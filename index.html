@@ -1,0 +1,156 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>TEORÍA at home PRO</title>
+<style>
+  :root{
+    --bg:#160f04; --panel:#1a1305; --panel2:#221908; --line:#3a2c10;
+    --ink:#fbf7ec; --muted:#d8caa6; --muted2:#a8966a; --paper:#f3f5ff;
+    --accent:#5a4518; --accent2:#6e561d;
+    --gold:#d4af37; --gold1:#d4af37; --gold2:#b8860b; --gold-soft:#e9c96a;
+    --shadow:0 1px 2px rgba(0,0,0,.4),0 18px 50px rgba(0,0,0,.45);
+  }
+  *{box-sizing:border-box}
+  html,body{margin:0;padding:0}
+  body{
+    background:
+      radial-gradient(1100px 500px at 50% -5%, #4d3a0b 0%, transparent 60%),
+      linear-gradient(180deg, #4d3a0b 0%, #2e2308 32%, #160f04 70%, #0a0702 100%);
+    background-attachment:fixed;
+    color:var(--ink);
+    font-family:"Helvetica Neue",Arial,system-ui,sans-serif;
+    -webkit-font-smoothing:antialiased; line-height:1.5; min-height:100vh;
+  }
+  .wrap{max-width:1240px;margin:0 auto;padding:26px 26px 80px}
+
+  /* ===== Cabecera / marca ===== */
+  header.top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
+  .brand{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap}
+  .brand h1{font-size:30px;font-weight:800;letter-spacing:-.6px;margin:0;line-height:1.1}
+  .brand h1 .a{color:var(--ink);font-weight:900}
+  .brand h1 .eav-pro{color:var(--gold1);font-weight:300}
+  .brand-inline{font-size:13px;color:var(--muted2);letter-spacing:.01em}
+  .tagline{font-size:12px;letter-spacing:.05em;color:var(--muted)}
+  .home2{font-size:.62em;font-style:italic;font-family:Georgia,'Times New Roman',serif;letter-spacing:.01em;color:var(--gold-soft);transform:rotate(-3deg);display:inline-block;font-weight:500}
+
+  /* ===== Enlace a la versión Elemental ===== */
+  .to-elemental{position:fixed;right:18px;top:54px;z-index:60;display:inline-flex;align-items:center;gap:9px;
+    background:linear-gradient(135deg,rgba(91,157,255,.14),rgba(58,79,134,.06));
+    border:1px solid rgba(91,157,255,.55);border-radius:12px;padding:9px 14px;
+    text-decoration:none;transition:transform .15s,border-color .15s,background .15s}
+  .to-elemental:hover{background:linear-gradient(135deg,rgba(91,157,255,.22),rgba(58,79,134,.12));
+    border-color:rgba(91,157,255,.75);transform:translateY(-1px)}
+  .to-elemental .te-icon{font-size:15px;color:#5b9dff;flex:none;line-height:1}
+  .to-elemental .te-text{color:#cdd9f5;font-size:11px;line-height:1.25;font-weight:600}
+  .to-elemental .te-text b{color:#fff;font-weight:800}
+  .to-elemental .te-go{color:#9bc2ff;font-weight:800;font-size:11px;white-space:nowrap}
+  @media(max-width:700px){.to-elemental{right:10px;top:10px;padding:7px 11px} .to-elemental .te-text{display:none}}
+
+  /* ===== Hero de portada ===== */
+  .opt-banner{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--muted2);border:1px solid var(--line);border-radius:999px;padding:6px 16px;margin-bottom:18px}
+  .opt-top{display:block;width:max-content;margin:18px auto 0}
+  .eva-hero{text-align:center;margin:18px 0 34px}
+  .eva-big{font-size:38px;font-weight:900;letter-spacing:-.01em;margin:0;line-height:1}
+  .eva-big .pre{color:var(--ink);font-weight:900}
+  .eva-big .dict{color:var(--muted);font-weight:100;-webkit-font-smoothing:antialiased}
+  .eva-big .home2{font-size:.5em;color:var(--gold-soft)}
+  .eva-big .pro-tag-big{font-size:.36em;font-weight:900;letter-spacing:.12em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:4px 10px;border-radius:7px;vertical-align:middle;margin-left:10px}
+  .eva-tag{font-size:15px;color:var(--muted);margin:10px 0 0}
+  .eva-tag2{font-size:13.5px;color:var(--muted2);margin-top:6px;font-style:italic}
+  @media (max-width:1100px){ .eva-big{font-size:32px} }
+
+  /* ===== Grid de pads 3×4 ===== */
+  .home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:24px;margin-top:40px}
+  .mode-card{
+    background:linear-gradient(180deg,var(--panel2),var(--panel));border:1px solid var(--line);border-radius:18px;
+    padding:34px 24px;cursor:pointer;text-align:center;transition:transform .12s,border-color .15s,box-shadow .15s;
+    position:relative;overflow:hidden;min-height:120px;display:flex;align-items:center;justify-content:center;
+    width:100%;font-family:inherit;
+  }
+  .mode-card:hover{transform:translateY(-4px);border-color:var(--gold2);box-shadow:0 18px 46px rgba(80,60,10,.45)}
+  .mode-card:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
+  .mode-card h2{font-size:21px;margin:0;font-weight:800;letter-spacing:.04em;color:var(--ink);text-transform:uppercase}
+  /* sello PRO dorado dentro del pad */
+  .mode-card h2 .pro-seal{font-size:.62em;font-weight:900;letter-spacing:.1em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:3px 8px;border-radius:6px;vertical-align:middle;margin-left:7px;text-transform:uppercase}
+  /* pads de repaso: distintivo dorado */
+  .mode-card.repaso{border-color:rgba(212,175,55,.45)}
+  .mode-card.repaso h2{color:var(--gold-soft)}
+  .mode-card.repaso .repaso-tag{
+    position:absolute;top:10px;right:12px;font-size:9px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;
+    color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:3px 8px;border-radius:999px;
+  }
+  .mode-card.repaso::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(var(--gold1),var(--gold2))}
+  @media (max-width:980px){ .home-grid{grid-template-columns:repeat(2,1fr)} }
+  @media (max-width:640px){ .home-grid{grid-template-columns:1fr} }
+
+  .eva-foot{text-align:center;margin:38px 0 0}
+  .maint-link{background:none;border:none;color:var(--muted2);font-size:12px;letter-spacing:.08em;cursor:pointer;opacity:.5;transition:opacity .15s}
+  .maint-link:hover{opacity:1;color:var(--muted)}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <a class="brand" id="brandHome" href="#" onclick="brandNav();return false;" style="cursor:pointer;text-decoration:none;color:inherit">
+      <h1><span class="a">LM</span><span class="eav-pro">PRO</span> <span class="home2">at home</span></h1>
+      <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+    </a>
+    <div class="tagline">by Iago González Alonso</div>
+  </header>
+
+  <a class="to-elemental" href="https://iagonaron.github.io/teoriaathome/">
+    <span class="te-icon">♪</span>
+    <span class="te-text">Trabaja lo fundamental en <b>TEORÍA</b></span>
+    <span class="te-go">Elemental →</span>
+  </a>
+
+  <!-- PORTADA -->
+  <div class="home-view" id="teoHome">
+    <div class="opt-banner opt-top">Versión optimizada para ordenador y tablet</div>
+    <div class="eva-hero">
+      <h1 class="eva-big"><span class="pre">TEO</span><span class="dict">RÍA</span> <span class="home2">at home</span> <span class="pro-tag-big">PRO</span></h1>
+      <p class="eva-tag">Ejercicios sueltos para dominar la teoría del Grado Profesional</p>
+      <p class="eva-tag eva-tag2">Es posible que haya ejercicios que no te han explicado todavía. ¡Ya llegará el momento! Practica lo que sabes hacer.</p>
+    </div>
+
+    <div class="home-grid">
+      <button class="mode-card" data-path="compasespro"><h2>Compases <span class="pro-seal">PRO</span></h2></button>
+      <button class="mode-card" data-path="seriearmonica"><h2>Serie armónica</h2></button>
+      <button class="mode-card" data-path="dodecafonismo"><h2>Dodecafonismo</h2></button>
+
+      <button class="mode-card" data-path="acordespro"><h2>Acordes <span class="pro-seal">PRO</span></h2></button>
+      <button class="mode-card" data-path="cadencias"><h2>Cadencias</h2></button>
+      <button class="mode-card" data-path="enarmoniapro"><h2>Enarmonía <span class="pro-seal">PRO</span></h2></button>
+
+      <button class="mode-card" data-path="modos"><h2>Modos</h2></button>
+      <button class="mode-card" data-path="modulacion"><h2>Modulación</h2></button>
+      <button class="mode-card" data-path="transporte"><h2>Transporte</h2></button>
+
+      <button class="mode-card" data-path="intervalos"><h2>Intervalos <span class="pro-seal">PRO</span></h2></button>
+      <button class="mode-card" data-path="tonalidades"><h2>Tonalidades <span class="pro-seal">PRO</span></h2></button>
+      <button class="mode-card" data-path="escalas"><h2>Escalas <span class="pro-seal">PRO</span></h2></button>
+    </div>
+
+    <div class="eva-foot"><button class="maint-link" id="maintLink">Mantenimiento</button></div>
+  </div>
+
+</div>
+
+<script>
+  // Marca: en la portada -> vuelve al portal principal LMPRO
+  function brandNav(){ window.location.href='https://iagonaron.github.io/lmpro/'; }
+
+  // Enganche de los paths (cada botón abrirá su ejercicio cuando me des los nombres/contenido)
+  document.querySelectorAll('.mode-card[data-path]').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      var id = btn.getAttribute('data-path');
+      // TODO: cada ejercicio se cableará a su vista cuando definas nombre y contenido
+      console.log('Path seleccionado:', id);
+    });
+  });
+</script>
+</body>
+</html>
