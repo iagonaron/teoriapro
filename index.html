@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>TEORÍA at home PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
 <style>
   :root{
     --bg:#160f04; --panel:#1a1305; --panel2:#221908; --line:#3a2c10;
@@ -23,7 +24,7 @@
     font-family:"Helvetica Neue",Arial,system-ui,sans-serif;
     -webkit-font-smoothing:antialiased; line-height:1.5; min-height:100vh;
   }
-  .wrap{max-width:1240px;margin:0 auto;padding:26px 26px 80px}
+  .wrap{max-width:1240px;margin:0 auto;padding:26px 26px 80px;position:relative}
 
   /* ===== Cabecera / marca ===== */
   header.top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;flex-wrap:wrap;margin-bottom:22px}
@@ -36,7 +37,8 @@
   .home2{font-size:.62em;font-style:italic;font-family:Georgia,'Times New Roman',serif;letter-spacing:.01em;color:var(--gold-soft);transform:rotate(-3deg);display:inline-block;font-weight:500}
 
   /* ===== Enlace a la versión Elemental ===== */
-  .to-elemental{position:fixed;right:18px;top:54px;z-index:60;display:inline-flex;align-items:center;gap:9px;
+  .te-row{display:flex;justify-content:flex-end;margin:-6px 0 8px}
+  .to-elemental{display:inline-flex;align-items:center;gap:9px;
     background:linear-gradient(135deg,rgba(91,157,255,.14),rgba(58,79,134,.06));
     border:1px solid rgba(91,157,255,.55);border-radius:12px;padding:9px 14px;
     text-decoration:none;transition:transform .15s,border-color .15s,background .15s}
@@ -46,19 +48,20 @@
   .to-elemental .te-text{color:#cdd9f5;font-size:11px;line-height:1.25;font-weight:600}
   .to-elemental .te-text b{color:#fff;font-weight:800}
   .to-elemental .te-go{color:#9bc2ff;font-weight:800;font-size:11px;white-space:nowrap}
-  @media(max-width:700px){.to-elemental{right:10px;top:10px;padding:7px 11px} .to-elemental .te-text{display:none}}
+  @media(max-width:700px){.to-elemental{padding:7px 11px} .to-elemental .te-text{display:none}}
 
   /* ===== Hero de portada ===== */
   .opt-banner{display:inline-block;font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:700;color:var(--muted2);border:1px solid var(--line);border-radius:999px;padding:6px 16px;margin-bottom:18px}
-  .opt-top{display:block;width:max-content;margin:18px auto 0}
-  .eva-hero{text-align:center;margin:18px 0 34px}
+  .opt-top{display:block;width:max-content;margin:8px auto 0}
+  .eva-hero{text-align:center;margin:44px 0 48px}
   .eva-big{font-size:38px;font-weight:900;letter-spacing:-.01em;margin:0;line-height:1}
   .eva-big .pre{color:var(--ink);font-weight:900}
   .eva-big .dict{color:var(--muted);font-weight:100;-webkit-font-smoothing:antialiased}
   .eva-big .home2{font-size:.5em;color:var(--gold-soft)}
   .eva-big .pro-tag-big{font-size:.36em;font-weight:900;letter-spacing:.12em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:4px 10px;border-radius:7px;vertical-align:middle;margin-left:10px}
   .eva-tag{font-size:15px;color:var(--muted);margin:10px 0 0}
-  .eva-tag2{font-size:13.5px;color:var(--muted2);margin-top:6px;font-style:italic}
+  .eva-tag2{font-size:13.5px;color:var(--muted2);margin-top:22px;font-style:italic;max-width:none;white-space:nowrap}
+  .eva-tag2 b{color:var(--gold-soft);font-weight:800;font-style:normal}
   @media (max-width:1100px){ .eva-big{font-size:32px} }
 
   /* ===== Grid de pads 3×4 ===== */
@@ -82,16 +85,100 @@
     color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:3px 8px;border-radius:999px;
   }
   .mode-card.repaso::before{content:"";position:absolute;left:0;top:0;bottom:0;width:5px;background:linear-gradient(var(--gold1),var(--gold2))}
+  /* punto que indica que el ejercicio ya está implementado */
+  .mode-card .dot-live{position:absolute;top:12px;right:14px;width:9px;height:9px;border-radius:50%;background:var(--gold1);box-shadow:0 0 0 0 rgba(212,175,55,.6);animation:dotPulse 1.8s ease-out infinite}
+  @keyframes dotPulse{
+    0%{box-shadow:0 0 0 0 rgba(212,175,55,.55)}
+    70%{box-shadow:0 0 0 8px rgba(212,175,55,0)}
+    100%{box-shadow:0 0 0 0 rgba(212,175,55,0)}
+  }
   @media (max-width:980px){ .home-grid{grid-template-columns:repeat(2,1fr)} }
   @media (max-width:640px){ .home-grid{grid-template-columns:1fr} }
 
   .eva-foot{text-align:center;margin:38px 0 0}
   .maint-link{background:none;border:none;color:var(--muted2);font-size:12px;letter-spacing:.08em;cursor:pointer;opacity:.5;transition:opacity .15s}
   .maint-link:hover{opacity:1;color:var(--muted)}
+
+  /* ===== estilos específicos de Acordes PRO ===== */
+  .brand h1 .a{color:var(--ink);font-weight:900}
+  .brand h1 .eav-pro{color:var(--gold1);font-weight:300}
+  .brand h1 .back-arrow{color:var(--muted2);font-weight:400;font-size:.8em;margin-right:2px;transition:color .15s}
+  .brand:hover h1 .back-arrow{color:var(--gold-soft)}
+  .pro-seal-brand{font-size:.42em;font-weight:900;letter-spacing:.1em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:2px 8px;border-radius:6px;vertical-align:middle;margin-left:8px;text-transform:uppercase}
+  .home2{font-size:.62em;font-style:italic;font-family:Georgia,'Times New Roman',serif;letter-spacing:.01em;color:var(--gold-soft);transform:rotate(-3deg);display:inline-block;font-weight:500}
+  .brand-inline{font-size:12px;color:var(--muted2);letter-spacing:.01em}
+  .tagline{font-size:12px;letter-spacing:.05em;color:var(--muted)}
+
+  /* enlace volver al portal */
+  .to-portal{display:inline-flex;align-items:center;gap:8px;background:rgba(233,201,106,.08);border:1px solid rgba(212,175,55,.4);
+    border-radius:11px;padding:8px 13px;text-decoration:none;color:var(--gold-soft);font-size:12px;font-weight:700;transition:background .15s,border-color .15s}
+  .to-portal:hover{background:rgba(233,201,106,.16);border-color:var(--gold1)}
+
+  /* ===== Título de vista ===== */
+  .iv-head{display:flex;align-items:center;justify-content:space-between;gap:16px;margin:18px 0 4px}
+  .iv-title{font-size:46px;font-weight:900;letter-spacing:-.02em;line-height:1}
+  .iv-title .post{color:var(--ink)}
+  .iv-title .dim{color:var(--muted);font-weight:200}
+  .iv-title .pro-seal{font-size:.34em;font-weight:900;letter-spacing:.12em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:4px 9px;border-radius:7px;vertical-align:middle;margin-left:10px;text-transform:uppercase}
+  .iv-sub{font-size:14px;color:var(--muted);margin:6px 0 22px;max-width:760px}
+
+  /* ===== Tarjeta de ejercicio ===== */
+  .ex-card{background:linear-gradient(150deg,#3a2c0e 0%,#241a08 45%,#160f04 100%);border:1px solid var(--line);border-radius:18px;padding:18px 20px;margin-bottom:24px;box-shadow:inset 0 1px 0 rgba(233,201,106,.08),0 14px 40px rgba(0,0,0,.4)}
+  .ex-top{display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-bottom:6px}
+  .ex-letter{display:flex;align-items:baseline;gap:10px}
+  .ex-letter b{font-size:11px;font-weight:900;letter-spacing:.16em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:3px 9px;border-radius:5px}
+  .ex-letter span{font-size:15px;font-weight:700;color:var(--ink)}
+  .iconbtn{display:inline-flex;align-items:center;gap:7px;background:rgba(233,201,106,.06);border:1px solid var(--line);color:var(--muted);font-size:13px;font-weight:700;padding:8px 14px;border-radius:9px;cursor:pointer;transition:background .15s,border-color .15s,color .15s}
+  .btn-nuevos{font-size:15px;font-weight:800;padding:13px 24px;border-radius:12px;gap:10px;color:var(--gold-soft);border-color:rgba(212,175,55,.45)}
+  .btn-nuevos svg{width:20px;height:20px}
+  .btn-nuevos:hover{background:rgba(233,201,106,.16);border-color:var(--gold1);color:var(--gold-soft)}
+  .iconbtn:hover{background:rgba(233,201,106,.14);color:var(--ink);border-color:var(--gold2)}
+  .iconbtn svg{width:16px;height:16px}
+  .btn-correct{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
+  .btn-correct:hover{filter:brightness(1.08);color:#1a1407}
+
+  .score{background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:0 12px;overflow:hidden;position:relative;display:flex;align-items:center}
+  .answers{margin-top:12px}
+  .ans-cell{border:1px solid var(--line);border-radius:12px;background:rgba(233,201,106,.02);padding:12px 10px}
+  .ans-cell.ok{border-color:var(--green);background:var(--green-soft)}
+  .ans-cell.bad{border-color:var(--red);background:var(--red-soft)}
+  .sol{font-size:12px;font-weight:700}
+
+  /* botones de tipo (texto + abreviatura) */
+  .tipo-list{display:flex;flex-direction:column;gap:6px;margin-top:4px}
+  .tipo-btn{display:flex;align-items:center;justify-content:space-between;gap:8px;width:100%;
+    border:1px solid var(--line);border-radius:9px;background:rgba(233,237,255,.03);color:var(--ink);
+    font-family:inherit;font-size:13px;font-weight:600;padding:8px 11px;cursor:pointer;transition:border-color .15s,background .15s}
+  .tipo-btn:hover{border-color:var(--gold2);background:rgba(233,201,106,.08)}
+  .tipo-btn.on{border-color:var(--gold1);background:rgba(212,175,55,.16);color:var(--gold-soft);font-weight:800}
+  .tipo-btn .ab{font-size:13px;color:var(--muted2);font-weight:700;font-variant-numeric:tabular-nums}
+  .tipo-btn .ab.ab-circ{font-size:16px;line-height:1;position:relative;top:1px}
+  .tipo-btn.on .ab{color:var(--gold-soft)}
+  .tipo-btn.sol-ok{border-color:var(--blue);background:rgba(47,109,246,.14);color:#cfe0ff}
+  .tipo-btn.sol-ok .ab{color:#cfe0ff}
+  .tipo-btn.sel-ok-green{border-color:var(--green);background:var(--green-soft);color:#bff3df}
+  .tipo-btn.sel-ok-green .ab{color:#bff3df}
+  .tipo-btn.sel-bad{border-color:var(--red);background:var(--red-soft);color:#ffc6cf}
+  .tipo-btn.sel-bad .ab{color:#ffc6cf}
+
+  /* alteración (construir) */
+  .acc-btn{width:38px;height:42px;border-radius:9px;border:1px solid var(--line);background:rgba(233,237,255,.03);color:var(--ink);font-size:19px;cursor:pointer;display:grid;place-items:center;transition:border-color .15s,background .15s}
+  .acc-btn.dsharp{font-size:20px;font-weight:800}
+  .acc-btn:hover{border-color:var(--gold2)}
+  .acc-btn.on{border-color:var(--gold1);background:rgba(212,175,55,.18);color:var(--gold-soft)}
+
+  .locked .answers, .locked .score{pointer-events:none}
+
+  .lead-cap{font-size:12px;font-weight:800;color:var(--ink);text-align:center;margin-bottom:8px}
+  .lead-cap .ab{color:var(--gold-soft);font-weight:700;margin-left:5px}
+  .lead-cap .ab.ab-circ{font-size:15px;position:relative;top:1px}
 </style>
 </head>
 <body>
 <div class="wrap">
+
+  <!-- ===================== VISTA PORTAL ===================== -->
+  <div id="view-portal">
 
   <header class="top">
     <a class="brand" id="brandHome" href="#" onclick="brandNav();return false;" style="cursor:pointer;text-decoration:none;color:inherit">
@@ -101,19 +188,20 @@
     <div class="tagline">by Iago González Alonso</div>
   </header>
 
-  <a class="to-elemental" href="https://iagonaron.github.io/teoriaathome/">
-    <span class="te-icon">♪</span>
-    <span class="te-text">Trabaja lo fundamental en <b>TEORÍA</b></span>
-    <span class="te-go">Elemental →</span>
-  </a>
+  <div class="te-row">
+    <a class="to-elemental" href="https://iagonaron.github.io/teoriaathome/">
+      <span class="te-icon">♪</span>
+      <span class="te-text">Trabaja lo fundamental en <b>TEORÍA</b></span>
+      <span class="te-go">Elemental →</span>
+    </a>
+  </div>
 
   <!-- PORTADA -->
   <div class="home-view" id="teoHome">
     <div class="opt-banner opt-top">Versión optimizada para ordenador y tablet</div>
     <div class="eva-hero">
       <h1 class="eva-big"><span class="pre">TEO</span><span class="dict">RÍA</span> <span class="home2">at home</span> <span class="pro-tag-big">PRO</span></h1>
-      <p class="eva-tag">Ejercicios sueltos para dominar la teoría del Grado Profesional</p>
-      <p class="eva-tag eva-tag2">Es posible que haya ejercicios que no te han explicado todavía. ¡Ya llegará el momento! Practica lo que sabes hacer.</p>
+      <p class="eva-tag eva-tag2">Es posible que haya ejercicios que <b>no te han explicado todavía</b>. ¡Ya llegará el momento! Practica lo que sabes hacer.</p>
     </div>
 
     <div class="home-grid">
@@ -121,7 +209,7 @@
       <button class="mode-card" data-path="seriearmonica"><h2>Serie armónica</h2></button>
       <button class="mode-card" data-path="dodecafonismo"><h2>Dodecafonismo</h2></button>
 
-      <button class="mode-card" data-path="acordespro"><h2>Acordes <span class="pro-seal">PRO</span></h2></button>
+      <button class="mode-card" data-path="acordespro"><span class="dot-live"></span><h2>Acordes <span class="pro-seal">PRO</span></h2></button>
       <button class="mode-card" data-path="cadencias"><h2>Cadencias</h2></button>
       <button class="mode-card" data-path="enarmoniapro"><h2>Enarmonía <span class="pro-seal">PRO</span></h2></button>
 
@@ -136,21 +224,578 @@
 
     <div class="eva-foot"><button class="maint-link" id="maintLink">Mantenimiento</button></div>
   </div>
+  </div>
+
+  <!-- ===================== VISTA ACORDES PRO ===================== -->
+  <div id="view-acordes" style="display:none">
+
+  <header class="top">
+    <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home PRO">
+      <h1><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+      <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+    </a>
+  </header>
+
+  <div class="iv-head">
+    <div class="iv-title"><span class="post">ACOR</span><span class="dim">DES</span> <span class="pro-seal">PRO</span></div>
+    <button class="iconbtn btn-nuevos" onclick="nuevoTODO()" title="Nuevos ejercicios">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+      Nuevos ejercicios
+    </button>
+  </div>
+
+  <!-- ===== TARJETA 1: IDENTIFICAR ===== -->
+  <div class="ex-card" id="cardID">
+    <div class="ex-top">
+      <div class="ex-letter"><b>1</b><span>Identifica el tipo de cada acorde</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-correct" onclick="corregirID()">✓ Corregir</button>
+      </div>
+    </div>
+    <div class="score" id="scoreID"></div>
+    <div class="answers" id="answersID"></div>
+  </div>
+
+  <!-- ===== TARJETA 2: CONSTRUIR ===== -->
+  <div class="ex-card" id="cardBUILD">
+    <div class="ex-top">
+      <div class="ex-letter"><b>2</b><span>Construye cada acorde</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-correct" onclick="corregirBUILD()">✓ Corregir</button>
+      </div>
+    </div>
+    <div class="score" id="scoreBUILD"></div>
+    <div class="answers" id="answersBUILD"></div>
+  </div>
+  </div>
 
 </div>
 
 <script>
-  // Marca: en la portada -> vuelve al portal principal LMPRO
+  // Marca del portal -> portal general LMPRO
   function brandNav(){ window.location.href='https://iagonaron.github.io/lmpro/'; }
 
-  // Enganche de los paths (cada botón abrirá su ejercicio cuando me des los nombres/contenido)
+  // Acciones de cada pad: abrir su vista interna (los pendientes no hacen nada)
+  var ACCIONES = {
+    acordespro: abrirAcordes
+  };
   document.querySelectorAll('.mode-card[data-path]').forEach(function(btn){
     btn.addEventListener('click', function(){
-      var id = btn.getAttribute('data-path');
-      // TODO: cada ejercicio se cableará a su vista cuando definas nombre y contenido
-      console.log('Path seleccionado:', id);
+      var fn = ACCIONES[btn.getAttribute('data-path')];
+      if(typeof fn === 'function') fn();
     });
   });
+
+  // ---- Alternar entre la portada y la vista de Acordes PRO ----
+  function abrirAcordes(){
+    document.getElementById('view-portal').style.display='none';
+    document.getElementById('view-acordes').style.display='block';
+    window.scrollTo(0,0);
+    if(!window._acoInit){ window._acoInit=true; nuevoID(); nuevoBUILD(); }
+    else { renderIDScore(); renderBUILDScore(); }
+  }
+  function volverPortal(){
+    document.getElementById('view-acordes').style.display='none';
+    document.getElementById('view-portal').style.display='block';
+    window.scrollTo(0,0);
+  }
+</script>
+
+<script>
+/* ============================================================
+   ACORDES PRO — helpers base (extraídos de TEORÍA at home)
+   ============================================================ */
+const VF = Vex.Flow;
+const STEPS=["C","D","E","F","G","A","B"];
+const STEP_ST={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function midiNota(s,o,a){return 12*(o+1)+STEP_ST[s]+a;}
+let RNG=Math.random;
+function rint(n){return Math.floor(RNG()*n);}
+function pick(a){return a[rint(a.length)];}
+function chance(p){return RNG()<p;}
+function accStr(a){return a===1?"#":a===-1?"b":a===2?"##":a===-2?"bb":"n";}
+function notaToKey(nb){
+  const acc=nb.alter===1?"#":nb.alter===-1?"b":nb.alter===2?"##":nb.alter===-2?"bb":"";
+  return nb.step.toLowerCase()+acc+"/"+nb.octave;
+}
+function noteName(nb){
+  const n={C:"Do",D:"Re",E:"Mi",F:"Fa",G:"Sol",A:"La",B:"Si"}[nb.step];
+  const a=nb.alter===1?"♯":nb.alter===-1?"♭":nb.alter===2?"𝄪":nb.alter===-2?"𝄫":"";
+  return n+a;
+}
+function diatonicStep(midi){
+  // índice diatónico continuo (para mapear Y); C4 -> referencia
+  const oct=Math.floor(midi/12)-1;
+  // aproximar por nombre natural más cercano
+  const names=[0,0,1,1,2,3,3,4,4,5,5,6];
+  const pc=((midi%12)+12)%12;
+  return oct*7 + names[pc];
+}
+function fitSvgToContent(host, H){
+  const svg=host.querySelector('svg'); if(!svg) return;
+  try{
+    svg.setAttribute('height',H);
+    host.style.height=H+'px';
+  }catch(e){}
+}
+function lockCard(id){const c=document.getElementById(id);if(c)c.classList.add('locked');}
+function unlockCard(id){const c=document.getElementById(id);if(c)c.classList.remove('locked');}
+
+/* ============================================================
+   Definición de los 10 tipos de acorde
+   tríadas: i3_st / i5_st ; cuatríadas: + i7_st
+   ============================================================ */
+const ACO_TIPOS = {
+  // TRÍADAS
+  dis:  {nNotas:3, texto:'Disminuido',       ab:'5̶',    i3_st:3, i5_st:6},
+  men:  {nNotas:3, texto:'menor',            ab:'-',    i3_st:3, i5_st:7},
+  may:  {nNotas:3, texto:'Mayor',            ab:'',     i3_st:4, i5_st:7},
+  aum:  {nNotas:3, texto:'Aumentado',        ab:'+',    i3_st:4, i5_st:8},
+  sus4: {nNotas:3, texto:'Cuarta suspendida',ab:'sus4', i3_st:5, i5_st:7},
+  // CUATRÍADAS
+  d7:   {nNotas:4, texto:'Séptima de dominante', ab:'7D', i3_st:4, i5_st:7, i7_st:10},
+  m7:   {nNotas:4, texto:'menor séptima',        ab:'-7', i3_st:3, i5_st:7, i7_st:10},
+  maj7: {nNotas:4, texto:'Mayor séptima',        ab:'△',  i3_st:4, i5_st:7, i7_st:11},
+  dim7: {nNotas:4, texto:'Séptima disminuida',   ab:'7̶',  i3_st:3, i5_st:6, i7_st:9},
+  m7b5: {nNotas:4, texto:'Semidisminuido',       ab:'∅',  i3_st:3, i5_st:6, i7_st:10},
+};
+const TRIADAS=['dis','men','may','aum','sus4'];
+const CUATRIADAS=['d7','m7','maj7','dim7','m7b5'];
+
+const ACO_RARAS = new Set(['F,-1','C,-1','B,1','E,1']);
+const ACO_MIDI_MIN = midiNota('A',3,0);
+const ACO_MIDI_MAX = midiNota('G',5,0);
+const ACO_NOTAS_PARTIDA = (function(){
+  const out=[];
+  for(let o=3;o<=5;o++) for(const s of STEPS){ const m=midiNota(s,o,0); if(m>=ACO_MIDI_MIN-2 && m<=ACO_MIDI_MAX+2) out.push({s,o}); }
+  return out;
+})();
+
+/* notas del acorde sobre (step,oct,alter) según tipo. grado: 2=3ª,4=5ª,6=7ª */
+function acoNotas(step, octave, alter, tipo){
+  const t=ACO_TIPOS[tipo];
+  const fundM=midiNota(step,octave,alter);
+  const out=[{step,octave,alter}];
+  const tramos=[];
+  // sus4 usa la 4ª (grado 3) en vez de la 3ª (grado 2)
+  if(tipo==='sus4'){ tramos.push([3,t.i3_st]); }
+  else { tramos.push([2,t.i3_st]); }
+  tramos.push([4,t.i5_st]);
+  if(t.i7_st!=null) tramos.push([6,t.i7_st]);
+  for(const [gr,st] of tramos){
+    const idx=STEPS.indexOf(step);
+    const raw=idx+gr;
+    const oShift=Math.floor(raw/7), nIdx=raw%7;
+    const stepN=STEPS[nIdx], octN=octave+oShift;
+    const target=fundM+st;
+    const alterN=target-midiNota(stepN,octN,0);
+    if(Math.abs(alterN)>2) return null;
+    if(ACO_RARAS.has(stepN+','+alterN)) return null;
+    out.push({step:stepN,octave:octN,alter:alterN});
+  }
+  return out;
+}
+function acoEnRango(notas){ return notas.every(n=>{ const m=midiNota(n.step,n.octave,n.alter); return m>=ACO_MIDI_MIN && m<=ACO_MIDI_MAX; }); }
+
+function acoSorteaTipo(tipo, usadas){
+  for(let i=0;i<1500;i++){
+    const {s,o}=pick(ACO_NOTAS_PARTIDA);
+    let alter=0; if(chance(0.4)) alter=pick([-1,1]);
+    if(ACO_RARAS.has(s+','+alter)) continue;
+    if(usadas.has(s+','+alter)) continue;
+    const notas=acoNotas(s,o,alter,tipo);
+    if(!notas) continue;
+    if(!acoEnRango(notas)) continue;
+    // como mucho UNA doble alteración por acorde (los dobles ♭♭/×× encadenados son demasiado difíciles)
+    const dobles=notas.filter(n=>Math.abs(n.alter)===2).length;
+    if(dobles>1) continue;
+    usadas.add(s+','+alter);
+    return {tipo, notas};
+  }
+  return null;
+}
+
+/* sortea 4 tipos: ~2 tríadas + ~2 cuatríadas (mezcla), sin repetir tipo si se puede */
+function sorteaCuatroTipos(){
+  // 2 tríadas distintas + 2 cuatríadas distintas, posiciones barajadas
+  function dosDe(arr){ const a=arr.slice(); const out=[]; for(let k=0;k<2;k++){ const idx=rint(a.length); out.push(a.splice(idx,1)[0]); } return out; }
+  const tipos=dosDe(TRIADAS).concat(dosDe(CUATRIADAS));
+  for(let i=tipos.length-1;i>0;i--){ const j=rint(i+1); [tipos[i],tipos[j]]=[tipos[j],tipos[i]]; }
+  return tipos;
+}
+
+/* ============================================================
+   TARJETA 1 — IDENTIFICAR (4 acordes, un pentagrama, clave de sol)
+   ============================================================ */
+let dataID=[];
+let idScoreMeta=null;
+
+function nuevoID(){
+  unlockCard('cardID');
+  const usadas=new Set();
+  const tipos=sorteaCuatroTipos();
+  dataID=[];
+  tipos.forEach(tipo=>{
+    let ac=null,intentos=0;
+    do{ ac=acoSorteaTipo(tipo,usadas); intentos++; }while(!ac && intentos<6);
+    if(!ac){ ac=acoSorteaTipo(tipo,new Set()); }
+    dataID.push({tipo:ac.tipo, notas:ac.notas, sel:null});
+  });
+  renderID();
+}
+function renderID(){ renderIDScore(); renderIDAnswers(); }
+
+function renderIDScore(){
+  const host=document.getElementById('scoreID'); if(!host) return; host.innerHTML='';
+  const W=host.clientWidth||760, H=180;
+  const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+  const ctx=r.getContext();
+  const x0=14, marginR=34, usable=W-x0-marginR, wC=usable/4;
+  idScoreMeta={wC,x0};
+  dataID.forEach((e,i)=>{
+    const stave=new VF.Stave(x0+i*wC, 44, wC);
+    if(i===0) stave.addClef('treble');
+    if(i===3) stave.setEndBarType(VF.Barline.type.DOUBLE);
+    stave.setContext(ctx).draw();
+    let chordNotes=e.notas.slice().sort((a,b)=>midiNota(a.step,a.octave,a.alter)-midiNota(b.step,b.octave,b.alter));
+    const keys=chordNotes.map(n=>notaToKey(n));
+    const sn=new VF.StaveNote({keys, duration:'w', clef:'treble'});
+    chordNotes.forEach((n,idx)=>{ if(n.alter) sn.addModifier(new VF.Accidental(accStr(n.alter)), idx); });
+    try{
+      const voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
+      voice.addTickables([sn]);
+      new VF.Formatter().joinVoices([voice]).format([voice], wC-20);
+      voice.draw(ctx,stave);
+    }catch(err){}
+  });
+  fitSvgToContent(host, H);
+}
+
+function renderIDAnswers(){
+  const host=document.getElementById('answersID'); if(!host) return; host.innerHTML='';
+  host.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px';
+  dataID.forEach((e,i)=>{
+    const cell=document.createElement('div'); cell.className='ans-cell'; cell.id='ansID'+i;
+    // una sola columna: las 5 opciones según nNotas del acorde
+    const lista=document.createElement('div'); lista.className='tipo-list';
+    const opciones = (e.notas.length===4) ? CUATRIADAS : TRIADAS;
+    opciones.forEach(tk=>{
+      const t=ACO_TIPOS[tk];
+      const b=document.createElement('button'); b.className='tipo-btn'; b.dataset.t=tk; b.dataset.i=i;
+      const esCirc = (t.ab==='∅');
+      b.innerHTML='<span>'+t.texto+'</span>'+(t.ab?'<span class="ab'+(esCirc?' ab-circ':'')+'">'+t.ab+'</span>':'');
+      b.addEventListener('click',()=>{
+        e.sel=tk;
+        lista.querySelectorAll('.tipo-btn').forEach(x=>x.classList.toggle('on', x.dataset.t===tk));
+      });
+      lista.appendChild(b);
+    });
+    cell.appendChild(lista);
+    const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:16px;margin-top:8px';
+    cell.appendChild(tag);
+    host.appendChild(cell);
+  });
+}
+
+function corregirID(){
+  lockCard('cardID');
+  dataID.forEach((e,i)=>{
+    const cell=document.getElementById('ansID'+i);
+    const tag=cell.querySelector('.sol');
+    const ok = e.sel===e.tipo;
+    cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+    if(ok){
+      tag.style.color='var(--green)'; tag.textContent='✓ Correcto';
+      cell.querySelectorAll('.tipo-btn').forEach(b=>{ if(b.dataset.t===e.tipo) b.classList.add('sel-ok-green'); });
+    }
+    else {
+      const t=ACO_TIPOS[e.tipo];
+      tag.style.color='var(--blue)'; tag.innerHTML='Solución: '+t.texto+(t.ab?' '+t.ab:'');
+      cell.querySelectorAll('.tipo-btn').forEach(b=>{
+        if(b.dataset.t===e.tipo) b.classList.add('sol-ok');        // correcta en azul
+        else if(b.dataset.t===e.sel) b.classList.add('sel-bad');   // su elección errónea en rojo
+      });
+    }
+  });
+}
+
+/* ============================================================
+   TARJETA 2 — CONSTRUIR (4 acordes, un pentagrama, clave de sol)
+   ============================================================ */
+let dataBUILD=[];
+let buildScoreMeta=null;
+let buildVarGeom={};
+let buildYMaps={};
+let buildPendingAlt={};
+
+function acoEtiqueta(e){
+  const t=ACO_TIPOS[e.tipo];
+  const esCirc=(t.ab==='∅');
+  const seal = t.ab ? ' <span class="ab'+(esCirc?' ab-circ':'')+'">'+t.ab+'</span>' : '';
+  return noteName(e.fund)+' '+t.texto+seal;
+}
+
+function nuevoBUILD(){
+  unlockCard('cardBUILD');
+  const usadas=new Set();
+  const tipos=sorteaCuatroTipos();
+  dataBUILD=[];
+  buildPendingAlt={};
+  tipos.forEach(tipo=>{
+    let ac=null,intentos=0;
+    do{ ac=acoSorteaTipo(tipo,usadas); intentos++; }while(!ac && intentos<6);
+    if(!ac){ ac=acoSorteaTipo(tipo,new Set()); }
+    dataBUILD.push({tipo:ac.tipo, notas:ac.notas, fund:ac.notas[0], objetivo:ac.notas.slice(1),
+                    userSeq:[], _selVar:null, _corregido:false});
+  });
+  renderBUILD();
+}
+function renderBUILD(){ buildVarGeom={}; buildYMaps={}; renderBUILDScore(); renderBUILDAnswers(); }
+
+function renderBUILDScore(){
+  const host=document.getElementById('scoreBUILD'); if(!host) return; host.innerHTML='';
+  const W=host.clientWidth||760, H=180;
+  const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+  const ctx=r.getContext();
+  const x0=14, marginR=34, usable=W-x0-marginR, wC=usable/4;
+  buildScoreMeta={wC,x0};
+  dataBUILD.forEach((e,i)=>{
+    const stave=new VF.Stave(x0+i*wC, 44, wC);
+    if(i===0) stave.addClef('treble');
+    if(i===3) stave.setEndBarType(VF.Barline.type.DOUBLE);
+    stave.setContext(ctx).draw();
+    let chordNotes;
+    if(e._corregido){
+      // fundamental dada (negro) + estado de cada nota
+      chordNotes=[Object.assign({}, e.fund)];
+      const objKeys=e.objetivo.map(n=>n.step+n.octave+'_'+n.alter);
+      const userKeys=e.userSeq.map(n=>n.step+n.octave+'_'+n.alter);
+      // notas que puso el alumno: verde si está en objetivo, rojo si no
+      e.userSeq.forEach(n=>{
+        const k=n.step+n.octave+'_'+n.alter;
+        chordNotes.push(Object.assign({}, n, objKeys.includes(k)?{_green:true}:{_red:true}));
+      });
+      // notas que faltaban: azul
+      e.objetivo.forEach((n,j)=>{
+        if(!userKeys.includes(objKeys[j])) chordNotes.push(Object.assign({}, n, {_blue:true}));
+      });
+    } else {
+      chordNotes=[e.fund].concat(e.userSeq);
+    }
+    chordNotes.sort((a,b)=>midiNota(a.step,a.octave,a.alter)-midiNota(b.step,b.octave,b.alter));
+    const keys=chordNotes.map(n=>notaToKey(n));
+    const sn=new VF.StaveNote({keys, duration:'w', clef:'treble'});
+    chordNotes.forEach((n,idx)=>{ if(n.alter && !n._inherited) sn.addModifier(new VF.Accidental(accStr(n.alter)), idx); });
+    chordNotes.forEach((n,idx)=>{
+      if(n._green) sn.setKeyStyle(idx,{fillStyle:'#22c98a',strokeStyle:'#22c98a'});
+      else if(n._red) sn.setKeyStyle(idx,{fillStyle:'#ff5c72',strokeStyle:'#ff5c72'});
+      else if(n._blue) sn.setKeyStyle(idx,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
+      else if(e._selVar!=null && e.userSeq[e._selVar] &&
+              n.step===e.userSeq[e._selVar].step && n.octave===e.userSeq[e._selVar].octave && !e._corregido)
+        sn.setKeyStyle(idx,{fillStyle:'#d4af37',strokeStyle:'#d4af37'});
+    });
+    try{
+      const voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
+      voice.addTickables([sn]);
+      new VF.Formatter().joinVoices([voice]).format([voice], wC-20);
+      voice.draw(ctx,stave);
+      e._noteX = sn.getAbsoluteX();
+    }catch(err){}
+    buildBUILDYMap(i, stave); buildVarGeom[i]={baseX:e._noteX||(x0+i*wC+wC/2)};
+  });
+  fitSvgToContent(host, H);
+  wireBUILD();
+}
+
+function renderBUILDAnswers(){
+  const host=document.getElementById('answersBUILD'); if(!host) return; host.innerHTML='';
+  host.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:14px';
+  dataBUILD.forEach((e,i)=>{
+    const cell=document.createElement('div'); cell.className='ans-cell'; cell.id='ansBUILD'+i;
+    const cap=document.createElement('div'); cap.className='lead-cap'; cap.innerHTML=acoEtiqueta(e);
+    cell.appendChild(cap);
+    const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:6px;align-items:center;justify-content:center;margin-top:4px';
+    const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:4px';
+    accRow.innerHTML='<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="-2">𝄫</button>'+
+                     '<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="-1">♭</button>'+
+                     '<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="0">♮</button>'+
+                     '<button class="acc-btn aco-var-acc" data-i="'+i+'" data-a="1">♯</button>'+
+                     '<button class="acc-btn aco-var-acc dsharp" data-i="'+i+'" data-a="2">×</button>';
+    wrap.appendChild(accRow); cell.appendChild(wrap);
+    refreshBUILDVarAcc(e,accRow);
+    accRow.querySelectorAll('.aco-var-acc').forEach(b=>b.addEventListener('click',()=>{
+      const a=+b.dataset.a;
+      if(e._selVar!=null && e.userSeq[e._selVar]){
+        e.userSeq[e._selVar].alter=a; e.userSeq[e._selVar]._inherited=false;
+        renderBUILD();
+      } else {
+        buildPendingAlt[i]=(buildPendingAlt[i]===a)?0:a;
+        accRow.querySelectorAll('.aco-var-acc').forEach(x=>x.classList.toggle('on',+x.dataset.a===buildPendingAlt[i] && buildPendingAlt[i]!==0));
+      }
+    }));
+    const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:16px;margin-top:8px';
+    cell.appendChild(tag);
+    host.appendChild(cell);
+  });
+}
+function refreshBUILDVarAcc(e,accRow){
+  if(e._selVar!=null && e.userSeq[e._selVar]){
+    const a=e.userSeq[e._selVar].alter||0;
+    accRow.querySelectorAll('.aco-var-acc').forEach(x=>x.classList.toggle('on',+x.dataset.a===a));
+  } else { accRow.querySelectorAll('.aco-var-acc').forEach(x=>x.classList.remove('on')); }
+}
+
+function buildBUILDYMap(i, stave){
+  try{
+    const yTop=stave.getYForLine(0), yBot=stave.getYForLine(4);
+    const half=(yBot-yTop)/8;
+    const refStep=diatonicStep(midiNota("F",5,0));
+    const map={};
+    for(let oct=3;oct<=6;oct++){
+      for(const st of STEPS){
+        const m=midiNota(st,oct,0);
+        if(m<53||m>86) continue;
+        const ds=diatonicStep(m);
+        map[st+oct]={step:st,octave:oct,y:yTop+(refStep-ds)*half};
+      }
+    }
+    buildYMaps[i]=map;
+  }catch(e){}
+}
+
+function wireBUILD(){
+  const host=document.getElementById('scoreBUILD'); if(!host||host._wired) return; host._wired=true;
+  host.style.position='relative';
+  host.addEventListener('mousemove',(ev)=>onBUILDHover(ev));
+  host.addEventListener('mouseleave',()=>clearBUILDGhost());
+  host.addEventListener('click',(ev)=>onBUILDClick(ev));
+  host.addEventListener('contextmenu',(ev)=>{
+    const i=buildCompasEn(ev); if(i==null) return; const e=dataBUILD[i];
+    ev.preventDefault();
+    if(e.userSeq.length){ e.userSeq.pop(); e._selVar=null; renderBUILD(); }
+  });
+}
+function buildCompasEn(ev){
+  const host=document.getElementById('scoreBUILD'); const svg=host&&host.querySelector('svg'); if(!svg||!buildScoreMeta) return null;
+  let p; try{ const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; p=pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(err){ return null; }
+  const {x0,wC}=buildScoreMeta;
+  for(let i=0;i<4;i++){ if(p.x>=x0+i*wC && p.x<x0+(i+1)*wC) return i; }
+  return null;
+}
+function buildPointIn(ev){
+  const host=document.getElementById('scoreBUILD'); const svg=host.querySelector('svg');
+  const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse());
+}
+function buildNearestByY(i,my){
+  const map=buildYMaps[i]; if(!map) return null;
+  let best=null,bd=1e9;
+  for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} }
+  return best;
+}
+function buildYReal(i,step,octave){ const map=buildYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
+function onBUILDHover(ev){
+  const i=buildCompasEn(ev); if(i==null){ clearBUILDGhost(); hideBUILDDelX(); return; }
+  const e=dataBUILD[i]; if(e._corregido){ clearBUILDGhost(); return; }
+  let p; try{ p=buildPointIn(ev); }catch(err){ clearBUILDGhost(); return; }
+  for(let k=0;k<e.userSeq.length;k++){
+    const y=buildYReal(i,e.userSeq[k].step,e.userSeq[k].octave);
+    if(y!=null && Math.abs(y-p.y)<8){ showBUILDDelX(i,k); clearBUILDGhost(); return; }
+  }
+  hideBUILDDelX();
+  if(e.userSeq.length>=e.objetivo.length){ clearBUILDGhost(); return; }
+  const nat=buildNearestByY(i,p.y); if(!nat){ clearBUILDGhost(); return; }
+  showBUILDGhost(i,nat);
+}
+function showBUILDDelX(i,k){
+  const e=dataBUILD[i];
+  const host=document.getElementById('scoreBUILD'); const svg=host&&host.querySelector('svg'); if(!svg) return;
+  const x=(buildVarGeom[i]&&buildVarGeom[i].baseX!=null)?buildVarGeom[i].baseX:60;
+  const y=buildYReal(i,e.userSeq[k].step,e.userSeq[k].octave); if(y==null) return;
+  let xbtn=document.getElementById('buildDelX');
+  if(!xbtn){ xbtn=document.createElement('div'); xbtn.id='buildDelX'; xbtn.textContent='×';
+    xbtn.style.cssText='position:absolute;z-index:8;width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;background:rgba(20,16,4,.82);color:#fff;border:1px solid rgba(233,201,106,.5);font-size:14px;font-weight:600;cursor:pointer';
+    host.style.position='relative'; host.appendChild(xbtn);
+    xbtn.addEventListener('mouseenter',()=>{ xbtn._over=true; });
+    xbtn.addEventListener('mouseleave',()=>{ xbtn._over=false; setTimeout(()=>{ if(!xbtn._over) xbtn.style.display='none'; },60); });
+  }
+  try{
+    const pt=svg.createSVGPoint(); pt.x=x; pt.y=y;
+    const sp=pt.matrixTransform(svg.getScreenCTM());
+    const hr=host.getBoundingClientRect();
+    xbtn.style.left=(sp.x-hr.left+16)+'px'; xbtn.style.top=(sp.y-hr.top-10)+'px'; xbtn.style.display='block';
+  }catch(err){ xbtn.style.display='none'; return; }
+  xbtn.onclick=(ev)=>{ ev.stopPropagation();
+    e.userSeq.splice(k,1); if(e._selVar===k) e._selVar=null; else if(e._selVar!=null&&e._selVar>k) e._selVar--;
+    renderBUILD();
+  };
+}
+function hideBUILDDelX(){ const x=document.getElementById('buildDelX'); if(x && !x._over) x.style.display='none'; }
+function showBUILDGhost(i,nat){
+  const host=document.getElementById('scoreBUILD');
+  let g=document.getElementById('buildghost');
+  if(!g){ g=document.createElement('div'); g.id='buildghost';
+    g.style.cssText='position:absolute;pointer-events:none;z-index:6;width:12px;height:10px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box';
+    host.style.position='relative'; host.appendChild(g); }
+  const svg=host.querySelector('svg'); if(!svg){g.style.display='none';return;}
+  const yInt=buildYReal(i,nat.step,nat.octave); if(yInt==null){g.style.display='none';return;}
+  const xInt=(buildVarGeom[i]&&buildVarGeom[i].baseX!=null)?buildVarGeom[i].baseX:(buildScoreMeta.x0+i*buildScoreMeta.wC+buildScoreMeta.wC/2);
+  try{
+    const pt=svg.createSVGPoint(); pt.x=xInt; pt.y=yInt;
+    const sp=pt.matrixTransform(svg.getScreenCTM());
+    const hr=host.getBoundingClientRect();
+    g.style.left=(sp.x-hr.left-6)+'px'; g.style.top=(sp.y-hr.top-5)+'px'; g.style.display='block';
+  }catch(err){ g.style.display='none'; }
+}
+function clearBUILDGhost(){ const g=document.getElementById('buildghost'); if(g) g.style.display='none'; }
+function onBUILDClick(ev){
+  const i=buildCompasEn(ev); if(i==null) return;
+  const e=dataBUILD[i]; if(e._corregido) return;
+  let p; try{ p=buildPointIn(ev); }catch(err){ return; }
+  for(let k=0;k<e.userSeq.length;k++){
+    const y=buildYReal(i,e.userSeq[k].step,e.userSeq[k].octave);
+    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=(e._selVar===k)?null:k; renderBUILD(); return; }
+  }
+  if(e.userSeq.length>=e.objetivo.length) return;
+  const nat=buildNearestByY(i,p.y); if(!nat) return;
+  let nb={step:nat.step,octave:nat.octave,alter:0};
+  for(let k=e.userSeq.length-1;k>=0;k--){ const pv=e.userSeq[k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } }
+  const pend=buildPendingAlt[i];
+  if(pend===1||pend===-1||pend===2||pend===-2){ nb.alter=pend; nb._inherited=false; }
+  e.userSeq.push(nb); buildPendingAlt[i]=0;
+  e._selVar=e.userSeq.length-1;
+  renderBUILD();
+}
+
+function corregirBUILD(){
+  lockCard('cardBUILD');
+  dataBUILD.forEach((e,i)=>{
+    const cell=document.getElementById('ansBUILD'+i);
+    const tag=cell.querySelector('.sol');
+    const got=e.userSeq.slice(), obj=e.objetivo;
+    let ok = got.length===obj.length;
+    if(ok){
+      const norm=arr=>arr.map(n=>n.step+n.octave+'_'+n.alter).sort();
+      const a=norm(got), b=norm(obj);
+      for(let k=0;k<a.length;k++){ if(a[k]!==b[k]){ ok=false; break; } }
+    }
+    cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+    e._corregido=true; e._selVar=null;
+    if(ok){ tag.style.color='var(--green)'; tag.textContent='✓ Correcto'; }
+    else {
+      tag.innerHTML='<span style="color:var(--green)">acierto</span> · '+
+                    '<span style="color:var(--red)">error</span> · '+
+                    '<span style="color:var(--blue)">faltaba</span>';
+    }
+  });
+  renderBUILDScore();
+}
+
+/* botón global: regenera ambos ejercicios */
+function nuevoTODO(){ nuevoID(); nuevoBUILD(); }
+
+/* arranque */
+/* arranque controlado por abrirAcordes() */
+window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dataBUILD.length) renderBUILDScore(); });
 </script>
 </body>
 </html>
