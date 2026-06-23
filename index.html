@@ -270,7 +270,7 @@
       <button class="mode-card" data-path="enarmoniapro"><h2>Enarmonía <span class="pro-seal">PRO</span></h2></button>
 
       <button class="mode-card" data-path="modos"><h2>Modos</h2></button>
-      <button class="mode-card" data-path="modulacion"><h2>Modulación</h2></button>
+      <button class="mode-card" data-path="modulacion"><span class="dot-live"></span><h2>Modulación</h2></button>
       <button class="mode-card" data-path="transporte"><h2>Transporte</h2></button>
 
       <button class="mode-card" data-path="intervalos"><h2>Intervalos <span class="pro-seal">PRO</span></h2></button>
@@ -370,10 +370,12 @@
   // Marca del portal -> portal general LMPRO
   function brandNav(){ window.location.href='https://iagonaron.github.io/lmpro/'; }
 
-  // Acciones de cada pad: abrir su vista interna (los pendientes no hacen nada)
+  // Acciones de cada pad: abrir su vista interna (los pendientes no hacen nada).
+  // Modulación es una página propia (modulacion.html), por eso navega en vez de abrir vista interna.
   var ACCIONES = {
     acordespro: abrirAcordes,
-    cadencias: abrirCadencias
+    cadencias: abrirCadencias,
+    modulacion: function(){ window.location.href='modulacion.html'; }
   };
   document.querySelectorAll('.mode-card[data-path]').forEach(function(btn){
     btn.addEventListener('click', function(){
@@ -911,18 +913,9 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
 window.CadenceEngine=(function(){
 /* =====================================================================
    MOTOR CADENCIAL v2 — generativo, conducción de voces verificada
-   ---------------------------------------------------------------------
-   No transpone bases fijas: genera cada cadencia eligiendo plantilla
-   armónica + tonalidad + realización SATB por búsqueda (beam search)
-   sujeta a las reglas de la armonía tonal (estilo coral).
-   Salida: eventos {midi:[S,A,T,B], q, rn, spell:[...], cadence:bool}.
    ===================================================================== */
-
-// ---------- utilidades de tonalidad y deletreo ----------
-const LETTER_PC = [0,2,4,5,7,9,11];          // C D E F G A B
+const LETTER_PC = [0,2,4,5,7,9,11];
 const LETTER_NAME = ['C','D','E','F','G','A','B'];
-
-// armaduras: sostenidos / bemoles por tonalidad (<=3 alteraciones)
 const KEYSIG = {
   major:{
     'C':{t:0,sh:[],fl:[]}, 'G':{t:4,sh:['F'],fl:[]}, 'D':{t:1,sh:['F','C'],fl:[]},
@@ -935,12 +928,10 @@ const KEYSIG = {
     'G':{t:4,sh:[],fl:['B','E']}, 'C':{t:0,sh:[],fl:['B','E','A']}
   }
 };
-// nombre VexFlow de la armadura
 const VEXKEY = {
   major:{'C':'C','G':'G','D':'D','A':'A','F':'F','Bb':'Bb','Eb':'Eb'},
   minor:{'A':'Am','E':'Em','B':'Bm','F#':'F#m','D':'Dm','G':'Gm','C':'Cm'}
 };
-
 function buildKey(name, mode){
   const k = KEYSIG[mode][name];
   const accForLetter = {};
@@ -951,18 +942,14 @@ function buildKey(name, mode){
   return {name, mode, tonicLetter, accForLetter, tonicPc,
           ltPc:(tonicPc+11)%12, vexKey:VEXKEY[mode][name]};
 }
-
-// deletrea un miembro de acorde (offset = 0/2/4/6 grados desde la fundamental)
 function spellTone(key, rootDeg, offset, dominantFn){
   const degIndex = (rootDeg + offset) % 7;
   const letter = (key.tonicLetter + degIndex) % 7;
   let acc = key.accForLetter[LETTER_NAME[letter]] || 0;
-  if(key.mode==='minor' && dominantFn && degIndex===6) acc += 1; // sensible alterada
+  if(key.mode==='minor' && dominantFn && degIndex===6) acc += 1;
   const pc = (LETTER_PC[letter] + acc + 24)%12;
   return {letter, acc, pc, degIndex};
 }
-
-// construye el acorde de una especificación de plantilla
 function buildChord(key, spec){
   const dom = spec.dom!==undefined ? spec.dom : (spec.deg===4 || spec.deg===6);
   const offsets = spec.seventh ? [0,2,4,6] : [0,2,4];
@@ -973,7 +960,6 @@ function buildChord(key, spec){
   });
   const bassRole = spec.bass || 'R';
   const bassTone = tones.find(t=>t.role===bassRole);
-  // inversión para el cifrado
   const invByRole = {R:0,'3':1,'5':2,'7':3};
   const inv = invByRole[bassRole];
   return {
@@ -985,27 +971,20 @@ function buildChord(key, spec){
     deg: spec.deg, inv, dbl: spec.dbl||null
   };
 }
-
 function romanLabel(mode, deg, seventh, inv){
   const MAJ = ['I','ii','iii','IV','V','vi','vii°'];
   const MIN = ['i','ii°','III','iv','V','VI','vii°'];
   let base = (mode==='major'?MAJ:MIN)[deg];
-  const supTri = ['', '\u2076', '\u2076\u2084'];           // '', 6, 6/4
-  const supSev = ['\u2077','\u2076\u2085','\u2074\u2083','\u2074\u2082']; // 7,6/5,4/3,4/2
+  const supTri = ['', '\u2076', '\u2076\u2084'];
+  const supSev = ['\u2077','\u2076\u2085','\u2074\u2083','\u2074\u2082'];
   return base + (seventh ? supSev[inv] : supTri[inv]);
 }
-
-// ---------- rangos vocales (midi) ----------
 const RANGE = { S:[60,79], A:[53,74], T:[48,67], B:[40,62] };
-
-// ---------- generación de candidatos de voicing para un acorde ----------
 function midisInRange(pc, lo, hi){
   const out=[];
   for(let m=lo; m<=hi; m++) if(((m%12)+12)%12===pc) out.push(m);
   return out;
 }
-
-// multisets de 3 pcs (S,A,T) válidos según completitud + duplicación
 function upperPcSets(chord, key){
   const triadPcs = chord.tones.filter(t=>t.role!=='7').map(t=>t.pc);
   const allPcs   = chord.tones.map(t=>t.pc);
@@ -1015,30 +994,23 @@ function upperPcSets(chord, key){
   const noDouble = new Set();
   if(chord.isLTchord) noDouble.add(ltPc);
   if(seventh) noDouble.add(sevPc);
-
   const sets = [];
   const push = (arr)=>{ sets.push(arr.slice()); };
-
   if(!seventh){
-    // tríada: las 3 notas presentes; una duplicada
     for(const dpc of allPcs){
       if(noDouble.has(dpc)) continue;
-      // multiset total de 4 voces = triada + duplicado
       const four = triadPcs.concat([dpc]);
-      // quitar el bajo una vez
       const idx = four.indexOf(bassPc);
       if(idx<0) continue;
       const upper = four.slice(); upper.splice(idx,1);
       push(upper);
     }
   } else {
-    // séptima completa
     {
       const four = allPcs.slice();
       const idx = four.indexOf(bassPc);
       if(idx>=0){ const up=four.slice(); up.splice(idx,1); push(up); }
     }
-    // séptima sin 5ª, fundamental duplicada
     {
       const fifthPc = chord.tones.find(t=>t.role==='5').pc;
       const rootPc  = chord.tones.find(t=>t.role==='R').pc;
@@ -1047,17 +1019,12 @@ function upperPcSets(chord, key){
       if(idx>=0){ const up=four.slice(); up.splice(idx,1); push(up); }
     }
   }
-  // dedupe
   const seen=new Set(), out=[];
   for(const s of sets){ const k=s.slice().sort((a,b)=>a-b).join(','); if(!seen.has(k)){seen.add(k); out.push(s);} }
   return out;
 }
-
-// coloca un multiset de 3 pcs en S/A/T con todas las octavas válidas
 function placeUpper(pcset){
   const cand=[];
-  const sList = pcset.map(pc=>midisInRange(pc,RANGE.S[0],RANGE.S[1]));
-  // probamos cada pc como soprano
   for(let i=0;i<3;i++){
     const restIdx=[0,1,2].filter(j=>j!==i);
     for(const sM of midisInRange(pcset[i],RANGE.S[0],RANGE.S[1])){
@@ -1068,7 +1035,6 @@ function placeUpper(pcset){
           }
         }
       }
-      // también la otra asignación A<->T del resto
       for(const aM of midisInRange(pcset[restIdx[1]],RANGE.A[0],RANGE.A[1])){
         for(const tM of midisInRange(pcset[restIdx[0]],RANGE.T[0],RANGE.T[1])){
           if(sM>=aM && aM>=tM && (sM-aM)<=12 && (aM-tM)<=12){
@@ -1078,12 +1044,10 @@ function placeUpper(pcset){
       }
     }
   }
-  // dedupe
   const seen=new Set(), out=[];
   for(const c of cand){ const k=c.join(','); if(!seen.has(k)){seen.add(k); out.push(c);} }
   return out;
 }
-
 function chordCandidates(chord, key){
   const out=[];
   const bassMidis = midisInRange(chord.bassPc, RANGE.B[0], RANGE.B[1]);
@@ -1091,20 +1055,14 @@ function chordCandidates(chord, key){
   for(const bM of bassMidis){
     for(const set of sets){
       for(const [sM,aM,tM] of placeUpper(set)){
-        if(tM>=bM){ // tenor por encima del bajo
-          out.push({S:sM,A:aM,T:tM,B:bM});
-        }
+        if(tM>=bM){ out.push({S:sM,A:aM,T:tM,B:bM}); }
       }
     }
   }
   return out;
 }
-
-// ---------- reglas de conducción entre dos acordes ----------
 const VN=['S','A','T','B'];
 function interval(a,b){ return Math.abs(a-b); }
-
-// ¿paralelas de 5ª/8ª por movimiento similar?
 function hasParallels(prev, cur){
   const p=[prev.S,prev.A,prev.T,prev.B], c=[cur.S,cur.A,cur.T,cur.B];
   for(let x=0;x<4;x++)for(let y=x+1;y<4;y++){
@@ -1115,37 +1073,29 @@ function hasParallels(prev, cur){
   }
   return false;
 }
-// 5ª/8ª directas (ocultas) en voces extremas con salto en soprano
 function hasHiddenOuter(prev, cur){
   const i2 = interval(cur.S,cur.B)%12;
   if(i2!==7 && i2!==0) return false;
   const dS=Math.sign(cur.S-prev.S), dB=Math.sign(cur.B-prev.B);
-  if(dS!==0 && dS===dB){ // movimiento similar hacia 5ª/8ª
-    if(Math.abs(cur.S-prev.S)>2) return true; // soprano por salto
+  if(dS!==0 && dS===dB){
+    if(Math.abs(cur.S-prev.S)>2) return true;
   }
   return false;
 }
-
-// resolución de sensible y de séptima; saltos melódicos; 2ª aumentada
 function transitionPenalty(prevChord, prev, curChord, cur, key, opts){
   let pen=0;
   if(hasParallels(prev,cur)) return Infinity;
-  if(hasHiddenOuter(prev,cur)) pen += 6;       // penalización fuerte, no prohibición total
-
+  if(hasHiddenOuter(prev,cur)) pen += 6;
   const pv=[prev.S,prev.A,prev.T,prev.B], cv=[cur.S,cur.A,cur.T,cur.B];
-
   for(let v=0; v<4; v++){
     const from=pv[v], to=cv[v], step=to-from, ad=Math.abs(step);
     const fromPc=((from%12)+12)%12;
-
-    // sensible del acorde dominante anterior
     if(prevChord.isLTchord && fromPc===key.ltPc){
       const goesTonic = (((to%12)+12)%12) === key.tonicPc && (step===1||step===-1? true : ad===1);
       if(curChord.isTonicTarget){
-        if(v===0){ // soprano: obligada a tónica por grado
+        if(v===0){
           if(!(((to%12)+12)%12===key.tonicPc && ad===1)) return Infinity;
         } else {
-          // voz interna: a tónica (subir) o a la 5ª (bajar) para completar
           const toPc=((to%12)+12)%12;
           const okUp = toPc===key.tonicPc && ad===1;
           const fifthPc=(key.tonicPc+7)%12;
@@ -1154,16 +1104,13 @@ function transitionPenalty(prevChord, prev, curChord, cur, key, opts){
         }
       }
     }
-    // séptima del acorde anterior DEBE bajar por grado (regla dura)
     if(prevChord.seventhPc!==null && fromPc===prevChord.seventhPc){
       if(!(step===-1||step===-2)) return Infinity;
     }
-    // 2ª aumentada melódica: sólo el salto b6<->#7 en menor (3 semitonos)
     if(ad===3 && key.mode==='minor'){
       const b6=(key.tonicPc+8)%12, lt=(key.tonicPc+11)%12, toPc=((to%12)+12)%12;
       if((fromPc===b6&&toPc===lt)||(fromPc===lt&&toPc===b6)) pen += 8;
     }
-    // saltos grandes en voces internas/agudas (el bajo puede saltar 8ª)
     if(v!==3){
       if(ad>8) return Infinity;
       if(ad>5) pen += (ad-5)*1.2;
@@ -1171,29 +1118,21 @@ function transitionPenalty(prevChord, prev, curChord, cur, key, opts){
       if(ad>12) return Infinity;
       if(ad>7 && ad!==12) pen += (ad-7)*0.8;
     }
-    // coste base de movimiento (interiores deben ser muy suaves)
     const w = (v===1||v===2)?1.4:1.0;
     pen += ad*w;
   }
-  // bono por notas comunes mantenidas (suavidad)
   return pen;
 }
-
 function firstChordPenalty(chord, v){
   let pen=0;
-  // centrar tesitura
   if(v.S>79||v.S<61) pen+=4;
   if(v.S>76) pen+=(v.S-76)*0.6;
   if(v.S<64) pen+=(64-v.S)*0.6;
-  // amplitud razonable entre extremos
   const spread=v.S-v.B;
   if(spread>34) pen+=(spread-34)*0.5;
   if(spread<16) pen+=(16-spread)*0.4;
-  // preferimos doblar fundamental: pequeño bono si el pc del bajo aparece arriba
   return pen;
 }
-
-// duplicación deseable (penalización por doblar 3ª; bono caso deceptiva)
 function doublingPenalty(chord, v, key){
   const pcs=[v.S,v.A,v.T,v.B].map(m=>((m%12)+12)%12);
   const count={}; pcs.forEach(p=>count[p]=(count[p]||0)+1);
@@ -1204,23 +1143,20 @@ function doublingPenalty(chord, v, key){
     if(count[p]>=2){
       const pc=+p;
       if(chord.dbl==='tonic'){
-        if(pc===key.tonicPc) pen-=3;           // deceptiva: doblar tónica (3ª de vi)
+        if(pc===key.tonicPc) pen-=3;
         else if(pc===thirdPc) pen+=2;
       } else {
-        if(pc===thirdPc) pen+=3;               // evitar doblar la 3ª
-        else if(pc===rootPc) pen-=1;           // preferir fundamental
+        if(pc===thirdPc) pen+=3;
+        else if(pc===rootPc) pen-=1;
       }
     }
   }
   return pen;
 }
-
-// ---------- beam search sobre toda la progresión ----------
 function realize(key, specs, finalConstraint, rng){
   const chords = specs.map(s=>buildChord(key,s));
   const BEAM = 16;
   let states=[];
-  // acorde 0
   const c0cands = chordCandidates(chords[0], key);
   for(const v of c0cands){
     const cost = firstChordPenalty(chords[0],v) + doublingPenalty(chords[0],v,key) + rng()*0.6;
@@ -1228,7 +1164,6 @@ function realize(key, specs, finalConstraint, rng){
   }
   states.sort((a,b)=>a.cost-b.cost);
   states=states.slice(0,BEAM);
-
   for(let i=1;i<chords.length;i++){
     const cands = chordCandidates(chords[i], key);
     const isFinal = (i===chords.length-1);
@@ -1244,15 +1179,13 @@ function realize(key, specs, finalConstraint, rng){
         next.push({voicings: st.voicings.concat([v]), cost});
       }
     }
-    if(next.length===0) return null;       // sin solución -> reintentar fuera
+    if(next.length===0) return null;
     next.sort((a,b)=>a.cost-b.cost);
     states = next.slice(0,BEAM);
   }
   const best = states[0];
   return {chords, voicings: best.voicings, cost: best.cost};
 }
-
-// ---------- restricciones de soprano final por tipo ----------
 function sopIs(role){ return (chord,v,key)=>{
   const t=chord.tones.find(x=>x.role===role); return t && ((v.S%12)+12)%12===t.pc;
 };}
@@ -1268,11 +1201,7 @@ function sopThirdOrFifth(){ return (chord,v,key)=>{
   const th=chord.tones.find(x=>x.role==='3'), f=chord.tones.find(x=>x.role==='5');
   const pc=((v.S%12)+12)%12; return pc===th.pc||pc===f.pc;
 };}
-
-// ---------- plantillas ----------
-// c(deg,{seventh,bass,dom,dbl})
 function c(deg,o={}){ return Object.assign({deg},o); }
-
 const TEMPLATES = {
   autentica_perfecta: {
     label:'Auténtica perfecta', modes:['major','minor'],
@@ -1288,10 +1217,9 @@ const TEMPLATES = {
     label:'Auténtica imperfecta', modes:['major','minor'],
     finalSoprano: null,
     seqs:[
-      // siempre con algún acorde en inversión (criterio claro perfecta/imperfecta)
-      {s:[c(0),c(0,{bass:'3'}),c(3),c(1,{bass:'3'}),c(4),c(4,{seventh:true}),c(0,{bass:'3'})], fin:null}, // V7 -> I6
-      {s:[c(0),c(5),c(3),c(1,{bass:'3'}),c(4),c(4,{bass:'3'}),c(0)], fin:null},                            // V6 -> I
-      {s:[c(0),c(0,{bass:'3'}),c(3),c(1,{bass:'3'}),c(0,{bass:'5'}),c(4,{seventh:true}),c(0,{bass:'3'})], fin:null}, // 6/4 -> V7 -> I6
+      {s:[c(0),c(0,{bass:'3'}),c(3),c(1,{bass:'3'}),c(4),c(4,{seventh:true}),c(0,{bass:'3'})], fin:null},
+      {s:[c(0),c(5),c(3),c(1,{bass:'3'}),c(4),c(4,{bass:'3'}),c(0)], fin:null},
+      {s:[c(0),c(0,{bass:'3'}),c(3),c(1,{bass:'3'}),c(0,{bass:'5'}),c(4,{seventh:true}),c(0,{bass:'3'})], fin:null},
     ]
   },
   plagal_perfecta: {
@@ -1306,8 +1234,8 @@ const TEMPLATES = {
     label:'Plagal imperfecta', modes:['major','minor'],
     finalSoprano: null,
     seqs:[
-      {s:[c(0),c(4,{bass:'3'}),c(0),c(4,{seventh:true}),c(0),c(3),c(0,{bass:'3'})], fin:null}, // IV -> I6
-      {s:[c(0),c(0,{bass:'3'}),c(4,{seventh:true}),c(0),c(5),c(3),c(0,{bass:'3'})], fin:null}, // IV -> I6
+      {s:[c(0),c(4,{bass:'3'}),c(0),c(4,{seventh:true}),c(0),c(3),c(0,{bass:'3'})], fin:null},
+      {s:[c(0),c(0,{bass:'3'}),c(4,{seventh:true}),c(0),c(5),c(3),c(0,{bass:'3'})], fin:null},
     ]
   },
   semicadencia: {
@@ -1318,7 +1246,7 @@ const TEMPLATES = {
       [c(0),c(4,{bass:'3'}),c(0,{bass:'3'}),c(3),c(1,{bass:'3'}),c(3),c(4)],
       [c(0),c(5),c(3),c(1,{bass:'3'}),c(0,{bass:'3'}),c(1,{bass:'3'}),c(4)],
     ],
-    seqsMinor:[ // incluye semicadencia frigia (iv6 -> V)
+    seqsMinor:[
       [c(0),c(0,{bass:'3'}),c(3),c(1,{bass:'3'}),c(0,{bass:'3'}),c(3,{bass:'3'}),c(4)],
       [c(0),c(5),c(3),c(1,{bass:'3'}),c(0,{bass:'3'}),c(3,{bass:'3'}),c(4)],
       [c(0),c(0,{bass:'3'}),c(3),c(1,{bass:'3'}),c(0),c(3),c(4)],
@@ -1333,11 +1261,6 @@ const TEMPLATES = {
     ]
   },
 };
-
-// ---------- ornamentación: notas de paso / bordaduras / retardos / apoyaturas ----------
-// Produce 4 flujos de voz (con negras y notas no acordales) a partir del esqueleto
-// de acordes ya realizado. Seguro por construcción: a lo sumo UN movimiento por beat,
-// y NUNCA toca los dos últimos acordes (cadencia clara).
 function octFor(letter, acc, midi){
   const pcSpelled = LETTER_PC[letter] + acc;
   return Math.round((midi - pcSpelled)/12) - 1;
@@ -1353,38 +1276,31 @@ function embellish(voicings, chords, key, rng){
     const letter = t?t.letter:0, acc=t?t.acc:0;
     return {midi, letter, acc, octave:octFor(letter,acc,midi), role:'main'};
   }
-  // grupos: groups[v][slot] = [notas]
   const groups={};
   VOICES.forEach(v=>{ groups[v]=[]; for(let i=0;i<N;i++){ const n=spellMain(voicings[i][v],chords[i]); n.q=slotQ[i]; n.slot=i; groups[v].push([n]); } });
-
   function midiBetween(letter,acc,a,b){ const pc=(LETTER_PC[letter]+acc+24)%12; const lo=Math.min(a,b),hi=Math.max(a,b);
     for(let m=lo+1;m<hi;m++) if((((m%12)+12)%12)===pc) return m; return null; }
   function stepNote(letter,acc,base,below){ const pc=(LETTER_PC[letter]+acc+24)%12;
     if(below){ for(let m=base-1;m>=base-3;m--) if(((m%12)+12)%12===pc) return m; }
     else { for(let m=base+1;m<=base+3;m++) if(((m%12)+12)%12===pc) return m; } return null; }
-
-  // recolectar candidatos
   const cand=[];
   VOICES.forEach(v=>{
-    const maxSlot = v==='B'?4:3;           // graves: hasta entrar en la dominante; agudas: cc 1-2
+    const maxSlot = v==='B'?4:3;
     for(let i=0;i<=maxSlot;i++){
       const a=groups[v][i][0], b=groups[v][i+1][0];
       const ld=((b.letter-a.letter)%7+7)%7;
-      // nota de paso (3ª melódica)
       if(ld===2||ld===5){
         const dir=ld===2?1:-1, mid=((a.letter+dir)%7+7)%7, macc=scaleAcc(mid);
         const pm=midiBetween(mid,macc,a.midi,b.midi);
         if(pm!==null && Math.abs(pm-a.midi)<=2 && Math.abs(pm-b.midi)<=2 && Math.abs(pm-a.midi)>=1)
           cand.push({type:'pt',v,slot:i,note:{midi:pm,letter:mid,acc:macc,octave:octFor(mid,macc,pm),q:1,slot:i,role:'pt'}});
       }
-      // bordadura (nota común)
       if(a.midi===b.midi && v!=='B'){
         const nl=((a.letter-1)%7+7)%7, nacc=scaleAcc(nl), nm=stepNote(nl,nacc,a.midi,true);
         if(nm!==null && Math.abs(nm-a.midi)<=2)
           cand.push({type:'nbr',v,slot:i,note:{midi:nm,letter:nl,acc:nacc,octave:octFor(nl,nacc,nm),q:1,slot:i,role:'nbr'}});
       }
     }
-    // retardo (voces agudas), resuelve en slots 1..3
     if(v!=='B') for(let j=1;j<=3;j++){
       const a=groups[v][j-1][0], b=groups[v][j][0], step=a.midi-b.midi;
       if((step===1||step===2)){
@@ -1393,13 +1309,11 @@ function embellish(voicings, chords, key, rng){
           prep:{midi:a.midi,letter:a.letter,acc:a.acc}});
       }
     }
-    // apoyatura (voces agudas), slots 1..3, abordada por salto
     if(v!=='B') for(let i=1;i<=3;i++){
       const prev=groups[v][i-1][0], cur=groups[v][i][0];
       const al=((cur.letter+1)%7), aacc=scaleAcc(al), am=stepNote(al,aacc,cur.midi,false);
       if(am!==null && Math.abs(am-cur.midi)<=2 && Math.abs(prev.midi-am)>=3){
         const pcApp=((am%12)+12)%12, isCT=chords[i].tones.some(x=>x.pc===pcApp);
-        // sin paralela de 5ª/8ª en beat A entre la apoyatura y las demás voces (vs acorde i-1)
         let ok=!isCT;
         if(ok){ const others=VOICES.filter(x=>x!==v);
           for(const ov of others){ const p1=voicings[i-1][v],p2=voicings[i-1][ov],c1=am,c2=voicings[i][ov];
@@ -1409,18 +1323,13 @@ function embellish(voicings, chords, key, rng){
       }
     }
   });
-
-  // rejilla base de 16 negras por voz (a partir del esqueleto)
   const grid={}; VOICES.forEach(v=>{ grid[v]=[]; for(let i=0;i<N;i++){ for(let k=0;k<slotQ[i];k++) grid[v].push(voicings[i][v]); } });
   function gridOK(changes){
-    const g={}; VOICES.forEach(v=>g[v]=grid[v]); // referencia; aplicamos en copia local sólo de los q tocados
     const orig={};
     changes.forEach(ch=>{ orig[ch.v+':'+ch.q]=grid[ch.v][ch.q]; grid[ch.v][ch.q]=ch.midi; });
     let ok=true;
     const qset=new Set(); changes.forEach(ch=>qset.add(ch.q));
-    // cruces en las negras modificadas
     for(const q of qset){ const s=grid.S[q],a=grid.A[q],t=grid.T[q],b=grid.B[q]; if(!(s>=a&&a>=t&&t>=b)){ok=false;break;} }
-    // paralelas 5ª/8ª en las transiciones afectadas
     if(ok){ const tr=new Set(); changes.forEach(ch=>{ if(ch.q>0)tr.add(ch.q); if(ch.q<15)tr.add(ch.q+1); });
       for(const q of tr){ if(q<1||q>15) continue;
         for(let x=0;x<4&&ok;x++)for(let y=x+1;y<4;y++){
@@ -1430,16 +1339,13 @@ function embellish(voicings, chords, key, rng){
         }
       }
     }
-    // revertir (lo comiteamos fuera si ok)
     changes.forEach(ch=>{ grid[ch.v][ch.q]=orig[ch.v+':'+ch.q]; });
     return ok;
   }
   function commit(changes){ changes.forEach(ch=>{ grid[ch.v][ch.q]=ch.midi; }); }
-
-  // barajar y aplicar validando contra la rejilla
   for(let k=cand.length-1;k>0;k--){ const j=Math.floor(rng()*(k+1)); [cand[k],cand[j]]=[cand[j],cand[k]]; }
   const vslot={}; const used=(v,s)=>vslot[v+':'+s]; const mark=(v,s)=>{vslot[v+':'+s]=true;};
-  const target = 2 + Math.floor(rng()*3);   // 2..4 ornamentos
+  const target = 2 + Math.floor(rng()*3);
   let applied=0;
   for(const e of cand){
     if(applied>=target) break;
@@ -1466,65 +1372,46 @@ function embellish(voicings, chords, key, rng){
       const main=groups[e.v][e.slot][0]; main.q=1; groups[e.v][e.slot]=[e.note,main]; applied++;
     }
   }
-  // aplanar
   const streams={};
   VOICES.forEach(v=>{ streams[v]=[]; groups[v].forEach(g=>g.forEach(n=>streams[v].push(n))); });
   return {streams};
 }
-
-
 function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
-
 function generate(opts={}){
   const seed = opts.seed!==undefined ? opts.seed : (Math.random()*1e9)|0;
   const rng = mulberry32(seed);
-
   const types = Object.keys(TEMPLATES);
   const type = (opts.type && opts.type!=='random') ? opts.type : types[Math.floor(rng()*types.length)];
   const T = TEMPLATES[type];
-
-  // modo
   const mode = opts.mode || T.modes[Math.floor(rng()*T.modes.length)];
-  // tonalidad
   const keyNames = Object.keys(KEYSIG[mode]);
   const keyName = opts.key || keyNames[Math.floor(rng()*keyNames.length)];
   const key = buildKey(keyName, mode);
-
-  // secuencia
   let seqs = (mode==='minor' && T.seqsMinor) ? T.seqsMinor : T.seqs;
   const pick = seqs[Math.floor(rng()*seqs.length)];
   const specs = Array.isArray(pick) ? pick : pick.s;
   const finalConstraint = Array.isArray(pick) ? T.finalSoprano : (pick.fin || T.finalSoprano);
-
-  // realización (varios intentos por aleatoriedad del beam)
   let real=null;
   for(let attempt=0; attempt<6 && !real; attempt++){
     real = realize(key, specs, finalConstraint, mulberry32(seed+attempt*7919+1));
   }
-  if(!real){ // último recurso: sin restricción de soprano final
-    real = realize(key, specs, null, mulberry32(seed+1));
-  }
+  if(!real){ real = realize(key, specs, null, mulberry32(seed+1)); }
   if(!real) throw new Error('No se pudo realizar la cadencia '+type+' en '+keyName+' '+mode);
-
-  // duraciones: 6 blancas + redonda
   const qs=[2,2,2,2,2,2,4];
   const events = real.voicings.map((v,i)=>({
     midi:[v.S,v.A,v.T,v.B],
     q: qs[i],
     rn: real.chords[i].roman,
-    cadence: (i>=qs.length-2),     // los dos últimos acordes (protagonistas)
+    cadence: (i>=qs.length-2),
     spell: spellEvent(real.chords[i], v),
     chordPcs: real.chords[i].tones.map(t=>t.pc),
     bassPc: real.chords[i].bassPc,
     deg: real.chords[i].deg,
     inv: real.chords[i].inv
   }));
-
-  // ornamentación a 4 voces (movimiento) + info de cifrado por slot
   const emb = embellish(real.voicings, real.chords, key, rng);
   const cadStart = qs.length-2;
   const harm = real.chords.map((ch,i)=>({slot:i, rn:ch.roman, cadence:(i>=cadStart)}));
-
   return {
     type, label:T.label, mode, keyName, key,
     vexKey:key.vexKey,
@@ -1532,8 +1419,6 @@ function generate(opts={}){
     tempo:85, seed
   };
 }
-
-// deletreo nota-a-nota para VexFlow (letra+acc correctos por función)
 function spellEvent(chord, v){
   const byPc={};
   chord.tones.forEach(t=>byPc[t.pc]=t);
@@ -1541,36 +1426,26 @@ function spellEvent(chord, v){
     const pc=((m%12)+12)%12, oct=Math.floor(m/12)-1;
     const t=byPc[pc];
     if(t) return {letter:LETTER_NAME[t.letter], acc:t.acc, octave: octForLetter(t, oct, pc), midi:m};
-    // fallback (no debería ocurrir)
     return {letter:'C', acc:0, octave:oct, midi:m};
   });
 }
-// la octava VexFlow va por la letra; ajustamos si acc cruza de octava (Cb/B#)
 function octForLetter(tone, octFromPc, pc){
-  // octFromPc se calculó con pc; el nombre por letra normalmente coincide salvo Cb/B#
   const letterNaturalPc = LETTER_PC[tone.letter];
-  // pc real = letterNaturalPc+acc ; si cruza el límite C, ajustar
   let oct = octFromPc;
-  if(tone.acc===1 && letterNaturalPc===11) oct = octFromPc-1; // B# suena como C
-  if(tone.acc===-1 && letterNaturalPc===0) oct = octFromPc+1; // Cb suena como B
+  if(tone.acc===1 && letterNaturalPc===11) oct = octFromPc-1;
+  if(tone.acc===-1 && letterNaturalPc===0) oct = octFromPc+1;
   return oct;
 }
-
-
 return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
 })();
 </script>
 <script>
 /* =====================================================================
    CADENCIAS · módulo integrado en TEORÍA at home PRO
-   4 voces independientes (S/A · T/B), movimiento de voces, audio piano,
-   flujo: teoría -> (pista auditiva opcional con respuesta previa) -> corregir.
-   Encapsulado (IIFE). Depende de window.CadenceEngine y Vex.Flow.
    ===================================================================== */
 (function(){
   const VF = Vex.Flow;
   const ENG = window.CadenceEngine;
-
   const TYPE_LABELS = {
     autentica_perfecta:'Auténtica perfecta',
     autentica_imperfecta:'Auténtica imperfecta (con inversión)',
@@ -1589,16 +1464,11 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
   };
   const TYPE_ORDER = ['autentica_perfecta','autentica_imperfecta','plagal_perfecta','plagal_imperfecta','semicadencia','rota'];
   const LETTER_PC=[0,2,4,5,7,9,11];
-
   let current=null, provisional=null, corrected=false, usedHint=false, inited=false;
-  let answerOK=false;                 // ¿acertó el alumno? -> color verde/rojo de las notas
-  let isPlaying=false, playSession=0, awaitingListen=false;   // play/stop + "marca antes tu respuesta" integrado
-
-  /* nombres de tonalidad en castellano (solfeo) en vez de cifrado americano */
+  let answerOK=false;
+  let isPlaying=false, playSession=0, awaitingListen=false;
   const KEY_SOLFEGE={'C':'Do','G':'Sol','D':'Re','A':'La','F':'Fa','Bb':'Si\u266d','Eb':'Mi\u266d','E':'Mi','B':'Si','F#':'Fa\u266f'};
   function keySolf(keyName, mode){ return (KEY_SOLFEGE[keyName]||keyName)+' '+(mode==='major'?'mayor':'menor'); }
-
-  /* timbres disponibles (muestras realistas + síntesis de respaldo) */
   const INSTRUMENTS=[
     {id:'piano',   label:'Piano',           sf:'acoustic_grand_piano', syn:'piano'},
     {id:'epiano',  label:'Piano eléctrico', sf:'electric_piano_1',     syn:'epiano'},
@@ -1607,23 +1477,16 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     {id:'cuerdas', label:'Cuerdas',         sf:'string_ensemble_1',    syn:'cuerdas'},
   ];
   let currentInst='piano';
-
-  /* ---------- spelling -> VexFlow ---------- */
   const _LN=['C','D','E','F','G','A','B'];
   function accSym(a){ return a===1?'#':a===-1?'b':a===2?'##':a===-2?'bb':'n'; }
   function vexKeyOf(n){ return _LN[n.letter].toLowerCase()+(n.acc===0?'':accSym(n.acc))+'/'+n.octave; }
   function sigAcc(key,letter){ return key.accForLetter[_LN[letter]]||0; }
-
-  /* ---------- agrupar streams por compás ---------- */
   function byMeasure(stream){
-    // slots 0,1->c1 ; 2,3->c2 ; 4,5->c3 ; 6->c4
     const m=[[],[],[],[]];
     stream.forEach(n=>{ const c = n.slot<=1?0 : n.slot<=3?1 : n.slot<=5?2 : 3; m[c].push(n); });
     return m;
   }
   function durOf(q){ return q===4?'w':q===2?'h':q===1?'q':'8'; }
-
-  /* ---------- render a 4 voces ---------- */
   function renderScore(){
     const host=document.getElementById('cadScore'); if(!host) return;
     host.innerHTML='';
@@ -1633,7 +1496,6 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     const W=Math.max(680, Math.min(cw-22, 1180)), H=250;
     const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
     const ctx=r.getContext(); ctx.setFont('Helvetica',10);
-
     const mS=byMeasure(gen.streams.S), mA=byMeasure(gen.streams.A),
           mT=byMeasure(gen.streams.T), mB=byMeasure(gen.streams.B);
     const maxNotes=[0,1,2,3].map(i=>Math.max(mS[i].length,mA[i].length,mT[i].length,mB[i].length));
@@ -1643,23 +1505,19 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     const avail=usable-firstExtra;
     const barW=weights.map(w=> (w/sumW)*avail );
     barW[0]+=firstExtra;
-
     let x=leftPad; const trebles=[],basses=[];
     for(let b=0;b<4;b++){
       const top=new VF.Stave(x,14,barW[b]), bot=new VF.Stave(x,116,barW[b]);
       if(b===0){ top.addClef('treble').addKeySignature(gen.vexKey).addTimeSignature('4/4');
         bot.addClef('bass').addKeySignature(gen.vexKey).addTimeSignature('4/4'); }
-      if(b===3){ top.setEndBarType(VF.Barline.type.END); bot.setEndBarType(VF.Barline.type.END); } // doble barra final
+      if(b===3){ top.setEndBarType(VF.Barline.type.END); bot.setEndBarType(VF.Barline.type.END); }
       top.setContext(ctx).draw(); bot.setContext(ctx).draw();
       if(b===0){ new VF.StaveConnector(top,bot).setType(VF.StaveConnector.type.BRACE).setContext(ctx).draw();
         new VF.StaveConnector(top,bot).setType(VF.StaveConnector.type.SINGLE_LEFT).setContext(ctx).draw(); }
       trebles.push(top); basses.push(bot); x+=barW[b];
     }
-
     const HL = answerOK ? {fillStyle:'#1e9e57',strokeStyle:'#1e9e57'} : {fillStyle:'#d23b45',strokeStyle:'#d23b45'};
-    const tieList=[]; // {voiceArr, i} pares por ligadura
     function buildVoiceNotes(measureArr, stemDir, clef, isBass){
-      // devuelve por compás un array de {sn, src}
       return measureArr.map(notes=>{
         return notes.map(n=>{
           const sn=new VF.StaveNote({clef, keys:[vexKeyOf(n)], duration:durOf(n.q), stem_direction:stemDir});
@@ -1671,11 +1529,8 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     }
     const vnS=buildVoiceNotes(mS,1,'treble',false), vnA=buildVoiceNotes(mA,-1,'treble',false);
     const vnT=buildVoiceNotes(mT,1,'bass',true),   vnB=buildVoiceNotes(mB,-1,'bass',true);
-
-    // cifrado de grados bajo el bajo (sólo tras corregir), en la nota 'main' de cada slot
     if(corrected){
       gen.harm.forEach(h=>{
-        // localizar la nota main del bajo en ese slot
         for(const mc of vnB){ for(const o of mc){ if(o.src.slot===h.slot && o.src.role==='main'){
           o.sn.addModifier(new VF.Annotation(h.rn)
             .setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM)
@@ -1683,7 +1538,6 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
           return; } } }
       });
     }
-
     for(let b=0;b<4;b++){
       const vs=new VF.Voice({num_beats:4,beat_value:4}).setMode(VF.Voice.Mode.SOFT);
       const va=new VF.Voice({num_beats:4,beat_value:4}).setMode(VF.Voice.Mode.SOFT);
@@ -1697,8 +1551,6 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
       vs.draw(ctx,trebles[b]); va.draw(ctx,trebles[b]);
       vt.draw(ctx,basses[b]);  vb.draw(ctx,basses[b]);
     }
-
-    // ligaduras (retardos): unir nota con tieStart a la siguiente de la MISMA voz
     [[vnS,1],[vnA,-1],[vnT,1],[vnB,-1]].forEach(function(pair){ const vn=pair[0],dir=pair[1];
       const flat=[]; vn.forEach(mc=>mc.forEach(o=>flat.push(o)));
       for(let i=0;i<flat.length-1;i++){
@@ -1708,8 +1560,6 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
       }
     });
   }
-
-  /* ---------- audio: 5 timbres (muestras realistas + síntesis de respaldo) ---------- */
   let actx=null, master=null, comp=null, playToken=0, sfCache={}, activeNodes=[];
   function midiFreq(m){ return 440*Math.pow(2,(m-69)/12); }
   function initAudio(){
@@ -1732,7 +1582,6 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     }catch(e){ sfCache[inst.id]=null; return null; }
   }
   function preloadInst(id){ const it=INSTRUMENTS.find(i=>i.id===id); if(it){ initAudio(); if(actx.state==='suspended') actx.resume(); loadSF(it); } }
-
   function env(g,t,dur,a,d,sLvl,r,peak){
     const tiny=0.0006;
     g.gain.setValueAtTime(tiny,t);
@@ -1822,26 +1671,12 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     const total=gen.events.reduce((s,e)=>s+e.q,0)*(60/gen.tempo);
     return {total};
   }
-
-  /* ---------- ventana CENTRADA (solo para mantener/cambiar: ahí sí puede tapar y evita scroll) ---------- */
   function openModal(title, contentNode){
     document.getElementById('cadModalTitle').textContent=title;
     const body=document.getElementById('cadModalBody'); body.innerHTML=''; body.appendChild(contentNode);
     document.getElementById('cadModal').style.display='flex';
   }
   function closeModal(){ const m=document.getElementById('cadModal'); if(m) m.style.display='none'; }
-  function optionGrid(onPick){
-    const g=document.createElement('div'); g.className='cad-modal-grid';
-    TYPE_ORDER.forEach(t=>{
-      const b=document.createElement('button'); b.className='tipo-btn';
-      b.innerHTML='<span>'+TYPE_LABELS[t]+'</span><span class="ab">'+TYPE_AB[t]+'</span>';
-      if(provisional===t) b.classList.add('sel');
-      b.addEventListener('click',()=>onPick(t)); g.appendChild(b);
-    });
-    return g;
-  }
-
-  /* ---------- quiz ---------- */
   function setMsg(txt,flash){ const m=document.getElementById('cadMsg'); if(!m) return; if(!txt){ m.classList.remove('show'); m.innerHTML=''; return; } m.innerHTML=''; const s=document.createElement('span'); s.textContent=txt; m.appendChild(s); m.classList.add('show'); if(flash){ m.classList.remove('flash'); void m.offsetWidth; m.classList.add('flash'); } }
   function keepMsg(){ const m=document.getElementById('cadMsg'); m.innerHTML='';
     const s=document.createElement('span'); s.textContent='\u00bfMantienes tu respuesta o la cambias?';
@@ -1889,18 +1724,16 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     document.getElementById('cadKey').style.visibility='visible';
     document.getElementById('cadListenBtn').disabled=true;
     const cb=document.getElementById('cadCorregir'); cb.disabled=true; cb.classList.add('done');
-    setTimeout(()=>{                                     // parpadeo de expectación y LUEGO color definitivo
+    setTimeout(()=>{
       if(chosen) chosen.classList.remove('cad-pending');
       document.querySelectorAll('#cadAnswers .tipo-btn').forEach(b=>{ if(b.dataset.t===correct) b.classList.add(provisional===correct?'sel-ok-green':'sol-ok'); else if(b.dataset.t===provisional) b.classList.add('sel-bad'); });
-      renderScore();                                     // colorea las notas (sin parpadeo de partitura)
+      renderScore();
       const ev=current.events, formula=ev[ev.length-2].rn+' \u2192 '+ev[ev.length-1].rn;
       const r=document.getElementById('cadResult');
       if(answerOK){ r.className='cad-result good'; r.innerHTML='\u2713 Correcto \u00b7 <b>'+TYPE_LABELS[correct]+'</b> \u00b7 '+formula; }
       else { r.className='cad-result bad'; r.innerHTML='\u2717 Era <b>'+TYPE_LABELS[correct]+'</b> \u00b7 '+formula+' &nbsp;\u00b7&nbsp; tu respuesta: '+TYPE_LABELS[provisional]; }
     }, 1400);
   }
-
-  // ---- pista auditiva: letrero reactivo + botón play/STOP ----
   function promptAnswerInline(){
     awaitingListen=true;
     setMsg('Antes de escuchar, marca tu respuesta provisional', true);
@@ -1924,7 +1757,6 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     const btn=document.getElementById('cadListenBtn'); if(btn) btn.classList.remove('playing');
     setMsg('');
   }
-
   function buildSound(){
     const host=document.getElementById('cadSound'); if(!host) return;
     INSTRUMENTS.forEach(it=>{
@@ -1947,7 +1779,6 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
     }
   };
 })();
-
 </script>
 </body>
 </html>
