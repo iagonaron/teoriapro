@@ -78,6 +78,9 @@
   .mode-card:hover{transform:translateY(-4px);border-color:var(--gold2);box-shadow:0 18px 46px rgba(80,60,10,.45)}
   .mode-card:focus-visible{outline:2px solid var(--gold2);outline-offset:3px}
   .mode-card h2{font-size:21px;margin:0;font-weight:800;letter-spacing:.04em;color:var(--ink);text-transform:uppercase}
+  .mode-card .card-sub{position:absolute;left:0;right:0;bottom:9px;display:block;font-size:8px;font-weight:300;letter-spacing:.2em;
+    white-space:nowrap;text-align:center;text-transform:uppercase;color:var(--muted2);opacity:.32;transition:opacity .2s ease,color .2s ease}
+  .mode-card:hover .card-sub{opacity:.92;color:var(--gold-soft)}
   /* sello PRO dorado dentro del pad */
   .mode-card h2 .pro-seal{font-size:.62em;font-weight:900;letter-spacing:.1em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:3px 8px;border-radius:6px;vertical-align:middle;margin-left:7px;text-transform:uppercase}
   /* pads de repaso: distintivo dorado */
@@ -171,6 +174,150 @@
   .acc-btn.on{border-color:var(--gold1);background:rgba(212,175,55,.18);color:var(--gold-soft)}
 
   .locked .answers, .locked .score{pointer-events:none}
+
+  /* ===== Intervalos PRO: ruedas iOS + respuestas ===== */
+  #view-intervalos .iv-sub{font-size:14px;color:var(--muted);margin:2px 0 16px}
+  #view-intervalos .answers{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  @media(max-width:720px){#view-intervalos .answers{grid-template-columns:repeat(2,1fr)}}
+  #view-intervalos .ans-cell{display:flex;flex-direction:column;align-items:center;gap:6px}
+  .dualsel{display:flex;gap:8px;justify-content:center}
+  .wheel{position:relative;width:64px;height:96px;border:1px solid var(--line);border-radius:12px;
+    background:linear-gradient(180deg,#241a08,#160f04);overflow:hidden;touch-action:none;
+    box-shadow:inset 0 1px 0 rgba(233,201,106,.08)}
+  .wheel .wlist{position:absolute;left:0;right:0;top:0;will-change:transform}
+  .wheel .witem{height:32px;line-height:32px;text-align:center;font-size:16px;font-weight:800;
+    color:var(--muted2);user-select:none}
+  .wheel .witem.sel{color:var(--gold-soft)}
+  .wheel::before,.wheel::after{content:"";position:absolute;left:0;right:0;height:32px;pointer-events:none;z-index:2}
+  .wheel::before{top:0;background:linear-gradient(180deg,#160f04,rgba(22,15,4,0))}
+  .wheel::after{bottom:0;background:linear-gradient(0deg,#160f04,rgba(22,15,4,0))}
+  .wheel .wband{position:absolute;left:0;right:0;top:32px;height:32px;
+    border-top:1px solid rgba(212,175,55,.4);border-bottom:1px solid rgba(212,175,55,.4);
+    background:rgba(212,175,55,.07);pointer-events:none;z-index:1}
+  /* tarjeta B: botones de alteración bajo cada celda */
+  #view-intervalos .accrow{display:flex;gap:6px;justify-content:center;margin-top:2px}
+  #view-intervalos .acc-btn{width:34px;height:34px;font-size:16px;display:flex;align-items:center;justify-content:center;
+    border:1px solid var(--line);border-radius:8px;background:rgba(233,201,106,.04);color:var(--muted);cursor:pointer;transition:.15s}
+  #view-intervalos .acc-btn:hover{border-color:var(--gold2);color:var(--ink)}
+  #view-intervalos .acc-btn.acc-x{font-weight:500;font-size:17px;font-style:italic}
+  #view-intervalos .hint{font-size:12.5px;color:var(--muted2);line-height:1.5}
+  #view-intervalos .score{min-height:120px}
+  #view-intervalos .score svg{max-width:100%;height:auto}
+
+  /* ===== Escalas PRO ===== */
+  #view-escalas .gr-row,#view-modos .gr-row{display:flex;gap:14px;align-items:center}
+  @media(max-width:720px){#view-escalas .gr-row,#view-modos .gr-row{flex-direction:column;align-items:stretch}}
+  #view-escalas .gr-ans,#view-modos .gr-ans{flex:0 0 230px;border:1px solid var(--line);border-radius:12px;padding:12px 10px;
+    background:rgba(233,201,106,.02)}
+  #view-escalas .gr-ans.ok,#view-modos .gr-ans.ok{border-color:var(--green);background:var(--green-soft)}
+  #view-escalas .gr-ans.bad,#view-modos .gr-ans.bad{border-color:var(--red);background:var(--red-soft)}
+  #view-escalas .gr-ans .sol,#view-modos .gr-ans .sol{font-size:12px;color:var(--muted);text-align:center}
+  #view-escalas .gr-preg,#view-modos .gr-preg{font-size:16px;font-weight:900;color:var(--gold-soft);text-align:center;margin-bottom:4px}
+  #view-escalas .gr-score,#view-modos .gr-score{flex:1 1 auto;min-width:0;background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:0 10px;overflow:hidden}
+  #view-escalas .gr-score svg,#view-modos .gr-score svg{max-width:100%;height:auto}
+  #view-escalas .hint,#view-modos .hint{font-size:12.5px;color:var(--muted2);line-height:1.5}
+  .esc-acc,.esc-var-acc{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:30px;
+    font-size:16px;border:1px solid var(--line);border-radius:8px;background:rgba(233,201,106,.04);
+    color:var(--muted);cursor:pointer;transition:.15s}
+  .esc-acc:hover,.esc-var-acc:hover{border-color:var(--gold2);color:var(--ink)}
+  .esc-acc.on,.esc-var-acc.on{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
+  @keyframes escBlink{0%,100%{opacity:1}50%{opacity:.45}}
+  .esc-blink{animation:escBlink 1.4s ease-in-out infinite}
+  @keyframes accTintin{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+  .acc-tintin{animation:accTintin 1.4s ease-in-out infinite;border-color:var(--gold1)!important;color:var(--gold-soft)}
+
+  /* ===== Tonalidades PRO ===== */
+  #view-tonalidades .score{min-height:120px;background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:0 12px;overflow:hidden;display:flex;align-items:center}
+  #view-tonalidades .score svg{max-width:100%;height:auto}
+  #view-tonalidades .ans-cell{display:flex;flex-direction:column;align-items:center;border:1px solid var(--line);border-radius:12px;background:rgba(233,201,106,.02);padding:10px 8px}
+  #view-tonalidades .ans-cell.ok{border-color:var(--green);background:var(--green-soft)}
+  #view-tonalidades .ans-cell.bad{border-color:var(--red);background:var(--red-soft)}
+  #view-tonalidades .ta-acc{display:inline-flex;align-items:center;justify-content:center;min-width:30px;height:28px;font-size:14px;border:1px solid var(--line);border-radius:7px;background:rgba(233,201,106,.04);color:var(--muted);cursor:pointer;transition:.15s}
+  #view-tonalidades .ta-acc:hover{border-color:var(--gold2);color:var(--ink)}
+  #view-tonalidades .ta-acc.on{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
+  #view-tonalidades .hint{font-size:12.5px;color:var(--muted2);line-height:1.5}
+  .vecinos-grid{display:grid;grid-template-columns:repeat(3,1fr);grid-template-rows:repeat(2,1fr);gap:10px;max-width:520px;margin:0 auto}
+  .vcell{border:1px solid var(--line);border-radius:12px;background:rgba(233,201,106,.03);min-height:54px;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:800;color:var(--ink);cursor:pointer;transition:.15s;text-align:center}
+  .vcell:hover{border-color:var(--gold2)}
+  .vcell.given{background:linear-gradient(135deg,rgba(212,175,55,.22),rgba(184,134,11,.12));border-color:var(--gold1);color:var(--gold-soft);cursor:default}
+  .vcell.ok{border-color:var(--green);background:var(--green-soft)}
+  .vcell.bad{border-color:var(--red);background:var(--red-soft)}
+  .vcell .empty{font-size:22px;color:var(--muted2)}
+  .tonpop{background:linear-gradient(150deg,#2a2009 0%,#1a1305 60%,#120c03 100%);border:1px solid var(--gold2);border-radius:14px;padding:14px;box-shadow:0 18px 50px rgba(0,0,0,.6);display:flex;flex-direction:column;gap:10px;align-items:center;width:200px}
+  .tonpop .wheel{height:90px;width:64px}
+  .tonpop .row{display:flex;gap:6px;align-items:center;justify-content:center}
+  .tonpop .pbtn{min-width:32px;height:32px;font-size:15px;border:1px solid var(--line);border-radius:7px;background:rgba(233,201,106,.05);color:var(--muted);cursor:pointer;transition:.15s}
+  .tonpop .pbtn:hover{border-color:var(--gold2);color:var(--ink)}
+  .tonpop .pbtn.on{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
+  .tonpop .ok-btn{width:100%;padding:9px;border:none;border-radius:9px;font-weight:800;font-size:14px;background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;cursor:pointer}
+
+  /* ===== Índice acústico ===== */
+  #view-indice .ia-progress{display:flex;gap:7px;justify-content:center;margin-bottom:12px}
+  #view-indice .ia-progress .pdot{width:30px;height:6px;border-radius:3px;background:var(--line);transition:background .3s}
+  #view-indice .ia-progress .pdot.cur{background:var(--gold-soft)}
+  #view-indice .ia-progress .pdot.ok{background:var(--green)}
+  #view-indice .ia-progress .pdot.bad{background:var(--red)}
+  /* temporizador grande y central con barra que se vacía */
+  #view-indice .ia-timerbar{position:relative;height:64px;border-radius:14px;overflow:hidden;margin-bottom:14px;
+    background:var(--panel2);border:1px solid var(--line);display:flex;align-items:center;justify-content:center}
+  #view-indice .ia-timerbar .ia-fill{position:absolute;left:0;top:0;bottom:0;width:100%;
+    background:linear-gradient(90deg,var(--gold2),var(--gold-soft));opacity:.20;transition:width 1s linear;z-index:0}
+  #view-indice .ia-timer-big{position:relative;z-index:1;font-weight:900;font-size:42px;line-height:1;color:var(--gold-soft);
+    font-variant-numeric:tabular-nums;letter-spacing:.02em}
+  #view-indice .ia-timerbar.warn .ia-fill{background:linear-gradient(90deg,#b8860b,var(--gold1));opacity:.32}
+  #view-indice .ia-timerbar.warn .ia-timer-big{color:var(--gold1)}
+  #view-indice .ia-timerbar.danger{animation:iaPanic .45s steps(1) infinite}
+  #view-indice .ia-timerbar.danger .ia-fill{background:linear-gradient(90deg,#7a1410,var(--red));opacity:.5}
+  #view-indice .ia-timerbar.danger .ia-timer-big{color:#fff}
+  @keyframes iaPanic{0%,100%{background:var(--panel2);box-shadow:0 0 0 0 rgba(217,83,79,0)}
+    50%{background:rgba(217,83,79,.22);box-shadow:0 0 0 3px rgba(217,83,79,.6)}}
+  /* la tarjeta entera parpadea en los últimos segundos */
+  #cardIA.panic{animation:iaCardPanic .45s steps(1) infinite}
+  @keyframes iaCardPanic{50%{box-shadow:0 0 0 3px rgba(217,83,79,.55),0 14px 40px rgba(0,0,0,.4)}}
+  #view-indice .ia-stage{position:relative}
+  #view-indice .ia-score{min-height:170px;background:var(--paper);border-radius:12px;box-shadow:var(--shadow);
+    padding:0 12px;display:flex;align-items:center;justify-content:center;overflow:hidden}
+  #view-indice .ia-score svg{max-width:100%;height:auto}
+  #view-indice .ia-score.flash{animation:iaFlash .4s steps(1) 2}
+  @keyframes iaFlash{50%{box-shadow:0 0 0 5px var(--gold1),var(--shadow)}}
+  /* cartel de veredicto superpuesto */
+  #view-indice .ia-verdict{position:absolute;inset:0;display:none;align-items:center;justify-content:center;
+    font-size:42px;font-weight:900;letter-spacing:.04em;text-transform:uppercase;border-radius:12px;z-index:3;
+    pointer-events:none}
+  #view-indice .ia-verdict.show{display:flex;animation:iaPop .25s ease 1}
+  #view-indice .ia-verdict.ok{background:rgba(47,170,106,.86);color:#fff}
+  #view-indice .ia-verdict.bad{background:rgba(217,83,79,.86);color:#fff}
+  @keyframes iaPop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+  #view-indice .ia-panels{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px}
+  @media(max-width:620px){#view-indice .ia-panels{gap:10px}}
+  #view-indice .ia-panel-cap{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);
+    text-align:center;margin-bottom:8px;font-weight:700}
+  #view-indice .ia-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;max-width:230px;margin:0 auto}
+  #view-indice .ia-key{aspect-ratio:1;height:auto;border:1px solid var(--line);border-radius:12px;background:linear-gradient(180deg,#241a08,#160f04);
+    color:var(--ink);font-size:19px;font-weight:800;cursor:pointer;transition:.12s;display:flex;align-items:center;justify-content:center;
+    font-family:inherit;-webkit-tap-highlight-color:transparent}
+  #view-indice .ia-key:hover{border-color:var(--gold2)}
+  #view-indice .ia-key:active{transform:scale(.95)}
+  #view-indice .ia-key.sel{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
+  #view-indice .ia-key.acc{color:var(--gold-soft);font-size:22px}
+  #view-indice .ia-key.acc.sel{color:#1a1407}
+  /* estados de corrección de las teclas */
+  #view-indice .ia-key.k-ok{background:var(--green);color:#04220f;border-color:transparent}
+  #view-indice .ia-key.k-bad{background:var(--red);color:#fff;border-color:transparent}
+  #view-indice .ia-key.k-sol{background:var(--blue);color:#04122e;border-color:transparent}
+  #view-indice .ia-key:disabled{cursor:default}
+  #view-indice .ia-chosen{margin-top:14px;text-align:center;font-size:17px;font-weight:800;min-height:24px;color:var(--gold-soft)}
+  #view-indice .ia-chosen .res-ok{color:var(--green)}
+  #view-indice .ia-chosen .res-bad{color:var(--blue)}
+  #view-indice .ia-summary{margin-top:8px;text-align:center}
+  #view-indice .ia-summary h3{font-size:22px;font-weight:900;color:var(--gold-soft);margin:6px 0 14px}
+  #view-indice .ia-summary .ia-sum-score{font-size:40px;font-weight:900;color:var(--ink)}
+  #view-indice .ia-sum-list{display:flex;flex-direction:column;gap:6px;max-width:420px;margin:14px auto 0;text-align:left}
+  #view-indice .ia-sum-row{display:flex;justify-content:space-between;gap:10px;padding:8px 12px;border:1px solid var(--line);
+    border-radius:9px;font-size:14px}
+  #view-indice .ia-sum-row.ok{border-color:var(--green);background:var(--green-soft)}
+  #view-indice .ia-sum-row.bad{border-color:var(--red);background:var(--red-soft)}
+  #view-indice .ia-sum-row b{color:var(--gold-soft)}
 
   .lead-cap{font-size:12px;font-weight:800;color:var(--ink);text-align:center;margin-bottom:8px}
   .lead-cap .ab{color:var(--gold-soft);font-weight:700;margin-left:5px}
@@ -269,13 +416,17 @@
       <button class="mode-card" data-path="cadencias"><span class="dot-live"></span><h2>Cadencias</h2></button>
       <button class="mode-card" data-path="enarmoniapro"><h2>Enarmonía <span class="pro-seal">PRO</span></h2></button>
 
-      <button class="mode-card" data-path="modos"><h2>Modos</h2></button>
+      <button class="mode-card" data-path="modos"><span class="dot-live"></span><h2>Modos</h2></button>
       <button class="mode-card" data-path="modulacion"><span class="dot-live"></span><h2>Modulación</h2></button>
       <button class="mode-card" data-path="transporte"><h2>Transporte</h2></button>
 
-      <button class="mode-card" data-path="intervalos"><h2>Intervalos <span class="pro-seal">PRO</span></h2></button>
-      <button class="mode-card" data-path="tonalidades"><h2>Tonalidades <span class="pro-seal">PRO</span></h2></button>
-      <button class="mode-card" data-path="escalas"><h2>Escalas <span class="pro-seal">PRO</span></h2></button>
+      <button class="mode-card" data-path="indiceacustico"><span class="dot-live"></span><h2>Índice acústico</h2></button>
+      <button class="mode-card" data-path="cifrado"><span class="dot-live"></span><h2>Cifrado</h2></button>
+      <button class="mode-card" data-path="inversion"><span class="dot-live"></span><h2>Inversión</h2></button>
+
+      <button class="mode-card" data-path="intervalos"><span class="dot-live"></span><h2>Intervalos</h2><span class="card-sub">REPASO PREPARATORIO ARMONÍA</span></button>
+      <button class="mode-card" data-path="tonalidades"><span class="dot-live"></span><h2>Tonalidades</h2><span class="card-sub">REPASO PREPARATORIO ARMONÍA</span></button>
+      <button class="mode-card" data-path="escalas"><span class="dot-live"></span><h2>Escalas</h2><span class="card-sub">REPASO PREPARATORIO ARMONÍA</span></button>
     </div>
 
     <div class="eva-foot"><button class="maint-link" id="maintLink">Mantenimiento</button></div>
@@ -323,6 +474,282 @@
     <div class="score" id="scoreBUILD"></div>
     <div class="answers" id="answersBUILD"></div>
   </div>
+  </div>
+
+  <!-- ===================== VISTA INTERVALOS PRO ===================== -->
+  <div id="view-intervalos" style="display:none">
+
+  <header class="top">
+    <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home PRO">
+      <h1><span class="back-arrow">‹</span><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+      <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+    </a>
+  </header>
+
+  <div class="iv-head">
+    <div class="iv-title"><span class="post">INTER</span><span class="dim">VALOS</span></div>
+    <button class="iconbtn btn-nuevos" onclick="nuevoIVTODO()" title="Nuevos ejercicios">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+      Nuevos ejercicios
+    </button>
+  </div>
+  <p class="iv-sub">Clasifica los intervalos (tarjeta a) y construye la nota pedida (tarjeta b). Aparecerá de todo: simples, compuestos, aumentados y disminuidos.</p>
+
+  <!-- Tarjeta A: clasificar -->
+  <div class="ex-card" id="cardA">
+    <div class="ex-top">
+      <div class="ex-letter"><b>a</b><span>Clasifica cada intervalo</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-correct" onclick="corregirA()">✓ Corregir</button>
+      </div>
+    </div>
+    <div class="score" id="scoreA"></div>
+    <div class="answers" id="answersA"></div>
+  </div>
+
+  <!-- Tarjeta B: construir nota -->
+  <div class="ex-card" id="cardB">
+    <div class="ex-top">
+      <div class="ex-letter"><b>b</b><span>Coloca la 2ª nota del intervalo</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-correct" onclick="corregirB()">✓ Corregir</button>
+      </div>
+    </div>
+    <div class="score" id="scoreB"></div>
+    <div class="answers" id="answersB"></div>
+    <p class="hint" id="hintB" style="margin-top:12px">Haz clic en el pentagrama para colocar la 2ª nota. Luego ajusta la alteración con ♭ / ♯ (doble clic = doble alteración).</p>
+  </div>
+  </div>
+
+  <!-- ===================== VISTA ESCALAS PRO ===================== -->
+  <div id="view-escalas" style="display:none">
+
+  <header class="top">
+    <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home PRO">
+      <h1><span class="back-arrow">‹</span><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+      <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+    </a>
+  </header>
+
+  <div class="iv-head">
+    <div class="iv-title"><span class="post">ESCA</span><span class="dim">LAS</span></div>
+    <button class="iconbtn btn-nuevos" onclick="nuevoESCtodos()" title="Nuevos ejercicios">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+      Nuevos ejercicios
+    </button>
+  </div>
+
+  <!-- Tarjeta 0: menores -->
+  <div class="ex-card" id="cardESC0">
+    <div class="ex-top">
+      <div class="ex-letter"><b>♭</b><span>Escalas menores</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" onclick="nuevoESCi(0)" title="Nueva escala">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+          Nueva
+        </button>
+        <button class="iconbtn btn-correct" onclick="corregirESCi(0)">✓ Corregir</button>
+      </div>
+    </div>
+    <div id="escRows0"></div>
+    <p class="hint" style="margin-top:10px">Pon la armadura y completa la escala. Toca el 6º y 7º grado y usa ♯/♮/♭ para alterarlos.</p>
+  </div>
+
+  <!-- Tarjeta 1: mayores -->
+  <div class="ex-card" id="cardESC1">
+    <div class="ex-top">
+      <div class="ex-letter"><b>♯</b><span>Escalas mayores</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" onclick="nuevoESCi(1)" title="Nueva escala">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+          Nueva
+        </button>
+        <button class="iconbtn btn-correct" onclick="corregirESCi(1)">✓ Corregir</button>
+      </div>
+    </div>
+    <div id="escRows1"></div>
+    <p class="hint" style="margin-top:10px">Pon la armadura y completa la escala. Toca el 6º y 7º grado y usa ♯/♮/♭ para alterarlos.</p>
+  </div>
+
+  <!-- Tarjeta 2: otras -->
+  <div class="ex-card" id="cardESC2">
+    <div class="ex-top">
+      <div class="ex-letter"><b>≈</b><span>Otras escalas</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" onclick="nuevoESCi(2)" title="Nueva escala">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+          Nueva
+        </button>
+        <button class="iconbtn btn-correct" onclick="corregirESCi(2)">✓ Corregir</button>
+      </div>
+    </div>
+    <div id="escRows2"></div>
+    <p class="hint" style="margin-top:10px">Pentatónica, hexátona o cromática. Toca el pentagrama para añadir cada nota en orden; para alterarla, tócala y usa ♯/♮/♭. Para borrarla, toca la <b>×</b> sobre ella (o clic derecho).</p>
+  </div>
+  </div>
+
+  <!-- ===================== VISTA TONALIDADES PRO ===================== -->
+  <div id="view-tonalidades" style="display:none">
+
+  <header class="top">
+    <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home PRO">
+      <h1><span class="back-arrow">‹</span><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+      <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+    </a>
+  </header>
+
+  <div class="iv-head">
+    <div class="iv-title"><span class="post">TONALI</span><span class="dim">DADES</span></div>
+    <button class="iconbtn btn-nuevos" onclick="nuevoTONtodos()" title="Nuevos ejercicios">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+      Nuevos ejercicios
+    </button>
+  </div>
+  <p class="iv-sub">a) Nombra las tonalidades de cada armadura · b) Coloca la armadura de cada tonalidad · c) Completa los tonos vecinos. Hasta 7 alteraciones.</p>
+
+  <!-- Tarjeta A: armadura -> tonalidades (M y m) -->
+  <div class="ex-card" id="cardTA">
+    <div class="ex-top">
+      <div class="ex-letter"><b>a</b><span>Escribe la tonalidad Mayor y su menor relativa</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" onclick="nuevoTA()" title="Nuevo ejercicio">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+          Nuevo
+        </button>
+        <button class="iconbtn btn-correct" onclick="corregirTA()">✓ Corregir</button>
+      </div>
+    </div>
+    <div class="score" id="scoreTA"></div>
+    <div class="answers" id="answersTA"></div>
+    <p class="hint" style="margin-top:10px">Para cada armadura, indica la tonalidad Mayor (arriba) y su menor relativa (abajo).</p>
+  </div>
+
+  <!-- Tarjeta B: tonalidad -> armadura -->
+  <div class="ex-card" id="cardTB">
+    <div class="ex-top">
+      <div class="ex-letter"><b>b</b><span>Coloca la armadura de cada tonalidad</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" onclick="nuevoTB()" title="Nuevo ejercicio">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+          Nuevo
+        </button>
+        <button class="iconbtn btn-correct" onclick="corregirTB()">✓ Corregir</button>
+      </div>
+    </div>
+    <div class="score" id="scoreTB"></div>
+    <div class="answers" id="answersTB"></div>
+    <p class="hint" style="margin-top:10px">Desliza cada rueda para poner la armadura: ↑ sostenidos · ↓ bemoles.</p>
+  </div>
+
+  <!-- Tarjeta C: tonos vecinos -->
+  <div class="ex-card" id="cardTC">
+    <div class="ex-top">
+      <div class="ex-letter"><b>c</b><span>Completa los tonos vecinos</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" onclick="nuevoTC()" title="Nuevo ejercicio">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+          Nuevo
+        </button>
+        <button class="iconbtn btn-correct" onclick="corregirTC()">✓ Corregir</button>
+      </div>
+    </div>
+    <div id="gridTC" class="vecinos-grid"></div>
+    <p class="hint" id="hintTC" style="margin-top:12px">Haz clic en una casilla vacía y elige la tonalidad. El orden no importa: basta con que estén los 5 vecinos correctos.</p>
+  </div>
+  </div>
+
+  <!-- ===================== VISTA MODOS PRO ===================== -->
+  <div id="view-modos" style="display:none">
+
+  <header class="top">
+    <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home PRO">
+      <h1><span class="back-arrow">‹</span><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+      <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+    </a>
+  </header>
+
+  <div class="iv-head">
+    <div class="iv-title"><span class="post">MO</span><span class="dim">DOS</span></div>
+    <button class="iconbtn btn-nuevos" onclick="nuevoMODO()" title="Nuevo modo">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+      Nuevo modo
+    </button>
+  </div>
+  <p class="iv-sub">Identifica el modo indicado: pon la armadura y altera lo que haga falta.</p>
+
+  <div class="ex-card" id="cardMODO">
+    <div class="ex-top">
+      <div class="ex-letter"><b>♭♯</b><span>Construye el modo indicado</span></div>
+      <div style="display:flex;gap:8px">
+        <button class="iconbtn" onclick="nuevoMODO()" title="Nuevo modo">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+          Nuevo
+        </button>
+        <button class="iconbtn btn-correct" onclick="corregirMODO()">✓ Corregir</button>
+      </div>
+    </div>
+    <div id="escRowsM"></div>
+    <p class="hint" style="margin-top:10px">Toca una nota para seleccionarla y usa ♯/♮/♭ para alterarla. La armadura se pone con la rueda.</p>
+  </div>
+  </div>
+
+  <!-- ===================== VISTA ÍNDICE ACÚSTICO ===================== -->
+  <div id="view-indice" style="display:none">
+
+  <header class="top">
+    <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home PRO">
+      <h1><span class="back-arrow">‹</span><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+      <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+    </a>
+  </header>
+
+  <div class="iv-head">
+    <div class="iv-title"><span class="post">ÍNDICE</span> <span class="dim">ACÚSTICO</span></div>
+    <button class="iconbtn btn-nuevos" onclick="iaStart()" title="Empezar de nuevo">
+      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+      Empezar
+    </button>
+  </div>
+  <p class="iv-sub">Identifica la nota y su índice acústico (SPN: Do central = C4). Tienes 7 segundos por nota.</p>
+
+  <div class="ex-card" id="cardIA">
+    <div class="ia-progress" id="iaProgress"></div>
+    <div class="ia-timerbar" id="iaTimerBar">
+      <div class="ia-timer-big" id="iaTimer"><span id="iaTimerNum">7</span></div>
+    </div>
+    <div class="ia-stage">
+      <div class="score ia-score" id="iaScore"></div>
+      <div class="ia-verdict" id="iaVerdict"></div>
+    </div>
+    <div class="ia-panels" id="iaPanels">
+      <div class="ia-panelblock">
+        <div class="ia-panel-cap">Nota</div>
+        <div class="ia-grid ia-grid-nota" id="iaGridNota"></div>
+      </div>
+      <div class="ia-panelblock">
+        <div class="ia-panel-cap">Índice</div>
+        <div class="ia-grid ia-grid-num" id="iaGridNum"></div>
+      </div>
+    </div>
+    <div class="ia-chosen" id="iaChosen"></div>
+    <div class="ia-summary" id="iaSummary" style="display:none"></div>
+  </div>
+  </div>
+
+  <!-- ===================== VISTA PLACEHOLDER (Cifrado / Inversión) ===================== -->
+  <div id="view-placeholder" style="display:none">
+    <header class="top">
+      <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home PRO">
+        <h1><span class="back-arrow">‹</span><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+        <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+      </a>
+    </header>
+    <div class="iv-head">
+      <div class="iv-title"><span class="post" id="phTitle">Cifrado</span></div>
+    </div>
+    <div class="ex-card" style="text-align:center;padding:48px 24px">
+      <p style="font-size:16px;color:var(--muted)">Este ejercicio está en construcción.</p>
+    </div>
   </div>
 
   <!-- ===================== VISTA CADENCIAS ===================== -->
@@ -375,6 +802,13 @@
   var ACCIONES = {
     acordespro: abrirAcordes,
     cadencias: abrirCadencias,
+    intervalos: abrirIntervalos,
+    escalas: abrirEscalas,
+    tonalidades: abrirTonalidades,
+    modos: abrirModos,
+    indiceacustico: abrirIndice,
+    cifrado: function(){ abrirPlaceholder('Cifrado'); },
+    inversion: function(){ abrirPlaceholder('Inversión'); },
     modulacion: function(){ window.location.href='modulacion.html'; }
   };
   document.querySelectorAll('.mode-card[data-path]').forEach(function(btn){
@@ -394,7 +828,54 @@
   }
   function volverPortal(){
     document.getElementById('view-acordes').style.display='none';
+    var vi=document.getElementById('view-intervalos'); if(vi) vi.style.display='none';
+    var ve=document.getElementById('view-escalas'); if(ve) ve.style.display='none';
+    var vt=document.getElementById('view-tonalidades'); if(vt) vt.style.display='none';
+    var vm=document.getElementById('view-modos'); if(vm) vm.style.display='none';
+    var vidx=document.getElementById('view-indice'); if(vidx) vidx.style.display='none';
+    var vph=document.getElementById('view-placeholder'); if(vph) vph.style.display='none';
+    if(window.iaStop) window.iaStop();
     document.getElementById('view-portal').style.display='block';
+    window.scrollTo(0,0);
+  }
+  function abrirIntervalos(){
+    document.getElementById('view-portal').style.display='none';
+    document.getElementById('view-intervalos').style.display='block';
+    window.scrollTo(0,0);
+    if(!window._ivInit){ window._ivInit=true; nuevoA(); nuevoB(); }
+    else { redrawA(); redrawB(); }
+  }
+  function abrirEscalas(){
+    document.getElementById('view-portal').style.display='none';
+    document.getElementById('view-escalas').style.display='block';
+    window.scrollTo(0,0);
+    if(!window._escReady){ window._escReady=true; window._escInit(); }
+    else { renderESC(); }
+  }
+  function abrirTonalidades(){
+    document.getElementById('view-portal').style.display='none';
+    document.getElementById('view-tonalidades').style.display='block';
+    window.scrollTo(0,0);
+    if(!window._tonReady){ window._tonReady=true; window._tonInit(); }
+  }
+  function abrirModos(){
+    document.getElementById('view-portal').style.display='none';
+    document.getElementById('view-modos').style.display='block';
+    window.scrollTo(0,0);
+    if(!window._modReady){ window._modReady=true; window.nuevoMODO(); }
+    else { window.renderMODO(); }
+  }
+  function abrirIndice(){
+    document.getElementById('view-portal').style.display='none';
+    document.getElementById('view-indice').style.display='block';
+    window.scrollTo(0,0);
+    window.iaStart();
+  }
+  function abrirPlaceholder(nombre){
+    document.getElementById('view-portal').style.display='none';
+    var v=document.getElementById('view-placeholder');
+    document.getElementById('phTitle').textContent=nombre;
+    v.style.display='block';
     window.scrollTo(0,0);
   }
   function abrirCadencias(){
@@ -417,6 +898,92 @@
 const VF = Vex.Flow;
 const STEPS=["C","D","E","F","G","A","B"];
 const STEP_ST={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+
+/* ===== rueda iOS global: snap suave + sonido tick + vibración ===== */
+let _wheelAC=null;
+function _wheelCtx(){ try{ if(!_wheelAC) _wheelAC=new (window.AudioContext||window.webkitAudioContext)(); if(_wheelAC.state==='suspended') _wheelAC.resume(); return _wheelAC; }catch(e){ return null; } }
+function wheelTick(){
+  const ctx=_wheelCtx(); if(!ctx) return;
+  try{
+    const t=ctx.currentTime;
+    // "tock" suave: senoide grave con caída rápida + filtro pasa-bajos
+    const o=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+    o.type='sine';
+    o.frequency.setValueAtTime(320,t);
+    o.frequency.exponentialRampToValueAtTime(180,t+0.05);
+    lp.type='lowpass'; lp.frequency.setValueAtTime(1200,t);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.05,t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.07);
+    o.connect(lp).connect(g).connect(ctx.destination); o.start(t); o.stop(t+0.09);
+  }catch(e){}
+  if(navigator.vibrate){ try{ navigator.vibrate(6); }catch(e){} }
+}
+/* makeWheel(host, items, startIdx, onChange) -> {setIndex,setItems,getValue,getIndex} */
+function makeWheel(host, items, startIdx, onChange){
+  const H=32;
+  host.innerHTML='';
+  const band=document.createElement('div'); band.className='wband'; host.appendChild(band);
+  const list=document.createElement('div'); list.className='wlist'; host.appendChild(list);
+  let data=items.slice(), idx=startIdx||0, live=idx;
+  let dragging=false, startY=0, moved=0;
+  let wheelAcc=0, wheelLock=false, wheelClr=null;
+  function build(){
+    list.innerHTML='';
+    data.forEach((t,i)=>{ const d=document.createElement('div'); d.className='witem'+(i===idx?' sel':''); d.textContent=t; d.dataset.i=i;
+      d.addEventListener('click',()=>{ if(moved>6) return; commit(i,true); }); list.appendChild(d); });
+  }
+  const hi=k=>list.querySelectorAll('.witem').forEach((e,i)=>e.classList.toggle('sel',i===k));
+  const placeAt=ix=>{ list.style.transform='translateY('+(H-ix*H)+'px)'; };
+  function commit(ni,fire){
+    ni=Math.max(0,Math.min(data.length-1,ni));
+    const cambia=(ni!==idx);
+    idx=ni; live=idx;
+    list.style.transition='transform .18s cubic-bezier(.22,.61,.36,1)';
+    placeAt(idx); hi(idx);
+    if(fire){ if(cambia) wheelTick(); if(onChange) onChange(idx); }
+  }
+  function onMove(e){
+    if(!dragging) return;
+    const y=(e.touches?e.touches[0].clientY:e.clientY); const dy=y-startY;
+    moved=Math.max(moved,Math.abs(dy));
+    list.style.transition='none';
+    list.style.transform='translateY('+(H-idx*H+dy)+'px)';
+    const c=Math.max(0,Math.min(data.length-1,Math.round(idx-dy/H)));
+    if(c!==live){ live=c; hi(c); wheelTick(); }
+    if(e.cancelable) e.preventDefault();
+  }
+  function detach(){ ['pointermove','mousemove','touchmove'].forEach(t=>window.removeEventListener(t,onMove)); ['pointerup','mouseup','touchend','pointercancel'].forEach(t=>window.removeEventListener(t,onUp)); }
+  function onUp(e){
+    if(!dragging) return; dragging=false; detach();
+    const y=(e.changedTouches?e.changedTouches[0].clientY:(e.clientY!=null?e.clientY:startY)); const dy=y-startY;
+    if(Math.abs(dy)<6){ placeAt(idx); hi(idx); return; }
+    commit(Math.round(idx-dy/H), true);
+  }
+  function onDown(e){
+    dragging=true; moved=0; live=idx; startY=(e.touches?e.touches[0].clientY:e.clientY);
+    _wheelCtx();
+    window.addEventListener('pointermove',onMove); window.addEventListener('pointerup',onUp); window.addEventListener('pointercancel',onUp);
+    window.addEventListener('mousemove',onMove); window.addEventListener('mouseup',onUp);
+    window.addEventListener('touchmove',onMove,{passive:false}); window.addEventListener('touchend',onUp);
+    if(e.cancelable) e.preventDefault();
+  }
+  host.addEventListener('pointerdown',onDown);
+  host.addEventListener('mousedown',e=>{ if(!window.PointerEvent) onDown(e); });
+  host.addEventListener('touchstart',e=>{ if(!window.PointerEvent) onDown(e); },{passive:false});
+  host.addEventListener('wheel',e=>{ e.preventDefault();
+    wheelAcc+=e.deltaY; if(wheelClr) clearTimeout(wheelClr); wheelClr=setTimeout(()=>{wheelAcc=0;},160);
+    if(wheelLock) return;
+    if(Math.abs(wheelAcc)>=24){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
+  },{passive:false});
+  build(); commit(idx,false);
+  return {
+    setIndex:(i,silent)=>{ commit(i,!silent); },
+    setItems:(newItems,silent)=>{ data=newItems.slice(); if(idx>=data.length) idx=data.length-1; build(); commit(idx,false); },
+    getValue:()=>data[idx], getIndex:()=>idx
+  };
+}
+window.makeWheel=makeWheel;
 function midiNota(s,o,a){return 12*(o+1)+STEP_ST[s]+a;}
 let RNG=Math.random;
 function rint(n){return Math.floor(RNG()*n);}
@@ -1780,5 +2347,1856 @@ return {generate, buildKey, buildChord, TEMPLATES, KEYSIG, romanLabel, RANGE};
   };
 })();
 </script>
+<!-- ====== INTERVALOS PRO: motor (10 categorías equiprobables) ====== -->
+<script>
+(function(){
+const VF = Vex.Flow;
+
+/* ===== PRNG / helpers ===== */
+const RNG=Math.random;
+function rint(n){return Math.floor(RNG()*n);}
+function pick(a){return a[rint(a.length)];}
+function chance(p){return RNG()<p;}
+
+/* ===== teoría base ===== */
+const STEPS=["C","D","E","F","G","A","B"];
+const STEP_ST={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function midiNota(s,o,a){return 12*(o+1)+STEP_ST[s]+a;}
+const ESP_LABEL={dd:'D.Dis.',d:'Dis.',m:'m',M:'M',J:'J',A:'Aum.',AA:'D.Aum.'};
+
+/* rangos: simples La3–Sol5 ; compuestos La3–Do6 */
+const RANGO_SIMPLE={min:midiNota("A",3,0),max:midiNota("G",5,0)};
+const RANGO_COMP={min:midiNota("A",3,0),max:midiNota("C",6,0)};
+const RARAS=new Set(["F,-1","C,-1","B,1","E,1"]);   // Fa♭,Do♭,Si♯,Mi♯ (evitar en simples)
+
+/* catálogo maestro [num, code, semitonos, grados]; grados=num-1 */
+const CAT=[
+  [2,'d',0,1],[2,'m',1,1],[2,'M',2,1],[2,'A',3,1],
+  [3,'d',2,2],[3,'m',3,2],[3,'M',4,2],[3,'A',5,2],
+  [4,'d',4,3],[4,'J',5,3],[4,'A',6,3],
+  [5,'d',6,4],[5,'J',7,4],[5,'A',8,4],
+  [6,'d',7,5],[6,'m',8,5],[6,'M',9,5],[6,'A',10,5],
+  [7,'d',9,6],[7,'m',10,6],[7,'M',11,6],[7,'A',12,6],
+  [8,'d',11,7],[8,'J',12,7],[8,'A',13,7],
+  /* compuestos */
+  [9,'m',13,8],[9,'M',14,8],
+  [10,'m',15,9],[10,'M',16,9],
+  [11,'d',16,10],[11,'J',17,10],[11,'A',18,10],
+  [12,'d',18,11],[12,'J',19,11],[12,'A',20,11],
+  [13,'m',20,12],[13,'M',21,12],
+  [14,'m',22,13],[14,'M',23,13],
+];
+function findCat(num,code){return CAT.find(e=>e[0]===num&&e[1]===code);}
+
+/* ===== 10 CATEGORÍAS equiprobables =====
+   Cada categoría devuelve una entrada de catálogo + si es compuesta. */
+const CATEGORIAS=[
+  // 1..7 grados simples (justos con aum/dis dentro)
+  {id:'2',  comp:false, pool:[['2','m'],['2','M']]},
+  {id:'3',  comp:false, pool:[['3','m'],['3','M']]},
+  {id:'4',  comp:false, pool:[['4','J'],['4','A'],['4','d']]},
+  {id:'5',  comp:false, pool:[['5','J'],['5','A'],['5','d']]},
+  {id:'6',  comp:false, pool:[['6','m'],['6','M']]},
+  {id:'7',  comp:false, pool:[['7','m'],['7','M']]},
+  {id:'8',  comp:false, pool:[['8','J'],['8','A'],['8','d']]},
+  // compuestos (rango especial). 11ª/12ª pueden ser J/A/d; resto m/M
+  {id:'comp',comp:true,  pool:[['9','m'],['9','M'],['10','m'],['10','M'],
+                               ['11','J'],['11','A'],['11','d'],
+                               ['12','J'],['12','A'],['12','d'],
+                               ['13','m'],['13','M'],['14','m'],['14','M']]},
+  // disminuidos: solo 2/3/6/7 (sin solape con justos)
+  {id:'dis', comp:false, pool:[['2','d'],['3','d'],['6','d'],['7','d']]},
+  // aumentados: solo 2/3/6/7
+  {id:'aum', comp:false, pool:[['2','A'],['3','A'],['6','A'],['7','A']]},
+];
+
+function calcularRespuesta(step,octave,alter,grados,semitonos,direccion){
+  const idx=STEPS.indexOf(step);
+  const signo=direccion==="asc"?1:-1;
+  const midiResp=midiNota(step,octave,alter)+signo*semitonos;
+  const idxRaw=idx+signo*grados;
+  const octShift=Math.floor(idxRaw/7);
+  const idxResp=((idxRaw%7)+7)%7;
+  const octaveResp=octave+octShift;
+  const stepResp=STEPS[idxResp];
+  const alterResp=midiResp-midiNota(stepResp,octaveResp,0);
+  return {step:stepResp,octave:octaveResp,alter:alterResp,midi:midiResp};
+}
+function notasPartida(rango){
+  const out=[];
+  for(let oct=2;oct<=6;oct++) for(const s of STEPS){
+    const m=midiNota(s,oct,0);
+    if(m>=rango.min-2 && m<=rango.max+2) out.push([s,oct]);
+  }
+  return out;
+}
+
+/* construye UN intervalo concreto de una entrada [num,code,semis,grados] */
+function _construir(entry,comp){
+  const [num,code,semitonos,grados]=entry;
+  const rango=comp?RANGO_COMP:RANGO_SIMPLE;
+  const partidas=notasPartida(rango);
+  const maxAlt=comp?2:1;
+  const probAlt=comp?0.45:0.4;
+  for(let t=0;t<500;t++){
+    const direccion=pick(["asc","desc"]);
+    const [step,octave]=pick(partidas);
+    let alter=0;
+    if(chance(probAlt)){ const c=pick([-1,1]); if(comp || !RARAS.has(step+","+c)) alter=c; }
+    const mp=midiNota(step,octave,alter);
+    if(mp<rango.min||mp>rango.max) continue;
+    const r=calcularRespuesta(step,octave,alter,grados,semitonos,direccion);
+    if(r.midi<rango.min||r.midi>rango.max) continue;
+    if(Math.abs(r.alter)>maxAlt) continue;
+    if(maxAlt===1 && RARAS.has(r.step+","+r.alter)) continue;
+    return {num,code,lab:num+ESP_LABEL[code],direccion,semitonos,grados,comp,
+            n1:{step,octave,alter},n2:{step:r.step,octave:r.octave,alter:r.alter}};
+  }
+  return {num,code,lab:num+ESP_LABEL[code],direccion:"asc",semitonos,grados,comp,
+          n1:{step:"C",octave:4,alter:0},n2:{step:"C",octave:4,alter:0}};
+}
+
+/* elige n intervalos: n categorías DISTINTAS (variedad garantizada) */
+function elegirIntervalos(n){
+  const cats=CATEGORIAS.slice();
+  // barajar categorías
+  for(let i=cats.length-1;i>0;i--){const j=rint(i+1);[cats[i],cats[j]]=[cats[j],cats[i]];}
+  const elegidas=cats.slice(0,n);
+  // barajar el orden de aparición también
+  for(let i=elegidas.length-1;i>0;i--){const j=rint(i+1);[elegidas[i],elegidas[j]]=[elegidas[j],elegidas[i]];}
+  return elegidas.map(cat=>{
+    const [numStr,code]=pick(cat.pool);
+    const entry=findCat(parseInt(numStr,10),code);
+    return _construir(entry,cat.comp);
+  });
+}
+
+/* ===== nombres y VexFlow ===== */
+function notaToKey(nb){
+  const acc=nb.alter===1?"#":nb.alter===-1?"b":nb.alter===2?"##":nb.alter===-2?"bb":"";
+  return nb.step.toLowerCase()+acc+"/"+nb.octave;
+}
+function accStr(a){return a===1?"#":a===-1?"b":a===2?"##":a===-2?"bb":"n";}
+const STEP_ES={C:"Do",D:"Re",E:"Mi",F:"Fa",G:"Sol",A:"La",B:"Si"};
+function noteName(nb){
+  const acc=nb.alter===1?"♯":nb.alter===-1?"♭":nb.alter===2?"♯♯":nb.alter===-2?"♭♭":"";
+  return STEP_ES[nb.step]+acc;
+}
+function diatonicStep(midi){
+  const pcToStep={0:0,2:1,4:2,5:3,7:4,9:5,11:6,1:0,3:1,6:3,8:4,10:5};
+  const pc=((midi%12)+12)%12, oct=Math.floor(midi/12)-1;
+  return oct*7+pcToStep[pc];
+}
+function midiToNatural(midi){
+  const names=[["C",0],["C",1],["D",0],["E",-1],["E",0],["F",0],["F",1],["G",0],["A",-1],["A",0],["B",-1],["B",0]];
+  const pc=((midi%12)+12)%12, oct=Math.floor(midi/12)-1;
+  const [step,alter]=names[pc];
+  return {step,octave:oct,alter};
+}
+
+/* dibuja N compases (2 redondas, 8/4 sin numerador). opts.modoB => 2ª nota incógnita */
+function dibujarCompases(hostId, items, opts){
+  opts=opts||{};
+  const host=document.getElementById(hostId); if(!host) return {};
+  host.innerHTML='';
+  const W=host.clientWidth||760;
+  const anyComp=items.some(it=>it && it.comp);
+  const H = anyComp ? 188 : 120;
+  const staveY = anyComp ? 54 : 26;
+  const renderer=new VF.Renderer(host, VF.Renderer.Backends.SVG);
+  renderer.resize(W,H);
+  const ctx=renderer.getContext();
+  const n=items.length, x0=10, usable=W-20, wC=usable/n;
+  const noteX=[];
+  items.forEach((it,i)=>{
+    const x=x0+i*wC;
+    const stave=new VF.Stave(x,staveY,wC);
+    if(i===0){ stave.addClef("treble"); opts._firstStave=stave; }
+    if(i===n-1) stave.setEndBarType(VF.Barline.type.DOUBLE);
+    stave.setContext(ctx).draw();
+    const notas=[];
+    const k1=notaToKey(it.n1);
+    const arm = it.tipo==='arm';
+    if(arm){
+      const keys = opts.modoB ? [k1] : [k1,notaToKey(it.n2)];
+      const sn=new VF.StaveNote({keys,duration:"w",clef:"treble"});
+      if(it.n1.alter) sn.addModifier(new VF.Accidental(accStr(it.n1.alter)),0);
+      if(!opts.modoB && it.n2.alter) sn.addModifier(new VF.Accidental(accStr(it.n2.alter)),keys.length-1);
+      if(!opts.modoB && it._solB) sn.setKeyStyle(1,{fillStyle:'#5b9dff',strokeStyle:'#5b9dff'});
+      else if(!opts.modoB && it.n2 && it._userPlaced) sn.setKeyStyle(1,{fillStyle:'#e9c96a',strokeStyle:'#e9c96a'});
+      notas.push(sn);
+    } else {
+      const sn1=new VF.StaveNote({keys:[k1],duration:"w",clef:"treble"});
+      if(it.n1.alter) sn1.addModifier(new VF.Accidental(accStr(it.n1.alter)),0);
+      notas.push(sn1);
+      if(opts.modoB && (it.n2==null)){
+        const ph=new VF.StaveNote({keys:["b/4"],duration:"w",clef:"treble"});
+        ph.setStyle({fillStyle:"rgba(0,0,0,0)",strokeStyle:"rgba(0,0,0,0)"});
+        notas.push(ph);
+      } else {
+        const sn2=new VF.StaveNote({keys:[notaToKey(it.n2)],duration:"w",clef:"treble"});
+        if(it.n2.alter) sn2.addModifier(new VF.Accidental(accStr(it.n2.alter)),0);
+        if(opts.modoB && it._okGreen) sn2.setKeyStyle(0,{fillStyle:'#2faa6a',strokeStyle:'#2faa6a'});
+        else if(opts.modoB && !it._solB) sn2.setKeyStyle(0,{fillStyle:'#e9c96a',strokeStyle:'#e9c96a'});
+        if(it._solB) sn2.setKeyStyle(0,{fillStyle:'#5b9dff',strokeStyle:'#5b9dff'});
+        notas.push(sn2);
+      }
+    }
+    const voice=new VF.Voice({num_beats:8,beat_value:4}).setStrict(false);
+    voice.addTickables(notas);
+    new VF.Formatter().joinVoices([voice]).format([voice], wC-20);
+    voice.draw(ctx,stave);
+    try{ noteX[i]=arm? notas[0].getAbsoluteX() : (notas[1]?notas[1].getAbsoluteX():null); }
+    catch(e){ noteX[i]=x+wC*0.62; }
+  });
+  // modoB: mapa midi->y por geometría del stave
+  if(opts.modoB){
+    try{
+      const stv=opts._firstStave;
+      if(stv){
+        const yTop=stv.getYForLine(0), yBot=stv.getYForLine(4);
+        const half=(yBot-yTop)/8;
+        const refStep=diatonicStep(midiNota("F",5,0));
+        const map={};
+        for(let oct=2;oct<=6;oct++) for(const st of STEPS){
+          const m=midiNota(st,oct,0);
+          const ds=diatonicStep(m);
+          const y=yTop + (refStep-ds)*half;
+          map[st+oct]={step:st,octave:oct,y};
+        }
+        opts._ymap=map;
+      }
+    }catch(e){}
+  }
+  // ceñir SVG al contenido
+  try{
+    const svg=host.querySelector('svg');
+    if(svg){ const bb=svg.getBBox(); const pad=10;
+      const top=Math.max(0,bb.y-pad); const newH=bb.height+pad*2;
+      svg.setAttribute('viewBox','0 '+top+' '+W+' '+newH);
+      svg.setAttribute('height',newH); svg.setAttribute('width',W);
+      opts._viewTop=top;
+    }
+  }catch(e){}
+  return {noteX, W, H, ymap:opts._ymap||null, viewTop:opts._viewTop||0};
+}
+
+/* ===== RUEDA iOS (makeWheel) ===== */
+/* ruedas: número (incluye "—") y especie (depende del número) */
+/* números: "—" por defecto (abajo), números hacia ARRIBA (2 arriba del todo) */
+function numerosDisponibles(){ return ["14","13","12","11","10","9","8","7","6","5","4","3","2","—"]; }
+/* especies según el número, ordenadas VISUALMENTE:
+   - justos (4,5,8,11,12): [Aum. (arriba), J (centro/defecto), Dis. (abajo)]
+   - resto: [D.Aum, Aum, M (arriba) , — (centro/defecto), m, Dis, D.Dis (abajo)] (solo las que existan) */
+function especiesParaNumero(num){
+  if(num==null) return ["—"];
+  const codes=CAT.filter(e=>e[0]===num).map(e=>e[1]);
+  const tieneJ = codes.includes('J');
+  if(tieneJ){
+    // justos: Aum arriba, Justa por defecto, Dis abajo
+    const arr=[];
+    if(codes.includes('AA')) arr.push(ESP_LABEL.AA);
+    if(codes.includes('A'))  arr.push(ESP_LABEL.A);
+    arr.push(ESP_LABEL.J);
+    if(codes.includes('d'))  arr.push(ESP_LABEL.d);
+    if(codes.includes('dd')) arr.push(ESP_LABEL.dd);
+    return arr;
+  }
+  // no justos: arriba lo "grande", abajo lo "pequeño", guion en medio
+  const arr=[];
+  if(codes.includes('AA')) arr.push(ESP_LABEL.AA);
+  if(codes.includes('A'))  arr.push(ESP_LABEL.A);
+  if(codes.includes('M'))  arr.push(ESP_LABEL.M);
+  arr.push("—");
+  if(codes.includes('m'))  arr.push(ESP_LABEL.m);
+  if(codes.includes('d'))  arr.push(ESP_LABEL.d);
+  if(codes.includes('dd')) arr.push(ESP_LABEL.dd);
+  return arr;
+}
+/* índice por defecto: en justos = la "J"; en el resto = el "—" */
+function idxDefecto(arr){
+  const j=arr.indexOf(ESP_LABEL.J); if(j>=0) return j;
+  const g=arr.indexOf("—"); return g<0?0:g;
+}
+function idxGuion(arr){ const i=arr.indexOf("—"); return i<0?0:i; }
+function labToCode(lab){ for(const k in ESP_LABEL){ if(ESP_LABEL[k]===lab) return k; } return null; }
+function catToSel(it){ return {num:it.num, esp:ESP_LABEL[it.code]}; }
+
+/* ========== TARJETA A ========== */
+let dataA=[], selA=[];
+function nuevoA(){
+  unlockCard('cardA');
+  dataA=elegirIntervalos(4).map(it=>({...it,tipo:chance(0.4)?'arm':'mel'}));
+  selA=dataA.map(()=>({num:null,esp:"—"}));
+  dibujarCompases('scoreA',dataA,{});
+  renderAnswersA();
+}
+function redrawA(){ if(dataA.length){ dibujarCompases('scoreA',dataA,{}); } else nuevoA(); }
+function renderAnswersA(){
+  const host=document.getElementById('answersA'); host.innerHTML='';
+  dataA.forEach((it,i)=>{
+    const cell=document.createElement('div'); cell.className='ans-cell'; cell.id='ansA'+i;
+    const dual=document.createElement('div'); dual.className='dualsel';
+    const wNum=document.createElement('div'); wNum.className='wheel';
+    const wEsp=document.createElement('div'); wEsp.className='wheel';
+    dual.appendChild(wNum); dual.appendChild(wEsp);
+    const tag=document.createElement('div'); tag.className='sol';
+    cell.appendChild(dual); cell.appendChild(tag); host.appendChild(cell);
+    const numItems=numerosDisponibles();
+    let espApi=null;
+    makeWheel(wNum,numItems,idxGuion(numItems),(ni)=>{
+      const raw=numItems[ni]; const num=(raw==="—")?null:parseInt(raw,10);
+      selA[i].num=num;
+      const esps=especiesParaNumero(num);
+      espApi.setItems(esps,true); espApi.setIndex(idxDefecto(esps),true);
+      selA[i].esp=esps[idxDefecto(esps)];
+    });
+    const espInit=especiesParaNumero(null);
+    espApi=makeWheel(wEsp,espInit,idxDefecto(espInit),()=>{ selA[i].esp=espApi.getValue(); });
+    selA[i].esp="—";
+  });
+}
+function corregirA(){
+  lockCard('cardA');
+  dataA.forEach((it,i)=>{
+    const cell=document.getElementById('ansA'+i);
+    const target=catToSel(it); const got=selA[i];
+    const ok = got.num===target.num && got.esp===target.esp;
+    cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+    cell.querySelector('.sol').textContent = ok?'✓':('Sol: '+it.num+ESP_LABEL[it.code]);
+  });
+}
+
+/* ========== TARJETA B: clic en pentagrama ========== */
+let dataB=[], respB=[], bMeta=null;
+function nuevoB(){
+  unlockCard('cardB');
+  dataB=elegirIntervalos(4).map(it=>({...it,tipo:'mel', _n2cat:it.n2}));
+  dataB.forEach(it=>{ it.n2=null; });
+  respB=dataB.map(()=>null);
+  bMeta=dibujarCompases('scoreB',dataB,{modoB:true});
+  setupBoardB();
+  renderAnswersB();
+}
+function redrawB(){
+  if(!dataB.length){ nuevoB(); return; }
+  bMeta=dibujarCompases('scoreB', dataB.map(it=> it.n2? {...it}:{...it,n2:null}), {modoB:true});
+  setupBoardB();
+}
+function setupBoardB(){
+  const host=document.getElementById('scoreB');
+  host.style.position='relative';
+  host.onmousemove=(e)=>onBoardHoverB(e);
+  host.onmouseleave=()=>clearBGhost();
+  host.onclick=(e)=>onBoardClickB(e);
+}
+function clearBGhost(){ const g=document.getElementById('bghostPRO'); if(g) g.style.display='none'; }
+function svgPointB(e){
+  const host=document.getElementById('scoreB');
+  const svg=host.querySelector('svg'); if(!svg||!bMeta) return null;
+  const rect=svg.getBoundingClientRect();
+  const vb=svg.viewBox.baseVal;
+  const sx=vb.width/rect.width, sy=vb.height/rect.height;
+  return {host, svg, rect, vx:(e.clientX-rect.left)*sx, vy:(e.clientY-rect.top)*sy+vb.y};
+}
+function onBoardHoverB(e){
+  const p=svgPointB(e); if(!p){ clearBGhost(); return; }
+  const near=nearestMidiByY(p.vy); if(!near){ clearBGhost(); return; }
+  // compás bajo el cursor
+  let ci=0,bd=1e9; bMeta.noteX.forEach((nx,i)=>{ if(nx==null)return; const d=Math.abs(nx-p.vx); if(d<bd){bd=d;ci=i;} });
+  const xGhost=bMeta.noteX[ci]; if(xGhost==null){ clearBGhost(); return; }
+  const yGhost=near.y;
+  let g=document.getElementById('bghostPRO');
+  if(!g){ g=document.createElement('div'); g.id='bghostPRO';
+    g.style.cssText='position:absolute;pointer-events:none;z-index:6;width:13px;height:11px;border:2px solid var(--gold-soft);border-radius:50%;box-sizing:border-box;opacity:.85';
+    p.host.appendChild(g); }
+  try{
+    const pt=p.svg.createSVGPoint(); pt.x=xGhost; pt.y=yGhost;
+    const sp=pt.matrixTransform(p.svg.getScreenCTM());
+    g.style.left=(sp.x-p.rect.left-6)+'px'; g.style.top=(sp.y-p.rect.top-5)+'px'; g.style.display='block';
+  }catch(err){ g.style.display='none'; }
+}
+function nearestMidiByY(my){
+  if(!bMeta||!bMeta.ymap) return null;
+  let best=null,bd=1e9;
+  for(const k in bMeta.ymap){ const e=bMeta.ymap[k]; const d=Math.abs(e.y-my); if(d<bd){bd=d;best=e;} }
+  return best;
+}
+function onBoardClickB(e){
+  const host=document.getElementById('scoreB');
+  const svg=host.querySelector('svg'); if(!svg||!bMeta) return;
+  const rect=svg.getBoundingClientRect();
+  const px=e.clientX-rect.left, py=e.clientY-rect.top;
+  // escala viewBox -> px
+  const vb=svg.viewBox.baseVal;
+  const sx=vb.width/rect.width, sy=vb.height/rect.height;
+  const vx=px*sx, vy=py*sy + vb.y;
+  // ¿en qué compás? por cercanía a noteX
+  let ci=0,bd=1e9;
+  bMeta.noteX.forEach((nx,i)=>{ if(nx==null)return; const d=Math.abs(nx-vx); if(d<bd){bd=d;ci=i;} });
+  const near=nearestMidiByY(vy);
+  if(!near) return;
+  const nat=midiToNatural(midiNota(near.step,near.octave,0));
+  respB[ci]={step:near.step,octave:near.octave,alter:0};
+  dataB[ci].n2={...respB[ci]}; dataB[ci]._userPlaced=true; dataB[ci]._solB=false;
+  redrawB(); renderAnswersB();
+}
+function setAltB(i,alter){
+  const r=respB[i]; if(!r) return;
+  respB[i]={step:r.step,octave:r.octave,alter};
+  dataB[i].n2={...respB[i]}; dataB[i]._userPlaced=true;
+  redrawB(); renderAnswersB();
+}
+function renderAnswersB(){
+  const host=document.getElementById('answersB'); host.innerHTML='';
+  dataB.forEach((it,i)=>{
+    const cell=document.createElement('div'); cell.className='ans-cell'; cell.id='ansB'+i;
+    const lbl=document.createElement('div'); lbl.style.cssText='font-size:13px;font-weight:800;color:var(--gold-soft)';
+    lbl.textContent=it.num+ESP_LABEL[it.code]+(it.direccion==='asc'?' ↑':' ↓');
+    cell.appendChild(lbl);
+    const r=respB[i];
+    const cur=document.createElement('div'); cur.style.cssText='font-size:12px;color:var(--muted);min-height:16px';
+    cur.textContent = r? noteName(r) : '—';
+    cell.appendChild(cur);
+    const accRow=document.createElement('div'); accRow.className='accrow';
+    const mk=(txt,a,cls)=>{ const b=document.createElement('button'); b.className='acc-btn'+(cls?(' '+cls):''); b.textContent=txt;
+      b.onclick=()=>setAltB(i,a); return b; };
+    accRow.appendChild(mk('𝄫',-2));            // doble bemol
+    accRow.appendChild(mk('♭',-1));            // bemol
+    accRow.appendChild(mk('♮',0));             // becuadro
+    accRow.appendChild(mk('♯',1));             // sostenido
+    accRow.appendChild(mk('x',2,'acc-x'));     // doble sostenido como "x"
+    cell.appendChild(accRow);
+    const tag=document.createElement('div'); tag.className='sol'; cell.appendChild(tag);
+    host.appendChild(cell);
+  });
+}
+function corregirB(){
+  lockCard('cardB');
+  dataB.forEach((it,i)=>{
+    const cell=document.getElementById('ansB'+i);
+    const want=it._n2cat; const got=respB[i];
+    const ok = got && got.step===want.step && got.octave===want.octave && got.alter===want.alter;
+    cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+    cell.querySelector('.sol').textContent = ok?'✓':('Era: '+noteName(want));
+    if(!ok){ dataB[i].n2={...want}; dataB[i]._solB=true; dataB[i]._okGreen=false; }
+    else { dataB[i]._okGreen=true; dataB[i]._solB=false; }
+  });
+  bMeta=dibujarCompases('scoreB', dataB.map(it=> it.n2? {...it}:{...it,n2:null}), {modoB:true});
+  setupBoardB();
+}
+
+function nuevoIVTODO(){ nuevoA(); nuevoB(); }
+
+/* exponer al ámbito global (onclick del HTML) */
+window.nuevoA=nuevoA; window.corregirA=corregirA; window.redrawA=redrawA;
+window.nuevoB=nuevoB; window.corregirB=corregirB; window.redrawB=redrawB;
+window.nuevoIVTODO=nuevoIVTODO;
+})();
+</script>
+
+<!-- ====== ESCALAS PRO: motor (3 tarjetas independientes) ====== -->
+<script>
+(function(){
+const VF = Vex.Flow;
+const RNG=Math.random;
+function rint(n){return Math.floor(RNG()*n);}
+function pick(a){return a[rint(a.length)];}
+function chance(p){return RNG()<p;}
+
+const STEPS=["C","D","E","F","G","A","B"];
+const STEP_ST={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+function midiNota(s,o,a){return 12*(o+1)+STEP_ST[s]+a;}
+function accStr(a){return a===1?"#":a===-1?"b":a===2?"##":a===-2?"bb":"n";}
+function notaToKey(nb){
+  const acc=nb.alter===1?"#":nb.alter===-1?"b":nb.alter===2?"##":nb.alter===-2?"bb":"";
+  return nb.step.toLowerCase()+acc+"/"+nb.octave;
+}
+const KS_VF={0:'C',1:'G',2:'D',3:'A',4:'E',5:'B',6:'F#',7:'C#','-1':'F','-2':'Bb','-3':'Eb','-4':'Ab','-5':'Db','-6':'Gb','-7':'Cb'};
+function diatonicStep(midi){
+  const pcToStep={0:0,2:1,4:2,5:3,7:4,9:5,11:6,1:0,3:1,6:3,8:4,10:5};
+  const pc=((midi%12)+12)%12; const oct=Math.floor(midi/12)-1;
+  return oct*7+pcToStep[pc];
+}
+function midiToNatural(midi){
+  const names=[["C",0],["C",1],["D",0],["E",-1],["E",0],["F",0],["F",1],["G",0],["A",-1],["A",0],["B",-1],["B",0]];
+  const pc=((midi%12)+12)%12; const oct=Math.floor(midi/12)-1;
+  const [step,alter]=names[pc];
+  return {step,octave:oct,alter};
+}
+function fitSvgToContent(host, W){
+  try{
+    const svg=host.querySelector('svg'); if(!svg) return;
+    const bb=svg.getBBox(); const pad=10;
+    const top=Math.max(0,bb.y-pad); const newH=bb.height+pad*2;
+    svg.setAttribute('viewBox','0 '+top+' '+W+' '+newH);
+    svg.setAttribute('height',newH); svg.setAttribute('width',W);
+  }catch(e){}
+}
+const ORDEN_SOST=["F","C","G","D","A","E","B"];
+const ORDEN_BEM=["B","E","A","D","G","C","F"];
+function armAlterFor(step,fifths){
+  if(fifths>0) return ORDEN_SOST.slice(0,fifths).includes(step)?1:0;
+  if(fifths<0) return ORDEN_BEM.slice(0,-fifths).includes(step)?-1:0;
+  return 0;
+}
+
+/* ===== RUEDA iOS (igual que intervalos PRO) ===== */
+
+/* ===== datos de escalas ===== */
+const ESC_TONICAS=[
+  {nom:"La",s:"A",o:3},{nom:"Si",s:"B",o:3},{nom:"Do",s:"C",o:4},{nom:"Re",s:"D",o:4},
+  {nom:"Mi",s:"E",o:4},{nom:"Fa",s:"F",o:4},{nom:"Sol",s:"G",o:4},
+];
+const ESC_TIPOS=["menor natural","menor armónica","menor melódica","menor dórica"];
+const ESC_PESOS={"menor natural":1,"menor armónica":3,"menor melódica":3,"menor dórica":3};
+const ESC_PATRONES={
+  "menor natural":[0,2,3,5,7,8,10],"menor armónica":[0,2,3,5,7,8,11],
+  "menor melódica":[0,2,3,5,7,9,11],"menor dórica":[0,2,3,5,7,9,10],
+};
+const MINOR_FIFTHS={C:-3,D:-1,E:1,F:-4,G:-2,A:0,B:2};
+const ESC_TIPOS_MAY=["Mayor tipo 1","Mayor tipo 2","Mayor tipo 3","Mayor tipo 4"];
+const ESC_PESOS_MAY={"Mayor tipo 1":1,"Mayor tipo 2":3,"Mayor tipo 3":3,"Mayor tipo 4":3};
+const ESC_PATRONES_MAY={
+  "Mayor tipo 1":[0,2,4,5,7,9,11],"Mayor tipo 2":[0,2,4,5,7,8,11],
+  "Mayor tipo 3":[0,2,4,5,7,8,10],"Mayor tipo 4":[0,2,4,5,7,9,10],
+};
+const MAJOR_FIFTHS={C:0,D:2,E:4,F:-1,G:1,A:3,B:5};
+function escVarNotas(fam,s,o){
+  const it=STEPS.indexOf(s), mt=midiNota(s,o,0);
+  function build(idxs,semis){
+    return idxs.map(i=>{ const idx=(it+i)%7, oc=o+Math.floor((it+i)/7), st=STEPS[idx];
+      return {step:st,octave:oc,alter:mt+semis[i]-midiNota(st,oc,0)}; });
+  }
+  if(fam==='pentatonica_may') return build([0,1,2,4,5],[0,2,4,5,7,9,11]);
+  if(fam==='pentatonica_men') return build([0,2,3,4,6],[0,2,3,5,7,8,10]);
+  if(fam==='hexatona'){ const semis=[0,2,4,6,8,10]; const out=[];
+    for(let i=0;i<6;i++){ const idx=(it+i)%7,oc=o+Math.floor((it+i)/7),st=STEPS[idx]; out.push({step:st,octave:oc,alter:mt+semis[i]-midiNota(st,oc,0)}); }
+    return out; }
+  if(fam==='cromatica'){ const out=[]; for(let k=0;k<12;k++) out.push({midi:mt+k}); return out; }
+  return [];
+}
+function escGenerarNotas(s,o,patron){
+  const midiTon=midiNota(s,o,0); const idxTon=STEPS.indexOf(s); const notas=[];
+  for(let i=0;i<patron.length;i++){
+    const idx=(idxTon+i)%7; const octava=o+Math.floor((idxTon+i)/7); const step=STEPS[idx];
+    const alter=midiTon+patron[i]-midiNota(step,octava,0);
+    notas.push({step,octave:octava,alter});
+  }
+  return notas;
+}
+function escItem7(familia){
+  const ton=pick(ESC_TONICAS);
+  const tipos = familia==='mayor'?ESC_TIPOS_MAY:ESC_TIPOS;
+  const pesos = familia==='mayor'?ESC_PESOS_MAY:ESC_PESOS;
+  const patrones = familia==='mayor'?ESC_PATRONES_MAY:ESC_PATRONES;
+  const pool=[]; tipos.forEach(t=>{ for(let i=0;i<pesos[t];i++) pool.push(t); });
+  const tipo=pick(pool);
+  const notasSol=escGenerarNotas(ton.s,ton.o,patrones[tipo]);
+  const userSeq=notasSol.map(n=>({step:n.step,octave:n.octave,alter:0}));
+  const t0=notasSol[0]; userSeq.push({step:t0.step,octave:t0.octave+1,alter:0,_opt:true});
+  return {familia, _variable:true, _precolocada:true, tonica:ton, tipo,
+          notasSol, nNotas:notasSol.length, userSeq, _selVar:null, userArm:null,
+          fifths:(familia==='mayor'?MAJOR_FIFTHS[ton.s]:MINOR_FIFTHS[ton.s])};
+}
+function escNombreVar(f){
+  if(f==='pentatonica'||f==='pentatonica_may'||f==='pentatonica_men') return 'pentatónica';
+  return f==='hexatona'?'hexátona':'cromática';
+}
+function escItemVariable(fam){
+  const ton=pick(ESC_TONICAS);
+  let subfam=fam, etiqueta='';
+  if(fam==='pentatonica'){
+    subfam = chance(0.5)?'pentatonica_may':'pentatonica_men';
+    etiqueta = subfam==='pentatonica_may'?'pentatónica Mayor':'pentatónica menor';
+  } else if(fam==='hexatona'){ etiqueta='hexátona'; }
+  else { etiqueta='cromática'; }
+  const sol=escVarNotas(subfam,ton.s,ton.o);
+  const it={familia:fam, subfam, _variable:true, tonica:ton, tipo:etiqueta,
+            notasSol:sol, nNotas:sol.length, userSeq:[], _selVar:null, sinArmadura:(fam!=='pentatonica')};
+  if(fam==='pentatonica'){
+    it._conArmadura=true; it.userArm=null;
+    it.fifths = subfam==='pentatonica_may' ? (MAJOR_FIFTHS[ton.s]||0) : (MINOR_FIFTHS[ton.s]||0);
+  }
+  return it;
+}
+let dataESC=[null,null,null,null];
+let escVarGeom={};
+const ESC_TITULOS=['Escalas menores','Escalas mayores','Otras escalas'];
+function nuevoESCi(i){
+  unlockCard('cardESC'+i);
+  if(i===0){ let it,prev=dataESC[0]?dataESC[0].tipo:null,n=0;
+    do{ it=escItem7('menor'); n++; }while(it.tipo===prev && n<30); dataESC[0]=it; }
+  else if(i===1){ let it,prev=dataESC[1]?dataESC[1].tipo:null,n=0;
+    do{ it=escItem7('mayor'); n++; }while(it.tipo===prev && n<30); dataESC[1]=it; }
+  else { const fam=pick(['pentatonica','hexatona','cromatica']); dataESC[2]=escItemVariable(fam); }
+  const e=dataESC[i]; e._corregido=false; e._solVisible=false; e._okGreen=false;
+  renderESCi(i);
+}
+function nuevoESCtodos(){ for(let i=0;i<3;i++) nuevoESCi(i); }
+function renderESCi(i){
+  if(i===3){ if(typeof renderMODO==='function') renderMODO(); return; }
+  const e=dataESC[i]; if(!e) return;
+  const host=document.getElementById('escRows'+i); if(!host) return; host.innerHTML='';
+  const row=document.createElement('div'); row.className='gr-row';
+  const ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC'+i;
+  const preg=document.createElement('div'); preg.className='gr-preg';
+  preg.textContent = e.tonica.nom+' '+e.tipo;
+  ans.appendChild(preg);
+  buildEscVarControls(ans, e, i);
+  const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
+  ans.appendChild(tag);
+  const sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC'+i;
+  row.appendChild(ans); row.appendChild(sc);
+  host.appendChild(row);
+  renderESCStaveOne(i);
+}
+function renderESC(){ for(let i=0;i<3;i++) if(dataESC[i]) renderESCi(i); }
+/* controles para menores/mayores: rueda de armadura + alteración de 6º y 7º */
+function buildEscEditControls(ans, e, i){
+  const ctrl=document.createElement('div'); ctrl.style.cssText='display:flex;gap:14px;align-items:center;justify-content:center;margin-top:4px;flex-wrap:wrap';
+  const armCol=document.createElement('div'); armCol.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px';
+  const armCap=document.createElement('div'); armCap.style.cssText='font-size:10px;color:var(--muted2)'; armCap.textContent='Armadura';
+  const wArm=document.createElement('div'); wArm.className='wheel'; wArm.style.height='90px';
+  armCol.appendChild(armCap); armCol.appendChild(wArm);
+  const edCol=document.createElement('div'); edCol.style.cssText='display:flex;gap:8px';
+  [5,6].forEach(gi=>{
+    const box=document.createElement('div'); box.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px';
+    const cap=document.createElement('div'); cap.style.cssText='font-size:10px;color:var(--muted2)'; cap.textContent=(gi+1)+'º';
+    const btns=document.createElement('div'); btns.className='esc-acc-group'; btns.dataset.i=i; btns.dataset.g=gi;
+    btns.style.cssText='display:flex;flex-direction:column;gap:3px';
+    [['♯',1],['♮',0],['♭',-1]].forEach(([sym,a])=>{   // ♯ arriba, ♭ abajo
+      const b=document.createElement('button'); b.className='acc-btn esc-acc'; b.style.cssText='min-width:32px;height:30px;font-size:16px';
+      b.textContent=sym; b.dataset.i=i; b.dataset.g=gi; b.dataset.a=a;
+      if(e.userNotas[gi].alter===a) b.classList.add('on');
+      b.addEventListener('click',()=>{
+        e.userNotas[gi].alter=a; e.userNotas[gi]._touched=true;
+        renderESCStaveOne(i);
+        btns.querySelectorAll('.esc-acc').forEach(x=>x.classList.toggle('on',+x.dataset.a===a));
+      });
+      btns.appendChild(b);
+    });
+    box.appendChild(cap); box.appendChild(btns); edCol.appendChild(box);
+  });
+  ctrl.appendChild(armCol); ctrl.appendChild(edCol);
+  ans.appendChild(ctrl);
+  const items=[]; for(let f=7;f>=-7;f--) items.push(f===0?'0':(f>0?f+'♯':Math.abs(f)+'♭'));
+  makeWheel(wArm,items,7,(idx)=>{ e.userArm=7-idx; applyArmToNotes(i); renderESCStaveOne(i); refreshEscAccButtons(i,edCol); });
+}
+/* actualiza qué botón ♭/♮/♯ está activo en 6º y 7º según la alteración actual */
+function refreshEscAccButtons(i,edCol){
+  const e=dataESC[i];
+  edCol.querySelectorAll('.esc-acc-group').forEach(grp=>{
+    const gi=+grp.dataset.g;
+    grp.querySelectorAll('.esc-acc').forEach(b=>b.classList.toggle('on', e.userNotas[gi].alter===+b.dataset.a));
+  });
+}
+/* controles unificados: armadura (precolocada/pentatónica) y/o panel ♯/♮/♭ */
+function buildEscVarControls(ans, e, i){
+  const pre=e._precolocada===true;
+  const conArm = pre || e._conArmadura===true;   // tiene rueda de armadura
+  const conPanel = !e._conArmadura;              // pentatónica NO tiene panel de alteraciones
+  const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:14px;align-items:center;justify-content:center;margin-top:4px;flex-wrap:wrap';
+  if(conArm){
+    const armCol=document.createElement('div'); armCol.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px';
+    const armCap=document.createElement('div'); armCap.style.cssText='font-size:10px;color:var(--muted2)'; armCap.textContent='Armadura';
+    const wArm=document.createElement('div'); wArm.className='wheel'; wArm.style.height='90px';
+    armCol.appendChild(armCap); armCol.appendChild(wArm);
+    wrap.appendChild(armCol);
+    const items=[]; for(let f=7;f>=-7;f--) items.push(f===0?'0':(f>0?f+'♯':Math.abs(f)+'♭'));
+    const startIdx = (e.userArm!=null)? (7-e.userArm) : 7;
+    makeWheel(wArm,items,startIdx,(idx)=>{ e.userArm=7-idx; if(pre) applyArmToSeq(i); renderESCi(i); });
+  }
+  const right=document.createElement('div'); right.style.cssText='display:flex;flex-direction:column;gap:5px;align-items:center';
+  const rowWrap=document.createElement('div'); rowWrap.style.cssText='display:flex;gap:8px;align-items:center;justify-content:center';
+  let accRow=null;
+  if(conPanel){
+    accRow=document.createElement('div'); accRow.style.cssText='display:flex;flex-direction:column;gap:4px';
+    accRow.innerHTML='<button class="acc-btn esc-var-acc" data-i="'+i+'" data-a="1">♯</button>'+
+                     '<button class="acc-btn esc-var-acc" data-i="'+i+'" data-a="0">♮</button>'+
+                     '<button class="acc-btn esc-var-acc" data-i="'+i+'" data-a="-1">♭</button>';
+    rowWrap.appendChild(accRow);
+  }
+  right.appendChild(rowWrap);
+  wrap.appendChild(right);
+  ans.appendChild(wrap);
+  if(accRow){
+    refreshEscVarAcc(e,accRow);
+    accRow.querySelectorAll('.esc-var-acc').forEach(b=>b.addEventListener('click',()=>{
+      const a=+b.dataset.a;
+      if(e._selVar!=null && e.userSeq[e._selVar]){
+        e.userSeq[e._selVar].alter=a; e.userSeq[e._selVar]._touched=true; e.userSeq[e._selVar]._inherited=false; e._okGreen=false; unlockCard('cardESC'+i); unlockCard('cardMODO');
+        renderESCi(i);
+      } else if(!pre){
+        escPendingAlt[i]=(escPendingAlt[i]===a)?0:a;
+        accRow.querySelectorAll('.esc-var-acc').forEach(x=>x.classList.toggle('on',+x.dataset.a===escPendingAlt[i] && escPendingAlt[i]!==0));
+      }
+    }));
+  }
+}
+/* aplica la armadura a las notas de userSeq que el alumno no haya tocado a mano */
+function applyArmToSeq(i){
+  const e=dataESC[i];
+  e.userSeq.forEach(n=>{ if(n._touched!==true){ n.alter=armAlterFor(n.step, e.userArm||0); } });
+}
+/* marca el botón ♯/♮/♭ que corresponde a la alteración de la nota seleccionada */
+function refreshEscVarAcc(e,accRow){
+  if(e._selVar!=null && e.userSeq[e._selVar]){
+    const a=e.userSeq[e._selVar].alter||0;
+    accRow.querySelectorAll('.esc-var-acc').forEach(x=>x.classList.toggle('on',+x.dataset.a===a));
+  } else {
+    accRow.querySelectorAll('.esc-var-acc').forEach(x=>x.classList.remove('on'));
+  }
+}
+function renderESCStaveOne(i){
+  const e=dataESC[i];
+  const host=document.getElementById('scoreESC'+i); if(!host) return; host.innerHTML='';
+  const mostrarSol = e._solVisible===true;
+  const W=host.clientWidth||520, H=mostrarSol?210:120;
+  const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+  const ctx=r.getContext();
+  const stave=new VF.Stave(8,12,W-16);
+  stave.addClef("treble");
+  stave.setEndBarType(VF.Barline.type.DOUBLE);
+  if((e._precolocada||e._conArmadura) && e.userArm!=null && e.userArm!==0) stave.addKeySignature(KS_VF[String(e.userArm)]);
+  stave.setContext(ctx).draw();
+  if(e._variable){
+    // dibujar notas colocadas; la seleccionada va en rosa.
+    // Rellenamos con notas-fantasma invisibles hasta nNotas para que el
+    // formatter reparta el ancho según el TOTAL final (5, 6 o 12 notas).
+    let noteXs=[];
+    const realCount=e.userSeq.length;
+    const realNotes=e.userSeq.map((nb,k)=>{
+      const sn=new VF.StaveNote({keys:[notaToKey(nb)],duration:"w",clef:"treble"});
+      const armA = (e._precolocada||e._conArmadura) ? armAlterFor(nb.step, e.userArm||0) : 0;
+      // regla de compás (escalas sin armadura): si esta nota es natural pero una nota
+      // anterior de la MISMA letra+octava estaba alterada, hay que escribir el becuadro.
+      let forzarBecuadro=false;
+      if(!e._precolocada && !e._conArmadura && nb.alter===0){
+        for(let j=k-1;j>=0;j--){ const pv=e.userSeq[j]; if(pv._opt) continue;
+          if(pv.step===nb.step && pv.octave===nb.octave){ if(pv.alter!==0) forzarBecuadro=true; break; } }
+      }
+      // dibuja accidental si: no es heredado y difiere de la armadura, O hay que forzar becuadro
+      if(forzarBecuadro){ sn.addModifier(new VF.Accidental("n"),0); }
+      else if(!nb._inherited && nb.alter!==armA){ sn.addModifier(new VF.Accidental(accStr(nb.alter)),0); }
+      if(nb._opt){
+        sn.setStyle({fillStyle:"#9aa3c0",strokeStyle:"#9aa3c0"});
+        try{ sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.LEFT),0);
+             sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.RIGHT),0); }catch(err){}
+      } else if(e._okGreen){ sn.setStyle({fillStyle:"#2faa6a",strokeStyle:"#2faa6a"}); }
+      else if(k===e._selVar) sn.setStyle({fillStyle:"#e9c96a",strokeStyle:"#e9c96a"});
+      return sn;
+    });
+    const fillCount=Math.max(0, e.nNotas-realCount);
+    const fillers=[];
+    for(let k=0;k<fillCount;k++){
+      try{ fillers.push(new VF.GhostNote({duration:"w"})); }
+      catch(err){ // fallback: nota invisible
+        const gn=new VF.StaveNote({keys:["b/4"],duration:"w",clef:"treble"});
+        gn.setStyle({fillStyle:"rgba(0,0,0,0)",strokeStyle:"rgba(0,0,0,0)"}); fillers.push(gn);
+      }
+    }
+    const allNotes=realNotes.concat(fillers);
+    if(allNotes.length){
+      const voice=new VF.Voice({num_beats:allNotes.length*4,beat_value:4}).setStrict(false);
+      voice.addTickables(allNotes);
+      new VF.Formatter().joinVoices([voice]).format([voice], W-90);
+      voice.draw(ctx,stave);
+      noteXs=realNotes.map((sn,k)=>{ if(e.userSeq[k] && e.userSeq[k]._opt) return null; try{return sn.getAbsoluteX();}catch(err){return null;} });
+      // Y de cada nota (centro de la cabeza) para acotar el hover a la redonda
+      buildEscYMap(i, stave);
+      const noteYs=e.userSeq.map((nb,k)=>{ if(nb._opt) return null; return escYReal(i,nb.step,nb.octave); });
+      let nextX=null;
+      if(fillers.length){ try{ nextX=fillers[0].getAbsoluteX(); }catch(err){} }
+      escVarGeom[i]={hostId:'scoreESC'+i, noteXs, noteYs, nextX};
+      escWireVarOne(i);
+    } else {
+      buildEscYMap(i, stave);
+      escVarGeom[i]={hostId:'scoreESC'+i, noteXs, noteYs:[], nextX:null};
+      escWireVarOne(i);
+    }
+  } else {
+    const notas=e.userNotas.map((n,gi)=>{
+      const sn=new VF.StaveNote({keys:[notaToKey(n)],duration:"w",clef:"treble"});
+      const armAlter=armAlterFor(n.step, e.userArm||0);
+      if(n.alter!==armAlter) sn.addModifier(new VF.Accidental(accStr(n.alter)),0);
+      if(n._opt){
+        sn.setStyle({fillStyle:"#9aa3c0",strokeStyle:"#9aa3c0"});
+        try{ sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.LEFT),0);
+             sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.RIGHT),0); }catch(err){}
+      } else if(n.editable){ sn.setStyle({fillStyle:"#5b9dff",strokeStyle:"#5b9dff"}); }
+      return sn;
+    });
+    const voice=new VF.Voice({num_beats:32,beat_value:4}).setStrict(false);
+    voice.addTickables(notas);
+    new VF.Formatter().joinVoices([voice]).format([voice], W-90);
+    voice.draw(ctx,stave);
+  }
+  // pentagrama de SOLUCIÓN (en azul) debajo, cuando hay fallo
+  if(mostrarSol){
+    const solStave=new VF.Stave(8, 120, W-16);
+    solStave.addClef("treble");
+    solStave.setEndBarType(VF.Barline.type.DOUBLE);
+    if((e._precolocada||e._conArmadura) && e.fifths!==0) solStave.addKeySignature(KS_VF[String(e.fifths)]);
+    solStave.setContext(ctx).draw();
+    const solNotes=e.notasSol.map(x=>{
+      let nb = x.midi!=null ? midiToNatural(x.midi) : {step:x.step,octave:x.octave,alter:x.alter};
+      const sn=new VF.StaveNote({keys:[notaToKey(nb)],duration:"w",clef:"treble"});
+      const armA = (e._precolocada||e._conArmadura) ? armAlterFor(nb.step, e.fifths) : 0;
+      if(nb.alter!==armA) sn.addModifier(new VF.Accidental(accStr(nb.alter)),0);
+      sn.setStyle({fillStyle:"#5b9dff",strokeStyle:"#5b9dff"});
+      return sn;
+    });
+    try{
+      const sv=new VF.Voice({num_beats:solNotes.length*4,beat_value:4}).setStrict(false);
+      sv.addTickables(solNotes);
+      new VF.Formatter().joinVoices([sv]).format([sv], W-90);
+      sv.draw(ctx,solStave);
+    }catch(err){}
+  }
+  fitSvgToContent(host, W);
+}
+/* mapa midi->y real para el ghost de escalas variables (mismo método que intervalos) */
+let escYMaps={};
+function buildEscYMap(i, stave){
+  try{
+    const yTop=stave.getYForLine(0), yBot=stave.getYForLine(4);
+    const half=(yBot-yTop)/8;
+    const refStep=diatonicStep(midiNota("F",5,0));
+    const map={};
+    for(let oct=3;oct<=6;oct++){
+      for(const st of STEPS){
+        const m=midiNota(st,oct,0);
+        if(m<53||m>86) continue;
+        const ds=diatonicStep(m);
+        map[st+oct]={step:st,octave:oct,y:yTop+(refStep-ds)*half};
+      }
+    }
+    escYMaps[i]=map;
+  }catch(e){}
+}
+/* armAlterFor: definido en cabecera del IIFE */
+/* al poner armadura, las notas no editables (1-5) toman la alteración de la armadura;
+   las editables (6,7) parten también de la armadura pero el alumno las ajusta */
+function applyArmToNotes(i){
+  const e=dataESC[i];
+  e.userNotas.forEach((n,gi)=>{
+    const a=armAlterFor(n.step, e.userArm||0);
+    if(!n.editable){ n.alter=a; }
+    else if(n._touched!==true){ n.alter=a; }
+  });
+}
+function corregirESCVar(e,i,cell){
+  const tag=cell.querySelector('.sol');
+  // hexátona y cromática se corrigen por ALTURA (acepta enarmonías); el resto por grafía
+  const porAltura = (e.familia==='cromatica' || e.familia==='hexatona');
+  const sol=e.notasSol;
+  let got=e.userSeq.filter(n=>!n._opt);   // excluir 8ª opcional
+  let notasOk = got.length===sol.length;
+  if(notasOk){
+    if(porAltura){
+      // comparar por ALTURA, ordenando ambas secuencias (acepta enarmonías y orden libre)
+      const midis = arr=>arr.map(x=> x.midi!=null?x.midi:midiNota(x.step,x.octave,x.alter)).sort((a,b)=>a-b);
+      const ms=midis(sol), mg=midis(got);
+      for(let k=0;k<ms.length;k++){ if(ms[k]!==mg[k]){ notasOk=false; break; } }
+    } else {
+      for(let k=0;k<sol.length;k++){
+        if(got[k].step!==sol[k].step||got[k].octave!==sol[k].octave||got[k].alter!==sol[k].alter){ notasOk=false; break; }
+      }
+    }
+  }
+  // armadura: se evalúa en precolocadas y en pentatónica
+  const pre = (e._precolocada===true) || (e._conArmadura===true);
+  const armOk = pre ? ((e.userArm||0)===e.fifths) : true;
+  const ok = notasOk && armOk;
+  cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+  // guardar estado para dibujar la solución en azul en el pentagrama si hay fallo
+  e._corregido=true; e._solVisible = !ok; e._okGreen = ok;
+  renderESCStaveOne(i);
+  // texto: solo "Solución" en azul (las notas/armadura van dibujadas en el pentagrama)
+  if(ok){ tag.style.color='var(--green)'; tag.textContent='✓'; }
+  else {
+    tag.style.color='#5b9dff';
+    tag.textContent = pre && !armOk ? 'Solución (armadura y notas en azul)' : 'Solución (en azul)';
+  }
+}
+let escPendingAlt={};
+function escWireVarOne(i){
+  const host=document.getElementById('scoreESC'+i); if(!host||host._escWired) return; host._escWired=true;
+  host.style.position='relative';
+  host.addEventListener('mousemove',(ev)=>onEscHover(i,ev));
+  host.addEventListener('mouseleave',()=>clearEscGhost(i));
+  host.addEventListener('click',(ev)=>onEscClick(i,ev));
+  // clic derecho = borrar la última nota (solo en escalas con ghost, no precolocadas)
+  host.addEventListener('contextmenu',(ev)=>{
+    const e=dataESC[i]; if(e._precolocada){ return; }
+    ev.preventDefault();
+    if(e.userSeq.length){ e.userSeq.pop(); e._selVar=(e.userSeq.length?e.userSeq.length-1:null); renderESCi(i); }
+  });
+}
+function escNearestByY(i,my){
+  const map=escYMaps[i]; if(!map) return null;
+  let best=null,bd=1e9;
+  for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} }
+  return best;
+}
+function escYReal(i,step,octave){ const map=escYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
+function onEscHover(i,ev){
+  const e=dataESC[i];
+  const host=document.getElementById('scoreESC'+i);
+  const svg=host.querySelector('svg'); if(!svg){clearEscGhost(i);return;}
+  let p; try{ const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; p=pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(err){clearEscGhost(i);return;}
+  // ¿el ratón está sobre una nota ya escrita?
+  const g=escVarGeom[i];
+  if(g && g.noteXs){
+    let hit=-1,bd=14;
+    g.noteXs.forEach((x,k)=>{
+      if(x==null)return;
+      const dx=Math.abs(x-p.x);
+      const y=g.noteYs?g.noteYs[k]:null;
+      // zona asimétrica: estrecha bajo la nota, amplia por arriba (hacia la X de borrado)
+      const above = (y!=null && p.y < y);
+      const dy = y!=null ? (above ? (y-p.y) : (p.y-y)) : 0;
+      const dyMax = above ? 42 : 10;
+      if(dx<16 && dy<dyMax){ const d=dx+dy*0.3; if(d<bd){bd=d;hit=k;} }
+    });
+    if(hit>=0){
+      host.style.cursor='pointer';
+      // X de borrado sobre la nota (sirve para ratón y táctil)
+      showEscDeleteX(i,hit);
+      // tintineo de invitación solo si aún no hay nota seleccionada
+      if(e._selVar==null) setEscHoverNote(i,hit);
+      clearEscGhost(i);
+      return;
+    }
+  }
+  hideEscDeleteX(i);
+  setEscHoverNote(i,null);
+  host.style.cursor='default';
+  // si está completa, no mostramos ghost (ya no quedan notas que añadir)
+  if(e.userSeq.length>=e.nNotas){clearEscGhost(i);return;}
+  const nat=escNearestByY(i,p.y); if(!nat){clearEscGhost(i);return;}
+  showEscGhost(i,nat);
+}
+/* X de borrado flotante sobre una nota */
+function showEscDeleteX(i,k){
+  const e=dataESC[i]; if(e._precolocada) return;   // precolocadas no se borran
+  const host=document.getElementById('scoreESC'+i); if(!host) return;
+  const g=escVarGeom[i]; if(!g||!g.noteXs) return;
+  const svg=host.querySelector('svg'); if(!svg) return;
+  const x=g.noteXs[k], y=g.noteYs?g.noteYs[k]:null; if(x==null||y==null) return;
+  let xbtn=document.getElementById('escDelX'+i);
+  if(!xbtn){
+    xbtn=document.createElement('div'); xbtn.id='escDelX'+i;
+    xbtn.textContent='×';
+    xbtn.style.cssText='position:absolute;z-index:8;width:20px;height:20px;line-height:18px;text-align:center;'+
+      'border-radius:50%;background:rgba(20,24,48,.92);color:#fff;border:1px solid rgba(255,255,255,.5);'+
+      'font-size:15px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)';
+    host.style.position='relative'; host.appendChild(xbtn);
+    xbtn.addEventListener('mouseenter',()=>{ xbtn._over=true; });
+    xbtn.addEventListener('mouseleave',()=>{ xbtn._over=false; setTimeout(()=>{ if(!xbtn._over) xbtn.style.display='none'; },60); });
+  }
+  try{
+    const pt=svg.createSVGPoint(); pt.x=x; pt.y=y;
+    const sp=pt.matrixTransform(svg.getScreenCTM());
+    const hr=host.getBoundingClientRect();
+    xbtn.style.left=(sp.x-hr.left+2)+'px'; xbtn.style.top=(sp.y-hr.top-26)+'px'; xbtn.style.display='block';
+  }catch(err){ xbtn.style.display='none'; return; }
+  xbtn.onclick=(ev)=>{ ev.stopPropagation();
+    e.userSeq.splice(k,1);
+    if(e._selVar===k) e._selVar=null; else if(e._selVar!=null && e._selVar>k) e._selVar--;
+    renderESCi(i);
+  };
+}
+function hideEscDeleteX(i){ const x=document.getElementById('escDelX'+i); if(x && !x._over) x.style.display='none'; }
+/* hover sobre una nota: la pone rosa y la hace tintinear, junto con los botones ♯/♮/♭ */
+let escHoverState={};
+function setEscHoverNote(i,k){
+  if(escHoverState[i]===k) return;
+  escHoverState[i]=k;
+  const host=document.getElementById('scoreESC'+i); if(!host) return;
+  const svg=host.querySelector('svg'); if(!svg) return;
+  const groups=svg.querySelectorAll('.vf-stavenote');
+  groups.forEach((gnode,idx)=>{
+    const on = (idx===k);
+    gnode.classList.toggle('esc-blink', on);
+    // pintar de rosa la nota bajo el cursor
+    gnode.querySelectorAll('path,rect,ellipse').forEach(el=>{
+      if(on){ el.style.fill='#e9c96a'; }
+      else { el.style.fill=''; }
+    });
+  });
+  // botones de alteración del MISMO item tintinean a la vez
+  const ansBtns=document.querySelectorAll('#ansESC'+i+' .esc-var-acc');
+  ansBtns.forEach(b=>b.classList.toggle('acc-tintin', k!=null));
+}
+function clearEscGhost(i){ const g=document.getElementById('escghost'+i); if(g) g.style.display='none';
+  const host=document.getElementById('scoreESC'+i); if(host) host.querySelectorAll('.escghost-ledger').forEach(el=>el.remove()); }
+function escGhostX(i){
+  // X de previsualización: poco después de la última nota escrita
+  const g=escVarGeom[i];
+  if(g && g.noteXs && g.noteXs.length){
+    // última nota real (no opcional) colocada
+    for(let k=g.noteXs.length-1;k>=0;k--){ if(g.noteXs[k]!=null) return g.noteXs[k]+34; }
+  }
+  if(g && g.nextX!=null) return g.nextX;
+  return 78;
+}
+function showEscGhost(i,nat){
+  const host=document.getElementById('scoreESC'+i);
+  let g=document.getElementById('escghost'+i);
+  if(!g){ g=document.createElement('div'); g.id='escghost'+i;
+    g.style.cssText='position:absolute;pointer-events:none;z-index:6;width:12px;height:10px;border:2px solid #e9c96a;border-radius:50%;box-sizing:border-box';
+    host.style.position='relative'; host.appendChild(g); }
+  const svg=host.querySelector('svg'); if(!svg){g.style.display='none';return;}
+  const yInt=escYReal(i,nat.step,nat.octave); if(yInt==null){g.style.display='none';return;}
+  const xInt=escGhostX(i);
+  let hr;
+  try{
+    const pt=svg.createSVGPoint(); pt.x=xInt; pt.y=yInt;
+    const sp=pt.matrixTransform(svg.getScreenCTM());
+    hr=host.getBoundingClientRect();
+    g.style.left=(sp.x-hr.left-6)+'px'; g.style.top=(sp.y-hr.top-5)+'px'; g.style.display='block';
+  }catch(err){ g.style.display='none'; return; }
+  drawEscGhostLedger(i, host, svg, hr, xInt, nat);
+}
+/* líneas adicionales del ghost de escalas (sobre F5 / bajo E4) */
+function drawEscGhostLedger(i, host, svg, hr, xInt, nat){
+  host.querySelectorAll('.escghost-ledger').forEach(el=>el.remove());
+  const map=escYMaps[i]; if(!map) return;
+  const top=map["F5"], bot=map["E4"]; if(!top||!bot) return;
+  const yNote=escYReal(i,nat.step,nat.octave); if(yNote==null) return;
+  const half=(bot.y-top.y)/8;       // medio espacio
+  const lines=[];
+  let y=top.y-2*half; while(y>=yNote-1){ lines.push(y); y-=2*half; }   // arriba
+  y=bot.y+2*half;     while(y<=yNote+1){ lines.push(y); y+=2*half; }   // abajo
+  lines.forEach(yL=>{
+    try{
+      const pt=svg.createSVGPoint(); pt.x=xInt; pt.y=yL;
+      const sp=pt.matrixTransform(svg.getScreenCTM());
+      const ln=document.createElement('div'); ln.className='escghost-ledger';
+      ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:18px;background:#9aa3c0;opacity:.7';
+      ln.style.left=(sp.x-hr.left-10)+'px'; ln.style.top=(sp.y-hr.top-1)+'px';
+      host.appendChild(ln);
+    }catch(e){}
+  });
+}
+function onEscClick(i,ev){
+  const e=dataESC[i];
+  const host=document.getElementById('scoreESC'+i);
+  const svg=host.querySelector('svg'); if(!svg) return;
+  let p; try{ const pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; p=pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(err){ return; }
+  // ¿clic sobre una nota ya colocada? (cerca en X y en Y) -> seleccionarla (rosa)
+  const g=escVarGeom[i];
+  if(g && g.noteXs){
+    let hit=-1,bd=1e9;
+    g.noteXs.forEach((x,k)=>{
+      if(x==null)return;
+      const dx=Math.abs(x-p.x);
+      const y=g.noteYs?g.noteYs[k]:null;
+      const dy=y!=null?Math.abs(y-p.y):0;
+      if(dx<16 && dy<11){ const d=dx+dy; if(d<bd){bd=d;hit=k;} }
+    });
+    if(hit>=0){
+      e._selVar=(e._selVar===hit)?null:hit;  // toggle selección
+      renderESCi(i);
+      return;
+    }
+  }
+  // (no estaba sobre una nota) -> colocar una nueva nota directamente
+  if(e.userSeq.length>=e.nNotas){ if(e._selVar!=null){ e._selVar=null; renderESCi(i); } return; }
+  const nat=escNearestByY(i,p.y); if(nat==null){ return; }
+  let nb={step:nat.step,octave:nat.octave,alter:0};
+  // CONVIVENCIA: hereda la alteración de la última nota de la misma letra+octava ya colocada
+  for(let k=e.userSeq.length-1;k>=0;k--){
+    const prev=e.userSeq[k];
+    if(prev._opt) continue;
+    if(prev.step===nb.step && prev.octave===nb.octave){ nb.alter=prev.alter; nb._inherited=true; break; }
+  }
+  // si hay alteración pendiente fijada en el panel, prevalece (explícita)
+  const pend=escPendingAlt[i];
+  if(pend===1||pend===-1){ nb.alter=pend; nb._inherited=false; }
+  e.userSeq.push(nb); escPendingAlt[i]=0;
+  // cromática y hexátona: la nueva queda SELECCIONADA (rosa) para alterarla al momento,
+  // pero el ghost sigue disponible para seguir colocando
+  const fijaSel = (e.familia==='cromatica' || e.familia==='hexatona');
+  e._selVar = fijaSel ? (e.userSeq.length-1) : null;
+  renderESCi(i);
+}
+
+function corregirESCi(i){
+  const e=dataESC[i]; if(!e) return;
+  if(!e._precolocada && e.userSeq.length<e.nNotas){
+    const ans=document.getElementById('ansESC'+i); const tag=ans.querySelector('.sol');
+    ans.classList.remove('ok','bad'); tag.style.color='#e0a13a';
+    tag.textContent='Te faltan notas: añade las '+e.nNotas+' notas tocando el pentagrama.';
+    return;
+  }
+  lockCard('cardESC'+i);
+  const ans=document.getElementById('ansESC'+i);
+  corregirESCVar(e,i,ans);
+}
+
+
+/* ===== MODOS (índice 3 de dataESC) ===== */
+/* patrones interválicos desde la tónica (semitonos) */
+const MODE_STEPS={
+  jonico:[0,2,4,5,7,9,11], dorico:[0,2,3,5,7,9,10], frigio:[0,1,3,5,7,8,10],
+  lidio:[0,2,4,6,7,9,11], mixolidio:[0,2,4,5,7,9,10], eolico:[0,2,3,5,7,8,10],
+  locrio:[0,1,3,5,6,8,10]
+};
+const MODE_LABEL={jonico:'jónico',dorico:'dórico',frigio:'frigio',lidio:'lidio',mixolidio:'mixolidio',eolico:'eólico',locrio:'locrio'};
+const MODE_ALL=['jonico','dorico','frigio','lidio','mixolidio','eolico','locrio'];
+/* base de armadura: Mayor (jónico/lidio/mixolidio) o menor (resto) */
+const MODE_BASE={jonico:'mayor',lidio:'mayor',mixolidio:'mayor',
+                 dorico:'menor',frigio:'menor',eolico:'menor',locrio:'menor'};
+/* tónicas: 7 blancas + alteradas pedidas (Fa#,Do#,Sol# ; Sib,Mib,Lab) */
+const MODE_TONICAS=[
+  {nom:"Do",s:"C",o:4,alt:0},{nom:"Re",s:"D",o:4,alt:0},{nom:"Mi",s:"E",o:4,alt:0},
+  {nom:"Fa",s:"F",o:4,alt:0},{nom:"Sol",s:"G",o:4,alt:0},{nom:"La",s:"A",o:3,alt:0},{nom:"Si",s:"B",o:3,alt:0},
+  {nom:"Fa♯",s:"F",o:4,alt:1},{nom:"Do♯",s:"C",o:4,alt:1},{nom:"Sol♯",s:"G",o:4,alt:1},
+  {nom:"Si♭",s:"B",o:3,alt:-1},{nom:"Mi♭",s:"E",o:4,alt:-1},{nom:"La♭",s:"A",o:3,alt:-1},
+];
+/* fifths de la armadura base de un modo sobre una tónica (Mayor o menor).
+   Mayor de X = (fifths de X natural mayor) + 7*alt_tónica.
+   menor de X = (fifths de X natural menor) + 7*alt_tónica. */
+function modeBaseFifths(ton, mode){
+  const base=MODE_BASE[mode];
+  const nat = base==='mayor' ? MAJOR_FIFTHS[ton.s] : MINOR_FIFTHS[ton.s];
+  return nat + 7*ton.alt;   // cada sostenido en la tónica añade 7 fifths; cada bemol resta 7
+}
+/* genera las 7 notas reales del modo: letras consecutivas desde la tónica,
+   alteración = diferencia entre el midi del patrón y el natural de esa letra. */
+function modeNotas(ton, mode){
+  const steps=MODE_STEPS[mode];
+  const midiTon=midiNota(ton.s, ton.o, ton.alt);
+  const idxTon=STEPS.indexOf(ton.s);
+  const out=[];
+  for(let i=0;i<7;i++){
+    const idx=(idxTon+i)%7;
+    const octava=ton.o+Math.floor((idxTon+i)/7);
+    const step=STEPS[idx];
+    const alter=midiTon+steps[i]-midiNota(step,octava,0);
+    out.push({step,octave:octava,alter});
+  }
+  return out;
+}
+/* ¿es válida la combinación? armadura base dentro de ±5 */
+function modeValida(ton, mode){
+  const f=modeBaseFifths(ton,mode);
+  if(Math.abs(f)>5) return false;
+  // además, evitar notas con triple alteración en la solución (defensivo)
+  const notas=modeNotas(ton,mode);
+  if(notas.some(n=>Math.abs(n.alter)>2)) return false;
+  return true;
+}
+function escItemModo(){
+  // sortea modo + tónica válidos
+  let ton,mode,intentos=0;
+  do{ mode=pick(MODE_ALL); ton=pick(MODE_TONICAS); intentos++; }
+  while(!modeValida(ton,mode) && intentos<300);
+  if(!modeValida(ton,mode)){ mode='dorico'; ton=MODE_TONICAS[1]; } // fallback Re dórico
+  const notasSol=modeNotas(ton,mode);
+  const userSeq=notasSol.map(n=>({step:n.step,octave:n.octave,alter:0}));
+  const t0=notasSol[0]; userSeq.push({step:t0.step,octave:t0.octave+1,alter:0,_opt:true});
+  return {familia:'modo', _variable:true, _precolocada:true, tonica:ton, tipo:MODE_LABEL[mode],
+          notasSol, nNotas:notasSol.length, userSeq, _selVar:null, userArm:null,
+          fifths:modeBaseFifths(ton,mode), _mode:mode};
+}
+function nuevoMODO(){
+  unlockCard('cardMODO');
+  let it,prev=dataESC[3]?dataESC[3]._mode:null,n=0;
+  do{ it=escItemModo(); n++; }while(it._mode===prev && n<30);
+  dataESC[3]=it; it._corregido=false; it._solVisible=false; it._okGreen=false;
+  renderMODO();
+}
+function renderMODO(){
+  const e=dataESC[3]; if(!e) return;
+  const host=document.getElementById('escRowsM'); if(!host) return; host.innerHTML='';
+  const row=document.createElement('div'); row.className='gr-row';
+  const ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC3';
+  const preg=document.createElement('div'); preg.className='gr-preg';
+  preg.textContent = e.tonica.nom+' '+e.tipo;
+  ans.appendChild(preg);
+  buildEscVarControls(ans, e, 3);
+  const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
+  ans.appendChild(tag);
+  const sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC3';
+  row.appendChild(ans); row.appendChild(sc);
+  host.appendChild(row);
+  renderESCStaveOne(3);
+}
+function corregirMODO(){
+  const e=dataESC[3]; if(!e) return;
+  lockCard('cardMODO');
+  const ans=document.getElementById('ansESC3');
+  corregirESCVar(e,3,ans);
+}
+
+/* exponer al ámbito global (onclick del HTML) */
+window.nuevoESCi=nuevoESCi; window.nuevoESCtodos=nuevoESCtodos;
+window.nuevoMODO=nuevoMODO; window.corregirMODO=corregirMODO; window.renderMODO=renderMODO;
+window.corregirESCi=corregirESCi; window.renderESC=renderESC; window.renderESCi=renderESCi;
+window._escInit=function(){ nuevoESCtodos(); };
+})();
+</script>
+
+<!-- ====== TONALIDADES PRO: motor (calco del elemental, hasta 7 alteraciones) ====== -->
+<script>
+(function(){
+const VF = Vex.Flow;
+const RNG=Math.random;
+function rint(n){return Math.floor(RNG()*n);}
+function pick(a){return a[rint(a.length)];}
+function fitSvgToContent(host, W){
+  try{
+    const svg=host.querySelector('svg'); if(!svg) return;
+    const bb=svg.getBBox(); const pad=10;
+    const top=Math.max(0,bb.y-pad); const newH=bb.height+pad*2;
+    svg.setAttribute('viewBox','0 '+top+' '+W+' '+newH);
+    svg.setAttribute('height',newH); svg.setAttribute('width',W);
+  }catch(e){}
+}
+/* ===== RUEDA iOS ===== */
+
+
+const TONS=[{nom:'DoM',f:0,nota:'Do',alt:'',modo:'M'},{nom:'SolM',f:1,nota:'Sol',alt:'',modo:'M'},{nom:'ReM',f:2,nota:'Re',alt:'',modo:'M'},{nom:'LaM',f:3,nota:'La',alt:'',modo:'M'},{nom:'MiM',f:4,nota:'Mi',alt:'',modo:'M'},{nom:'SiM',f:5,nota:'Si',alt:'',modo:'M'},{nom:'Fa#M',f:6,nota:'Fa',alt:'#',modo:'M'},{nom:'Do#M',f:7,nota:'Do',alt:'#',modo:'M'},{nom:'FaM',f:-1,nota:'Fa',alt:'',modo:'M'},{nom:'SibM',f:-2,nota:'Si',alt:'b',modo:'M'},{nom:'MibM',f:-3,nota:'Mi',alt:'b',modo:'M'},{nom:'LabM',f:-4,nota:'La',alt:'b',modo:'M'},{nom:'RebM',f:-5,nota:'Re',alt:'b',modo:'M'},{nom:'SolbM',f:-6,nota:'Sol',alt:'b',modo:'M'},{nom:'DobM',f:-7,nota:'Do',alt:'b',modo:'M'},{nom:'Lam',f:0,nota:'La',alt:'',modo:'m'},{nom:'Mim',f:1,nota:'Mi',alt:'',modo:'m'},{nom:'Sim',f:2,nota:'Si',alt:'',modo:'m'},{nom:'Fa#m',f:3,nota:'Fa',alt:'#',modo:'m'},{nom:'Do#m',f:4,nota:'Do',alt:'#',modo:'m'},{nom:'Sol#m',f:5,nota:'Sol',alt:'#',modo:'m'},{nom:'Re#m',f:6,nota:'Re',alt:'#',modo:'m'},{nom:'La#m',f:7,nota:'La',alt:'#',modo:'m'},{nom:'Rem',f:-1,nota:'Re',alt:'',modo:'m'},{nom:'Solm',f:-2,nota:'Sol',alt:'',modo:'m'},{nom:'Dom',f:-3,nota:'Do',alt:'',modo:'m'},{nom:'Fam',f:-4,nota:'Fa',alt:'',modo:'m'},{nom:'Sibm',f:-5,nota:'Si',alt:'b',modo:'m'},{nom:'Mibm',f:-6,nota:'Mi',alt:'b',modo:'m'},{nom:'Labm',f:-7,nota:'La',alt:'b',modo:'m'}];
+const KS_VF={0:'C',1:'G',2:'D',3:'A',4:'E',5:'B',6:'F#',7:'C#','-1':'F','-2':'Bb','-3':'Eb','-4':'Ab','-5':'Db','-6':'Gb','-7':'Cb'};
+const PESOS_ALT={0:4,1:10,2:10,3:10,4:10,5:10,6:8,7:6};
+
+const NOTAS_ES=["Do","Re","Mi","Fa","Sol","La","Si"];
+function tonPorClave(f,modo){ return TONS.find(t=>t.f===f && t.modo===modo); }
+function vecinos(t){
+  // t es objeto TONS. Devuelve 5 nombres (relativa, dom, dom-rel, subdom, subdom-rel)
+  const otroModo=t.modo==='M'?'m':'M';
+  const out=[];
+  const rel=tonPorClave(t.f,otroModo); if(rel) out.push(rel);
+  const dom=tonPorClave(t.f+1,t.modo); if(dom) out.push(dom);
+  const domR=tonPorClave(t.f+1,otroModo); if(domR) out.push(domR);
+  const sub=tonPorClave(t.f-1,t.modo); if(sub) out.push(sub);
+  const subR=tonPorClave(t.f-1,otroModo); if(subR) out.push(subR);
+  return out;
+}
+/* sorteo ponderado de fifths según PESOS_ALT (6 y 7 ~ raros) */
+function sorteaFifths(){
+  const pool=[];
+  for(let f=-7;f<=7;f++){ const w=PESOS_ALT[Math.abs(f)]; for(let i=0;i<w;i++) pool.push(f); }
+  return pick(pool);
+}
+function sorteaTon(soloConVecinosCompletos){
+  for(let t=0;t<200;t++){
+    const f=sorteaFifths();
+    const modo=pick(['M','m']);
+    const ton=tonPorClave(f,modo);
+    if(!ton) continue;
+    if(soloConVecinosCompletos && vecinos(ton).length<5) continue;
+    return ton;
+  }
+  return tonPorClave(0,'M');
+}
+
+/* armadura VexFlow en un stave */
+function staveConArmadura(ctx,x,y,w,fifths,conClave,doble){
+  const stave=new VF.Stave(x,y,w);
+  if(conClave) stave.addClef("treble");
+  if(fifths!==0) stave.addKeySignature(KS_VF[String(fifths)]);
+  if(doble) stave.setEndBarType(VF.Barline.type.DOUBLE);
+  stave.setContext(ctx).draw();
+  return stave;
+}
+
+/* ========== TARJETA A: armadura -> (M, m) ========== */
+let dataTA=[], selTA=[];
+function nuevoTA(){
+  unlockCard('cardTA');
+  dataTA=[]; const usados=new Set();
+  for(let i=0;i<4;i++){
+    let f, intentos=0;
+    do{ f=sorteaFifths(); intentos++; }while(usados.has(f)&&intentos<30);
+    usados.add(f); dataTA.push(f);
+  }
+  selTA=dataTA.map(()=>([{nota:null,alt:'',modo:'M'},{nota:null,alt:'',modo:'m'}]));
+  renderScoreTA(); renderAnswersTA();
+}
+function renderScoreTA(){
+  const host=document.getElementById('scoreTA'); host.innerHTML='';
+  const W=host.clientWidth||760,H=120;
+  const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+  const ctx=r.getContext();
+  const x0=10,usable=W-20,wC=usable/4;
+  dataTA.forEach((f,i)=>{
+    const stave=new VF.Stave(x0+i*wC, 12, wC);
+    if(i===0) stave.addClef("treble");
+    if(i===3) stave.setEndBarType(VF.Barline.type.DOUBLE);
+    if(f!==0) stave.addKeySignature(KS_VF[String(f)]);
+    stave.setContext(ctx).draw();
+  });
+  fitSvgToContent(host, W);
+}
+function renderAnswersTA(){
+  const host=document.getElementById('answersTA'); host.innerHTML='';
+  host.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px';
+  dataTA.forEach((f,i)=>{
+    const cell=document.createElement('div'); cell.className='ans-cell'; cell.id='ansTA'+i;
+    const cols=document.createElement('div'); cols.style.cssText='display:flex;gap:16px;justify-content:center';
+    ['M','m'].forEach((modo,mi)=>{
+      const colu=document.createElement('div'); colu.style.cssText='display:flex;flex-direction:column;align-items:center;gap:4px';
+      const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:78px;width:64px';
+      const accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px';
+      accRow.innerHTML='<button class="acc-btn ta-acc" data-i="'+i+'" data-m="'+mi+'" data-a="b">♭</button>'+
+                       '<button class="acc-btn ta-acc" data-i="'+i+'" data-m="'+mi+'" data-a="#">♯</button>';
+      colu.appendChild(wNota); colu.appendChild(accRow);
+      cols.appendChild(colu);
+      const suf = modo==='M'?'M':'m';
+      // notas invertidas: Do pegado al guion (abajo), Si arriba. Guion al final.
+      selTA[i][mi].nota=null; selTA[i][mi].alt='';
+      const itemsBase=taItems(i,mi,suf);
+      const GUION=NOTAS_ES.length;   // índice del guion (último/abajo)
+      const NOTAS_REV=NOTAS_ES.slice().reverse();   // [Si,La,Sol,Fa,Mi,Re,Do]
+      const wheelApi=makeWheel(wNota, itemsBase, GUION, (idx)=>{
+        if(idx===GUION){ selTA[i][mi].nota=null; }   // último = guion (sin nota)
+        else { selTA[i][mi].nota=NOTAS_REV[idx]; }
+        selTA[i][mi].alt='';
+        repaintTAWheel(i,mi,wheelApi,suf); paintTAAcc(i,mi,accRow);
+      });
+      selTA[i][mi]._wheel=wheelApi; selTA[i][mi]._suf=suf;
+      accRow.querySelectorAll('.ta-acc').forEach(b=>b.addEventListener('click',()=>{
+        if(!selTA[i][mi].nota) return;   // sin nota elegida, no aplica alteración
+        selTA[i][mi].alt=(selTA[i][mi].alt===b.dataset.a)?'':b.dataset.a;
+        repaintTAWheel(i,mi,wheelApi,suf); paintTAAcc(i,mi,accRow);
+      }));
+    });
+    const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:4px';
+    cell.appendChild(cols); cell.appendChild(tag);
+    host.appendChild(cell);
+  });
+}
+/* notas invertidas (Si arriba ... Do pegado al guion) + guion al final (abajo) */
+function taItems(i,mi,suf){
+  return NOTAS_ES.slice().reverse().map(n=>n+suf).concat(['—']);
+}
+function repaintTAWheel(i,mi,api,suf){
+  const sel=selTA[i][mi];
+  const NOTAS_REV=NOTAS_ES.slice().reverse();
+  const GUION=NOTAS_ES.length;
+  if(!sel.nota){ // guion (abajo)
+    api.setItems(NOTAS_REV.map(n=>n+suf).concat(['—']),true); api.setIndex(GUION,true); return;
+  }
+  const acc=sel.alt==='#'?'♯':sel.alt==='b'?'♭':'';
+  const items=NOTAS_REV.map(n=> n===sel.nota ? (n+acc+suf):(n+suf)).concat(['—']);
+  const idx=NOTAS_REV.indexOf(sel.nota);
+  api.setItems(items,true); api.setIndex(idx,true);
+}
+function paintTAAcc(i,mi,accCol){
+  accCol.querySelectorAll('.ta-acc').forEach(b=>b.classList.toggle('on', selTA[i][mi].alt===b.dataset.a));
+}
+function corregirTA(){
+  lockCard('cardTA');
+  dataTA.forEach((f,i)=>{
+    const cell=document.getElementById('ansTA'+i);
+    const may=tonPorClave(f,'M'), men=tonPorClave(f,'m');
+    const okM = may && selTA[i][0].nota===may.nota && selTA[i][0].alt===may.alt;
+    const okm = men && selTA[i][1].nota===men.nota && selTA[i][1].alt===men.alt;
+    const ok=okM&&okm;
+    cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+    const tag=cell.querySelector('.sol');
+    const green='var(--green)',red='var(--red)';
+    const mSpan='<span style="color:'+(okM?green:red)+'">'+(okM?'✓':'✗')+' M</span>';
+    const menSpan='<span style="color:'+(okm?green:red)+'">'+(okm?'✓':'✗')+' m</span>';
+    let html=mSpan+' · '+menSpan;
+    if(!ok) html+='<br><span style="color:#5b9dff">'+may.nom+' / '+men.nom+'</span>';
+    tag.innerHTML=html;
+  });
+}
+
+/* ========== TARJETA B: tonalidad -> armadura ========== */
+let dataTB=[], selTB=[];   // selTB[i] = fifths elegido por el alumno (o null)
+function nuevoTB(){
+  unlockCard('cardTB');
+  dataTB=[]; for(let i=0;i<4;i++) dataTB.push(sorteaTon(false));
+  selTB=dataTB.map(()=>0);
+  renderScoreTB(); renderAnswersTB();
+}
+function renderScoreTB(){
+  const host=document.getElementById('scoreTB'); host.innerHTML='';
+  const W=host.clientWidth||760,H=120;
+  const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+  const ctx=r.getContext();
+  const x0=10,usable=W-20,wC=usable/4;
+  dataTB.forEach((t,i)=>{
+    const f=selTB[i]||0;
+    const stave=new VF.Stave(x0+i*wC, 12, wC);
+    if(i===0) stave.addClef("treble");
+    if(i===3) stave.setEndBarType(VF.Barline.type.DOUBLE);
+    if(f!==0) stave.addKeySignature(KS_VF[String(f)]);
+    stave.setContext(ctx).draw();
+  });
+  fitSvgToContent(host, W);
+}
+function renderAnswersTB(){
+  const host=document.getElementById('answersTB'); host.innerHTML='';
+  host.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-top:6px';
+  dataTB.forEach((t,i)=>{
+    const cell=document.createElement('div'); cell.className='ans-cell'; cell.id='ansTB'+i;
+    // nombre de la tonalidad debajo del pentagrama, alineado a la izquierda (como en examen)
+    const lab=document.createElement('div');
+    lab.style.cssText='font-size:16px;font-weight:900;color:var(--ink);text-align:left;padding-left:6px;margin-bottom:6px';
+    lab.textContent=t.nom;
+    const wArm=document.createElement('div'); wArm.className='wheel'; wArm.style.cssText='height:90px;margin:0 auto';
+    const tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:4px';
+    cell.appendChild(lab); cell.appendChild(wArm); cell.appendChild(tag);
+    host.appendChild(cell);
+    const items=[]; for(let f=7;f>=-7;f--){ items.push(f===0?'0':(f>0?f+'♯':Math.abs(f)+'♭')); }
+    makeWheel(wArm,items,7,(idx)=>{ selTB[i]=7-idx; renderScoreTB(); });
+  });
+}
+function corregirTB(){
+  lockCard('cardTB');
+  dataTB.forEach((t,i)=>{
+    const cell=document.getElementById('ansTB'+i);
+    const ok = (selTB[i]||0)===t.f;
+    cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
+    const acc=t.f===0?'0 alteraciones':(t.f>0?t.f+' ♯':Math.abs(t.f)+' ♭');
+    const tag=cell.querySelector('.sol');
+    tag.style.color = ok?'var(--green)':'#5b9dff';
+    tag.textContent = ok?'✓':('Solución: '+acc);
+  });
+}
+
+/* ========== TARJETA C: tonos vecinos ========== */
+let tcCentro=null, tcGiven=0, tcCeldas=[], tcSol=[];
+// rejilla 2x3:  índices 0,1,2 = fila Mayores (subdom, tónica, dom)
+//               índices 3,4,5 = fila menores relativas (subdom, tónica, dom)
+function nuevoTC(){
+  // elegimos una tónica Mayor con dominante y subdominante válidas
+  let base=null;
+  for(let t=0;t<300;t++){
+    const cand=sorteaTon(true);
+    const may = cand.modo==='M'?cand:tonPorClave(cand.f,'M');
+    if(!may) continue;
+    const dom=tonPorClave(may.f+1,'M'), sub=tonPorClave(may.f-1,'M');
+    const relC=tonPorClave(may.f,'m'), relD=tonPorClave(may.f+1,'m'), relS=tonPorClave(may.f-1,'m');
+    if(dom&&sub&&relC&&relD&&relS){ base={may,dom,sub,relC,relD,relS}; break; }
+  }
+  if(!base){ // fallback Do Mayor
+    const may=tonPorClave(0,'M');
+    base={may, dom:tonPorClave(1,'M'), sub:tonPorClave(-1,'M'),
+          relC:tonPorClave(0,'m'), relD:tonPorClave(1,'m'), relS:tonPorClave(-1,'m')};
+  }
+  // solución por celda (0..5)
+  tcSol=[base.sub, base.may, base.dom, base.relS, base.relC, base.relD];
+  // el dato puede ser la tónica Mayor (1) o la menor relativa (4)
+  tcGiven=pick([1,4]);
+  tcCentro=tcSol[1]; // referencia
+  tcCeldas=[null,null,null,null,null,null];
+  tcCeldas[tcGiven]={given:true, ton:tcSol[tcGiven]};
+  renderTC();
+}
+function renderTC(){
+  const grid=document.getElementById('gridTC'); grid.innerHTML='';
+  grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px';
+  const etiquetas=['Subdominante','Tónica','Dominante'];
+  for(let k=0;k<6;k++){
+    const cell=document.createElement('div'); cell.className='vcell'; cell.id='tc'+k;
+    const c=tcCeldas[k];
+    if(c&&c.given){ cell.classList.add('given'); cell.textContent=c.ton.nom; }
+    else if(c&&c.ton){ cell.textContent=c.ton.nom; }
+    else { cell.innerHTML='<span class="empty">+</span>'; }
+    if(!(c&&c.given)) cell.onclick=(ev)=>abrirTonPop(k,cell);
+    grid.appendChild(cell);
+  }
+}
+/* popover de selección de tonalidad: rueda nota + alt(♭/♯) + modo (M/m) */
+let tonPopState=null;
+function abrirTonPop(k,anchor){
+  cerrarTonPop();
+  const pop=document.createElement('div'); pop.className='tonpop'; pop.id='tonpop';
+  const wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.height='90px';
+  const row=document.createElement('div'); row.className='row';
+  row.innerHTML=
+    '<button class="pbtn" id="pp_s">♯</button>'+
+    '<button class="pbtn" id="pp_b">♭</button>'+
+    '<span style="width:10px"></span>'+
+    '<button class="pbtn" id="pp_M">M</button>'+
+    '<button class="pbtn" id="pp_m">m</button>';
+  const ok=document.createElement('button'); ok.className='ok-btn'; ok.textContent='Añadir'; ok.disabled=true;
+  ok.style.opacity='.4'; ok.style.cursor='default';
+  pop.appendChild(wNota); pop.appendChild(row); pop.appendChild(ok);
+  document.body.appendChild(pop);
+  // posicionar a la IZQUIERDA de la rejilla de celdas (en el hueco libre)
+  posicionarTonPop(pop);
+  tonPopState={k, nota:null, alt:'', modo:null};   // sin nota (guion) ni modo por defecto
+  const NOTAS_REVC=NOTAS_ES.slice().reverse();   // [Si..Do]
+  const GUION_C=NOTAS_ES.length;   // índice del guion (al final/abajo)
+  const repaintWheel=(api)=>{
+    const sufijo = tonPopState.modo==='M'?'M':tonPopState.modo==='m'?'m':'';
+    const acc=tonPopState.alt==='#'?'♯':tonPopState.alt==='b'?'♭':'';
+    const items=NOTAS_REVC.map(n=> n===tonPopState.nota ? (n+acc+sufijo) : (n+sufijo)).concat(['—']);
+    const idx=(tonPopState.nota==null)?GUION_C:NOTAS_REVC.indexOf(tonPopState.nota);
+    api.setItems(items,true); api.setIndex(idx,true);
+  };
+  const wheelApi=makeWheel(wNota, NOTAS_REVC.map(n=>n).concat(['—']), GUION_C, (idx)=>{
+    tonPopState.nota=(idx===GUION_C)?null:NOTAS_REVC[idx];
+    repaintWheel(wheelApi); refreshOk();
+  });
+  const refreshOk=()=>{ const okToIns = (tonPopState.modo!=null && tonPopState.nota!=null);
+    ok.disabled=!okToIns; ok.style.opacity=okToIns?'1':'.4'; ok.style.cursor=okToIns?'pointer':'default'; };
+  const setAlt=(a)=>{ if(tonPopState.nota==null) return; tonPopState.alt=(tonPopState.alt===a)?'':a;
+    pp_b.classList.toggle('on',tonPopState.alt==='b'); pp_s.classList.toggle('on',tonPopState.alt==='#'); repaintWheel(wheelApi); };
+  pop.querySelector('#pp_b').onclick=()=>setAlt('b');
+  pop.querySelector('#pp_s').onclick=()=>setAlt('#');
+  const setModo=(m)=>{ tonPopState.modo=m;
+    pop.querySelector('#pp_M').classList.toggle('on',m==='M'); pop.querySelector('#pp_m').classList.toggle('on',m==='m');
+    repaintWheel(wheelApi); refreshOk(); };
+  pop.querySelector('#pp_M').onclick=()=>setModo('M');
+  pop.querySelector('#pp_m').onclick=()=>setModo('m');
+  ok.onclick=()=>{
+    if(tonPopState.modo==null || tonPopState.nota==null) return;   // no inserta sin nota ni modo
+    const t=TONS.find(x=>x.nota===tonPopState.nota && x.alt===tonPopState.alt && x.modo===tonPopState.modo);
+    tcCeldas[k]= t? {given:false,ton:t} : {given:false,ton:{nom:tonPopState.nota+(tonPopState.alt==='#'?'♯':tonPopState.alt==='b'?'♭':'')+(tonPopState.modo),_invalid:true}};
+    cerrarTonPop(); renderTC();
+  };
+}
+function cerrarTonPop(){ const p=document.getElementById('tonpop'); if(p) p.remove(); tonPopState=null; }
+/* coloca el popover en el hueco a la izquierda de la rejilla de celdas (sin tapar) */
+function posicionarTonPop(pop){
+  const grid=document.getElementById('gridTC');
+  pop.style.position='fixed'; pop.style.zIndex='1000'; pop.style.transform='none';
+  if(grid){
+    const r=grid.getBoundingClientRect();
+    // intentamos a la izquierda de la rejilla; si no cabe, lo centramos verticalmente al lado
+    const popW=210;
+    let left=r.left - popW - 16;
+    if(left<10) left=10;                       // no salir de pantalla
+    let top=r.top;
+    if(top<10) top=10;
+    pop.style.left=left+'px';
+    pop.style.top=top+'px';
+  } else {
+    pop.style.left='50%'; pop.style.top='50%'; pop.style.transform='translate(-50%,-50%)';
+  }
+}
+document.addEventListener('click',(e)=>{
+  const p=document.getElementById('tonpop');
+  if(p && !p.contains(e.target) && !e.target.closest('.vcell')) cerrarTonPop();
+});
+function corregirTC(){
+  // validación por CONJUNTO: las 6 tonalidades correctas pueden ir en cualquier celda.
+  // basta con que entre todas las casillas aparezcan las 6 tonalidades esperadas.
+  const esperadas = tcSol.map(t=>t.nom);
+  const restantes = esperadas.slice();
+  // primero descontamos la celda dada
+  for(let k=0;k<6;k++){ const c=tcCeldas[k]; if(c&&c.given){ const j=restantes.indexOf(c.ton.nom); if(j>=0) restantes.splice(j,1); } }
+  let todasOk=true;
+  for(let k=0;k<6;k++){
+    const c=tcCeldas[k]; const cell=document.getElementById('tc'+k);
+    if(!c){ todasOk=false; continue; }
+    if(c.given) continue;
+    cell.classList.remove('ok','bad');
+    const j = c.ton ? restantes.indexOf(c.ton.nom) : -1;
+    if(j>=0){ cell.classList.add('ok'); restantes.splice(j,1); }
+    else { cell.classList.add('bad'); todasOk=false; }
+  }
+  const hint=document.getElementById('hintTC');
+  if(todasOk) hint.textContent='¡Correcto! Están las seis tonalidades vecinas.';
+  else hint.textContent='Revisa las casillas marcadas. Da igual el orden y la fila: basta con que estén las seis tonalidades correctas.';
+}
+
+function _tonInit(){ if(dataTA.length===0){ nuevoTA(); nuevoTB(); nuevoTC(); } }
+function nuevoTONtodos(){ nuevoTA(); nuevoTB(); nuevoTC(); }
+
+
+/* exponer al ámbito global (onclick del HTML) */
+window.nuevoTA=nuevoTA; window.nuevoTB=nuevoTB; window.nuevoTC=nuevoTC;
+window.corregirTA=corregirTA; window.corregirTB=corregirTB; window.corregirTC=corregirTC;
+window.nuevoTONtodos=nuevoTONtodos; window._tonInit=_tonInit;
+})();
+</script>
+
+<!-- ====== ÍNDICE ACÚSTICO: motor ====== -->
+<script>
+(function(){
+const VF = Vex.Flow;
+const RNG=Math.random;
+function rint(n){return Math.floor(RNG()*n);}
+function pick(a){return a[rint(a.length)];}
+function chance(p){return RNG()<p;}
+
+const STEPS=["C","D","E","F","G","A","B"];
+const STEP_ST={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const STEP_ES={C:"Do",D:"Re",E:"Mi",F:"Fa",G:"Sol",A:"La",B:"Si"};
+/* SPN: midi = 12*(octave+1)+semis. Do central C4 = 60. */
+function midi(step,oct,alter){return 12*(oct+1)+STEP_ST[step]+(alter||0);}
+function notaToKey(step,oct,alter){
+  const acc=alter===1?"#":alter===-1?"b":"";
+  return step.toLowerCase()+acc+"/"+oct;
+}
+function nombreES(step,alter){
+  const acc=alter===1?"♯":alter===-1?"♭":"";
+  return STEP_ES[step]+acc;
+}
+
+/* ===== rango cómodo por clave (≤2 líneas adicionales) =====
+   treble: F3 (midi 53) .. C6 (84)   bass: A1 (33) .. E4 (64)
+   clave de Do: solo notas DENTRO del pentagrama (sin líneas adicionales).
+   - alto  (Do en 3ª): línea central = C4. Pentagrama F3..G4.
+   - tenor (Do en 4ª): 4ª línea = C4.   Pentagrama D3..F4. */
+const RANGOS={
+  treble:{lo:midi("F",3,0), hi:midi("C",6,0)},
+  bass:  {lo:midi("A",1,0), hi:midi("E",4,0)},
+  alto:  {lo:midi("F",3,0), hi:midi("G",4,0)},
+  tenor: {lo:midi("D",3,0), hi:midi("F",4,0)}
+};
+/* genera una nota: clave dada (o sol/fa al azar), step+oct dentro de rango */
+function genNota(clefForzada){
+  const clef=clefForzada || pick(["treble","bass"]);
+  const R=RANGOS[clef];
+  for(let t=0;t<400;t++){
+    const step=pick(STEPS);
+    const oct=2+rint(5); // 2..6
+    let alter=0;
+    if(chance(0.45)){ alter=pick([-1,1]); }
+    if(alter===1 && (step==="E"||step==="B")) alter=0;
+    if(alter===-1 && (step==="F"||step==="C")) alter=0;
+    const m=midi(step,oct,alter);
+    if(m<R.lo || m>R.hi) continue;
+    return {clef,step,oct,alter,midi:m};
+  }
+  // fallback seguro por clave
+  const fb={treble:{step:"G",oct:4},bass:{step:"D",oct:3},alto:{step:"C",oct:4},tenor:{step:"C",oct:4}}[clef]||{step:"G",oct:4};
+  return {clef,step:fb.step,oct:fb.oct,alter:0,midi:midi(fb.step,fb.oct,0)};
+}
+
+/* ===== estado ===== */
+const TOTAL=5, SEG=7;
+let lista=[], idx=0, selNota=null, selAlt=0, selNum=null, tieneNota=false;
+let resultados=[], timer=null, restante=SEG, bloqueado=false;
+
+function iaStart(){
+  if(timer){ clearInterval(timer); timer=null; }
+  lista=[]; for(let k=0;k<TOTAL;k++) lista.push(genNota());
+  // garantizar UNA en clave de Do (alto o tenor), en posición aleatoria
+  const claveDo = pick(["alto","tenor"]);
+  const pos = rint(TOTAL);
+  lista[pos] = genNota(claveDo);
+  idx=0; resultados=[];
+  document.getElementById('iaSummary').style.display='none';
+  document.getElementById('iaPanels').style.display='grid';
+  mostrarPregunta();
+}
+function iaStop(){ if(timer){ clearInterval(timer); timer=null; } }
+
+function iaBeep(freq,dur,vol){
+  try{ const ctx=(window._wheelCtx&&window._wheelCtx())|| null; }catch(e){}
+  try{
+    const AC=window.AudioContext||window.webkitAudioContext; if(!AC) return;
+    if(!window._iaAC) window._iaAC=new AC();
+    const ctx=window._iaAC; if(ctx.state==='suspended') ctx.resume();
+    const t=ctx.currentTime, o=ctx.createOscillator(), g=ctx.createGain();
+    o.type='sine'; o.frequency.setValueAtTime(freq,t);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(vol||0.12,t+0.005);
+    g.gain.exponentialRampToValueAtTime(0.0001,t+(dur||0.09));
+    o.connect(g).connect(ctx.destination); o.start(t); o.stop(t+(dur||0.09)+0.02);
+  }catch(e){}
+}
+function mostrarPregunta(){
+  bloqueado=false; selNota=null; selAlt=0; selNum=null; tieneNota=false;
+  document.getElementById('cardIA').classList.remove('panic');
+  const v=document.getElementById('iaVerdict'); v.className='ia-verdict'; v.textContent='';
+  renderProgress();
+  renderPartitura();
+  renderPaneles();
+  document.getElementById('iaChosen').innerHTML='';
+  restante=SEG; pintarTimer(); iaBeep(660,0.07,0.10);
+  if(timer) clearInterval(timer);
+  timer=setInterval(()=>{
+    restante--;
+    pintarTimer();
+    if(restante>0){
+      // tic cada segundo; agudo y más fuerte en los últimos 2
+      if(restante<=2) iaBeep(1100,0.10,0.18);
+      else iaBeep(700,0.06,0.09);
+    }
+    if(restante<=0){ clearInterval(timer); timer=null; iaBeep(300,0.25,0.2); finPregunta(); }
+  },1000);
+}
+function pintarTimer(){
+  const bar=document.getElementById('iaTimerBar');
+  const card=document.getElementById('cardIA');
+  document.getElementById('iaTimerNum').textContent=Math.max(0,restante);
+  // barra que se vacía
+  let fill=document.getElementById('iaFill');
+  if(!fill){ fill=document.createElement('div'); fill.id='iaFill'; fill.className='ia-fill'; bar.insertBefore(fill,bar.firstChild); }
+  fill.style.width=(Math.max(0,restante)/SEG*100)+'%';
+  bar.classList.remove('warn','danger');
+  if(restante<=2){ bar.classList.add('danger'); card.classList.add('panic'); }
+  else if(restante<=5){ bar.classList.add('warn'); card.classList.remove('panic'); }
+  else card.classList.remove('panic');
+}
+function renderProgress(){
+  const host=document.getElementById('iaProgress'); host.innerHTML='';
+  for(let k=0;k<TOTAL;k++){
+    const d=document.createElement('div'); d.className='pdot';
+    if(k<resultados.length) d.classList.add(resultados[k].ok?'ok':'bad');
+    else if(k===idx) d.classList.add('cur');
+    host.appendChild(d);
+  }
+}
+function renderPartitura(opts){
+  opts=opts||{};
+  const host=document.getElementById('iaScore'); host.innerHTML='';
+  const q=lista[idx];
+  const W=host.clientWidth||520, H=170;
+  const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+  const ctx=r.getContext();
+  const stave=new VF.Stave(W/2-90, 42, 180);
+  stave.addClef(q.clef);
+  stave.setContext(ctx).draw();
+  const sn=new VF.StaveNote({keys:[notaToKey(q.step,q.oct,q.alter)],duration:"w",clef:q.clef});
+  if(q.alter) sn.addModifier(new VF.Accidental(q.alter===1?"#":"b"),0);
+  if(opts.color){ sn.setStyle({fillStyle:opts.color,strokeStyle:opts.color}); }
+  const voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
+  voice.addTickables([sn]);
+  new VF.Formatter().joinVoices([voice]).format([voice],90);
+  voice.draw(ctx,stave);
+  // nombre de la nota debajo, al revelar la solución
+  if(opts.label){
+    ctx.save();
+    ctx.setFont("Helvetica", 19, "bold");
+    ctx.setFillStyle(opts.color||"#1a1407");
+    try{ ctx.fillText(opts.label, W/2-90+60, stave.getYForLine(7)+34); }catch(e){
+      ctx.fillText(opts.label, W/2-30, 150);
+    }
+    ctx.restore();
+  }
+  try{ const svg=host.querySelector('svg'); const bb=svg.getBBox(); const pad=12;
+    const top=Math.max(0,bb.y-pad); const nh=bb.height+pad*2;
+    svg.setAttribute('viewBox','0 '+top+' '+W+' '+nh); svg.setAttribute('height',nh); svg.setAttribute('width',W);
+  }catch(e){}
+}
+function renderPaneles(){
+  // panel nota: Do Re Mi Fa Sol La Si + ♭ + ♯  (3x3)
+  const gN=document.getElementById('iaGridNota'); gN.innerHTML='';
+  const notasOrden=["C","D","E","F","G","A","B"];
+  notasOrden.forEach(st=>{
+    const b=document.createElement('button'); b.className='ia-key'; b.textContent=STEP_ES[st]; b.dataset.step=st;
+    b.onclick=()=>elegirNota(st,b); gN.appendChild(b);
+  });
+  const bBemol=document.createElement('button'); bBemol.className='ia-key acc'; bBemol.textContent='♭'; bBemol.dataset.acc='-1';
+  bBemol.onclick=()=>elegirAlt(-1,bBemol); gN.appendChild(bBemol);
+  const bSost=document.createElement('button'); bSost.className='ia-key acc'; bSost.textContent='♯'; bSost.dataset.acc='1';
+  bSost.onclick=()=>elegirAlt(1,bSost); gN.appendChild(bSost);
+  // panel número 1..9 (teléfono)
+  const gNum=document.getElementById('iaGridNum'); gNum.innerHTML='';
+  for(let n=1;n<=9;n++){
+    const b=document.createElement('button'); b.className='ia-key'; b.textContent=n; b.dataset.num=n;
+    b.onclick=()=>elegirNum(n,b); gNum.appendChild(b);
+  }
+}
+function elegirNota(st,btn){
+  if(bloqueado) return;
+  selNota=st; tieneNota=true;
+  document.querySelectorAll('#iaGridNota .ia-key[data-step]').forEach(b=>b.classList.toggle('sel',b.dataset.step===st));
+  actualizarChosen();
+}
+function elegirAlt(a,btn){
+  if(bloqueado) return;
+  selAlt=(selAlt===a)?0:a;
+  document.querySelectorAll('#iaGridNota .ia-key.acc').forEach(b=>b.classList.toggle('sel',+b.dataset.acc===selAlt && selAlt!==0));
+  actualizarChosen();
+}
+function elegirNum(n,btn){
+  if(bloqueado) return;
+  selNum=n;
+  document.querySelectorAll('#iaGridNum .ia-key').forEach(b=>b.classList.toggle('sel',+b.dataset.num===n));
+  actualizarChosen();
+}
+function actualizarChosen(){
+  const host=document.getElementById('iaChosen');
+  let txt='';
+  if(tieneNota) txt=nombreES(selNota,selAlt);
+  if(selNum!=null) txt+=(txt?' ':'')+selNum;
+  host.textContent=txt;
+}
+function finPregunta(){
+  bloqueado=true;
+  document.getElementById('cardIA').classList.remove('panic');
+  const q=lista[idx];
+  const okNota = tieneNota && selNota===q.step && selAlt===(q.alter||0);
+  const okNum  = selNum===q.oct;
+  const ok = okNota && okNum;
+  resultados.push({q, ok, okNota, okNum, dadoNota: tieneNota?nombreES(selNota,selAlt):'—', dadoNum: selNum!=null?selNum:'—'});
+  renderProgress();
+  const solStr=nombreES(q.step,q.alter)+q.oct;
+  // partitura: nota + nombre. verde si acierto, azul si fallo
+  const col = ok ? '#2faa6a' : '#5b9dff';
+  renderPartitura({color:col, label:solStr});
+  // parpadeo breve y cartel de veredicto
+  const sc=document.getElementById('iaScore'); sc.classList.add('flash'); setTimeout(()=>sc.classList.remove('flash'),820);
+  const v=document.getElementById('iaVerdict');
+  v.className='ia-verdict show '+(ok?'ok':'bad'); v.textContent=ok?'CORRECTO':'INCORRECTO';
+  iaBeep(ok?880:160, ok?0.18:0.32, 0.2);
+  if(ok) setTimeout(()=>iaBeep(1180,0.18,0.18),120);
+  // colorear teclas
+  const solAlt=q.alter||0;
+  // panel NOTA
+  document.querySelectorAll('#iaGridNota .ia-key[data-step]').forEach(b=>{
+    const st=b.dataset.step;
+    if(ok){ if(st===selNota) b.classList.add('k-ok'); }
+    else{
+      if(st===q.step) b.classList.add('k-sol');                 // solución azul
+      if(tieneNota && st===selNota && st!==q.step) b.classList.add('k-bad'); // pulsada mal en rojo
+    }
+  });
+  document.querySelectorAll('#iaGridNota .ia-key.acc').forEach(b=>{
+    const a=+b.dataset.acc;
+    if(ok){ if(a===selAlt && selAlt!==0) b.classList.add('k-ok'); }
+    else{
+      if(a===solAlt && solAlt!==0) b.classList.add('k-sol');
+      if(a===selAlt && selAlt!==0 && selAlt!==solAlt) b.classList.add('k-bad');
+    }
+  });
+  // panel NÚMERO
+  document.querySelectorAll('#iaGridNum .ia-key').forEach(b=>{
+    const n=+b.dataset.num;
+    if(ok){ if(n===selNum) b.classList.add('k-ok'); }
+    else{
+      if(n===q.oct) b.classList.add('k-sol');
+      if(selNum!=null && n===selNum && n!==q.oct) b.classList.add('k-bad');
+    }
+  });
+  // texto bajo paneles
+  const chosen=document.getElementById('iaChosen');
+  chosen.innerHTML = ok ? '<span class="res-ok">✓ '+solStr+'</span>' : '<span class="res-bad">Solución: '+solStr+'</span>';
+  setTimeout(()=>{
+    idx++;
+    if(idx>=TOTAL) mostrarResumen();
+    else mostrarPregunta();
+  },1700);
+}
+function mostrarResumen(){
+  iaStop();
+  document.getElementById('iaPanels').style.display='none';
+  document.getElementById('iaChosen').innerHTML='';
+  document.getElementById('iaScore').innerHTML='';
+  const aciertos=resultados.filter(r=>r.ok).length;
+  const sum=document.getElementById('iaSummary'); sum.style.display='block';
+  let rows='';
+  resultados.forEach((r,k)=>{
+    const sol=nombreES(r.q.step,r.q.alter)+r.q.oct;
+    const dado=(r.dadoNota||'—')+(r.dadoNum!=null?r.dadoNum:'');
+    rows+='<div class="ia-sum-row '+(r.ok?'ok':'bad')+'"><span>'+(k+1)+'. Tu respuesta: <b>'+dado+'</b></span><span>'+(r.ok?'✓':'Era '+sol)+'</span></div>';
+  });
+  sum.innerHTML='<h3>Resumen</h3><div class="ia-sum-score">'+aciertos+' / '+TOTAL+'</div>'+
+    '<div class="ia-sum-list">'+rows+'</div>'+
+    '<p class="hint" style="margin-top:16px">Pulsa «Empezar» para otra ronda.</p>';
+  renderProgress();
+}
+
+window.iaStart=iaStart; window.iaStop=iaStop;
+})();
+</script>
+
 </body>
 </html>
