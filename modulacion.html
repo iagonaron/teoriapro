@@ -302,16 +302,17 @@
   .ex-mod-fila .cas-g.cas-empty{color:rgba(216,202,166,.3)}
   /* popover flotante de opciones de puente */
   .cas-popover{position:absolute;top:90px;left:50%;transform:translateX(-50%) scale(.96);transform-origin:top center;
-    width:min(440px,86vw);background:#0e1838;border:1px solid #3a6fd8;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.55);
+    width:min(480px,90vw);background:#0e1838;border:1px solid #3a6fd8;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.55);
     padding:14px;z-index:20;opacity:0;visibility:hidden;transition:opacity .16s ease,transform .16s ease}
   .cas-popover.show{opacity:1;visibility:visible;transform:translateX(-50%) scale(1)}
   .cas-popover .pop-cap{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#bcd8ff;font-weight:800;margin-bottom:10px;text-align:center}
-  .cas-popover .pop-opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
-  .cas-popover .cas-opt{flex:1 1 110px;display:flex;flex-direction:column;align-items:center;gap:1px;
-    border:1px solid rgba(123,176,255,.4);border-radius:10px;background:rgba(91,157,255,.12);padding:8px 6px}
-  .cas-popover .opt-cif{font-size:11px;font-weight:900;color:var(--gold-soft)}
-  .cas-popover .opt-nom{font-size:14px;font-weight:900;color:#e3eeff}
-  .cas-popover .opt-gr{font-size:10px;color:#9cc1ff;font-weight:700;text-align:center}
+  .cas-popover .pop-opts{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;justify-items:stretch}
+  .cas-popover .pop-opts.cols-3{grid-template-columns:repeat(3,1fr)}
+  .cas-popover .cas-opt{aspect-ratio:1/1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;
+    border:1px solid #d7d2c4;border-radius:12px;background:#fbf7ec;padding:8px 6px;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+  .cas-popover .opt-cif{font-size:12px;font-weight:900;color:#9a7a1e}
+  .cas-popover .opt-nom{font-size:15px;font-weight:900;color:#15233f}
+  .cas-popover .opt-gr{font-size:10px;color:#3a5a96;font-weight:700;text-align:center;line-height:1.35}
   .cas-popover .pop-foot{margin-top:10px;font-size:11px;color:#9cc1ff;text-align:center;line-height:1.4}
   .ex-mod-note{margin-top:12px;font-size:12px;color:#9cc1ff;line-height:1.5}
   .ex-mod-note b{color:#dcebff}
@@ -1193,7 +1194,7 @@ window.MOD={ get EX(){return EX;}, get user(){return userSlots;}, generarEjercic
         spec.bridgeOpts.forEach(o=>{
           opts+='<div class="cas-opt"><span class="opt-cif">'+escHtml(o.cif)+'</span><span class="opt-nom">'+escHtml(o.nombre)+'</span><span class="opt-gr">'+escHtml(spec.tonA||'A')+': '+escHtml(o.gA)+' · '+escHtml(spec.tonB||'B')+': '+escHtml(o.gB)+'</span></div>';
         });
-        popover='<div class="cas-popover" id="exPuentePop"><div class="pop-cap">Acordes puente válidos</div><div class="pop-opts">'+opts+'</div><div class="pop-foot">Cualquiera sirve como pivote. El ejemplo usa el primero.</div></div>';
+        popover='<div class="cas-popover" id="exPuentePop"><div class="pop-cap">Acordes puente válidos</div><div class="pop-opts'+(spec.bridgeOpts.length===3?' cols-3':'')+'">'+opts+'</div><div class="pop-foot">Cualquiera sirve como pivote. El ejemplo usa el primero.</div></div>';
       }
       let pasos='';
       (spec.pasos||[]).forEach(p=>{ pasos+='<li>'+escHtml(p)+'</li>'; });
