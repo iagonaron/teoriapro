@@ -4,6 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Modulación · TEORÍA at home PRO</title>
+<script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
 <style>
   :root{
     --bg:#160f04; --panel:#1a1305; --panel2:#221908; --line:#3a2c10;
@@ -222,6 +223,110 @@
   .sol-slot.parcelado .parcela .pc-cif{font-size:11px;font-weight:700;color:#3a63b8;font-variant-numeric:tabular-nums}
 
   .foot-tip{margin-top:18px;font-size:12px;color:var(--muted2);font-style:italic}
+  /* ===== Botón Ejemplo resuelto + modal ===== */
+  .btn-ejemplo{font-size:15px;font-weight:800;padding:13px 20px;border-radius:12px;gap:9px;
+    color:#bcd8ff;border-color:rgba(123,176,255,.5);background:rgba(91,157,255,.1)}
+  .btn-ejemplo svg{width:20px;height:20px}
+  .btn-ejemplo:hover{background:rgba(91,157,255,.2);border-color:#7bb0ff;color:#dcebff}
+  .ex-modal{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;
+    background:rgba(8,5,1,.7);backdrop-filter:blur(3px)}
+  .ex-modal.show{display:flex;animation:exFade .2s ease 1}
+  @keyframes exFade{from{opacity:0}to{opacity:1}}
+  .ex-modal-box{position:relative;max-width:620px;width:100%;max-height:86vh;overflow-y:auto;overflow-x:hidden;
+    background-color:#0c1430;border:1px solid rgba(123,176,255,.45);border-radius:18px;box-shadow:var(--shadow);padding:26px 26px 30px}
+  .ex-modal-box.wide{max-width:920px}
+  .ex-modal-box::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+    filter:blur(46px) saturate(150%);opacity:.68;
+    background:
+      radial-gradient(40% 52% at 20% 28%, #3a6fd8 0%, transparent 60%),
+      radial-gradient(36% 48% at 80% 22%, #2f9cc8 0%, transparent 62%),
+      radial-gradient(42% 54% at 66% 82%, #5566d6 0%, transparent 60%),
+      radial-gradient(38% 50% at 30% 80%, #2f7ed8 0%, transparent 62%),
+      radial-gradient(52% 62% at 50% 50%, #243a7a 0%, transparent 70%);
+    background-size:240% 240%,240% 240%,240% 240%,240% 240%,200% 200%;
+    animation:exNebula 18s ease-in-out infinite alternate}
+  .ex-modal-box > *{position:relative;z-index:1}
+  @keyframes exNebula{
+    0%{background-position:0% 0%,100% 0%,60% 100%,20% 90%,50% 50%}
+    25%{background-position:50% 30%,40% 60%,90% 20%,70% 40%,30% 70%}
+    50%{background-position:80% 70%,20% 30%,30% 80%,90% 10%,65% 35%}
+    75%{background-position:30% 90%,80% 50%,60% 30%,10% 70%,40% 60%}
+    100%{background-position:100% 40%,10% 80%,20% 60%,80% 30%,55% 45%}
+  }
+  @media (prefers-reduced-motion: reduce){ .ex-modal-box::before{animation:none} }
+  .ex-modal-tag{display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;
+    color:#0a1426;background:linear-gradient(135deg,#9cc1ff,#7bb0ff);padding:5px 11px;border-radius:8px;margin-bottom:14px}
+  .ex-modal-box h3{margin:0 0 14px;font-size:20px;font-weight:900;color:var(--ink)}
+  .ex-modal-sec{margin-bottom:16px}
+  .ex-modal-sec .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin-bottom:6px}
+  .ex-modal-sec .enun{font-size:15px;color:var(--muted);line-height:1.55}
+  .ex-modal-resp{background:rgba(91,157,255,.1);border:1px solid rgba(123,176,255,.4);border-radius:12px;padding:14px 16px}
+  .ex-modal-resp .lab{color:#9cc1ff}
+  .ex-modal-resp .val{font-size:18px;font-weight:900;color:#dcebff}
+  .ex-modal-sec .expl{font-size:14px;color:var(--muted);line-height:1.6}
+  /* pentagrama dentro del modal */
+  .ex-modal-scorewrap{margin:0 0 18px}
+  .ex-modal-scorewrap .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin-bottom:8px}
+  .ex-modal-scorescroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;background:var(--paper);box-shadow:var(--shadow);padding:10px 6px;min-height:120px;display:flex;align-items:center;justify-content:center}
+  .ex-modal-scorescroll svg{display:block;margin:0 auto}
+  #exModalScore{min-width:100%}
+  @media(max-width:560px){ .ex-modal-scorescroll{justify-content:flex-start} }
+  /* ---- ejemplo MODULACIÓN: casillas cuadradas tipo ejercicio + pasos ---- */
+  /* ---- ejemplo MODULACIÓN: casillas cuadradas tipo ejercicio + pasos ---- */
+  .ex-mod-grados{margin:0 0 16px}
+  .ex-mod-grados .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin-bottom:8px}
+  .ex-mod-scroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  .ex-mod-grid{display:inline-flex;flex-direction:column;gap:7px;min-width:100%}
+  .ex-mod-casillas{display:flex;gap:10px;align-items:flex-end}
+  .ex-mod-fila{display:flex;gap:10px;align-items:center}
+  .fila-lab{width:74px;min-width:74px;flex:0 0 auto;font-size:10px;letter-spacing:.03em;text-transform:uppercase;
+    color:var(--muted2);font-weight:800;white-space:nowrap;text-align:right;padding-right:4px;overflow:hidden;text-overflow:ellipsis}
+  /* casilla cuadrada blanca */
+  .ex-mod-cas{position:relative;width:92px;min-width:92px;height:92px;display:flex;flex-direction:column;
+    border:1px solid #d7d2c4;border-radius:12px;background:#fbf7ec;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .ex-mod-cas .cas-cif{position:absolute;top:5px;left:8px;font-size:12px;font-weight:900;color:#9a7a1e;letter-spacing:.02em}
+  .ex-mod-cas .cas-nom{flex:1;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#15233f;text-align:center;padding:14px 6px 8px;line-height:1.15}
+  .ex-mod-cas.cas-puente{border-color:#3a6fd8;box-shadow:0 0 0 2px rgba(58,111,216,.35),0 1px 4px rgba(0,0,0,.25)}
+  /* botón + tintineante */
+  .cas-plus{position:absolute;bottom:-9px;right:-9px;width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#4d82f0,#2f56b8);color:#fff;font-size:18px;font-weight:700;line-height:1;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(58,111,216,.6);
+    animation:casPulse 1.4s ease-in-out infinite;z-index:3}
+  .cas-plus:hover{filter:brightness(1.1)}
+  @keyframes casPulse{0%,100%{box-shadow:0 0 0 0 rgba(77,130,240,.55),0 2px 8px rgba(58,111,216,.6);transform:scale(1)}
+    50%{box-shadow:0 0 0 7px rgba(77,130,240,0),0 2px 8px rgba(58,111,216,.6);transform:scale(1.08)}}
+  /* dos filas de grados discretas, alineadas con las casillas */
+  .ex-mod-fila{display:flex;gap:10px;align-items:center}
+  .ex-mod-fila .cas-g{width:92px;min-width:92px;text-align:center;font-size:13px;font-weight:700;color:var(--muted)}
+  .ex-mod-fila .cas-g.g-hl{color:#9cc1ff;font-weight:900}
+  .ex-mod-fila .cas-g.cas-empty{color:rgba(216,202,166,.3)}
+  /* popover flotante de opciones de puente */
+  .cas-popover{position:absolute;top:90px;left:50%;transform:translateX(-50%) scale(.96);transform-origin:top center;
+    width:min(440px,86vw);background:#0e1838;border:1px solid #3a6fd8;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.55);
+    padding:14px;z-index:20;opacity:0;visibility:hidden;transition:opacity .16s ease,transform .16s ease}
+  .cas-popover.show{opacity:1;visibility:visible;transform:translateX(-50%) scale(1)}
+  .cas-popover .pop-cap{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#bcd8ff;font-weight:800;margin-bottom:10px;text-align:center}
+  .cas-popover .pop-opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .cas-popover .cas-opt{flex:1 1 110px;display:flex;flex-direction:column;align-items:center;gap:1px;
+    border:1px solid rgba(123,176,255,.4);border-radius:10px;background:rgba(91,157,255,.12);padding:8px 6px}
+  .cas-popover .opt-cif{font-size:11px;font-weight:900;color:var(--gold-soft)}
+  .cas-popover .opt-nom{font-size:14px;font-weight:900;color:#e3eeff}
+  .cas-popover .opt-gr{font-size:10px;color:#9cc1ff;font-weight:700;text-align:center}
+  .cas-popover .pop-foot{margin-top:10px;font-size:11px;color:#9cc1ff;text-align:center;line-height:1.4}
+  .ex-mod-note{margin-top:12px;font-size:12px;color:#9cc1ff;line-height:1.5}
+  .ex-mod-note b{color:#dcebff}
+  .ex-mod-pasos{margin:14px 0 14px}
+  .ex-mod-pasos .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin-bottom:8px}
+  .ex-mod-pasos ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px}
+  .ex-mod-pasos li{font-size:14px;color:var(--muted);line-height:1.5}
+  .ex-modal-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);
+    background:rgba(251,247,236,.05);color:var(--ink);font-size:18px;cursor:pointer;line-height:1}
+  .ex-modal-close:hover{background:rgba(251,247,236,.12)}
+  .ex-modal-otro{margin-top:6px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    font-family:inherit;font-size:14px;font-weight:800;padding:13px 18px;border-radius:11px;cursor:pointer;
+    color:#bcd8ff;border:1px solid rgba(123,176,255,.5);background:rgba(91,157,255,.1);transition:.12s}
+  .ex-modal-otro svg{width:18px;height:18px}
+  .ex-modal-otro:hover{background:rgba(91,157,255,.2);border-color:#7bb0ff;color:#dcebff}
 </style>
 </head>
 <body>
@@ -278,7 +383,10 @@
     <div class="editor" id="editor"></div>
 
     <div class="actions-bar" style="margin-top:18px;justify-content:flex-end">
-      <button class="iconbtn btn-help" id="helpBtn">Pedir pistas</button>
+      <button class="iconbtn btn-ejemplo" id="ejemploBtn" onclick="abrirEjemplo('modulacion')" title="Ver un ejemplo resuelto">
+        <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Ejemplo resuelto
+      </button>
       <button class="iconbtn btn-correct" id="checkBtn">✓ Corregir</button>
     </div>
     <div class="result-msg" id="resultMsg"></div>
@@ -487,7 +595,7 @@ function nuevo(){
   $('editor').classList.remove('show'); $('editor').innerHTML='';
   $('solution').classList.remove('show');
   $('resultMsg').className='result-msg'; $('resultMsg').textContent='';
-  $('helpBtn').classList.remove('on'); $('helpBtn').textContent='Pedir pistas'; helpOpen=false;
+  $('helpBtn')&&($('helpBtn').style.display='none'); helpOpen=false;
   $('hintKeys').classList.remove('show');
   $('evitaRow').classList.remove('show');
   $('gradoLines').classList.remove('show');
@@ -812,26 +920,349 @@ function evitarTexto(){
     return ga===gb ? ga : ga+'/'+gb;
   }).join(', ');
 }
-function toggleHelp(){
-  helpOpen=!helpOpen;
-  $('helpBtn').classList.toggle('on',helpOpen);
-  $('helpBtn').textContent=helpOpen?'Ocultar pistas':'Pedir pistas';
-  $('hintKeys').classList.toggle('show',helpOpen);
-  $('evitaRow').classList.toggle('show',helpOpen);
-  $('gradoLines').classList.toggle('show',helpOpen);
-  if(helpOpen){
-    $('evitaBubble').innerHTML='Nota a evitar: <b>'+(evitarTexto()||'—')+'</b>';
-  }
-  updateNebula();
-}
 
 /* ---- wiring ---- */
 $('newBtn').addEventListener('click', nuevo);
 $('checkBtn').addEventListener('click', corregir);
-$('helpBtn').addEventListener('click', toggleHelp);
 
 nuevo();
 window.MOD={ get EX(){return EX;}, get user(){return userSlots;}, generarEjercicio, diatonicTriads, acordesComunes };
 </script>
+<!-- ====== MODAL: Ejemplo resuelto ====== -->
+<div class="ex-modal" id="exModal" onclick="if(event.target===this)cerrarEjemplo()">
+  <div class="ex-modal-box" id="exModalBox">
+    <button class="ex-modal-close" onclick="cerrarEjemplo()" title="Cerrar">✕</button>
+    <span class="ex-modal-tag">Ejemplo resuelto</span>
+    <h3 id="exModalTitle">—</h3>
+    <div class="ex-modal-sec">
+      <div class="lab">Enunciado</div>
+      <div class="enun" id="exModalEnun">—</div>
+    </div>
+    <div class="ex-modal-scorewrap" id="exModalScoreWrap" style="display:none">
+      <div class="lab">Partitura</div>
+      <div class="ex-modal-scorescroll"><div id="exModalScore"></div></div>
+    </div>
+    <div id="exModalExtra"></div>
+    <div class="ex-modal-sec ex-modal-resp">
+      <div class="lab">Proceso (con grados)</div>
+      <div class="val" id="exModalResp">—</div>
+    </div>
+    <div class="ex-modal-sec">
+      <div class="lab">Por qué</div>
+      <div class="expl" id="exModalExpl">—</div>
+    </div>
+    <button class="ex-modal-otro" id="exModalOtro" onclick="otroEjemplo()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+      Ver otro ejemplo
+    </button>
+  </div>
+</div>
+<script>
+(function(){
+  const EJEMPLOS = {
+    modulacion: [
+      { titulo:'Do Mayor → Sol Mayor',
+        enun:'Modula de Do Mayor (0 alteraciones) a Sol Mayor (1♯) por modulación diatónica, usando un acorde común.',
+        resp:'C – F – G7 – C – Em – D7 – G',
+        spec:{type:'mod',clef:'treble',tonA:'Do Mayor (0)',tonB:'Sol Mayor (1♯)',bridge:4,
+          chords:[
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['f/4','a/4','c/5'],cif:'F'},
+            {keys:['g/4','b/4','d/5','f/5'],cif:'G7'},
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['e/4','g/4','b/4'],cif:'Em',hl:true},
+            {keys:['d/4','f#/4','a/4','c/5'],cif:'D7'},
+            {keys:['g/4','b/4','d/5'],cif:'G'}],
+          gradosA:['I','IV','V7','I','III','·','·'],
+          gradosB:['·','·','·','·','VI','V7','I'],
+          pasos:[
+            'Paso 0. Armaduras: Do Mayor (0) y Sol Mayor (1♯).',
+            'Paso 1. Proceso cadencial para asentar Do Mayor: I – IV – V7 – I (C – F – G7 – C).',
+            'Paso 2. Acorde puente común: Em. Nota a evitar Fa (natural en Do, ♯ en Sol); Em (Mi-Sol-Si) no la contiene. Es III en Do Mayor y VI en Sol Mayor.',
+            'Paso 3. Asentar Sol Mayor con la dominante: V7 – I (D7 – G). La dominante va con 7ª y es Mayor.'],
+          bridgeOpts:[{cif:'Em',nombre:'Mi menor',gA:'III',gB:'VI'},{cif:'C',nombre:'Do Mayor',gA:'I',gB:'IV'},{cif:'G',nombre:'Sol Mayor',gA:'V',gB:'I'},{cif:'Am',nombre:'La menor',gA:'VI',gB:'II'}],
+          bridgeAlt:'Otros puentes válidos Do→Sol (sin la nota a evitar Fa): C (I→IV), G (V→I), Am (VI→II). Em es solo una opción.'},
+        expl:'El acorde puente (Em) es el pivote: el mismo acorde se interpreta como III desde Do Mayor y como VI desde Sol Mayor. Por eso aparece con un grado en cada hilera.' },
+      { titulo:'Do Mayor → Fa Mayor',
+        enun:'Modula de Do Mayor (0) a Fa Mayor (1♭) por modulación diatónica, usando un acorde común.',
+        resp:'C – F – G7 – C – Dm – C7 – F',
+        spec:{type:'mod',clef:'treble',tonA:'Do Mayor (0)',tonB:'Fa Mayor (1♭)',bridge:4,
+          chords:[
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['f/4','a/4','c/5'],cif:'F'},
+            {keys:['g/4','b/4','d/5','f/5'],cif:'G7'},
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['d/4','f/4','a/4'],cif:'Dm',hl:true},
+            {keys:['c/4','e/4','g/4','bb/4'],cif:'C7'},
+            {keys:['f/4','a/4','c/5'],cif:'F'}],
+          gradosA:['I','IV','V7','I','II','·','·'],
+          gradosB:['·','·','·','·','VI','V7','I'],
+          pasos:[
+            'Paso 0. Armaduras: Do Mayor (0) y Fa Mayor (1♭).',
+            'Paso 1. Cadencia para asentar Do Mayor: I – IV – V7 – I (C – F – G7 – C).',
+            'Paso 2. Acorde puente común: Dm. Nota a evitar Si (natural en Do, ♭ en Fa); Dm (Re-Fa-La) no la contiene. Es II en Do Mayor y VI en Fa Mayor.',
+            'Paso 3. Asentar Fa Mayor: V7 – I (C7 – F). El C7 ya introduce el Si♭, propio de la nueva tonalidad.'],
+          bridgeOpts:[{cif:'Dm',nombre:'Re menor',gA:'II',gB:'VI'},{cif:'C',nombre:'Do Mayor',gA:'I',gB:'V'},{cif:'F',nombre:'Fa Mayor',gA:'IV',gB:'I'},{cif:'Am',nombre:'La menor',gA:'VI',gB:'III'}],
+          bridgeAlt:'Otros puentes válidos Do→Fa (sin la nota a evitar Si): C (I→V), F (IV→I), Am (VI→III). Dm es solo una opción.'},
+        expl:'El puente (Dm) es el pivote: II desde Do Mayor y VI desde Fa Mayor. Cada perspectiva da un grado distinto, por eso van en dos hileras.' },
+      { titulo:'Do Mayor → Re menor',
+        enun:'Modula de Do Mayor (0) a Re menor (1♭) por modulación diatónica, usando un acorde común.',
+        resp:'C – F – G7 – C – F – A7 – Dm',
+        spec:{type:'mod',clef:'treble',tonA:'Do Mayor (0)',tonB:'Re menor (1♭)',bridge:4,
+          chords:[
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['f/4','a/4','c/5'],cif:'F'},
+            {keys:['g/4','b/4','d/5','f/5'],cif:'G7'},
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['f/4','a/4','c/5'],cif:'F',hl:true},
+            {keys:['a/4','c#/5','e/5','g/5'],cif:'A7'},
+            {keys:['d/4','f/4','a/4'],cif:'Dm'}],
+          gradosA:['I','IV','V7','I','IV','·','·'],
+          gradosB:['·','·','·','·','III','V7','i'],
+          pasos:[
+            'Paso 0. Armaduras: Do Mayor (0) y Re menor (1♭).',
+            'Paso 1. Cadencia para asentar Do Mayor: I – IV – V7 – I (C – F – G7 – C).',
+            'Paso 2. Acorde puente común: F. No contiene la nota a evitar (Si). Es IV en Do Mayor y III en Re menor.',
+            'Paso 3. Asentar Re menor: V7 – i (A7 – Dm). La dominante A7 es Mayor; su Do♯ es la sensible que confirma la nueva tonalidad.'],
+          bridgeOpts:[{cif:'F',nombre:'Fa Mayor',gA:'IV',gB:'III'},{cif:'C',nombre:'Do Mayor',gA:'I',gB:'VII'},{cif:'Am',nombre:'La menor',gA:'VI',gB:'V'}],
+          bridgeAlt:'Otros puentes válidos Do→Re menor (sin la nota a evitar Si): C (I→VII), Am (VI→V). F es solo una opción.'},
+        expl:'El puente (F) es el pivote: IV desde Do Mayor y III desde Re menor. Por eso lleva un grado en cada hilera.' }
+    ]
+  };
+  /* ---- dibujador de pentagramas del modal (autónomo) ---- */
+  function exDraw(spec){
+    const host=document.getElementById('exModalScore');
+    const wrap=document.getElementById('exModalScoreWrap');
+    if(!host) return;
+    host.innerHTML='';
+    if(!spec){ if(wrap) wrap.style.display='none'; return; }
+    let VFlib=null; try{ VFlib=Vex.Flow; }catch(e){}
+    if(!VFlib){ if(wrap) wrap.style.display='none'; return; }
+    const VF=VFlib;
+    if(wrap) wrap.style.display='block';
+    try{
+      if(spec.type==='chord'){ exDrawChord(VF,host,spec); return; }
+      if(spec.type==='seq'){ exDrawSeq(VF,host,spec); return; }
+      if(spec.type==='scale'){ exDrawScale(VF,host,spec); return; }
+      if(spec.type==='mod'){ if(wrap) wrap.style.display='none'; return; }
+      if(spec.type==='notes'){ exDrawNotes(VF,host,spec); return; }
+      if(wrap) wrap.style.display='none';
+    }catch(err){ host.innerHTML=''; if(wrap) wrap.style.display='none'; }
+  }
+  function exAccOf(k){ const m=k.match(/^[a-gA-G](##|bb|#|b|n)?/); return m&&m[1]; }
+  function exDrawChord(VF,host,spec){
+    const W=320,H=170;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,28,W-20); stave.addClef(spec.clef||'treble');
+    stave.setContext(ctx).draw();
+    const keys=spec.keys.slice();
+    const sn=new VF.StaveNote({keys,duration:'w',clef:spec.clef||'treble'});
+    keys.forEach((k,i)=>{ const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),i); });
+    if(spec.cif) sn.addModifier(new VF.Annotation(spec.cif).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',13,'bold'),0);
+    if(spec.grado) sn.addModifier(new VF.Annotation(spec.grado).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',12,''),0);
+    const v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickable(sn);
+    new VF.Formatter().joinVoices([v]).format([v],W-90);
+    v.draw(ctx,stave);
+  }
+  function exDrawSeq(VF,host,spec){
+    const chords=spec.chords; const n=chords.length;
+    const wC=Math.max(78, Math.min(120, Math.floor((560-30)/n)));
+    const W=20+wC*n, H=190;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    let x=10;
+    chords.forEach((c,i)=>{
+      const st=new VF.Stave(x,34,wC);
+      if(i===0) st.addClef(spec.clef||'treble');
+      if(i===n-1) st.setEndBarType(VF.Barline.type.END);
+      st.setContext(ctx).draw();
+      const keys=c.keys.slice();
+      const sn=new VF.StaveNote({keys,duration:'w',clef:spec.clef||'treble'});
+      keys.forEach((k,j)=>{ const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),j); });
+      if(c.cif) sn.addModifier(new VF.Annotation(c.cif).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',12,'bold'),0);
+      if(c.grado) sn.addModifier(new VF.Annotation(c.grado).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',11,''),0);
+      const v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickable(sn);
+      new VF.Formatter().joinVoices([v]).format([v],wC-26);
+      v.draw(ctx,st);
+      x+=wC;
+    });
+  }
+  function exDrawScale(VF,host,spec){
+    const keys=spec.keys; const n=keys.length;
+    const wPer=Math.max(40, Math.min(58, Math.floor((560-40)/n)));
+    const W=Math.max(360, 30+wPer*n), H=150;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,34,W-20); stave.addClef(spec.clef||'treble');
+    stave.setEndBarType(VF.Barline.type.END);
+    stave.setContext(ctx).draw();
+    const notes=keys.map((k,i)=>{
+      const sn=new VF.StaveNote({keys:[k],duration:'q',clef:spec.clef||'treble'});
+      const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),0);
+      if(i===0 && spec.tonicLabel) sn.addModifier(new VF.Annotation(spec.tonicLabel).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',11,'bold'),0);
+      return sn;
+    });
+    const v=new VF.Voice({num_beats:n,beat_value:4}).setStrict(false); v.addTickables(notes);
+    new VF.Formatter().joinVoices([v]).format([v],W-60);
+    v.draw(ctx,stave);
+  }
+  function exDrawNotes(VF,host,spec){
+    const items=spec.items; const n=items.length;
+    const wPer=Math.max(70, Math.min(150, Math.floor((560-40)/Math.max(1,n))));
+    const W=Math.max(300, 40+wPer*n), H=spec.h||170;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,36,W-20); stave.addClef(spec.clef||'treble');
+    if(spec.keysig) stave.addKeySignature(spec.keysig);
+    stave.setEndBarType(VF.Barline.type.END);
+    stave.setContext(ctx).draw();
+    const notes=items.map(it=>{
+      const sn=new VF.StaveNote({keys:[it.key],duration:'w',clef:it.clef||spec.clef||'treble'});
+      const a=exAccOf(it.key);
+      if(a && !it.noAcc) sn.addModifier(new VF.Accidental(a),0);
+      if(it.label) sn.addModifier(new VF.Annotation(it.label).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',13,'bold'),0);
+      if(it.sub) sn.addModifier(new VF.Annotation(it.sub).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',11,''),0);
+      return sn;
+    });
+    const v=new VF.Voice({num_beats:n,beat_value:1}).setStrict(false); v.addTickables(notes);
+    new VF.Formatter().joinVoices([v]).format([v],W-70);
+    v.draw(ctx,stave);
+  }
+  // modulación: secuencia de acordes con el puente (hl:true) resaltado en azul
+  function exDrawMod(VF,host,spec){
+    const chords=spec.chords; const n=chords.length;
+    const wC=Math.max(70, Math.min(96, Math.floor((560-24)/n)));
+    const W=18+wC*n, H=150;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    let x=9;
+    chords.forEach((c,i)=>{
+      const st=new VF.Stave(x,18,wC);
+      if(i===0) st.addClef(spec.clef||'treble');
+      if(i===n-1) st.setEndBarType(VF.Barline.type.END);
+      st.setContext(ctx).draw();
+      const keys=c.keys.slice();
+      const sn=new VF.StaveNote({keys,duration:'w',clef:spec.clef||'treble'});
+      keys.forEach((k,j)=>{ const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),j); });
+      if(c.cif) sn.addModifier(new VF.Annotation(c.cif).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',12,'bold'),0);
+      if(c.hl){ try{ sn.setStyle({fillStyle:'#3b6fd4',strokeStyle:'#3b6fd4'}); }catch(e){} }
+      const v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickable(sn);
+      new VF.Formatter().joinVoices([v]).format([v],wC-22);
+      v.draw(ctx,st);
+      x+=wC;
+    });
+  }
+
+  let curKey=null, curIdx=-1;
+  function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function exExtra(spec){
+    const box=document.getElementById('exModalExtra'); if(!box) return;
+    box.innerHTML='';
+    if(!spec) return;
+    if(spec.type==='transp'){
+      box.innerHTML =
+        '<div class="ex-transp-card">'+
+          '<div class="ex-transp-cap">Respuesta</div>'+
+          '<div class="ex-transp-grid">'+
+            cellT('Tonalidad A',spec.tonA)+cellT('Armadura A',spec.armA)+
+            cellT('Tonalidad B',spec.tonB)+cellT('Armadura B',spec.armB)+
+            cellT('Diferencias',spec.dif)+cellT('Notas afectadas',spec.notas)+
+          '</div>'+
+          (spec.camino?'<div class="ex-transp-camino">Camino de armaduras: <b>'+escHtml(spec.camino)+'</b></div>':'')+
+        '</div>';
+    } else if(spec.type==='mod'){
+      const hasOpts = spec.bridgeOpts && spec.bridgeOpts.length>1;
+      let casillas='', filaA='', filaB='';
+      spec.chords.forEach((c,i)=>{
+        const isB=(i===spec.bridge);
+        const gA=spec.gradosA[i]||'·', gB=spec.gradosB[i]||'·';
+        const plus=(isB && hasOpts)?'<button class="cas-plus" onclick="exTogglePuente(event)" title="Ver otras opciones de puente">+</button>':'';
+        casillas+=
+          '<div class="ex-mod-cas'+(isB?' cas-puente':'')+'">'+
+            '<div class="cas-cif">'+escHtml(c.cif)+'</div>'+
+            '<div class="cas-nom">'+escHtml(exNombreAcorde(c.cif))+'</div>'+
+            plus+
+          '</div>';
+        filaA+='<span class="cas-g'+(gA==='·'?' cas-empty':'')+(isB?' g-hl':'')+'">'+escHtml(gA)+'</span>';
+        filaB+='<span class="cas-g'+(gB==='·'?' cas-empty':'')+(isB?' g-hl':'')+'">'+escHtml(gB)+'</span>';
+      });
+      let popover='';
+      if(hasOpts){
+        let opts='';
+        spec.bridgeOpts.forEach(o=>{
+          opts+='<div class="cas-opt"><span class="opt-cif">'+escHtml(o.cif)+'</span><span class="opt-nom">'+escHtml(o.nombre)+'</span><span class="opt-gr">'+escHtml(spec.tonA||'A')+': '+escHtml(o.gA)+' · '+escHtml(spec.tonB||'B')+': '+escHtml(o.gB)+'</span></div>';
+        });
+        popover='<div class="cas-popover" id="exPuentePop"><div class="pop-cap">Acordes puente válidos</div><div class="pop-opts">'+opts+'</div><div class="pop-foot">Cualquiera sirve como pivote. El ejemplo usa el primero.</div></div>';
+      }
+      let pasos='';
+      (spec.pasos||[]).forEach(p=>{ pasos+='<li>'+escHtml(p)+'</li>'; });
+      box.innerHTML =
+        '<div class="ex-mod-grados" style="position:relative">'+
+          '<div class="lab">Proceso en casillas</div>'+
+          '<div class="ex-mod-scroll">'+
+            '<div class="ex-mod-grid">'+
+              '<div class="ex-mod-casillas"><span class="fila-lab"></span>'+casillas+'</div>'+
+              '<div class="ex-mod-fila"><span class="fila-lab">'+escHtml(spec.tonA||'Ton. A')+'</span>'+filaA+'</div>'+
+              '<div class="ex-mod-fila"><span class="fila-lab">'+escHtml(spec.tonB||'Ton. B')+'</span>'+filaB+'</div>'+
+            '</div>'+
+          '</div>'+
+          popover+
+          '<div class="ex-mod-note">Cada casilla replica la respuesta del ejercicio: el cifrado en la esquina y el acorde escrito (Mayor/menor). Debajo, en dos filas, el grado en cada tonalidad. El acorde puente es el pivote'+(hasOpts?'; pulsa el botón <b>+</b> para ver otras opciones de puente':'')+'.</div>'+
+        '</div>'+
+        '<div class="ex-mod-pasos"><div class="lab">Paso a paso</div><ol>'+pasos+'</ol></div>';
+    }
+  }
+  // abrir/cerrar el popover de opciones de puente sin modificar la casilla
+  function exTogglePuente(ev){
+    if(ev){ ev.stopPropagation(); }
+    const pop=document.getElementById('exPuentePop'); if(!pop) return;
+    pop.classList.toggle('show');
+  }
+  // nombre escrito de un acorde a partir del cifrado (Do Mayor, La menor, Sol 7…)
+  function exNombreAcorde(cif){
+    const N={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+    const m=cif.match(/^([A-G])(b|#)?(.*)$/); if(!m) return cif;
+    let nom=N[m[1]]||m[1]; if(m[2]==='b') nom+='♭'; else if(m[2]==='#') nom+='♯';
+    const rest=m[3]||'';
+    if(/^7/.test(rest)) return nom+' 7';
+    if(/^m|^-/.test(rest)) return nom+' menor';
+    if(/^Δ/.test(rest)) return nom+' Maj7';
+    if(/^Ø/.test(rest)) return nom+' semidism.';
+    if(/^°/.test(rest)) return nom+' dism.';
+    if(/^\+/.test(rest)) return nom+' aum.';
+    if(/^sus/i.test(rest)) return nom+' sus';
+    return nom+' Mayor';
+  }
+    function pinta(){
+    const e = EJEMPLOS[curKey][curIdx];
+    document.getElementById('exModalTitle').textContent = e.titulo;
+    document.getElementById('exModalEnun').textContent = e.enun;
+    document.getElementById('exModalResp').textContent = e.resp;
+    document.getElementById('exModalExpl').textContent = e.expl;
+    document.getElementById('exModalOtro').style.display = (EJEMPLOS[curKey].length>1)?'inline-flex':'none';
+    const tw=e.spec&&(e.spec.type==='mod'||e.spec.type==='transp'||e.spec.type==='satb'||e.spec.type==='scalekey'||e.spec.type==='scale');
+    const box=document.getElementById('exModalBox'); if(box) box.classList.toggle('wide', !!tw);
+    exDraw(e.spec);
+    exExtra(e.spec);
+  }
+  function abrirEjemplo(clave){
+    const arr = EJEMPLOS[clave]; if(!arr||!arr.length) return;
+    curKey = clave; curIdx = Math.floor(Math.random()*arr.length);
+    pinta();
+    document.getElementById('exModal').classList.add('show');
+  }
+  function otroEjemplo(){
+    if(!curKey) return; const arr = EJEMPLOS[curKey]; if(arr.length<2) return;
+    let n; do{ n = Math.floor(Math.random()*arr.length); } while(n===curIdx);
+    curIdx = n; pinta();
+  }
+  function cerrarEjemplo(){ document.getElementById('exModal').classList.remove('show'); }
+  document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') cerrarEjemplo(); });
+  window.abrirEjemplo=abrirEjemplo; window.otroEjemplo=otroEjemplo; window.cerrarEjemplo=cerrarEjemplo;
+  window.exTogglePuente=exTogglePuente;
+})();
+</script>
+
 </body>
 </html>

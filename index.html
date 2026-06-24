@@ -318,6 +318,223 @@
   #view-indice .ia-sum-row.ok{border-color:var(--green);background:var(--green-soft)}
   #view-indice .ia-sum-row.bad{border-color:var(--red);background:var(--red-soft)}
   #view-indice .ia-sum-row b{color:var(--gold-soft)}
+  /* overlay de inicio (Play) */
+  #view-indice #cardIA{position:relative}
+  #view-indice .ia-startoverlay{display:none;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+    position:absolute;inset:0;z-index:5;border-radius:inherit;background:linear-gradient(180deg,rgba(20,14,4,.86),rgba(12,8,2,.92));backdrop-filter:blur(2px)}
+  #view-indice #cardIA.idle .ia-startoverlay{display:flex}
+  #view-indice #cardIA.idle .ia-progress,
+  #view-indice #cardIA.idle .ia-timerbar,
+  #view-indice #cardIA.idle .ia-stage,
+  #view-indice #cardIA.idle .ia-panels,
+  #view-indice #cardIA.idle .ia-chosen,
+  #view-indice #cardIA.idle .ia-summary{visibility:hidden}
+  #view-indice .ia-playbtn{width:88px;height:88px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 8px 28px rgba(212,175,55,.35);transition:.15s}
+  #view-indice .ia-playbtn svg{width:40px;height:40px;margin-left:4px}
+  #view-indice .ia-playbtn:hover{transform:scale(1.06)}
+  #view-indice .ia-playbtn:active{transform:scale(.96)}
+  #view-indice .ia-playhint{font-size:13px;color:var(--muted2);font-weight:700;letter-spacing:.03em}
+
+  /* ===== Transporte ===== */
+  .tr-tabs{display:flex;gap:6px;max-width:560px;margin:0 auto 18px;background:var(--panel);border:1px solid var(--line);
+    border-radius:13px;padding:5px}
+  .tr-tab{flex:1;border:none;background:transparent;color:var(--muted);font-family:inherit;font-size:14px;font-weight:800;
+    letter-spacing:.04em;padding:10px 8px;border-radius:9px;cursor:pointer;transition:.15s;text-transform:uppercase}
+  .tr-tab:hover{color:var(--ink)}
+  .tr-tab.active{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407}
+  /* scroll horizontal en pantallas estrechas */
+  .tr-scroll{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  /* tabla RESPUESTA en vivo (horizontal, clara) */
+  .tr-respuesta{max-width:920px;margin:0 auto 16px;border:1px solid rgba(233,201,106,.4);border-radius:12px;padding:12px 14px;
+    background:rgba(233,201,106,.06)}
+  .tr-resp-cap{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--gold-soft);font-weight:800;margin-bottom:10px}
+  .tr-table-resp{border-collapse:collapse;width:100%;min-width:560px}
+  .tr-table-resp th{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);font-weight:700;
+    padding:6px 8px;border-bottom:1px solid rgba(251,247,236,.22);text-align:center;white-space:nowrap;background:rgba(251,247,236,.06)}
+  .tr-table-resp td{padding:9px 8px;text-align:center;border-bottom:1px solid rgba(251,247,236,.08);font-size:16px;
+    color:var(--ink);font-weight:800;border-left:1px solid rgba(251,247,236,.06)}
+  .tr-table-resp td:first-child{border-left:none}
+  .tr-table-resp td.ok{background:var(--green-soft);color:#bdf3d8}
+  .tr-table-resp td.bad{background:var(--red-soft)}
+  .tr-table-resp td .resp-mal{color:#ffb3bb;text-decoration:line-through;opacity:.7;font-size:13px;display:block}
+  .tr-table-resp td .resp-sol{color:var(--gold-soft);font-size:14px;display:block}
+  .tr-table-resp td .tr-arrow{vertical-align:-2px;margin-left:2px}
+
+  /* transporte a realizar (tarjeta intermedia) */
+  .tr-pide{max-width:920px;margin:0 auto 18px;display:flex;align-items:center;justify-content:center;gap:14px;
+    background:linear-gradient(160deg,rgba(233,201,106,.1),rgba(233,201,106,.04));border:1px solid rgba(233,201,106,.3);border-radius:14px;padding:14px 22px}
+  .tr-pide span{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.1em}
+  .tr-pide b{font-size:26px;font-weight:900;color:var(--ink);display:inline-flex;align-items:center;gap:4px}
+  .tr-pide b .tr-arrow{vertical-align:middle}
+
+  #trCardSint{max-width:920px;margin:0 auto}
+  /* flecha SVG coherente */
+  .tr-arrow{display:inline-block}
+
+  /* tabla a rellenar: columnas horizontales */
+  .tr-table-fill{display:flex;gap:0;min-width:640px;border:1px solid rgba(123,176,255,.18);border-radius:12px;overflow:hidden}
+  .tr-col{flex:1;display:flex;flex-direction:column;border-right:1px solid rgba(251,247,236,.1);min-width:92px;background:rgba(91,157,255,.025)}
+  .tr-col:nth-child(even){background:rgba(233,201,106,.04)}
+  .tr-col:last-child{border-right:none}
+  .tr-col-notas{flex:0 0 132px}
+  .tr-col-dada{flex:0 0 92px;background:rgba(233,201,106,.07)}
+  .tr-dada-val{font-size:24px;font-weight:900;color:var(--gold-soft)}
+  .tr-th{font-size:10px;letter-spacing:.05em;text-transform:uppercase;color:var(--ink);font-weight:700;text-align:center;
+    padding:9px 6px;background:linear-gradient(180deg,rgba(123,176,255,.14),rgba(123,176,255,.04));border-bottom:1px solid rgba(123,176,255,.28);white-space:nowrap}
+  .tr-cell{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:8px;padding:14px 8px;background:transparent}
+  .tr-cell .wheel{width:62px;height:96px}
+  .tr-cell-tonb .wheel{width:70px}
+  .tr-accs{display:flex;gap:6px}
+  .tr-modos{display:flex;gap:6px}
+  .tr-modo{width:34px;height:32px;border:1px solid rgba(251,247,236,.22);background:rgba(251,247,236,.04);color:var(--ink);
+    font-family:inherit;font-size:14px;font-weight:800;border-radius:8px;cursor:pointer;transition:.12s}
+  .tr-modo:hover{border-color:var(--gold-soft)}
+  .tr-modo.on{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
+  .tr-dirs{display:flex;flex-direction:column;gap:6px}
+  .tr-dir{width:46px;height:36px;border:1px solid rgba(251,247,236,.22);background:rgba(251,247,236,.04);color:var(--ink);
+    font-family:inherit;border-radius:9px;cursor:pointer;transition:.12s;display:flex;align-items:center;justify-content:center}
+  .tr-dir:hover{border-color:var(--gold-soft)}
+  .tr-dir.on{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
+  .tr-notas{display:grid;grid-template-columns:1fr 1fr;gap:6px;width:100%}
+  .tr-nota{border:1px solid rgba(251,247,236,.2);background:rgba(251,247,236,.04);color:var(--ink);
+    font-family:inherit;font-size:14px;font-weight:800;padding:9px 4px;border-radius:9px;cursor:pointer;transition:.12s;
+    -webkit-tap-highlight-color:transparent;text-align:center}
+  .tr-nota:hover{border-color:var(--gold-soft)}
+  .tr-nota.on{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
+  .tr-nota.n-ok{background:var(--green);color:#04220f;border-color:transparent}
+  .tr-nota.n-bad{background:var(--red);color:#fff;border-color:transparent}
+  .tr-nota.n-sol{background:var(--blue);color:#04122e;border-color:transparent}
+  .tr-actions{margin-top:22px;text-align:center}
+  .tr-feedback{margin-top:14px;text-align:center;font-size:15px;font-weight:700;min-height:22px}
+  .tr-feedback .fb-ok{color:var(--green)}
+  .tr-feedback .fb-bad{color:var(--red)}
+  .tr-fbrow{display:flex;flex-direction:column;gap:5px;max-width:460px;margin:12px auto 0;text-align:left}
+  .tr-fbline{display:flex;justify-content:space-between;gap:10px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;font-size:13px;font-weight:600}
+  .tr-fbline.ok{border-color:var(--green);background:var(--green-soft)}
+  .tr-fbline.bad{border-color:var(--red);background:var(--red-soft)}
+  .tr-fbline span:first-child{color:var(--muted)}
+  .tr-fbline .sol-b{color:var(--blue);font-weight:800}
+
+  /* ===== Botón Ejemplo resuelto + modal ===== */
+  .iv-actions{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  .btn-ejemplo{font-size:15px;font-weight:800;padding:13px 20px;border-radius:12px;gap:9px;
+    color:#bcd8ff;border-color:rgba(123,176,255,.5);background:rgba(91,157,255,.1)}
+  .btn-ejemplo svg{width:20px;height:20px}
+  .btn-ejemplo:hover{background:rgba(91,157,255,.2);border-color:#7bb0ff;color:#dcebff}
+  .ex-modal{position:fixed;inset:0;z-index:90;display:none;align-items:center;justify-content:center;padding:20px;
+    background:rgba(8,5,1,.7);backdrop-filter:blur(3px)}
+  .ex-modal.show{display:flex;animation:exFade .2s ease 1}
+  @keyframes exFade{from{opacity:0}to{opacity:1}}
+  .ex-modal-box{position:relative;max-width:620px;width:100%;max-height:86vh;overflow-y:auto;overflow-x:hidden;
+    background-color:#0c1430;
+    border:1px solid rgba(123,176,255,.45);border-radius:18px;box-shadow:var(--shadow);padding:26px 26px 30px}
+  .ex-modal-box.wide{max-width:920px}
+  .ex-modal-box::before{content:'';position:absolute;inset:0;z-index:0;pointer-events:none;
+    filter:blur(46px) saturate(150%);opacity:.68;
+    background:
+      radial-gradient(40% 52% at 20% 28%, #3a6fd8 0%, transparent 60%),
+      radial-gradient(36% 48% at 80% 22%, #2f9cc8 0%, transparent 62%),
+      radial-gradient(42% 54% at 66% 82%, #5566d6 0%, transparent 60%),
+      radial-gradient(38% 50% at 30% 80%, #2f7ed8 0%, transparent 62%),
+      radial-gradient(52% 62% at 50% 50%, #243a7a 0%, transparent 70%);
+    background-size:240% 240%,240% 240%,240% 240%,240% 240%,200% 200%;
+    animation:exNebula 18s ease-in-out infinite alternate}
+  .ex-modal-box > *{position:relative;z-index:1}
+  @keyframes exNebula{
+    0%{background-position:0% 0%,100% 0%,60% 100%,20% 90%,50% 50%}
+    25%{background-position:50% 30%,40% 60%,90% 20%,70% 40%,30% 70%}
+    50%{background-position:80% 70%,20% 30%,30% 80%,90% 10%,65% 35%}
+    75%{background-position:30% 90%,80% 50%,60% 30%,10% 70%,40% 60%}
+    100%{background-position:100% 40%,10% 80%,20% 60%,80% 30%,55% 45%}
+  }
+  @media (prefers-reduced-motion: reduce){ .ex-modal-box::before{animation:none} }
+  .ex-modal-tag{display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;
+    color:#0a1426;background:linear-gradient(135deg,#9cc1ff,#7bb0ff);padding:5px 11px;border-radius:8px;margin-bottom:14px}
+  .ex-modal-box h3{margin:0 0 14px;font-size:20px;font-weight:900;color:var(--ink)}
+  .ex-modal-sec{margin-bottom:16px}
+  .ex-modal-sec .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin-bottom:6px}
+  .ex-modal-sec .enun{font-size:15px;color:var(--muted);line-height:1.55}
+  .ex-modal-resp{background:rgba(91,157,255,.1);border:1px solid rgba(123,176,255,.4);border-radius:12px;padding:14px 16px}
+  .ex-modal-resp .lab{color:#9cc1ff}
+  .ex-modal-resp .val{font-size:18px;font-weight:900;color:#dcebff}
+  .ex-modal-sec .expl{font-size:14px;color:var(--muted);line-height:1.6}
+  /* pentagrama dentro del modal */
+  .ex-modal-scorewrap{margin:0 0 18px}
+  .ex-modal-scorewrap .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin-bottom:8px}
+  .ex-modal-scorescroll{overflow-x:auto;-webkit-overflow-scrolling:touch;border-radius:12px;background:var(--paper);box-shadow:var(--shadow);padding:10px 6px;min-height:120px;display:flex;align-items:center;justify-content:center}
+  .ex-modal-scorescroll svg{display:block;margin:0 auto}
+  #exModalScore{min-width:100%}
+  @media(max-width:560px){ .ex-modal-scorescroll{justify-content:flex-start} }
+  .ex-modal-close{position:absolute;top:14px;right:14px;width:34px;height:34px;border-radius:9px;border:1px solid var(--line);
+    background:rgba(251,247,236,.05);color:var(--ink);font-size:18px;cursor:pointer;line-height:1}
+  .ex-modal-close:hover{background:rgba(251,247,236,.12)}
+  .ex-modal-otro{margin-top:6px;width:100%;display:inline-flex;align-items:center;justify-content:center;gap:9px;
+    font-family:inherit;font-size:14px;font-weight:800;padding:13px 18px;border-radius:11px;cursor:pointer;
+    color:#bcd8ff;border:1px solid rgba(123,176,255,.5);background:rgba(91,157,255,.1);transition:.12s}
+  .ex-modal-otro svg{width:18px;height:18px}
+  .ex-modal-otro:hover{background:rgba(91,157,255,.2);border-color:#7bb0ff;color:#dcebff}
+
+  /* ---- ejemplo TRANSPORTE: tarjeta azul horizontal, sin notas ---- */
+  .ex-transp-card{margin:0 0 18px;border:1px solid rgba(123,176,255,.5);border-radius:14px;
+    background:linear-gradient(160deg,rgba(91,157,255,.16),rgba(40,70,140,.1));padding:14px 16px}
+  .ex-transp-cap{font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:#9cc1ff;font-weight:800;margin-bottom:12px}
+  .ex-transp-grid{display:flex;gap:10px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:4px}
+  .ex-transp-cell{flex:1 0 130px;display:flex;flex-direction:column;gap:4px;border:1px solid rgba(123,176,255,.28);
+    border-radius:10px;background:rgba(91,157,255,.08);padding:9px 11px}
+  .ex-transp-cell .t-lab{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#8fb4ec;font-weight:800}
+  .ex-transp-cell .t-val{font-size:17px;font-weight:900;color:#e3eeff;white-space:nowrap}
+  .ex-transp-camino{margin-top:12px;font-size:13px;color:#bcd8ff}
+  .ex-transp-camino b{color:#e3eeff;font-weight:800;letter-spacing:.02em}
+
+  /* ---- ejemplo MODULACIÓN: casillas cuadradas tipo ejercicio + pasos ---- */
+  .ex-mod-grados{margin:0 0 16px}
+  .ex-mod-grados .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin-bottom:8px}
+  .ex-mod-scroll{overflow-x:auto;overflow-y:visible;-webkit-overflow-scrolling:touch;padding-bottom:6px}
+  .ex-mod-grid{display:inline-flex;flex-direction:column;gap:7px;min-width:100%}
+  .ex-mod-casillas{display:flex;gap:10px;align-items:flex-end}
+  .ex-mod-fila{display:flex;gap:10px;align-items:center}
+  .fila-lab{width:74px;min-width:74px;flex:0 0 auto;font-size:10px;letter-spacing:.03em;text-transform:uppercase;
+    color:var(--muted2);font-weight:800;white-space:nowrap;text-align:right;padding-right:4px;overflow:hidden;text-overflow:ellipsis}
+  /* casilla cuadrada blanca */
+  .ex-mod-cas{position:relative;width:92px;min-width:92px;height:92px;display:flex;flex-direction:column;
+    border:1px solid #d7d2c4;border-radius:12px;background:#fbf7ec;box-shadow:0 1px 4px rgba(0,0,0,.25)}
+  .ex-mod-cas .cas-cif{position:absolute;top:5px;left:8px;font-size:12px;font-weight:900;color:#9a7a1e;letter-spacing:.02em}
+  .ex-mod-cas .cas-nom{flex:1;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:900;color:#15233f;text-align:center;padding:14px 6px 8px;line-height:1.15}
+  .ex-mod-cas.cas-puente{border-color:#3a6fd8;box-shadow:0 0 0 2px rgba(58,111,216,.35),0 1px 4px rgba(0,0,0,.25)}
+  /* botón + tintineante */
+  .cas-plus{position:absolute;bottom:-9px;right:-9px;width:26px;height:26px;border-radius:50%;border:none;cursor:pointer;
+    background:linear-gradient(135deg,#4d82f0,#2f56b8);color:#fff;font-size:18px;font-weight:700;line-height:1;
+    display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(58,111,216,.6);
+    animation:casPulse 1.4s ease-in-out infinite;z-index:3}
+  .cas-plus:hover{filter:brightness(1.1)}
+  @keyframes casPulse{0%,100%{box-shadow:0 0 0 0 rgba(77,130,240,.55),0 2px 8px rgba(58,111,216,.6);transform:scale(1)}
+    50%{box-shadow:0 0 0 7px rgba(77,130,240,0),0 2px 8px rgba(58,111,216,.6);transform:scale(1.08)}}
+  /* dos filas de grados discretas, alineadas con las casillas */
+  .ex-mod-fila{display:flex;gap:10px;align-items:center}
+  .ex-mod-fila .cas-g{width:92px;min-width:92px;text-align:center;font-size:13px;font-weight:700;color:var(--muted)}
+  .ex-mod-fila .cas-g.g-hl{color:#9cc1ff;font-weight:900}
+  .ex-mod-fila .cas-g.cas-empty{color:rgba(216,202,166,.3)}
+  /* popover flotante de opciones de puente */
+  .cas-popover{position:absolute;top:90px;left:50%;transform:translateX(-50%) scale(.96);transform-origin:top center;
+    width:min(440px,86vw);background:#0e1838;border:1px solid #3a6fd8;border-radius:14px;box-shadow:0 14px 40px rgba(0,0,0,.55);
+    padding:14px;z-index:20;opacity:0;visibility:hidden;transition:opacity .16s ease,transform .16s ease}
+  .cas-popover.show{opacity:1;visibility:visible;transform:translateX(-50%) scale(1)}
+  .cas-popover .pop-cap{font-size:10px;letter-spacing:.08em;text-transform:uppercase;color:#bcd8ff;font-weight:800;margin-bottom:10px;text-align:center}
+  .cas-popover .pop-opts{display:flex;flex-wrap:wrap;gap:8px;justify-content:center}
+  .cas-popover .cas-opt{flex:1 1 110px;display:flex;flex-direction:column;align-items:center;gap:1px;
+    border:1px solid rgba(123,176,255,.4);border-radius:10px;background:rgba(91,157,255,.12);padding:8px 6px}
+  .cas-popover .opt-cif{font-size:11px;font-weight:900;color:var(--gold-soft)}
+  .cas-popover .opt-nom{font-size:14px;font-weight:900;color:#e3eeff}
+  .cas-popover .opt-gr{font-size:10px;color:#9cc1ff;font-weight:700;text-align:center}
+  .cas-popover .pop-foot{margin-top:10px;font-size:11px;color:#9cc1ff;text-align:center;line-height:1.4}
+  .ex-mod-note{margin-top:12px;font-size:12px;color:#9cc1ff;line-height:1.5}
+  .ex-mod-note b{color:#dcebff}
+  .ex-mod-pasos{margin:14px 0 14px}
+  .ex-mod-pasos .lab{font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin-bottom:8px}
+  .ex-mod-pasos ol{margin:0;padding-left:20px;display:flex;flex-direction:column;gap:7px}
+  .ex-mod-pasos li{font-size:14px;color:var(--muted);line-height:1.5}
 
   .lead-cap{font-size:12px;font-weight:800;color:var(--ink);text-align:center;margin-bottom:8px}
   .lead-cap .ab{color:var(--gold-soft);font-weight:700;margin-left:5px}
@@ -418,7 +635,7 @@
 
       <button class="mode-card" data-path="modos"><span class="dot-live"></span><h2>Modos</h2></button>
       <button class="mode-card" data-path="modulacion"><span class="dot-live"></span><h2>Modulación</h2></button>
-      <button class="mode-card" data-path="transporte"><h2>Transporte</h2></button>
+      <button class="mode-card" data-path="transporte"><span class="dot-live"></span><h2>Transporte</h2></button>
 
       <button class="mode-card" data-path="indiceacustico"><span class="dot-live"></span><h2>Índice acústico</h2></button>
       <button class="mode-card" data-path="cifrado"><span class="dot-live"></span><h2>Cifrado</h2></button>
@@ -445,10 +662,12 @@
 
   <div class="iv-head">
     <div class="iv-title"><span class="post">ACOR</span><span class="dim">DES</span> <span class="pro-seal">PRO</span></div>
-    <button class="iconbtn btn-nuevos" onclick="nuevoTODO()" title="Nuevos ejercicios">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
-      Nuevos ejercicios
-    </button>
+    <div class="iv-actions">
+      <button class="iconbtn btn-nuevos" onclick="nuevoTODO()" title="Nuevos ejercicios">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+        Nuevos ejercicios
+      </button>
+    </div>
   </div>
 
   <!-- ===== TARJETA 1: IDENTIFICAR ===== -->
@@ -456,6 +675,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>1</b><span>Identifica el tipo de cada acorde</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('acordes_id')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn btn-correct" onclick="corregirID()">✓ Corregir</button>
       </div>
     </div>
@@ -468,6 +691,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>2</b><span>Construye cada acorde</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('acordes_build')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn btn-correct" onclick="corregirBUILD()">✓ Corregir</button>
       </div>
     </div>
@@ -488,10 +715,12 @@
 
   <div class="iv-head">
     <div class="iv-title"><span class="post">INTER</span><span class="dim">VALOS</span></div>
-    <button class="iconbtn btn-nuevos" onclick="nuevoIVTODO()" title="Nuevos ejercicios">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
-      Nuevos ejercicios
-    </button>
+    <div class="iv-actions">
+      <button class="iconbtn btn-nuevos" onclick="nuevoIVTODO()" title="Nuevos ejercicios">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+        Nuevos ejercicios
+      </button>
+    </div>
   </div>
   <p class="iv-sub">Clasifica los intervalos (tarjeta a) y construye la nota pedida (tarjeta b). Aparecerá de todo: simples, compuestos, aumentados y disminuidos.</p>
 
@@ -500,6 +729,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>a</b><span>Clasifica cada intervalo</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('intervalos_a')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn btn-correct" onclick="corregirA()">✓ Corregir</button>
       </div>
     </div>
@@ -512,6 +745,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>b</b><span>Coloca la 2ª nota del intervalo</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('intervalos_b')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn btn-correct" onclick="corregirB()">✓ Corregir</button>
       </div>
     </div>
@@ -533,10 +770,12 @@
 
   <div class="iv-head">
     <div class="iv-title"><span class="post">ESCA</span><span class="dim">LAS</span></div>
-    <button class="iconbtn btn-nuevos" onclick="nuevoESCtodos()" title="Nuevos ejercicios">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
-      Nuevos ejercicios
-    </button>
+    <div class="iv-actions">
+      <button class="iconbtn btn-nuevos" onclick="nuevoESCtodos()" title="Nuevos ejercicios">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+        Nuevos ejercicios
+      </button>
+    </div>
   </div>
 
   <!-- Tarjeta 0: menores -->
@@ -544,6 +783,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>♭</b><span>Escalas menores</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('escalas_men')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn" onclick="nuevoESCi(0)" title="Nueva escala">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
           Nueva
@@ -560,6 +803,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>♯</b><span>Escalas mayores</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('escalas_may')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn" onclick="nuevoESCi(1)" title="Nueva escala">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
           Nueva
@@ -576,6 +823,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>≈</b><span>Otras escalas</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('escalas_otras')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn" onclick="nuevoESCi(2)" title="Nueva escala">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
           Nueva
@@ -600,10 +851,12 @@
 
   <div class="iv-head">
     <div class="iv-title"><span class="post">TONALI</span><span class="dim">DADES</span></div>
-    <button class="iconbtn btn-nuevos" onclick="nuevoTONtodos()" title="Nuevos ejercicios">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
-      Nuevos ejercicios
-    </button>
+    <div class="iv-actions">
+      <button class="iconbtn btn-nuevos" onclick="nuevoTONtodos()" title="Nuevos ejercicios">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+        Nuevos ejercicios
+      </button>
+    </div>
   </div>
   <p class="iv-sub">a) Nombra las tonalidades de cada armadura · b) Coloca la armadura de cada tonalidad · c) Completa los tonos vecinos. Hasta 7 alteraciones.</p>
 
@@ -612,6 +865,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>a</b><span>Escribe la tonalidad Mayor y su menor relativa</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('tonalidades_a')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn" onclick="nuevoTA()" title="Nuevo ejercicio">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
           Nuevo
@@ -629,6 +886,10 @@
     <div class="ex-top">
       <div class="ex-letter"><b>b</b><span>Coloca la armadura de cada tonalidad</span></div>
       <div style="display:flex;gap:8px">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('tonalidades_b')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo
+        </button>
         <button class="iconbtn" onclick="nuevoTB()" title="Nuevo ejercicio">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
           Nuevo
@@ -670,10 +931,16 @@
 
   <div class="iv-head">
     <div class="iv-title"><span class="post">MO</span><span class="dim">DOS</span></div>
-    <button class="iconbtn btn-nuevos" onclick="nuevoMODO()" title="Nuevo modo">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
-      Nuevo modo
-    </button>
+    <div class="iv-actions">
+      <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('modos')" title="Ver un ejemplo resuelto">
+        <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Ejemplo resuelto
+      </button>
+      <button class="iconbtn btn-nuevos" onclick="nuevoMODO()" title="Nuevo modo">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+        Nuevo modo
+      </button>
+    </div>
   </div>
   <p class="iv-sub">Identifica el modo indicado: pon la armadura y altera lo que haga falta.</p>
 
@@ -705,14 +972,26 @@
 
   <div class="iv-head">
     <div class="iv-title"><span class="post">ÍNDICE</span> <span class="dim">ACÚSTICO</span></div>
-    <button class="iconbtn btn-nuevos" onclick="iaStart()" title="Empezar de nuevo">
-      <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
-      Empezar
-    </button>
+    <div class="iv-actions">
+      <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('indice')" title="Ver un ejemplo resuelto">
+        <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        Ejemplo resuelto
+      </button>
+      <button class="iconbtn btn-nuevos" onclick="iaReiniciar()" title="Nuevo ejercicio">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+        Nuevo ejercicio
+      </button>
+    </div>
   </div>
   <p class="iv-sub">Identifica la nota y su índice acústico (SPN: Do central = C4). Tienes 7 segundos por nota.</p>
 
   <div class="ex-card" id="cardIA">
+    <div class="ia-startoverlay" id="iaStartOverlay">
+      <button class="ia-playbtn" id="iaPlayBtn" onclick="iaStart()" title="Empezar ejercicio" aria-label="Empezar">
+        <svg viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+      </button>
+      <div class="ia-playhint">Pulsa para empezar · 7 notas, 7 s cada una</div>
+    </div>
     <div class="ia-progress" id="iaProgress"></div>
     <div class="ia-timerbar" id="iaTimerBar">
       <div class="ia-timer-big" id="iaTimer"><span id="iaTimerNum">7</span></div>
@@ -752,6 +1031,129 @@
     </div>
   </div>
 
+  <!-- ===================== VISTA TRANSPORTE ===================== -->
+  <div id="view-transporte" style="display:none">
+    <header class="top">
+      <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home PRO">
+        <h1><span class="back-arrow">‹</span><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+        <span class="brand-inline">Nivel Pro · Grado Profesional</span>
+      </a>
+    </header>
+    <div class="iv-head">
+      <div class="iv-title"><span class="post">TRANS</span><span class="dim">PORTE</span></div>
+      <div class="iv-actions">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('transporte')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo resuelto
+        </button>
+        <button class="iconbtn btn-nuevos" id="trNuevoBtn" onclick="trNuevo()" title="Nuevo ejercicio">
+          <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+          Nuevo
+        </button>
+      </div>
+    </div>
+
+    <div class="tr-tabs" id="trTabs">
+      <button class="tr-tab active" data-tab="sintesis">Resumen</button>
+      <button class="tr-tab" data-tab="escrita">Escrito</button>
+      <button class="tr-tab" data-tab="mental">Mental</button>
+    </div>
+
+    <!-- ---------- PESTAÑA RESUMEN ---------- -->
+    <div class="tr-panel" id="trPanel-sintesis">
+      <p class="iv-sub">Indica las diferencias de cada transporte y las notas que se verían afectadas si tuvieran alteración accidental.</p>
+
+      <!-- RESPUESTA en vivo (se actualiza según lo que elige el alumno) -->
+      <div class="tr-respuesta">
+        <div class="tr-resp-cap">Respuesta</div>
+        <div class="tr-scroll">
+          <table class="tr-table-resp" id="trTablaResp">
+            <thead><tr>
+              <th>Tonalidad A</th><th>Armadura A</th><th>Transporte</th>
+              <th>Tonalidad B</th><th>Armadura B</th><th>Diferencias</th><th>Notas afectadas</th>
+            </tr></thead>
+            <tbody><tr>
+              <td id="rTonA">—</td><td id="rArmA">—</td><td id="rTransp">—</td>
+              <td id="rTonB">—</td><td id="rArmB">—</td><td id="rDif">—</td><td id="rNotas">—</td>
+            </tr></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- transporte a realizar -->
+      <div class="tr-pide">
+        <span>Transporte a realizar</span>
+        <b id="trTranspPide">—</b>
+      </div>
+
+      <div class="ex-card" id="trCardSint">
+        <div class="tr-scroll">
+          <div class="tr-table-fill">
+            <div class="tr-col tr-col-dada">
+              <div class="tr-th">Tonalidad A</div>
+              <div class="tr-cell"><b class="tr-dada-val" id="trTonA">—</b></div>
+            </div>
+            <div class="tr-col">
+              <div class="tr-th">Armadura A</div>
+              <div class="tr-cell"><div class="wheel" id="trWArmA"></div></div>
+            </div>
+            <div class="tr-col">
+              <div class="tr-th">Tonalidad B</div>
+              <div class="tr-cell tr-cell-tonb">
+                <div class="wheel" id="trWNotaB"></div>
+                <div class="tr-accs">
+                  <button class="acc-btn" id="trBacc-b" data-a="b">♭</button>
+                  <button class="acc-btn" id="trBacc-s" data-a="#">♯</button>
+                </div>
+                <div class="tr-modos">
+                  <button class="tr-modo" id="trModo-M" data-m="M">M</button>
+                  <button class="tr-modo" id="trModo-m" data-m="m">m</button>
+                </div>
+              </div>
+            </div>
+            <div class="tr-col">
+              <div class="tr-th">Armadura B</div>
+              <div class="tr-cell"><div class="wheel" id="trWArmB"></div></div>
+            </div>
+            <div class="tr-col">
+              <div class="tr-th">Diferencias</div>
+              <div class="tr-cell tr-cell-dif">
+                <div class="wheel" id="trWDif"></div>
+                <div class="tr-dirs">
+                  <button class="tr-dir" id="trDir-asc" data-d="asc" title="ascendentes"></button>
+                  <button class="tr-dir" id="trDir-desc" data-d="desc" title="descendentes"></button>
+                </div>
+              </div>
+            </div>
+            <div class="tr-col tr-col-notas">
+              <div class="tr-th">Notas afectadas</div>
+              <div class="tr-cell"><div class="tr-notas" id="trNotas"></div></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="tr-actions">
+          <button class="iconbtn btn-correct" onclick="trCorregir()">✓ Corregir</button>
+        </div>
+        <div class="tr-feedback" id="trFeedback"></div>
+      </div>
+    </div>
+
+    <!-- ---------- PESTAÑA ESCRITA ---------- -->
+    <div class="tr-panel" id="trPanel-escrita" style="display:none">
+      <div class="ex-card" style="text-align:center;padding:48px 24px">
+        <p style="font-size:16px;color:var(--muted)">El transporte escrito está en construcción.</p>
+      </div>
+    </div>
+
+    <!-- ---------- PESTAÑA MENTAL ---------- -->
+    <div class="tr-panel" id="trPanel-mental" style="display:none">
+      <div class="ex-card" style="text-align:center;padding:48px 24px">
+        <p style="font-size:16px;color:var(--muted)">El transporte mental está en construcción.</p>
+      </div>
+    </div>
+  </div>
+
   <!-- ===================== VISTA CADENCIAS ===================== -->
   <div id="view-cadencias" style="display:none">
     <header class="top">
@@ -762,7 +1164,13 @@
     </header>
     <div class="iv-head">
       <div class="iv-title"><span class="post">CADEN</span><span class="dim">CIAS</span></div>
-      <button class="iconbtn btn-nuevos" id="cadNewBtn" title="Nuevo ejercicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.35" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.35" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.35" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.35" fill="currentColor" stroke="none"/></svg> Nuevo ejercicio</button>
+      <div class="iv-actions">
+        <button class="iconbtn btn-ejemplo" onclick="abrirEjemplo('cadencias')" title="Ver un ejemplo resuelto">
+          <svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ejemplo resuelto
+        </button>
+        <button class="iconbtn btn-nuevos" id="cadNewBtn" title="Nuevo ejercicio"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="4"/><circle cx="8" cy="8" r="1.35" fill="currentColor" stroke="none"/><circle cx="16" cy="8" r="1.35" fill="currentColor" stroke="none"/><circle cx="12" cy="12" r="1.35" fill="currentColor" stroke="none"/><circle cx="8" cy="16" r="1.35" fill="currentColor" stroke="none"/><circle cx="16" cy="16" r="1.35" fill="currentColor" stroke="none"/></svg> Nuevo ejercicio</button>
+      </div>
     </div>
 
     <div class="ex-card">
@@ -807,6 +1215,7 @@
     tonalidades: abrirTonalidades,
     modos: abrirModos,
     indiceacustico: abrirIndice,
+    transporte: abrirTransporte,
     cifrado: function(){ abrirPlaceholder('Cifrado'); },
     inversion: function(){ abrirPlaceholder('Inversión'); },
     modulacion: function(){ window.location.href='modulacion.html'; }
@@ -834,6 +1243,7 @@
     var vm=document.getElementById('view-modos'); if(vm) vm.style.display='none';
     var vidx=document.getElementById('view-indice'); if(vidx) vidx.style.display='none';
     var vph=document.getElementById('view-placeholder'); if(vph) vph.style.display='none';
+    var vtr=document.getElementById('view-transporte'); if(vtr) vtr.style.display='none';
     if(window.iaStop) window.iaStop();
     document.getElementById('view-portal').style.display='block';
     window.scrollTo(0,0);
@@ -869,7 +1279,13 @@
     document.getElementById('view-portal').style.display='none';
     document.getElementById('view-indice').style.display='block';
     window.scrollTo(0,0);
-    window.iaStart();
+    if(window.iaShowStart) window.iaShowStart();
+  }
+  function abrirTransporte(){
+    document.getElementById('view-portal').style.display='none';
+    document.getElementById('view-transporte').style.display='block';
+    window.scrollTo(0,0);
+    if(window.trInit) window.trInit();
   }
   function abrirPlaceholder(nombre){
     document.getElementById('view-portal').style.display='none';
@@ -3972,8 +4388,15 @@ const TOTAL=5, SEG=7;
 let lista=[], idx=0, selNota=null, selAlt=0, selNum=null, tieneNota=false;
 let resultados=[], timer=null, restante=SEG, bloqueado=false;
 
+function iaShowStart(){
+  // muestra el overlay con Play y detiene cualquier ronda en curso
+  if(timer){ clearInterval(timer); timer=null; }
+  const card=document.getElementById('cardIA'); if(card) card.classList.add('idle');
+  const sum=document.getElementById('iaSummary'); if(sum) sum.style.display='none';
+}
 function iaStart(){
   if(timer){ clearInterval(timer); timer=null; }
+  const card=document.getElementById('cardIA'); if(card) card.classList.remove('idle');
   lista=[]; for(let k=0;k<TOTAL;k++) lista.push(genNota());
   // garantizar UNA en clave de Do (alto o tenor), en posición aleatoria
   const claveDo = pick(["alto","tenor"]);
@@ -3984,6 +4407,7 @@ function iaStart(){
   document.getElementById('iaPanels').style.display='grid';
   mostrarPregunta();
 }
+function iaReiniciar(){ iaStart(); }
 function iaStop(){ if(timer){ clearInterval(timer); timer=null; } }
 
 function iaBeep(freq,dur,vol){
@@ -4190,11 +4614,1060 @@ function mostrarResumen(){
   });
   sum.innerHTML='<h3>Resumen</h3><div class="ia-sum-score">'+aciertos+' / '+TOTAL+'</div>'+
     '<div class="ia-sum-list">'+rows+'</div>'+
-    '<p class="hint" style="margin-top:16px">Pulsa «Empezar» para otra ronda.</p>';
+    '<p class="hint" style="margin-top:16px">Pulsa «Nuevo ejercicio» para otra ronda.</p>';
   renderProgress();
 }
 
-window.iaStart=iaStart; window.iaStop=iaStop;
+window.iaStart=iaStart; window.iaStop=iaStop; window.iaShowStart=iaShowStart; window.iaReiniciar=iaReiniciar;
+})();
+</script>
+
+<!-- ====== TRANSPORTE: motor (pestaña Síntesis) ====== -->
+<script>
+(function(){
+const RNG=Math.random;
+function rint(n){return Math.floor(RNG()*n);}
+function pick(a){return a[rint(a.length)];}
+
+const LSEM={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+const LIDX={C:0,D:1,E:2,F:3,G:4,A:5,B:6};
+const IDXL=['C','D','E','F','G','A','B'];
+const ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+const ES2L={Do:'C',Re:'D',Mi:'E',Fa:'F',Sol:'G',La:'A',Si:'B'};
+const baseMajor={F:-1,C:0,G:1,D:2,A:3,E:4,B:5};
+const ISEM={'2m':1,'2M':2,'3m':3,'3M':4};
+const INUM={'2m':2,'2M':2,'3m':3,'3M':3};
+const ILAB={'2m':'2ªm','2M':'2ªM','3m':'3ªm','3M':'3ªM'};
+const ORDEN_SOST=['F','C','G','D','A','E','B'];   // Fa Do Sol Re La Mi Si
+const ORDEN_BEM =['B','E','A','D','G','C','F'];   // Si Mi La Re Sol Do Fa
+const NOTAS=['Do','Re','Mi','Fa','Sol','La','Si'];
+
+function fifths(letter,alt,mode){ let f=baseMajor[letter]+7*alt; if(mode==='m') f-=3; return f; }
+function transponer(letter,alt,interval,dir){
+  const steps=INUM[interval]-1, semis=ISEM[interval];
+  const li=LIDX[letter];
+  let newLi,carry;
+  if(dir==='asc'){ newLi=(li+steps)%7; carry=Math.floor((li+steps)/7); }
+  else { const raw=li-steps; newLi=((raw%7)+7)%7; carry=Math.floor(raw/7); }
+  const newLetter=IDXL[newLi];
+  const origAbs=LSEM[letter]+alt;
+  const targetAbs=dir==='asc'?origAbs+semis:origAbs-semis;
+  const newNat=LSEM[newLetter]+carry*12;
+  return {letter:newLetter, alt:targetAbs-newNat};
+}
+function accSym(alt){ return alt===1?'♯':alt===-1?'♭':alt===2?'x':alt===-2?'♭♭':''; }
+function nombreTon(letter,alt,mode){ return ES[letter]+accSym(alt)+(mode==='M'?'M':'m'); }
+function armStr(f){ return f===0?'0':(f>0?f+'♯':Math.abs(f)+'♭'); }
+/* flecha SVG coherente (misma forma para arriba y abajo) */
+function arrowSVG(dir,size){
+  size=size||16; const rot=dir==='desc'?180:0;
+  return '<svg class="tr-arrow" viewBox="0 0 24 24" width="'+size+'" height="'+size+'" '+
+    'style="transform:rotate('+rot+'deg)" aria-hidden="true">'+
+    '<path d="M12 19V5M12 5l-6.5 6.5M12 5l6.5 6.5" fill="none" stroke="currentColor" '+
+    'stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+}
+
+/* genera un ejercicio limpio: tónica A común, intervalo 2ª/3ª, B válida */
+function genEjercicio(){
+  const letters=['C','D','E','F','G','A','B'];
+  for(let t=0;t<500;t++){
+    const letterA=pick(letters);
+    const altA=pick([-1,0,0,1]);            // sobre todo naturales
+    const mode=pick(['M','m']);
+    const fA=fifths(letterA,altA,mode);
+    if(Math.abs(fA)>4) continue;            // tónica A común (≤4 alteraciones)
+    if(Math.abs(altA)>1) continue;
+    const interval=pick(['2m','2M','3m','3M']);
+    const dir=pick(['asc','desc']);
+    const B=transponer(letterA,altA,interval,dir);
+    if(Math.abs(B.alt)>1) continue;          // sin dobles alteraciones en la tónica B
+    const fB=fifths(B.letter,B.alt,mode);
+    if(Math.abs(fB)>7) continue;
+    const diff=Math.abs(fA-fB);
+    if(diff<1||diff>7) continue;
+    const asc=fB>fA;
+    const orden=asc?ORDEN_SOST:ORDEN_BEM;
+    const notas=orden.slice(0,diff).map(l=>ES[l]);
+    return { letterA,altA,mode,fA, interval,dir, letterB:B.letter,altB:B.alt,fB, diff, asc, notas };
+  }
+  // fallback (ejemplo del PDF)
+  return { letterA:'C',altA:0,mode:'M',fA:0, interval:'2M',dir:'asc',
+           letterB:'D',altB:0,fB:2, diff:2, asc:true, notas:['Fa','Do'] };
+}
+
+/* ===== estado y UI ===== */
+let EJ=null, locked=false;
+let sel={ armA:0, notaB:null, altB:0, modoB:null, armB:0, dif:0, dir:null, notas:{} };
+let wArmA=null, wNotaB=null, wArmB=null, wDif=null;
+
+function buildArmItems(){ const it=[]; for(let f=7;f>=-7;f--) it.push(f===0?'0':(f>0?f+'♯':Math.abs(f)+'♭')); return it; }
+function buildDifItems(){ const it=[]; for(let n=7;n>=0;n--) it.push(''+n); return it; }   // 0 abajo, sube
+const NOTAS_REV=NOTAS.slice().reverse();   // [Si..Do], Do pegado al guion
+
+function trInit(){
+  if(!window._trWired){ window._trWired=true; wireTabs(); }
+  if(!EJ) trNuevo();
+}
+function wireTabs(){
+  document.querySelectorAll('#trTabs .tr-tab').forEach(b=>{
+    b.addEventListener('click',()=>{
+      const tab=b.dataset.tab;
+      document.querySelectorAll('#trTabs .tr-tab').forEach(x=>x.classList.toggle('active',x===b));
+      ['sintesis','escrita','mental'].forEach(t=>{
+        const p=document.getElementById('trPanel-'+t); if(p) p.style.display=(t===tab)?'block':'none';
+      });
+      // el botón "Nuevo" sólo actúa en Resumen por ahora
+      document.getElementById('trNuevoBtn').style.visibility=(tab==='sintesis')?'visible':'hidden';
+    });
+  });
+}
+
+function trNuevo(){
+  EJ=genEjercicio(); locked=false;
+  sel={ armA:0, notaB:null, altB:0, modoB:null, armB:0, dif:0, dir:null, notas:{} };
+  document.getElementById('trFeedback').innerHTML='';
+  // dato dado: Tonalidad A (columna fija) y transporte (tarjeta intermedia)
+  document.getElementById('trTonA').textContent=nombreTon(EJ.letterA,EJ.altA,EJ.mode);
+  document.getElementById('trTranspPide').innerHTML=ILAB[EJ.interval]+' '+arrowSVG(EJ.dir,22);
+  // flechas SVG en los botones de dirección
+  document.getElementById('trDir-asc').innerHTML=arrowSVG('asc',20);
+  document.getElementById('trDir-desc').innerHTML=arrowSVG('desc',20);
+  // ruedas
+  const armItems=buildArmItems();
+  wArmA=makeWheel(document.getElementById('trWArmA'), armItems, 7, (idx)=>{ sel.armA=7-idx; trPaintResp(); });
+  wArmB=makeWheel(document.getElementById('trWArmB'), armItems, 7, (idx)=>{ sel.armB=7-idx; trPaintResp(); });
+  const GUION=NOTAS_REV.length;
+  wNotaB=makeWheel(document.getElementById('trWNotaB'), NOTAS_REV.concat(['—']), GUION, (idx)=>{
+    sel.notaB=(idx===GUION)?null:NOTAS_REV[idx];
+    if(sel.notaB==null){ sel.altB=0; paintBacc(); }
+    trPaintResp();
+  });
+  const difItems=buildDifItems();
+  wDif=makeWheel(document.getElementById('trWDif'), difItems, difItems.length-1, (idx)=>{ sel.dif=7-idx; trPaintResp(); });
+  // alteración de B
+  const bB=document.getElementById('trBacc-b'), bS=document.getElementById('trBacc-s');
+  bB.onclick=()=>{ if(sel.notaB==null) return; sel.altB=(sel.altB===-1)?0:-1; paintBacc(); trPaintResp(); };
+  bS.onclick=()=>{ if(sel.notaB==null) return; sel.altB=(sel.altB=== 1)?0: 1; paintBacc(); trPaintResp(); };
+  paintBacc();
+  // modo de B (lo decide el alumno)
+  const mM=document.getElementById('trModo-M'), mm=document.getElementById('trModo-m');
+  mM.onclick=()=>{ sel.modoB=(sel.modoB==='M')?null:'M'; paintModo(); trPaintResp(); };
+  mm.onclick=()=>{ sel.modoB=(sel.modoB==='m')?null:'m'; paintModo(); trPaintResp(); };
+  paintModo();
+  // dirección de diferencias
+  const dA=document.getElementById('trDir-asc'), dD=document.getElementById('trDir-desc');
+  dA.onclick=()=>{ sel.dir=(sel.dir==='asc')?null:'asc'; paintDir(); trPaintResp(); };
+  dD.onclick=()=>{ sel.dir=(sel.dir==='desc')?null:'desc'; paintDir(); trPaintResp(); };
+  paintDir();
+  // notas afectadas
+  const host=document.getElementById('trNotas'); host.innerHTML='';
+  NOTAS.forEach(n=>{ const b=document.createElement('button'); b.className='tr-nota'; b.textContent=n; b.dataset.n=n;
+    b.onclick=()=>{ if(locked) return; sel.notas[n]=!sel.notas[n]; b.classList.toggle('on',!!sel.notas[n]); trPaintResp(); };
+    host.appendChild(b); });
+  trPaintResp();
+}
+/* respuesta en vivo: refleja lo que el alumno va eligiendo */
+function trPaintResp(){
+  if(!EJ) return;
+  const setCell=(id,html)=>{ const c=document.getElementById(id); if(c){ c.className=''; c.innerHTML=html; } };
+  setCell('rTonA', nombreTon(EJ.letterA,EJ.altA,EJ.mode));
+  setCell('rTransp', ILAB[EJ.interval]+' '+arrowSVG(EJ.dir,15));
+  setCell('rArmA', armStr(sel.armA));
+  // Tonalidad B en construcción: nota + alteración + modo (lo que haya)
+  let tonB='—';
+  if(sel.notaB){ tonB=sel.notaB+(sel.altB===1?'♯':sel.altB===-1?'♭':'')+(sel.modoB?(sel.modoB==='M'?'M':'m'):''); }
+  setCell('rTonB', tonB);
+  setCell('rArmB', armStr(sel.armB));
+  // diferencias
+  let difTxt='—';
+  if(sel.dir){ difTxt=sel.dif+' '+arrowSVG(sel.dir,15); }
+  else if(sel.dif>0){ difTxt=''+sel.dif; }
+  setCell('rDif', difTxt);
+  // notas marcadas
+  const marc=NOTAS.filter(n=>sel.notas[n]);
+  setCell('rNotas', marc.length?marc.join(', '):'—');
+}
+
+function paintBacc(){
+  document.getElementById('trBacc-b').classList.toggle('on',sel.altB===-1);
+  document.getElementById('trBacc-s').classList.toggle('on',sel.altB===1);
+}
+function paintModo(){
+  document.getElementById('trModo-M').classList.toggle('on',sel.modoB==='M');
+  document.getElementById('trModo-m').classList.toggle('on',sel.modoB==='m');
+}
+function paintDir(){
+  document.getElementById('trDir-asc').classList.toggle('on',sel.dir==='asc');
+  document.getElementById('trDir-desc').classList.toggle('on',sel.dir==='desc');
+}
+
+function trCorregir(){
+  if(!EJ) return;
+  locked=true;
+  const okArmA = sel.armA===EJ.fA;
+  const letterBSel = sel.notaB? ES2L[sel.notaB] : null;
+  const okTonB = (letterBSel===EJ.letterB && sel.altB===EJ.altB && sel.modoB===EJ.mode);
+  const okArmB = sel.armB===EJ.fB;
+  const okDif  = (sel.dif===EJ.diff && sel.dir===(EJ.asc?'asc':'desc'));
+  const setSel = NOTAS.filter(n=>sel.notas[n]);
+  const okNotas = (setSel.length===EJ.notas.length && EJ.notas.every(n=>sel.notas[n]));
+  // colorear notas afectadas (botones)
+  document.querySelectorAll('#trNotas .tr-nota').forEach(b=>{
+    const n=b.dataset.n; b.classList.remove('on');
+    const esSol=EJ.notas.includes(n), marc=!!sel.notas[n];
+    if(okNotas){ if(marc) b.classList.add('n-ok'); }
+    else { if(esSol) b.classList.add('n-sol'); if(marc && !esSol) b.classList.add('n-bad'); }
+  });
+  // valores del alumno (lo que muestra la respuesta ahora)
+  const dirArrow=d=>arrowSVG(d,15);
+  const tonBAlum = sel.notaB? (sel.notaB+(sel.altB===1?'♯':sel.altB===-1?'♭':'')+(sel.modoB?(sel.modoB==='M'?'M':'m'):'')) : '—';
+  const difAlum = sel.dir? (sel.dif+' '+dirArrow(sel.dir)) : (sel.dif>0?(''+sel.dif):'—');
+  const notasAlum = setSel.length?setSel.join(', '):'—';
+  // soluciones
+  const solDif = EJ.diff+' '+dirArrow(EJ.asc?'asc':'desc');
+  // pinta una celda de la respuesta con estado y solución si falla
+  const mark=(id,ok,alum,sol)=>{
+    const c=document.getElementById(id); if(!c) return;
+    c.className= ok?'ok':'bad';
+    c.innerHTML = ok ? alum : ('<span class="resp-mal">'+alum+'</span><span class="resp-sol">'+sol+'</span>');
+  };
+  mark('rArmA', okArmA, armStr(sel.armA), armStr(EJ.fA));
+  mark('rTonB', okTonB, tonBAlum, nombreTon(EJ.letterB,EJ.altB,EJ.mode));
+  mark('rArmB', okArmB, armStr(sel.armB), armStr(EJ.fB));
+  mark('rDif',  okDif,  difAlum, solDif);
+  mark('rNotas',okNotas,notasAlum, EJ.notas.join(', '));
+  // mensaje breve
+  const todo = okArmA&&okTonB&&okArmB&&okDif&&okNotas;
+  document.getElementById('trFeedback').innerHTML='<div class="'+(todo?'fb-ok':'fb-bad')+'">'+
+    (todo?'✓ ¡Correcto!':'Revisa lo marcado en rojo arriba')+'</div>';
+}
+
+window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
+})();
+</script>
+
+<!-- ====== MODAL: Ejemplo resuelto ====== -->
+<div class="ex-modal" id="exModal" onclick="if(event.target===this)cerrarEjemplo()">
+  <div class="ex-modal-box" id="exModalBox">
+    <button class="ex-modal-close" onclick="cerrarEjemplo()" title="Cerrar">✕</button>
+    <span class="ex-modal-tag">Ejemplo resuelto</span>
+    <h3 id="exModalTitle">—</h3>
+    <div class="ex-modal-sec">
+      <div class="lab">Enunciado</div>
+      <div class="enun" id="exModalEnun">—</div>
+    </div>
+    <div class="ex-modal-scorewrap" id="exModalScoreWrap" style="display:none">
+      <div class="lab">Partitura</div>
+      <div class="ex-modal-scorescroll"><div id="exModalScore"></div></div>
+    </div>
+    <div id="exModalExtra"></div>
+    <div class="ex-modal-sec ex-modal-resp">
+      <div class="lab">Respuesta</div>
+      <div class="val" id="exModalResp">—</div>
+    </div>
+    <div class="ex-modal-sec">
+      <div class="lab">Por qué</div>
+      <div class="expl" id="exModalExpl">—</div>
+    </div>
+    <button class="ex-modal-otro" id="exModalOtro" onclick="otroEjemplo()">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 12a9 9 0 1 1-3-6.7L21 8"/><path d="M21 3v5h-5"/></svg>
+      Ver otro ejemplo
+    </button>
+  </div>
+</div>
+<script>
+(function(){
+  const EJEMPLOS = {
+    acordes_build: [
+      { titulo:'Séptima de dominante (D7)',
+        enun:'Construye el acorde cifrado como D7 partiendo de Re.',
+        resp:'Re – Fa♯ – La – Do',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f#/4','a/4','c/5'],cif:'D7'},
+        expl:'Estructura: fundamental + 3ª Mayor (Fa♯) + 5ª Justa (La) + 7ª menor (Do). Es una tríada Mayor a la que se le añade una 7ª menor.' },
+      { titulo:'Menor séptima (D-7)',
+        enun:'Construye el acorde cifrado como D-7 partiendo de Re.',
+        resp:'Re – Fa – La – Do',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f/4','a/4','c/5'],cif:'D-7'},
+        expl:'Estructura: fundamental + 3ª menor (Fa) + 5ª Justa (La) + 7ª menor (Do). Es la tríada menor con una 7ª menor encima. Frente al D7 solo cambia la 3ª (menor en vez de Mayor).' },
+      { titulo:'Mayor séptima (DΔ)',
+        enun:'Construye el acorde cifrado como DΔ (Mayor séptima) partiendo de Re.',
+        resp:'Re – Fa♯ – La – Do♯',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f#/4','a/4','c#/5'],cif:'DΔ'},
+        expl:'Estructura: fundamental + 3ª Mayor (Fa♯) + 5ª Justa (La) + 7ª MAYOR (Do♯). La diferencia con el D7 está en la 7ª: aquí es Mayor.' },
+      { titulo:'Semidisminuido (DØ)',
+        enun:'Construye el acorde cifrado como DØ (semidisminuido) partiendo de Re.',
+        resp:'Re – Fa – La♭ – Do',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f/4','ab/4','c/5'],cif:'DØ'},
+        expl:'Estructura: fundamental + 3ª menor (Fa) + 5ª disminuida (La♭) + 7ª menor (Do). Es un acorde disminuido (3ª m + 5ª dis) con una 7ª menor.' },
+      { titulo:'Séptima disminuida (D°7)',
+        enun:'Construye el acorde cifrado como D°7 partiendo de Re.',
+        resp:'Re – Fa – La♭ – Do♭',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f/4','ab/4','cb/5'],cif:'D°7'},
+        expl:'Estructura: fundamental + 3ª menor + 5ª disminuida + 7ª disminuida; es decir, terceras menores apiladas (Re–Fa–La♭–Do♭). Es simétrico.' },
+      { titulo:'Tríada aumentada (D+)',
+        enun:'Construye el acorde cifrado como D+ (aumentado) partiendo de Re.',
+        resp:'Re – Fa♯ – La♯',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f#/4','a#/4'],cif:'D+'},
+        expl:'Estructura: fundamental + 3ª Mayor (Fa♯) + 5ª aumentada (La♯). Frente a la tríada Mayor (Re Fa♯ La) se eleva la 5ª un semitono. Es simétrica (terceras Mayores apiladas).' },
+      { titulo:'Cuarta suspendida (Dsus)',
+        enun:'Construye el acorde cifrado como Dsus (4ª suspendida) partiendo de Re.',
+        resp:'Re – Sol – La',
+        spec:{type:'chord',clef:'treble',keys:['d/4','g/4','a/4'],cif:'Dsus'},
+        expl:'Estructura: fundamental + 4ª Justa (Sol) + 5ª Justa (La). La 3ª se sustituye por la 4ª, dejando el acorde "en suspenso" (ni Mayor ni menor).' }
+    ],
+    acordes_id: [
+      { titulo:'Identificar: séptima de dominante',
+        enun:'Observa el acorde sobre Re y di su cifrado.',
+        resp:'D7 (séptima de dominante)',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f#/4','a/4','c/5']},
+        expl:'De abajo arriba: Re – Fa♯ (3ª Mayor) – La (5ª Justa) – Do (7ª menor). Tríada Mayor + 7ª menor = séptima de dominante: D7.' },
+      { titulo:'Identificar: menor séptima',
+        enun:'Observa el acorde sobre Re y di su cifrado.',
+        resp:'D-7 (menor séptima)',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f/4','a/4','c/5']},
+        expl:'Re – Fa (3ª menor) – La (5ª Justa) – Do (7ª menor). Tríada menor + 7ª menor = menor séptima: D-7.' },
+      { titulo:'Identificar: semidisminuido',
+        enun:'Observa el acorde sobre Re y di su cifrado.',
+        resp:'DØ (semidisminuido)',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f/4','ab/4','c/5']},
+        expl:'Re – Fa (3ª menor) – La♭ (5ª disminuida) – Do (7ª menor). Acorde disminuido (3ªm + 5ª dis) con 7ª menor = semidisminuido: DØ.' },
+      { titulo:'Identificar: Mayor séptima',
+        enun:'Observa el acorde sobre Re y di su cifrado.',
+        resp:'DΔ (Mayor séptima)',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f#/4','a/4','c#/5']},
+        expl:'Re – Fa♯ (3ª Mayor) – La (5ª Justa) – Do♯ (7ª MAYOR). Tríada Mayor + 7ª Mayor = Mayor séptima: DΔ.' },
+      { titulo:'Identificar: séptima disminuida',
+        enun:'Observa el acorde sobre Re y di su cifrado.',
+        resp:'D°7 (séptima disminuida)',
+        spec:{type:'chord',clef:'treble',keys:['d/4','f/4','ab/4','cb/5']},
+        expl:'Re – Fa – La♭ – Do♭: terceras menores apiladas. 3ª menor + 5ª disminuida + 7ª disminuida = séptima disminuida: D°7. Es simétrico.' }
+    ],
+    cadencias: [
+      { titulo:'Auténtica perfecta',
+        enun:'En Sol Mayor: Re (V) → Sol (I), ambos en estado fundamental y con la tónica (Sol) en la voz superior.',
+        resp:'Cadencia auténtica perfecta (V → I).',
+        spec:{type:'satb',keysig:'G',chords:[
+          {cif:'D',grado:'V', s:'f#/4',a:'d/4',t:'a/3',b:'d/3'},
+          {cif:'G',grado:'I', s:'g/4',a:'d/4',t:'b/3',b:'g/2'}]},
+        expl:'Va de dominante a tónica ("auténtica") y es "perfecta" porque ambos acordes están en estado fundamental y la tónica queda en la voz superior. Da la máxima sensación de conclusión y reposo.' },
+      { titulo:'Auténtica imperfecta',
+        enun:'En Fa Mayor: Do (V) → Fa (I), pero el acorde de tónica aparece con la 3ª (La) en el bajo: la conclusión es más débil.',
+        resp:'Cadencia auténtica imperfecta (V → I⁶).',
+        spec:{type:'satb',keysig:'F',chords:[
+          {cif:'C',grado:'V', s:'e/4',a:'c/4',t:'g/3',b:'c/3'},
+          {cif:'F/La',grado:'I⁶', s:'f/4',a:'c/4',t:'a/3',b:'a/2'}]},
+        expl:'Sigue siendo de dominante a tónica (V→I), pero el acorde de tónica aparece invertido (la 3ª en el bajo), así que no cumple las condiciones de la perfecta y concluye de forma más débil y menos rotunda.' },
+      { titulo:'Plagal',
+        enun:'En Re Mayor: Sol (IV) → Re (I). La cadencia "de amén".',
+        resp:'Cadencia plagal (IV → I).',
+        spec:{type:'satb',keysig:'D',chords:[
+          {cif:'G',grado:'IV', s:'g/4',a:'d/4',t:'b/3',b:'g/2'},
+          {cif:'D',grado:'I', s:'f#/4',a:'d/4',t:'a/3',b:'d/3'}]},
+        expl:'De subdominante a tónica; concluye con un carácter suave y reposado.' },
+      { titulo:'Semicadencia',
+        enun:'En La menor: La menor (i) → Mi (V). Reposo suspensivo en la dominante.',
+        resp:'Semicadencia (reposo en la dominante).',
+        spec:{type:'satb',chords:[
+          {cif:'A-',grado:'i', s:'a/4',a:'e/4',t:'c/4',b:'a/2'},
+          {cif:'E',grado:'V', s:'g#/4',a:'e/4',t:'b/3',b:'e/3'}]},
+        expl:'Termina en la dominante (V) en lugar de en la tónica: la frase respira pero deja sensación de pregunta, pidiendo continuación. En tonalidad menor, la dominante se hace Mayor (sensible subida).' },
+      { titulo:'Rota o deceptiva',
+        enun:'En Mi menor: Si (V) → Do Mayor (VI). En vez de resolver a la tónica, "engaña" yendo al VI.',
+        resp:'Cadencia rota / deceptiva (V → VI).',
+        spec:{type:'satb',keysig:'G',chords:[
+          {cif:'B',grado:'V', s:'f#/4',a:'d#/4',t:'b/3',b:'b/2'},
+          {cif:'C',grado:'VI', s:'e/4',a:'c/4',t:'g/3',b:'c/3'}]},
+        expl:'La dominante hace esperar la tónica, pero "engaña" resolviendo al VI (Do Mayor en Mi menor). Sorprende y permite alargar el discurso en lugar de concluir. En menor, la dominante es Mayor (sensible subida).' }
+    ],
+    modos: [
+      { titulo:'Dórico (m+6)',
+        enun:'Construye el modo Dórico de Re (una octava ascendente).',
+        resp:'Re – Mi – Fa – Sol – La – Si♮ – Do – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re Dórico',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'bn/4',acc:true},{key:'c/5'},{key:'d/5'}]},
+        expl:'Es m+6: menor natural con la 6ª Mayor. Se escribe con la armadura del menor de Re (1♭, Si♭) y se altera SOLO la nota característica: el 6º grado sube a Si natural, así que lleva becuadro (♮) porque la armadura traía Si♭. Esa es su huella.' },
+      { titulo:'Frigio (m-2)',
+        enun:'Construye el modo Frigio de Re (una octava ascendente).',
+        resp:'Re – Mi♭ – Fa – Sol – La – Si♭ – Do – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re Frigio',
+          notes:[{key:'d/4'},{key:'eb/4',acc:true},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4'},{key:'c/5'},{key:'d/5'}]},
+        expl:'Es m-2: menor natural con la 2ª menor. Armadura del menor de Re (1♭). Se altera SOLO la característica: el 2º grado baja a Mi♭, que lleva bemol porque la armadura no alteraba el Mi. El Si♭ ya lo pone la armadura, no se reescribe.' },
+      { titulo:'Lidio (M+4)',
+        enun:'Construye el modo Lidio de Re (una octava ascendente).',
+        resp:'Re – Mi – Fa♯ – Sol♯ – La – Si – Do♯ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'D',tonicLabel:'Re Lidio',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g#/4',acc:true},{key:'a/4'},{key:'b/4'},{key:'c/5'},{key:'d/5'}]},
+        expl:'Es M+4: escala Mayor con la 4ª aumentada. Armadura de Re Mayor (2♯: Fa♯, Do♯). Se altera SOLO la característica: el 4º grado sube a Sol♯, que lleva sostenido porque la armadura no tocaba el Sol. Fa♯ y Do♯ los pone la armadura.' },
+      { titulo:'Mixolidio (M-7)',
+        enun:'Construye el modo Mixolidio de Re (una octava ascendente).',
+        resp:'Re – Mi – Fa♯ – Sol – La – Si – Do♮ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'D',tonicLabel:'Re Mixolidio',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4'},{key:'cn/5',acc:true},{key:'d/5'}]},
+        expl:'Es M-7: escala Mayor con la 7ª menor. Armadura de Re Mayor (2♯). Se altera SOLO la característica: el 7º grado baja a Do natural, que lleva becuadro (♮) porque la armadura traía Do♯. Es el modo del blues.' },
+      { titulo:'Eólico (m)',
+        enun:'Construye el modo Eólico de Re (una octava ascendente).',
+        resp:'Re – Mi – Fa – Sol – La – Si♭ – Do – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re Eólico',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4'},{key:'c/5'},{key:'d/5'}]},
+        expl:'El Eólico es la escala menor natural: la referencia "m". Con la armadura del menor de Re (1♭, Si♭) no hace falta ningún accidental: todo coincide con la armadura. Es el patrón con el que se comparan los demás modos menores.' },
+      { titulo:'Locrio (m-2-5)',
+        enun:'Construye el modo Locrio de Re (una octava ascendente).',
+        resp:'Re – Mi♭ – Fa – Sol – La♭ – Si♭ – Do – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re Locrio',
+          notes:[{key:'d/4'},{key:'eb/4',acc:true},{key:'f/4'},{key:'g/4'},{key:'ab/4',acc:true},{key:'b/4'},{key:'c/5'},{key:'d/5'}]},
+        expl:'Es m-2-5: menor natural con la 2ª menor y la 5ª disminuida. Armadura del menor de Re (1♭). Se alteran SOLO las dos características: el 2º grado baja a Mi♭ (bemol) y el 5º grado baja a La♭ (bemol). El Si♭ lo pone la armadura. Es el modo más inestable.' },
+      { titulo:'Jónico (M)',
+        enun:'Construye el modo Jónico de Re (una octava ascendente).',
+        resp:'Re – Mi – Fa♯ – Sol – La – Si – Do♯ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'D',tonicLabel:'Re Jónico',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4'},{key:'c/5'},{key:'d/5'}]},
+        expl:'El Jónico es la propia escala Mayor: la referencia "M". Con la armadura de Re Mayor (2♯: Fa♯ y Do♯) no hace falta ningún accidental, todo coincide con la armadura. Sirve de patrón para los demás modos mayores.' }
+    ],
+    indice: [
+      { titulo:'El Do central',
+        enun:'¿Qué índice acústico tiene el Do central?',
+        resp:'Do4',
+        spec:{type:'notes',clef:'alto',items:[{key:'c/4',label:'Do4'}]},
+        expl:'El Do central es la referencia del sistema. Aquí está escrito en clave de Do en 3ª: la línea central que marca la clave ES ese Do4, nuestra referencia. Toda la octava de Do4 a Si4 lleva el número 4; desde ahí se cuenta hacia arriba (Do5…) y hacia abajo (Do3…).' },
+      { titulo:'Una nota en clave de Do en 3ª',
+        enun:'En clave de Do en 3ª, ¿qué nota e índice es la escrita?',
+        resp:'Mi4',
+        spec:{type:'notes',clef:'alto',items:[{key:'e/4',label:'Mi4'}]},
+        expl:'En clave de Do en 3ª, la línea central marca el Do4 (referencia). Subiendo a la derecha encontramos Mi4, dentro de la octava central. Esta clave evita líneas adicionales para las notas cercanas al Do central.' },
+      { titulo:'Sol bajo en clave de Do en 3ª',
+        enun:'En clave de Do en 3ª, ¿qué nota e índice es la escrita?',
+        resp:'Sol3',
+        spec:{type:'notes',clef:'alto',items:[{key:'g/3',label:'Sol3'}]},
+        expl:'Tomando como referencia el Do4 (línea central de la clave de Do en 3ª), bajamos por Si3–La3 hasta Sol3. Recuerda que el número de octava cambia en el salto Si→Do, por eso al bajar de Do4 ya estamos en la octava 3.' },
+      { titulo:'El cambio de octava (Si → Do)',
+        enun:'Subes un semitono desde el Si4. ¿Qué nota e índice obtienes?',
+        resp:'Do5',
+        spec:{type:'notes',clef:'treble',items:[{key:'c/5',label:'Do5'}]},
+        expl:'El número de octava no cambia en cualquier nota, sino justo al pasar de Si a Do. Subiendo un semitono desde Si4 se llega a Do5 (no a Do4). El salto Si→Do es la "frontera" entre octavas. Como es agudo, se escribe cómodamente en clave de sol.' },
+      { titulo:'La nota de afinación',
+        enun:'¿Cómo se nombra, con su índice, la nota a la que se afina la orquesta (440 Hz)?',
+        resp:'La4',
+        spec:{type:'notes',clef:'treble',items:[{key:'a/4',label:'La4'}]},
+        expl:'440 Hz es la frecuencia de resonancia del La de la octava central: La4, justo encima del Do central, dentro de la octava "4". En clave de sol queda en la 2ª línea, muy legible.' },
+      { titulo:'Una nota aguda',
+        enun:'En clave de sol, ¿qué nota e índice es la escrita?',
+        resp:'Mi5',
+        spec:{type:'notes',clef:'treble',items:[{key:'e/5',label:'Mi5'}]},
+        expl:'En clave de sol, la 2ª línea es Sol4. Subiendo (La4, Si4, Do5, Re5) llegamos a Mi5, en el 4º espacio. Ya estamos en la octava 5 porque hemos cruzado el Do5.' },
+      { titulo:'Bajar una octava',
+        enun:'¿Qué nota está una octava justa por debajo del Do4?',
+        resp:'Do3',
+        spec:{type:'notes',clef:'bass',items:[{key:'c/3',label:'Do3'}]},
+        expl:'Al bajar desde Do4 cruzamos la frontera Do→Si y entramos en la octava 3: el Do3. Se escribe en clave de fa para evitar líneas adicionales; en clave de fa la línea que marca la clave (4ª línea) es el Fa3, que sirve de referencia.' },
+      { titulo:'Por debajo del Do central',
+        enun:'¿Cómo se llama el Si inmediatamente inferior al Do central?',
+        resp:'Si3',
+        spec:{type:'notes',clef:'bass',items:[{key:'b/3',label:'Si3'}]},
+        expl:'Justo por debajo de Do4 está Si3: como el cambio de número ocurre en el salto Si–Do, al bajar del Do4 al Si contiguo el índice pasa de 4 a 3. En clave de fa la línea de la clave (4ª línea) es el Fa3, que sirve de referencia.' },
+      { titulo:'Una nota grave',
+        enun:'En clave de fa, ¿qué nota e índice es la escrita?',
+        resp:'La2',
+        spec:{type:'notes',clef:'bass',items:[{key:'a/2',label:'La2'}]},
+        expl:'En clave de fa, la 4ª línea es el Fa3 (referencia). Bajando por Mi3, Re3, Do3… cruzamos a la octava 2 y llegamos a La2, en la 2ª línea. Por debajo del Do3 todo lleva índice 2.' }
+    ],
+    modulacion: [
+      { titulo:'Do Mayor → Sol Mayor',
+        enun:'Modula de Do Mayor (0 alteraciones) a Sol Mayor (1♯) por modulación diatónica, usando un acorde común.',
+        resp:'C – F – G7 – C – Em – D7 – G',
+        spec:{type:'mod',clef:'treble',tonA:'Do Mayor (0)',tonB:'Sol Mayor (1♯)',bridge:4,
+          chords:[
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['f/4','a/4','c/5'],cif:'F'},
+            {keys:['g/4','b/4','d/5','f/5'],cif:'G7'},
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['e/4','g/4','b/4'],cif:'Em',hl:true},
+            {keys:['d/4','f#/4','a/4','c/5'],cif:'D7'},
+            {keys:['g/4','b/4','d/5'],cif:'G'}],
+          gradosA:['I','IV','V7','I','III','·','·'],
+          gradosB:['·','·','·','·','VI','V7','I'],
+          pasos:[
+            'Paso 0. Armaduras: Do Mayor (0) y Sol Mayor (1♯).',
+            'Paso 1. Proceso cadencial para asentar Do Mayor: I – IV – V7 – I (C – F – G7 – C).',
+            'Paso 2. Acorde puente común: Em. Nota a evitar Fa (natural en Do, ♯ en Sol); Em (Mi-Sol-Si) no la contiene. Es III en Do Mayor y VI en Sol Mayor.',
+            'Paso 3. Asentar Sol Mayor con la dominante: V7 – I (D7 – G). La dominante va con 7ª y es Mayor.'],
+          bridgeOpts:[{cif:'Em',nombre:'Mi menor',gA:'III',gB:'VI'},{cif:'C',nombre:'Do Mayor',gA:'I',gB:'IV'},{cif:'G',nombre:'Sol Mayor',gA:'V',gB:'I'},{cif:'Am',nombre:'La menor',gA:'VI',gB:'II'}],
+          bridgeAlt:'Otros puentes válidos Do→Sol (sin la nota a evitar Fa): C (I→IV), G (V→I), Am (VI→II). Em es solo una opción.'},
+        expl:'El acorde puente (Em) es el pivote: el mismo acorde se interpreta como III desde Do Mayor y como VI desde Sol Mayor. Por eso aparece con un grado en cada hilera.' },
+      { titulo:'Do Mayor → Fa Mayor',
+        enun:'Modula de Do Mayor (0) a Fa Mayor (1♭) por modulación diatónica, usando un acorde común.',
+        resp:'C – F – G7 – C – Dm – C7 – F',
+        spec:{type:'mod',clef:'treble',tonA:'Do Mayor (0)',tonB:'Fa Mayor (1♭)',bridge:4,
+          chords:[
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['f/4','a/4','c/5'],cif:'F'},
+            {keys:['g/4','b/4','d/5','f/5'],cif:'G7'},
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['d/4','f/4','a/4'],cif:'Dm',hl:true},
+            {keys:['c/4','e/4','g/4','bb/4'],cif:'C7'},
+            {keys:['f/4','a/4','c/5'],cif:'F'}],
+          gradosA:['I','IV','V7','I','II','·','·'],
+          gradosB:['·','·','·','·','VI','V7','I'],
+          pasos:[
+            'Paso 0. Armaduras: Do Mayor (0) y Fa Mayor (1♭).',
+            'Paso 1. Cadencia para asentar Do Mayor: I – IV – V7 – I (C – F – G7 – C).',
+            'Paso 2. Acorde puente común: Dm. Nota a evitar Si (natural en Do, ♭ en Fa); Dm (Re-Fa-La) no la contiene. Es II en Do Mayor y VI en Fa Mayor.',
+            'Paso 3. Asentar Fa Mayor: V7 – I (C7 – F). El C7 ya introduce el Si♭, propio de la nueva tonalidad.'],
+          bridgeOpts:[{cif:'Dm',nombre:'Re menor',gA:'II',gB:'VI'},{cif:'C',nombre:'Do Mayor',gA:'I',gB:'V'},{cif:'F',nombre:'Fa Mayor',gA:'IV',gB:'I'},{cif:'Am',nombre:'La menor',gA:'VI',gB:'III'}],
+          bridgeAlt:'Otros puentes válidos Do→Fa (sin la nota a evitar Si): C (I→V), F (IV→I), Am (VI→III). Dm es solo una opción.'},
+        expl:'El puente (Dm) es el pivote: II desde Do Mayor y VI desde Fa Mayor. Cada perspectiva da un grado distinto, por eso van en dos hileras.' },
+      { titulo:'Do Mayor → Re menor',
+        enun:'Modula de Do Mayor (0) a Re menor (1♭) por modulación diatónica, usando un acorde común.',
+        resp:'C – F – G7 – C – F – A7 – Dm',
+        spec:{type:'mod',clef:'treble',tonA:'Do Mayor (0)',tonB:'Re menor (1♭)',bridge:4,
+          chords:[
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['f/4','a/4','c/5'],cif:'F'},
+            {keys:['g/4','b/4','d/5','f/5'],cif:'G7'},
+            {keys:['c/4','e/4','g/4'],cif:'C'},
+            {keys:['f/4','a/4','c/5'],cif:'F',hl:true},
+            {keys:['a/4','c#/5','e/5','g/5'],cif:'A7'},
+            {keys:['d/4','f/4','a/4'],cif:'Dm'}],
+          gradosA:['I','IV','V7','I','IV','·','·'],
+          gradosB:['·','·','·','·','III','V7','i'],
+          pasos:[
+            'Paso 0. Armaduras: Do Mayor (0) y Re menor (1♭).',
+            'Paso 1. Cadencia para asentar Do Mayor: I – IV – V7 – I (C – F – G7 – C).',
+            'Paso 2. Acorde puente común: F. No contiene la nota a evitar (Si). Es IV en Do Mayor y III en Re menor.',
+            'Paso 3. Asentar Re menor: V7 – i (A7 – Dm). La dominante A7 es Mayor; su Do♯ es la sensible que confirma la nueva tonalidad.'],
+          bridgeOpts:[{cif:'F',nombre:'Fa Mayor',gA:'IV',gB:'III'},{cif:'C',nombre:'Do Mayor',gA:'I',gB:'VII'},{cif:'Am',nombre:'La menor',gA:'VI',gB:'V'}],
+          bridgeAlt:'Otros puentes válidos Do→Re menor (sin la nota a evitar Si): C (I→VII), Am (VI→V). F es solo una opción.'},
+        expl:'El puente (F) es el pivote: IV desde Do Mayor y III desde Re menor. Por eso lleva un grado en cada hilera.' }
+    ],
+    intervalos_a: [
+      { titulo:'Clasificar: 3ª Mayor',
+        enun:'Identifica la especie del intervalo Do – Mi.',
+        resp:'3ª Mayor',
+        spec:{type:'notes',clef:'treble',items:[{key:'c/4'},{key:'e/4'}]},
+        expl:'Las 3ªs se memorizan: dos tonos = 3ª Mayor; un tono y un semitono = 3ª menor. Do–Mi tiene dos tonos enteros, así que es 3ª Mayor. Menos sería disminuida; más, aumentada.' },
+      { titulo:'Clasificar: 4ª aumentada',
+        enun:'Identifica la especie del intervalo Fa – Si.',
+        resp:'4ª aumentada (tritono)',
+        spec:{type:'notes',clef:'treble',items:[{key:'f/4'},{key:'b/4'}]},
+        expl:'Las 4ª, 5ª y 8ª son Justas si ambas notas llevan la misma alteración. Fa–Si es la excepción: aun siendo ambas naturales, tiene 3 tonos (tritono), así que es 4ª aumentada, mayor que la Justa. La pareja gemela es Si–Fa (5ª disminuida).' },
+      { titulo:'Clasificar: 6ª Mayor (por inversión)',
+        enun:'Identifica la especie del intervalo Do – La.',
+        resp:'6ª Mayor',
+        spec:{type:'notes',clef:'treble',items:[{key:'c/4'},{key:'a/4'}]},
+        expl:'Las 6ª y 7ª se resuelven por inversión: las conviertes en 3ª/2ª. Do–La invertido es La–Do, una 3ª menor; la inversión cambia la especie a la opuesta, así que la 3ª menor da 6ª Mayor. Los justos, neutros, permanecen justos.' },
+      { titulo:'Clasificar: 2ª menor',
+        enun:'Identifica la especie del intervalo Mi – Fa.',
+        resp:'2ª menor',
+        spec:{type:'notes',clef:'treble',items:[{key:'e/4'},{key:'f/4'}]},
+        expl:'Las 2ªs se memorizan: un semitono = 2ª menor; un tono = 2ª Mayor. Mi–Fa es un semitono natural, así que es 2ª menor. Sin distancia sería unísono; más de un tono, aumentada.' }
+    ],
+    intervalos_b: [
+      { titulo:'Construir: 5ª Justa sobre Sol',
+        enun:'Coloca la nota superior de una 5ª Justa ascendente partiendo de Sol.',
+        resp:'Re (Sol – Re)',
+        spec:{type:'notes',clef:'treble',items:[{key:'g/4',sub:'base'},{key:'d/5',sub:'5ªJ'}]},
+        expl:'Las 4ª, 5ª y 8ª son Justas cuando ambas notas llevan la misma alteración. Desde Sol, la 5ª Justa cae en Re: ambas naturales, así que es 5ª Justa sin más.' },
+      { titulo:'Construir: 3ª menor sobre La',
+        enun:'Coloca la nota superior de una 3ª menor ascendente partiendo de La.',
+        resp:'Do (La – Do)',
+        spec:{type:'notes',clef:'treble',items:[{key:'a/4',sub:'base'},{key:'c/5',sub:'3ªm'}]},
+        expl:'3ª menor = un tono y un semitono. Desde La subes a Do: La–Si es un tono, Si–Do un semitono; en total tono + semitono = 3ª menor. Si quisieras 3ª Mayor el techo sería Do♯.' },
+      { titulo:'Construir: 6ª Mayor sobre Fa',
+        enun:'Coloca la nota superior de una 6ª Mayor ascendente partiendo de Fa.',
+        resp:'Re (Fa – Re)',
+        spec:{type:'notes',clef:'treble',items:[{key:'f/4',sub:'base'},{key:'d/5',sub:'6ªM'}]},
+        expl:'Para la 6ª, piensa por inversión: su inversa es la 3ª menor. Fa–Re: invertido Re–Fa es 3ª menor, luego Fa–Re es 6ª Mayor. Ambas naturales encajan en Mayor.' },
+      { titulo:'Construir: 2ª Mayor sobre Si',
+        enun:'Coloca la nota superior de una 2ª Mayor ascendente partiendo de Si.',
+        resp:'Do♯ (Si – Do♯)',
+        spec:{type:'notes',clef:'treble',items:[{key:'b/4',sub:'base'},{key:'c#/5',sub:'2ªM'}]},
+        expl:'2ª Mayor = un tono entero. Si–Do es solo un semitono (2ª menor), así que para llegar al tono hay que subir el techo a Do♯. Por eso Si–Do♯ es 2ª Mayor.' }
+    ],
+    escalas_men: [
+      { titulo:'Menor natural',
+        enun:'Construye la escala menor natural de Re (ascendente).',
+        resp:'Re – Mi – Fa – Sol – La – Si♭ – Do – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re m natural',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4'},{key:'c/5'},{key:'d/5'}]},
+        expl:'Con la armadura del menor de Re (1♭, Si♭) la escala natural no necesita ningún accidental: todo coincide con la armadura. Es la referencia "menor".' },
+      { titulo:'Menor armónica (+7)',
+        enun:'Construye la escala menor armónica de Re (ascendente).',
+        resp:'Re – Mi – Fa – Sol – La – Si♭ – Do♯ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re m armónica',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4'},{key:'c#/5',acc:true},{key:'d/5'}]},
+        expl:'Armadura del menor de Re (1♭). Se altera SOLO la nota característica: el 7º grado sube a Do♯ (sostenido, porque la armadura no tocaba el Do) para crear sensible. El Si♭ lo pone la armadura. Aparece la 2ª aumentada Si♭–Do♯.' },
+      { titulo:'Menor melódica (+6 +7)',
+        enun:'Construye la escala menor melódica de Re (ascendente).',
+        resp:'Re – Mi – Fa – Sol – La – Si♮ – Do♯ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re m melódica',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'bn/4',acc:true},{key:'c#/5',acc:true},{key:'d/5'}]},
+        expl:'Armadura del menor de Re (1♭). Se alteran las dos características: el 6º grado sube a Si natural (becuadro, porque la armadura traía Si♭) y el 7º a Do♯ (sostenido). Así se evita la 2ª aumentada de la armónica.' },
+      { titulo:'Menor dórica (+6)',
+        enun:'Construye la escala menor dórica de Re (ascendente).',
+        resp:'Re – Mi – Fa – Sol – La – Si♮ – Do – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re m dórica',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'bn/4',acc:true},{key:'c/5'},{key:'d/5'}]},
+        expl:'Armadura del menor de Re (1♭). Se altera SOLO la característica: el 6º grado sube a Si natural (becuadro, porque la armadura traía Si♭). El 7º se queda natural. Coincide con el modo Dórico.' }
+    ],
+    escalas_may: [
+      { titulo:'Mayor tipo 1 (Jónico)',
+        enun:'Construye la escala Mayor (tipo 1) de Re (ascendente).',
+        resp:'Re – Mi – Fa♯ – Sol – La – Si – Do♯ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'D',tonicLabel:'Re M tipo 1',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4'},{key:'c/5'},{key:'d/5'}]},
+        expl:'Con la armadura de Re Mayor (2♯: Fa♯ y Do♯) la escala Mayor no necesita accidentales: todo coincide con la armadura. Es la referencia "Mayor" (Jónico).' },
+      { titulo:'Mayor tipo 2 (-6)',
+        enun:'Construye la escala Mayor tipo 2 de Re (ascendente).',
+        resp:'Re – Mi – Fa♯ – Sol – La – Si♭ – Do♯ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'D',tonicLabel:'Re M tipo 2',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'bb/4',acc:true},{key:'c/5'},{key:'d/5'}]},
+        expl:'Armadura de Re Mayor (2♯). Se altera SOLO la característica: el 6º grado baja a Si♭ (bemol, porque la armadura no tocaba el Si). Fa♯ y Do♯ los pone la armadura.' },
+      { titulo:'Mayor tipo 3 (-6 -7)',
+        enun:'Construye la escala Mayor tipo 3 de Re (ascendente).',
+        resp:'Re – Mi – Fa♯ – Sol – La – Si♭ – Do♮ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'D',tonicLabel:'Re M tipo 3',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'bb/4',acc:true},{key:'cn/5',acc:true},{key:'d/5'}]},
+        expl:'Armadura de Re Mayor (2♯). Se alteran las dos características: el 6º grado baja a Si♭ (bemol) y el 7º a Do natural (becuadro, porque la armadura traía Do♯). Conserva la 3ª Mayor (Fa♯).' },
+      { titulo:'Mayor tipo 4 (-7, Mixolidio)',
+        enun:'Construye la escala Mayor tipo 4 de Re (ascendente).',
+        resp:'Re – Mi – Fa♯ – Sol – La – Si – Do♮ – Re',
+        spec:{type:'scalekey',clef:'treble',keysig:'D',tonicLabel:'Re M tipo 4',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4'},{key:'cn/5',acc:true},{key:'d/5'}]},
+        expl:'Armadura de Re Mayor (2♯). Se altera SOLO la característica: el 7º grado baja a Do natural (becuadro, porque la armadura traía Do♯). Coincide con el modo Mixolidio.' }
+    ],
+    escalas_otras: [
+      { titulo:'Pentatónica Mayor',
+        enun:'Construye la pentatónica Mayor de Re.',
+        resp:'Re – Mi – Fa♯ – La – Si',
+        spec:{type:'scalekey',clef:'treble',keysig:'D',tonicLabel:'Re pentatónica M',
+          notes:[{key:'d/4'},{key:'e/4'},{key:'f/4'},{key:'g/4',ghost:true},{key:'a/4'},{key:'b/4'},{key:'c/5',ghost:true}]},
+        expl:'Se parte de la escala Mayor de Re y se quitan el 4º grado (Sol) y el 7º (Do♯), que aparecen tachados. Quedan 5 sonidos: Re Mi Fa♯ La Si. Al no haber semitonos no genera tensiones; no se duplica la tónica.' },
+      { titulo:'Pentatónica menor',
+        enun:'Construye la pentatónica menor de Re.',
+        resp:'Re – Fa – Sol – La – Do',
+        spec:{type:'scalekey',clef:'treble',keysig:'F',tonicLabel:'Re pentatónica m',
+          notes:[{key:'d/4'},{key:'e/4',ghost:true},{key:'f/4'},{key:'g/4'},{key:'a/4'},{key:'b/4',ghost:true},{key:'c/5'}]},
+        expl:'Se parte de la escala menor de Re y se quitan el 2º grado (Mi) y el 6º (Si♭), que aparecen tachados. Quedan 5 sonidos: Re Fa Sol La Do. Es la pentatónica del blues y el rock; no se duplica la tónica.' },
+      { titulo:'Hexátona (tonos enteros)',
+        enun:'Construye la escala hexátona desde Re.',
+        resp:'Re – Mi – Fa♯ – Sol♯ – La♯ – Do – Re',
+        spec:{type:'scale',clef:'treble',tonicLabel:'Re hexátona',keys:['d/4','e/4','f#/4','g#/4','a#/4','c/5','d/5']},
+        expl:'Todo tonos enteros, sin necesidad de armadura. Seis sonidos equidistantes; no tiene semitonos ni sensible, de ahí su sonido "suspendido", muy de cine.' },
+      { titulo:'Cromática',
+        enun:'Construye la escala cromática desde Re (ascendente, una octava).',
+        resp:'Re – Re♯ – Mi – Fa – Fa♯ – Sol – Sol♯ – La – La♯ – Si – Do – Do♯ – Re',
+        spec:{type:'scale',clef:'treble',tonicLabel:'Re cromática',keys:['d/4','d#/4','e/4','f/4','f#/4','g/4','g#/4','a/4','a#/4','b/4','c/5','c#/5','d/5']},
+        expl:'Todos los semitonos, sin armadura. Aquí se escribe con sostenidos al subir (tipo 1). Tiene inversiones teóricas combinando ♯ y ♭, pero suena igual.' }
+    ],
+    tonalidades_a: [
+      { titulo:'Armadura de 1♯ → tonalidades',
+        enun:'Una armadura de 1 sostenido (Fa♯). ¿Qué tonalidad Mayor y qué menor relativa le corresponden?',
+        resp:'Sol Mayor / Mi menor',
+        spec:{type:'notes',clef:'treble',keysig:'G',items:[]},
+        expl:'Truco de sostenidos: el último sostenido es la sensible de la Mayor, así que la tónica está medio tono por encima. Con 1♯ (Fa♯), la tónica Mayor es Sol. Su relativa menor está una 3ª menor por debajo: Mi menor. Comparten armadura.' },
+      { titulo:'Armadura de 2♭ → tonalidades',
+        enun:'Una armadura de 2 bemoles (Si♭, Mi♭). ¿Qué tonalidad Mayor y qué menor relativa le corresponden?',
+        resp:'Si♭ Mayor / Sol menor',
+        spec:{type:'notes',clef:'treble',keysig:'Bb',items:[]},
+        expl:'Truco de bemoles: el penúltimo bemol es la tónica de la Mayor. Con 2♭ (Si♭, Mi♭), el penúltimo es Si♭ → Si♭ Mayor. Su relativa menor, una 3ª menor por debajo respetando la armadura, es Sol menor.' },
+      { titulo:'Armadura de 3♯ → tonalidades',
+        enun:'Una armadura de 3 sostenidos (Fa♯, Do♯, Sol♯). ¿Qué tonalidad Mayor y qué menor relativa le corresponden?',
+        resp:'La Mayor / Fa♯ menor',
+        spec:{type:'notes',clef:'treble',keysig:'A',items:[]},
+        expl:'El último sostenido (Sol♯) es la sensible: medio tono por encima está La → La Mayor. Su relativa menor, una 3ª menor por debajo, es Fa♯ menor. Las dos comparten los 3 sostenidos.' }
+    ],
+    tonalidades_b: [
+      { titulo:'La Mayor → armadura',
+        enun:'¿Qué armadura tiene La Mayor?',
+        resp:'3 sostenidos: Fa♯ – Do♯ – Sol♯',
+        spec:{type:'notes',clef:'treble',keysig:'A',items:[{key:'a/4',label:'La M',noAcc:true}]},
+        expl:'No se apellida "bemol" ni es Fa/Do Mayor, así que lleva sostenidos. Su sensible (Sol♯) será el último sostenido. Escribes los sostenidos en su orden (Fa♯ Do♯ Sol♯) hasta llegar a ella: 3 sostenidos.' },
+      { titulo:'Sol menor → armadura',
+        enun:'¿Qué armadura tiene Sol menor?',
+        resp:'2 bemoles: Si♭ – Mi♭',
+        spec:{type:'notes',clef:'treble',keysig:'Bb',items:[{key:'g/4',label:'Sol m',noAcc:true}]},
+        expl:'Primero su relativo Mayor (una 3ª menor por encima): Si♭ Mayor. La tónica del Mayor es el penúltimo bemol; para que Si♭ sea el penúltimo, añades uno más (Mi♭). Resultado: 2 bemoles, Si♭ y Mi♭.' },
+      { titulo:'Mi Mayor → armadura',
+        enun:'¿Qué armadura tiene Mi Mayor?',
+        resp:'4 sostenidos: Fa♯ – Do♯ – Sol♯ – Re♯',
+        spec:{type:'notes',clef:'treble',keysig:'E',items:[{key:'e/4',label:'Mi M',noAcc:true}]},
+        expl:'No se apellida "bemol", lleva sostenidos. Su sensible es Re♯ (medio tono por debajo de Mi). Escribes sostenidos en orden hasta Re♯: Fa♯ Do♯ Sol♯ Re♯. Resultado: 4 sostenidos.' }
+    ],
+    transporte: [
+      { titulo:'Diferencias: Re Mayor → Fa Mayor',
+        enun:'Transporta de Re Mayor (2♯) a Fa Mayor (1♭). ¿Cuántas diferencias hay y a qué notas afectan?',
+        resp:'3 diferencias descendentes → Si, Mi, La',
+        spec:{type:'transp',
+          tonA:'Re Mayor', armA:'2♯', tonB:'Fa Mayor', armB:'1♭',
+          dif:'3 descendentes', notas:'Si · Mi · La',
+          camino:'2♯ → 1♯ → 0 → 1♭'},
+        expl:'Cuentas los pasos de armadura: 2♯ → 1♯ → 0 → 1♭, son 3 movimientos; al ir de sostenidos hacia bemoles son descendentes. Las 3 diferencias descendentes afectan a las 3 primeras del orden de BEMOLES: Si, Mi, La. Si tras transportar te encuentras una de esas notas con alteración accidental, le bajas la alteración (un ♯ pasa a ♮, un ♮ pasa a ♭).' },
+      { titulo:'Diferencias: Mi♭ Mayor → Do Mayor',
+        enun:'Transporta de Mi♭ Mayor (3♭) a Do Mayor (0). ¿Cuántas diferencias y de qué tipo?',
+        resp:'3 diferencias ascendentes → Fa, Do, Sol',
+        spec:{type:'transp',
+          tonA:'Mi♭ Mayor', armA:'3♭', tonB:'Do Mayor', armB:'0',
+          dif:'3 ascendentes', notas:'Fa · Do · Sol',
+          camino:'3♭ → 2♭ → 1♭ → 0'},
+        expl:'Pasos: 3♭ → 2♭ → 1♭ → 0, tres movimientos; al ir de bemoles hacia ninguna alteración (subir hacia el "nivel del mar") son ascendentes. Las diferencias ascendentes afectan al orden de SOSTENIDOS: las 3 primeras son Fa, Do, Sol. Si tras transportar aparece una de esas notas con alteración accidental, le subes la alteración (un ♭ pasa a ♮, un ♮ pasa a ♯).' },
+      { titulo:'Diferencias: Sol Mayor → La Mayor',
+        enun:'Transporta de Sol Mayor (1♯) a La Mayor (3♯). ¿Cuántas diferencias y de qué tipo?',
+        resp:'2 diferencias ascendentes → Fa, Do',
+        spec:{type:'transp',
+          tonA:'Sol Mayor', armA:'1♯', tonB:'La Mayor', armB:'3♯',
+          dif:'2 ascendentes', notas:'Fa · Do',
+          camino:'1♯ → 2♯ → 3♯'},
+        expl:'Pasos: 1♯ → 2♯ → 3♯, dos movimientos; al ganar sostenidos (subir la montaña) son ascendentes. Las 2 diferencias ascendentes afectan a las 2 primeras del orden de SOSTENIDOS: Fa, Do. Si tras transportar aparece un Fa o un Do con alteración accidental, le subes la alteración.' }
+    ]
+  };
+
+  /* ---- dibujador de pentagramas del modal (autónomo) ---- */
+  function exDraw(spec){
+    const host=document.getElementById('exModalScore');
+    const wrap=document.getElementById('exModalScoreWrap');
+    if(!host) return;
+    host.innerHTML='';
+    if(!spec){ if(wrap) wrap.style.display='none'; return; }
+    let VFlib=null; try{ VFlib=Vex.Flow; }catch(e){}
+    if(!VFlib){ if(wrap) wrap.style.display='none'; return; }
+    const VF=VFlib;
+    if(wrap) wrap.style.display='block';
+    try{
+      if(spec.type==='chord'){ exDrawChord(VF,host,spec); return; }
+      if(spec.type==='seq'){ exDrawSeq(VF,host,spec); return; }
+      if(spec.type==='satb'){ exDrawSatb(VF,host,spec); return; }
+      if(spec.type==='scale'){ exDrawScale(VF,host,spec); return; }
+      if(spec.type==='scalekey'){ exDrawScaleKey(VF,host,spec); return; }
+      if(spec.type==='notes'){ exDrawNotes(VF,host,spec); return; }
+      if(spec.type==='mod' || spec.type==='transp'){ if(wrap) wrap.style.display='none'; return; }
+      if(wrap) wrap.style.display='none';
+    }catch(err){ host.innerHTML=''; if(wrap) wrap.style.display='none'; }
+  }
+  function exAccOf(k){ const m=k.match(/^[a-gA-G](##|bb|#|b|n)?/); return m&&m[1]; }
+  function exDrawChord(VF,host,spec){
+    const W=320,H=170;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,28,W-20); stave.addClef(spec.clef||'treble');
+    stave.setContext(ctx).draw();
+    const keys=spec.keys.slice();
+    const sn=new VF.StaveNote({keys,duration:'w',clef:spec.clef||'treble'});
+    keys.forEach((k,i)=>{ const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),i); });
+    if(spec.cif) sn.addModifier(new VF.Annotation(spec.cif).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',13,'bold'),0);
+    if(spec.grado) sn.addModifier(new VF.Annotation(spec.grado).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',12,''),0);
+    const v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickable(sn);
+    new VF.Formatter().joinVoices([v]).format([v],W-90);
+    v.draw(ctx,stave);
+  }
+  function exDrawSeq(VF,host,spec){
+    const chords=spec.chords; const n=chords.length;
+    const wC=Math.max(78, Math.min(120, Math.floor((560-30)/n)));
+    const W=20+wC*n+(spec.keysig?22:0), H=190;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    let x=10;
+    chords.forEach((c,i)=>{
+      const st=new VF.Stave(x, 34, wC + (i===0&&spec.keysig?22:0));
+      if(i===0){ st.addClef(spec.clef||'treble'); if(spec.keysig) st.addKeySignature(spec.keysig); }
+      if(i===n-1) st.setEndBarType(VF.Barline.type.END);
+      st.setContext(ctx).draw();
+      const keys=c.keys.slice();
+      const sn=new VF.StaveNote({keys,duration:'w',clef:spec.clef||'treble'});
+      keys.forEach((k,j)=>{ const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),j); });
+      if(c.cif) sn.addModifier(new VF.Annotation(c.cif).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',12,'bold'),0);
+      if(c.grado) sn.addModifier(new VF.Annotation(c.grado).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',11,''),0);
+      const v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickable(sn);
+      new VF.Formatter().joinVoices([v]).format([v],wC-26);
+      v.draw(ctx,st);
+      x+=wC+(i===0&&spec.keysig?22:0);
+    });
+  }
+  function exDrawScale(VF,host,spec){
+    const keys=spec.keys; const n=keys.length;
+    const wPer=Math.max(64, Math.min(92, Math.floor((820-60)/n)));
+    const W=Math.max(420, 60+wPer*n), H=150;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,34,W-20); stave.addClef(spec.clef||'treble');
+    stave.setEndBarType(VF.Barline.type.END);
+    stave.setContext(ctx).draw();
+    const notes=keys.map((k,i)=>{
+      const sn=new VF.StaveNote({keys:[k],duration:'w',clef:spec.clef||'treble'});
+      const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),0);
+      if(i===0 && spec.tonicLabel) sn.addModifier(new VF.Annotation(spec.tonicLabel).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',11,'bold'),0);
+      return sn;
+    });
+    const v=new VF.Voice({num_beats:n,beat_value:1}).setStrict(false); v.addTickables(notes);
+    new VF.Formatter().joinVoices([v]).format([v],W-70);
+    v.draw(ctx,stave);
+  }
+  function exDrawNotes(VF,host,spec){
+    const items=spec.items||[]; const n=items.length;
+    if(n===0){
+      // pentagrama vacío con armadura (p. ej. tonalidades: armadura → tonalidades)
+      const W=320, H=spec.h||150;
+      const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+      const ctx=r.getContext();
+      const stave=new VF.Stave(10,34,W-20); stave.addClef(spec.clef||'treble');
+      if(spec.keysig) stave.addKeySignature(spec.keysig);
+      stave.setEndBarType(VF.Barline.type.END);
+      stave.setContext(ctx).draw();
+      return;
+    }
+    const wPer=Math.max(70, Math.min(150, Math.floor((560-40)/Math.max(1,n))));
+    const W=Math.max(300, 40+wPer*n), H=spec.h||170;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,36,W-20); stave.addClef(spec.clef||'treble');
+    if(spec.keysig) stave.addKeySignature(spec.keysig);
+    stave.setEndBarType(VF.Barline.type.END);
+    stave.setContext(ctx).draw();
+    const notes=items.map(it=>{
+      const sn=new VF.StaveNote({keys:[it.key],duration:'w',clef:it.clef||spec.clef||'treble'});
+      const a=exAccOf(it.key);
+      if(a && !it.noAcc) sn.addModifier(new VF.Accidental(a),0);
+      if(it.label) sn.addModifier(new VF.Annotation(it.label).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',13,'bold'),0);
+      if(it.sub) sn.addModifier(new VF.Annotation(it.sub).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',11,''),0);
+      return sn;
+    });
+    const v=new VF.Voice({num_beats:n,beat_value:1}).setStrict(false); v.addTickables(notes);
+    new VF.Formatter().joinVoices([v]).format([v],W-70);
+    v.draw(ctx,stave);
+  }
+  // escala con armadura: solo las notas marcadas acc:true llevan accidental visible
+  function exDrawScaleKey(VF,host,spec){
+    const arr=spec.notes; const n=arr.length;
+    const ksMap=exKsAccMap(spec.keysig||'C');
+    const wPer=Math.max(64, Math.min(88, Math.floor((820-80)/n)));
+    const W=Math.max(440, 70+wPer*n), H=156;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    const stave=new VF.Stave(10,34,W-20); stave.addClef(spec.clef||'treble');
+    if(spec.keysig) stave.addKeySignature(spec.keysig);
+    stave.setEndBarType(VF.Barline.type.END);
+    stave.setContext(ctx).draw();
+    const notes=arr.map((it,i)=>{
+      const sn=new VF.StaveNote({keys:[it.key],duration:'w',clef:spec.clef||'treble'});
+      if(it.acc){ const a=exNeedsAcc(it.key,ksMap); if(a) sn.addModifier(new VF.Accidental(a),0); }
+      if(i===0 && spec.tonicLabel) sn.addModifier(new VF.Annotation(spec.tonicLabel).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',11,'bold'),0);
+      return sn;
+    });
+    const v=new VF.Voice({num_beats:n,beat_value:1}).setStrict(false); v.addTickables(notes);
+    new VF.Formatter().joinVoices([v]).format([v],W-70);
+    v.draw(ctx,stave);
+    // tachar las notas fantasma (grados quitados) con una raya diagonal
+    arr.forEach((it,i)=>{
+      if(!it.ghost) return;
+      try{
+        const sn=notes[i];
+        const x=sn.getAbsoluteX();
+        const ys=sn.getYs?sn.getYs():null;
+        const y=(ys&&ys.length)?ys[0]:(stave.getYForLine(2));
+        ctx.save();
+        ctx.setStrokeStyle('#9a917f'); ctx.setLineWidth(1.6);
+        ctx.beginPath(); ctx.moveTo(x-8,y+6); ctx.lineTo(x+12,y-6); ctx.stroke();
+        ctx.restore();
+      }catch(e){}
+    });
+  }
+  // modulación: secuencia de acordes con el puente (hl:true) resaltado en azul
+  function exDrawMod(VF,host,spec){
+    const chords=spec.chords; const n=chords.length;
+    const wC=Math.max(70, Math.min(96, Math.floor((560-24)/n)));
+    const W=18+wC*n, H=150;
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    let x=9;
+    chords.forEach((c,i)=>{
+      const st=new VF.Stave(x,18,wC);
+      if(i===0) st.addClef(spec.clef||'treble');
+      if(i===n-1) st.setEndBarType(VF.Barline.type.END);
+      st.setContext(ctx).draw();
+      const keys=c.keys.slice();
+      const sn=new VF.StaveNote({keys,duration:'w',clef:spec.clef||'treble'});
+      keys.forEach((k,j)=>{ const a=exAccOf(k); if(a) sn.addModifier(new VF.Accidental(a),j); });
+      if(c.cif) sn.addModifier(new VF.Annotation(c.cif).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',12,'bold'),0);
+      if(c.hl){ try{ sn.setStyle({fillStyle:'#3b6fd4',strokeStyle:'#3b6fd4'}); }catch(e){} }
+      const v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickable(sn);
+      new VF.Formatter().joinVoices([v]).format([v],wC-22);
+      v.draw(ctx,st);
+      x+=wC;
+    });
+  }
+  // alteración que la armadura aplica a una letra (a-g) -> '#','b' o null
+  function exKsAccMap(keysig){
+    const SOST=['f','c','g','d','a','e','b'], BEM=['b','e','a','d','g','c','f'];
+    const SHARPS={G:1,D:2,A:3,E:4,B:5,'F#':6,'C#':7};
+    const FLATS={F:1,Bb:2,Eb:3,Ab:4,Db:5,Gb:6,Cb:7};
+    const m={};
+    if(SHARPS[keysig]) SOST.slice(0,SHARPS[keysig]).forEach(l=>m[l]='#');
+    else if(FLATS[keysig]) BEM.slice(0,FLATS[keysig]).forEach(l=>m[l]='b');
+    return m;
+  }
+  // ¿hay que dibujar el accidental de esta nota dado el contexto de armadura?
+  function exNeedsAcc(key, ksMap){
+    const m=key.match(/^([a-g])(##|bb|#|b|n)?\//i); if(!m) return null;
+    const letter=m[1].toLowerCase(); const a=m[2]||null;
+    const ksHas=ksMap[letter]||null; // '#','b' o null que pone la armadura
+    if(a===ksHas) return null;            // coincide con armadura -> no redibujar
+    if(!a && ksHas) return 'n';           // natural frente a armadura alterada -> becuadro
+    return a;                             // alteración distinta de la armadura
+  }
+  // cadencia SATB: dos pentagramas (sol: S+A, fa: T+B), redondas sin plica
+  function exDrawSatb(VF,host,spec){
+    const chords=spec.chords; const n=chords.length;
+    const wC=Math.max(150, Math.min(220, Math.floor((760-30)/n)));
+    const ksW = spec.keysig?26:0;
+    const W=30+ksW+wC*n, H=250;
+    const ksMap=exKsAccMap(spec.keysig||'C');
+    const r=new VF.Renderer(host,VF.Renderer.Backends.SVG); r.resize(W,H);
+    const ctx=r.getContext();
+    let x=12;
+    chords.forEach((c,i)=>{
+      const w=wC+(i===0?ksW:0);
+      const top=new VF.Stave(x,18,w), bot=new VF.Stave(x,118,w);
+      if(i===0){
+        top.addClef('treble'); bot.addClef('bass');
+        if(spec.keysig){ top.addKeySignature(spec.keysig); bot.addKeySignature(spec.keysig); }
+      }
+      if(i===n-1){ top.setEndBarType(VF.Barline.type.END); bot.setEndBarType(VF.Barline.type.END); }
+      top.setContext(ctx).draw(); bot.setContext(ctx).draw();
+      if(i===0){
+        new VF.StaveConnector(top,bot).setType(VF.StaveConnector.type.BRACE).setContext(ctx).draw();
+        new VF.StaveConnector(top,bot).setType(VF.StaveConnector.type.SINGLE_LEFT).setContext(ctx).draw();
+      }
+      // soprano (stem up) + alto (stem down) en clave de sol
+      const sN=new VF.StaveNote({keys:[c.s],duration:'w',clef:'treble',stem_direction:1});
+      const aN=new VF.StaveNote({keys:[c.a],duration:'w',clef:'treble',stem_direction:-1});
+      let acc;
+      acc=exNeedsAcc(c.s,ksMap); if(acc) sN.addModifier(new VF.Accidental(acc),0);
+      acc=exNeedsAcc(c.a,ksMap); if(acc) aN.addModifier(new VF.Accidental(acc),0);
+      if(c.cif) sN.addModifier(new VF.Annotation(c.cif).setVerticalJustification(VF.Annotation.VerticalJustify.TOP).setFont('Arial',12,'bold'),0);
+      // tenor (stem up) + bajo (stem down) en clave de fa
+      const tN=new VF.StaveNote({keys:[c.t],duration:'w',clef:'bass',stem_direction:1});
+      const bN=new VF.StaveNote({keys:[c.b],duration:'w',clef:'bass',stem_direction:-1});
+      acc=exNeedsAcc(c.t,ksMap); if(acc) tN.addModifier(new VF.Accidental(acc),0);
+      acc=exNeedsAcc(c.b,ksMap); if(acc) bN.addModifier(new VF.Accidental(acc),0);
+      if(c.grado) bN.addModifier(new VF.Annotation(c.grado).setVerticalJustification(VF.Annotation.VerticalJustify.BOTTOM).setFont('Arial',12,'').setStyle({fillStyle:'#3b6fd4'}),0);
+      const vS=new VF.Voice({num_beats:1,beat_value:1}).setStrict(false).addTickable(sN);
+      const vA=new VF.Voice({num_beats:1,beat_value:1}).setStrict(false).addTickable(aN);
+      const vT=new VF.Voice({num_beats:1,beat_value:1}).setStrict(false).addTickable(tN);
+      const vB=new VF.Voice({num_beats:1,beat_value:1}).setStrict(false).addTickable(bN);
+      new VF.Formatter().joinVoices([vS,vA]).joinVoices([vT,vB]).format([vS,vA,vT,vB], w-40);
+      vS.draw(ctx,top); vA.draw(ctx,top); vT.draw(ctx,bot); vB.draw(ctx,bot);
+      x+=w;
+    });
+  }
+
+  let curKey=null, curIdx=-1;
+  function escHtml(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+  function cellT(lab,val){ return '<div class="ex-transp-cell"><span class="t-lab">'+escHtml(lab)+'</span><span class="t-val">'+escHtml(val)+'</span></div>'; }
+  function exExtra(spec){
+    const box=document.getElementById('exModalExtra'); if(!box) return;
+    box.innerHTML='';
+    if(!spec) return;
+    if(spec.type==='transp'){
+      box.innerHTML =
+        '<div class="ex-transp-card">'+
+          '<div class="ex-transp-cap">Respuesta</div>'+
+          '<div class="ex-transp-grid">'+
+            cellT('Tonalidad A',spec.tonA)+cellT('Armadura A',spec.armA)+
+            cellT('Tonalidad B',spec.tonB)+cellT('Armadura B',spec.armB)+
+            cellT('Diferencias',spec.dif)+cellT('Notas afectadas',spec.notas)+
+          '</div>'+
+          (spec.camino?'<div class="ex-transp-camino">Camino de armaduras: <b>'+escHtml(spec.camino)+'</b></div>':'')+
+        '</div>';
+    } else if(spec.type==='mod'){
+      const hasOpts = spec.bridgeOpts && spec.bridgeOpts.length>1;
+      let casillas='', filaA='', filaB='';
+      spec.chords.forEach((c,i)=>{
+        const isB=(i===spec.bridge);
+        const gA=spec.gradosA[i]||'·', gB=spec.gradosB[i]||'·';
+        const plus=(isB && hasOpts)?'<button class="cas-plus" onclick="exTogglePuente(event)" title="Ver otras opciones de puente">+</button>':'';
+        casillas+=
+          '<div class="ex-mod-cas'+(isB?' cas-puente':'')+'">'+
+            '<div class="cas-cif">'+escHtml(c.cif)+'</div>'+
+            '<div class="cas-nom">'+escHtml(exNombreAcorde(c.cif))+'</div>'+
+            plus+
+          '</div>';
+        filaA+='<span class="cas-g'+(gA==='·'?' cas-empty':'')+(isB?' g-hl':'')+'">'+escHtml(gA)+'</span>';
+        filaB+='<span class="cas-g'+(gB==='·'?' cas-empty':'')+(isB?' g-hl':'')+'">'+escHtml(gB)+'</span>';
+      });
+      let popover='';
+      if(hasOpts){
+        let opts='';
+        spec.bridgeOpts.forEach(o=>{
+          opts+='<div class="cas-opt"><span class="opt-cif">'+escHtml(o.cif)+'</span><span class="opt-nom">'+escHtml(o.nombre)+'</span><span class="opt-gr">'+escHtml(spec.tonA||'A')+': '+escHtml(o.gA)+' · '+escHtml(spec.tonB||'B')+': '+escHtml(o.gB)+'</span></div>';
+        });
+        popover='<div class="cas-popover" id="exPuentePop"><div class="pop-cap">Acordes puente válidos</div><div class="pop-opts">'+opts+'</div><div class="pop-foot">Cualquiera sirve como pivote. El ejemplo usa el primero.</div></div>';
+      }
+      let pasos='';
+      (spec.pasos||[]).forEach(p=>{ pasos+='<li>'+escHtml(p)+'</li>'; });
+      box.innerHTML =
+        '<div class="ex-mod-grados" style="position:relative">'+
+          '<div class="lab">Proceso en casillas</div>'+
+          '<div class="ex-mod-scroll">'+
+            '<div class="ex-mod-grid">'+
+              '<div class="ex-mod-casillas"><span class="fila-lab"></span>'+casillas+'</div>'+
+              '<div class="ex-mod-fila"><span class="fila-lab">'+escHtml(spec.tonA||'Ton. A')+'</span>'+filaA+'</div>'+
+              '<div class="ex-mod-fila"><span class="fila-lab">'+escHtml(spec.tonB||'Ton. B')+'</span>'+filaB+'</div>'+
+            '</div>'+
+          '</div>'+
+          popover+
+          '<div class="ex-mod-note">Cada casilla replica la respuesta del ejercicio: el cifrado en la esquina y el acorde escrito (Mayor/menor). Debajo, en dos filas, el grado en cada tonalidad. El acorde puente es el pivote'+(hasOpts?'; pulsa el botón <b>+</b> para ver otras opciones de puente':'')+'.</div>'+
+        '</div>'+
+        '<div class="ex-mod-pasos"><div class="lab">Paso a paso</div><ol>'+pasos+'</ol></div>';
+    }
+  }
+  // abrir/cerrar el popover de opciones de puente sin modificar la casilla
+  function exTogglePuente(ev){
+    if(ev){ ev.stopPropagation(); }
+    const pop=document.getElementById('exPuentePop'); if(!pop) return;
+    pop.classList.toggle('show');
+  }
+  // nombre escrito de un acorde a partir del cifrado (Do Mayor, La menor, Sol 7…)
+  function exNombreAcorde(cif){
+    const N={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+    const m=cif.match(/^([A-G])(b|#)?(.*)$/); if(!m) return cif;
+    let nom=N[m[1]]||m[1]; if(m[2]==='b') nom+='♭'; else if(m[2]==='#') nom+='♯';
+    const rest=m[3]||'';
+    if(/^7/.test(rest)) return nom+' 7';
+    if(/^m|^-/.test(rest)) return nom+' menor';
+    if(/^Δ/.test(rest)) return nom+' Maj7';
+    if(/^Ø/.test(rest)) return nom+' semidism.';
+    if(/^°/.test(rest)) return nom+' dism.';
+    if(/^\+/.test(rest)) return nom+' aum.';
+    if(/^sus/i.test(rest)) return nom+' sus';
+    return nom+' Mayor';
+  }
+  function pinta(){
+    const e = EJEMPLOS[curKey][curIdx];
+    document.getElementById('exModalTitle').textContent = e.titulo;
+    document.getElementById('exModalEnun').textContent = e.enun;
+    document.getElementById('exModalResp').textContent = e.resp;
+    document.getElementById('exModalExpl').textContent = e.expl;
+    document.getElementById('exModalOtro').style.display = (EJEMPLOS[curKey].length>1)?'inline-flex':'none';
+    // modal ancho para tipos muy horizontales
+    const tw=e.spec&&(e.spec.type==='mod'||e.spec.type==='transp'||e.spec.type==='satb'||e.spec.type==='scalekey'||e.spec.type==='scale');
+    const box=document.getElementById('exModalBox'); if(box) box.classList.toggle('wide', !!tw);
+    exDraw(e.spec);
+    exExtra(e.spec);
+  }
+  function abrirEjemplo(clave){
+    const arr = EJEMPLOS[clave]; if(!arr||!arr.length) return;
+    try{ if(window.iaStop) window.iaStop(); }catch(e){}
+    curKey = clave; curIdx = Math.floor(Math.random()*arr.length);
+    pinta();
+    document.getElementById('exModal').classList.add('show');
+  }
+  function otroEjemplo(){
+    if(!curKey) return; const arr = EJEMPLOS[curKey]; if(arr.length<2) return;
+    let n; do{ n = Math.floor(Math.random()*arr.length); } while(n===curIdx);
+    curIdx = n; pinta();
+  }
+  function cerrarEjemplo(){ document.getElementById('exModal').classList.remove('show'); }
+  document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') cerrarEjemplo(); });
+  window.abrirEjemplo=abrirEjemplo; window.otroEjemplo=otroEjemplo; window.cerrarEjemplo=cerrarEjemplo;
+  window.exTogglePuente=exTogglePuente;
 })();
 </script>
 
