@@ -625,7 +625,7 @@
     </div>
 
     <div class="home-grid">
-      <button class="mode-card" data-path="compasespro"><h2>Compases <span class="pro-seal">PRO</span></h2></button>
+      <button class="mode-card" data-path="compasespro"><span class="dot-live"></span><h2>Compases <span class="pro-seal">PRO</span></h2></button>
       <button class="mode-card" data-path="seriearmonica"><h2>Serie armónica</h2></button>
       <button class="mode-card" data-path="dodecafonismo"><h2>Dodecafonismo</h2></button>
 
@@ -1208,6 +1208,7 @@
   // Acciones de cada pad: abrir su vista interna (los pendientes no hacen nada).
   // Modulación es una página propia (modulacion.html), por eso navega en vez de abrir vista interna.
   var ACCIONES = {
+    compasespro: function(){ window.location.href='compases.html'; },
     acordespro: abrirAcordes,
     cadencias: abrirCadencias,
     intervalos: abrirIntervalos,
