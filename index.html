@@ -4130,12 +4130,16 @@ window.MODOS_MOTOR = {
     // contenedor aquí para que TODA la interacción del motor quede ligada.
     host.innerHTML='<div id="escRowsM" style="width:100%"></div>';
     renderMODO();
-    // el pentagrama (scoreESC3) puede haberse dibujado con clientWidth=0 si la
-    // tarjeta aún no tenía ancho: re-render en el frame siguiente ya con layout.
-    requestAnimationFrame(function(){
+    // el pentagrama (scoreESC3) puede dibujarse con clientWidth=0 si la tarjeta
+    // aún no tiene ancho (recién insertada u oculta): re-render cuando el layout
+    // ya asentó — doble pasada (rAF + timeout) para curarlo con seguridad.
+    var _reMODO=function(){
       try{ var sc=document.getElementById('scoreESC3');
-        if(sc && (!sc.querySelector('svg') || sc.clientWidth>0)){ renderESCStaveOne(3); } }catch(e){}
-    });
+        if(sc){ if(!sc.clientWidth){ sc.style.minWidth='520px'; } renderESCStaveOne(3); } }catch(e){}
+    };
+    requestAnimationFrame(_reMODO);
+    setTimeout(_reMODO, 60);
+    setTimeout(_reMODO, 220);
   },
   // corrige el ejercicio montado y devuelve 0..1
   corregirMontado: function(item, host){
@@ -4146,29 +4150,42 @@ window.MODOS_MOTOR = {
   // puntuación SILENCIOSA 0..1 (misma comparación que corregirESCVar)
   puntua: function(e){
     try{
+      var conArm=(e._precolocada===true)||(e._conArmadura===true);
       var porAltura=(e.familia==='cromatica'||e.familia==='hexatona');
       var sol=e.notasSol||[];
       var got=(e.userSeq||[]).filter(function(n){return !n._opt;});
-      var notasOk=(got.length===sol.length);
-      if(notasOk){
-        if(porAltura){
-          var midis=function(arr){return arr.map(function(x){return x.midi!=null?x.midi:midiNota(x.step,x.octave,x.alter);}).sort(function(a,b){return a-b;});};
-          var ms=midis(sol), mg=midis(got);
-          for(var k=0;k<ms.length;k++){ if(ms[k]!==mg[k]){ notasOk=false; break; } }
-        } else {
-          for(var k2=0;k2<sol.length;k2++){
-            var g=got[k2], sN=sol[k2];
-            if(g.step!==sN.step||g.octave!==sN.octave||g.alter!==sN.alter){ notasOk=false; break; }
-          }
+      if(!conArm){
+        // pentatónica/hexátona/cromática: la 1ª (tónica) viene dada; el resto lo
+        // pone el alumno tocando el pentagrama. Cuenta por nota colocada correcta.
+        if(!got.length) return 0;
+        var total=sol.length, aciertos=0;
+        var midiOf=function(n){ return n.midi!=null?n.midi:midiNota(n.step,n.octave,n.alter||0); };
+        for(var i=0;i<sol.length;i++){
+          if(i===0){ aciertos++; continue; }   // tónica dada
+          var g=got[i];
+          if(g && sol[i] && midiOf(g)===midiOf(sol[i])) aciertos++;
         }
+        return total? aciertos/total : 0;
       }
-      var conArm=(e._precolocada===true)||(e._conArmadura===true);
-      var armSol=(e.fifths!=null)?e.fifths:(e.armSol!=null?e.armSol:null);
-      if(conArm && armSol!=null){
-        var armOk=((e.userArm||0)===armSol);
-        return (notasOk?0.7:0)+(armOk?0.3:0);
+      // CON armadura (modos/mayor/menor): puntos = armadura + cada accidental que
+      // el alumno DEBE alterar. La inacción NO puntúa: una nota solo cuenta si la
+      // tocó (_touched) y coincide; las notas ya cubiertas por la armadura no dan
+      // mérito (el alumno no las toca).
+      var armSol=(e.fifths!=null)?e.fifths:0;
+      var unidades=1;                          // la armadura es 1 unidad
+      var logrados=((e.userArm||0)===armSol)?1:0;
+      for(var k=0;k<sol.length;k++){
+        var s2=sol[k];
+        var armA=armAlterFor(s2.step, armSol);
+        var esAcc=((s2.alter||0)!==armA);
+        if(!esAcc) continue;                   // nota dada por armadura: no es unidad evaluable
+        unidades++;
+        var u2=got[k];
+        var toco=u2 && u2._touched===true;
+        var acierta=toco && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
+        if(acierta) logrados++;
       }
-      return notasOk?1:0;
+      return unidades? logrados/unidades : 0;
     }catch(err){ console.warn('[MODOS_MOTOR] puntua', err); return 0; }
   },
   // ---- CORRECCIÓN VISUAL para el resumen (verde=bien / rojo=mal / azul=solución) ----
@@ -4221,9 +4238,13 @@ function dibujarEscCorr(host, e){
     for(var i=0;i<nn;i++){
       var sN=sol[i]?deletrea(sol[i]):null, u=alumno[i];
       if(i<dadas){ if(sN) tick.push(_mkCorNote(VFx,sN,COR_NEG,0)); continue; }
-      if(u && sN && midiOf(u)===midiOf(sN)){ tick.push(_mkCorNote(VFx,u,COR_OK,0)); }        // acertó -> verde
-      else if(u && sN){ tick.push(_mkCorNote(VFx,u,COR_BAD,0)); tick.push(_mkCorNote(VFx,sN,COR_SOL,0)); }  // rojo + azul
-      else if(sN){ tick.push(_mkCorNote(VFx,sN,COR_SOL,0)); }                                  // faltó -> azul
+      var tocoO = u && u._touched===true;
+      if(tocoO && sN && midiOf(u)===midiOf(sN)){ tick.push(_mkCorNote(VFx,u,COR_OK,0)); }        // acertó -> verde
+      else if(tocoO && sN){                                                                     // rojo+azul, grave a la izquierda
+        var uN=_mkCorNote(VFx,u,COR_BAD,0), sN2=_mkCorNote(VFx,sN,COR_SOL,0);
+        if(midiOf(u)<=midiOf(sN)){ tick.push(uN); tick.push(sN2); } else { tick.push(sN2); tick.push(uN); }
+      }
+      else if(sN){ tick.push(_mkCorNote(VFx,sN,COR_SOL,0)); }                                  // no tocó -> solo azul
     }
     if(tick.length){
       try{ var v0=new VFx.Voice({num_beats:tick.length*4,beat_value:4}).setStrict(false); v0.addTickables(tick);
@@ -4244,18 +4265,32 @@ function dibujarEscCorr(host, e){
   try{ stave.setEndBarType(VFx.Barline.type.DOUBLE); }catch(_){}
   stave.setContext(ctx).draw();
   var tick2=[];
+  var midiN=function(n){ return midiNota(n.step,n.octave,n.alter||0); };
   for(var k=0;k<sol.length;k++){
     var s2=sol[k]; if(!s2) continue; var u2=alumno[k];
     var armA=armAlterFor(s2.step, fifths);
     var esAcc=((s2.alter||0)!==armA);
-    if(!esAcc){ tick2.push(_mkCorNote(VFx,s2,COR_NEG,armA)); }                                  // dada -> negra
+    if(!esAcc){ tick2.push(_mkCorNote(VFx,s2,COR_NEG,armA)); }                                  // dada -> negra/redonda negra
     else {
-      var acerto = u2 && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
+      // VERDE solo si el alumno REALMENTE la tocó (la inacción no da mérito)
+      var toco = u2 && u2._touched===true;
+      var acerto = toco && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
       if(acerto){ tick2.push(_mkCorNote(VFx,s2,COR_OK,armA)); }                                 // acertó accidental -> VERDE
-      else if(u2){ tick2.push(_mkCorNote(VFx,u2,COR_BAD,armAlterFor(u2.step,fifths))); tick2.push(_mkCorNote(VFx,s2,COR_SOL,armA)); }  // rojo + azul
-      else { tick2.push(_mkCorNote(VFx,s2,COR_SOL,armA)); }                                      // faltó -> azul
+      else if(toco){
+        // alumno puso algo distinto: rojo (su nota) + azul (correcta), la MÁS GRAVE a la izquierda
+        var uNote=_mkCorNote(VFx,u2,COR_BAD,armAlterFor(u2.step,fifths));
+        var sNote=_mkCorNote(VFx,s2,COR_SOL,armA);
+        if(midiN(u2)<=midiN(s2)){ tick2.push(uNote); tick2.push(sNote); }
+        else { tick2.push(sNote); tick2.push(uNote); }
+      }
+      else {
+        // el alumno NO tocó: solo la correcta en azul (sin nota roja, no hizo nada)
+        tick2.push(_mkCorNote(VFx,s2,COR_SOL,armA));
+      }
     }
   }
+  // 8ª opcional atenuada al final (duplicar octava) en modos/mayor/menor
+  if(sol.length){ var t0=sol[0]; var oct=_mkCorNote(VFx,{step:t0.step,octave:t0.octave+1,alter:t0.alter||0},'#2f6df655',armAlterFor(t0.step,fifths)); tick2.push(oct); }
   try{ var v=new VFx.Voice({num_beats:tick2.length*4,beat_value:4}).setStrict(false); v.addTickables(tick2);
     new VFx.Formatter().joinVoices([v]).format([v], W-100); v.draw(ctx, stave); }catch(e){}
   var svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; }
@@ -6588,6 +6623,13 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     background:linear-gradient(165deg,rgba(212,175,55,.1),rgba(16,11,3,.6));
     box-shadow:0 18px 50px rgba(0,0,0,.35)}
   .fp-alu-card #aluHost .score, .fp-alu-card #aluHost svg{min-height:150px}
+  /* fondo blanco de pentagrama para el sistema de fichas (el PRO no tenía .penta) */
+  svg.penta{background:#f3f5ff;border-radius:12px;display:block;width:100%;height:auto}
+  #aluHost .gr-score, .fp-corr-host, .fp-corr-host svg{background:#f3f5ff;border-radius:12px}
+  .fp-corr-host{padding:6px 10px;min-height:96px;overflow:hidden}
+  .fp-corr-host svg{width:100%;height:auto;display:block}
+  #aluHost{width:100%}
+  #aluHost .gr-row{width:100%}
   .fp-practica{border:1px solid rgba(212,175,55,.55);background:rgba(212,175,55,.12);color:#f3e4b0;
     border-radius:11px;padding:9px 16px;font-weight:800;font-size:14px;cursor:pointer;transition:background .12s}
   .fp-practica:hover{background:rgba(212,175,55,.24)}
@@ -6784,23 +6826,23 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
       var pc=((m%12)+12)%12, d=DELETREO[pc];
       return { step:d[0], octave:Math.floor(m/12)-1, alter:d[1] };
     });
+    // duplicar la octava (última nota atenuada) en modos/mayor/menor
+    var addOct = conArm && fuente.length>=5;
+    var lista = fuente.slice();
+    if(addOct){ var t0=fuente[0]; lista.push({step:t0.step, octave:t0.octave+1, alter:t0.alter||0, _opt:true}); }
     var acc={};
-    var notas=fuente.map(function(n){
-      var alter=(resuelto ? (n.alter!=null?n.alter:0) : 0);
+    var notas=lista.map(function(n){
+      var alter=(n.alter!=null?n.alter:0);
       var head=n.step.toLowerCase()+(alter===1?'#':alter===-1?'b':alter===2?'##':alter===-2?'bb':'')+'/'+n.octave;
-      var sn=new VF.StaveNote({clef:'treble', keys:[head], duration:'q'});
-      if(resuelto){
-        var idn=n.step+'/'+n.octave;
-        var base=(acc[idn]!==undefined)?acc[idn]:fpKsAlter(conArm?fifths:0, n.step);
-        if(alter!==base){
-          try{ sn.addModifier(new VF.Accidental(fpAccName(alter)),0); }catch(e){}
-          acc[idn]=alter;
-        }
-        sn.setStyle({fillStyle:'#d11d1d', strokeStyle:'#d11d1d'});
-      }
+      var sn=new VF.StaveNote({clef:'treble', keys:[head], duration:'w'});   // REDONDA
+      var idn=n.step+'/'+n.octave;
+      var base=(acc[idn]!==undefined)?acc[idn]:fpKsAlter(conArm?fifths:0, n.step);
+      if(alter!==base){ try{ sn.addModifier(new VF.Accidental(fpAccName(alter)),0); }catch(e){} acc[idn]=alter; }
+      if(n._opt) sn.setStyle({fillStyle:'#b1454590', strokeStyle:'#b1454590'});   // 8va atenuada
+      else sn.setStyle({fillStyle:'#d11d1d', strokeStyle:'#d11d1d'});
       return sn;
     });
-    var v=new VF.Voice({num_beats:Math.max(1,notas.length), beat_value:4}).setMode(VF.Voice.Mode.SOFT);
+    var v=new VF.Voice({num_beats:notas.length, beat_value:4}).setMode(VF.Voice.Mode.SOFT);
     v.addTickables(notas);
     new VF.Formatter().joinVoices([v]).formatToStave([v], stave);
     v.draw(ctx, stave);
@@ -7412,7 +7454,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO r4 · calco GE (interacción+practicar+resumen coloreado) activo');
+console.info('[teoriapro] FICHAS PRO r6 · redondas+8va+inaccion+penta+grave-izq activo');
 })();
 </script>
 
