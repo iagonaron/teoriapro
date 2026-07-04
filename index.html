@@ -4095,6 +4095,88 @@ window.nuevoESCi=nuevoESCi; window.nuevoESCtodos=nuevoESCtodos;
 window.nuevoMODO=nuevoMODO; window.corregirMODO=corregirMODO; window.renderMODO=renderMODO;
 window.corregirESCi=corregirESCi; window.renderESC=renderESC; window.renderESCi=renderESCi;
 window._escInit=function(){ nuevoESCtodos(); };
+
+/* ======================================================================
+   GP-C · FACHADA DEL MOTOR DE MODOS PARA FICHAS (Iago 4-jul-2026)
+   ----------------------------------------------------------------------
+   El sistema de fichas monta ejercicios de Modos DENTRO de sus propias
+   tarjetas (panel del profesor y carrusel del alumno) reutilizando este
+   motor tal cual. Convención: se usa el HUECO 3 de dataESC (el de la
+   vista Modos) — solo hay un ejercicio de ficha en pantalla a la vez,
+   así que no hay colisión. Los ítems son datos planos: viajan en el
+   payload y se rehidratan con JSON.
+   ====================================================================== */
+window.MODOS_MOTOR = {
+  // genera un ítem nuevo de "construye el modo indicado"
+  nuevo: function(){ return escItemModo(); },
+  // C2 (Iago 4-jul): escalas para fichas — UNA escala por ejercicio (regla
+  // permanente). familia: 'mayor' | 'menor' | 'otras' (pent/hexátona/cromática)
+  nuevoEscala: function(familia){
+    if(familia==='mayor') return escItem7('mayor');
+    if(familia==='menor') return escItem7('menor');
+    var fam=pick(['pentatonica','hexatona','cromatica']);
+    return escItemVariable(fam);
+  },
+  // enunciado legible ("Re dórico", "Fa lidio"...)
+  enunciado: function(item){ return (item.tonica&&item.tonica.nom||'')+' '+(item.tipo||''); },
+  // monta el ejercicio INTERACTIVO dentro de `host` (misma UI que la vista)
+  montarEn: function(host, item, opts){
+    opts=opts||{};
+    dataESC[3]=item;
+    if(!opts.corregido){ item._corregido=false; item._solVisible=false; item._okGreen=false; }
+    host.innerHTML='';
+    var row=document.createElement('div'); row.className='gr-row';
+    var ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC3';
+    var preg=document.createElement('div'); preg.className='gr-preg';
+    preg.textContent=(item.tonica&&item.tonica.nom||'')+' '+(item.tipo||'');
+    ans.appendChild(preg);
+    buildEscVarControls(ans,item,3);
+    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
+    ans.appendChild(tag);
+    var sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC3';
+    row.appendChild(ans); row.appendChild(sc);
+    host.appendChild(row);
+    renderESCStaveOne(3);
+  },
+  // corrige el ejercicio actualmente montado (feedback visual del motor)
+  corregirMontado: function(item, host){
+    dataESC[3]=item;
+    var ans=host.querySelector('#ansESC3')||host;
+    corregirESCVar(item,3,ans);
+    return window.MODOS_MOTOR.puntua(item);
+  },
+  // puntuación SILENCIOSA 0..1 (misma comparación que corregirESCVar):
+  // notas por grafía (o por altura en cromática/hexátona) + armadura si aplica
+  puntua: function(e){
+    try{
+      var porAltura=(e.familia==='cromatica'||e.familia==='hexatona');
+      var sol=e.notasSol||[];
+      var got=(e.userSeq||[]).filter(function(n){return !n._opt;});
+      var notasOk=(got.length===sol.length);
+      if(notasOk){
+        if(porAltura){
+          var midis=function(arr){return arr.map(function(x){return x.midi!=null?x.midi:midiNota(x.step,x.octave,x.alter);}).sort(function(a,b){return a-b;});};
+          var ms=midis(sol), mg=midis(got);
+          for(var k=0;k<ms.length;k++){ if(ms[k]!==mg[k]){ notasOk=false; break; } }
+        } else {
+          for(var k2=0;k2<sol.length;k2++){
+            var g=got[k2], sN=sol[k2];
+            if(g.step!==sN.step||g.octave!==sN.octave||g.alter!==sN.alter){ notasOk=false; break; }
+          }
+        }
+      }
+      // armadura: la solución vive en e.fifths (escalas 7 notas, pentatónicas
+      // y modos la traen; hexátona/cromática no llevan armadura)
+      var conArm=(e._precolocada===true)||(e._conArmadura===true);
+      var armSol=(e.fifths!=null)?e.fifths:(e.armSol!=null?e.armSol:null);
+      if(conArm && armSol!=null){
+        var armOk=((e.userArm||0)===armSol);
+        return (notasOk?0.7:0)+(armOk?0.3:0);
+      }
+      return notasOk?1:0;
+    }catch(err){ console.warn('[MODOS_MOTOR] puntua', err); return 0; }
+  }
+};
 })();
 </script>
 
@@ -6322,6 +6404,653 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   document.addEventListener('keydown',function(ev){ if(ev.key==='Escape') cerrarEjemplo(); });
   window.abrirEjemplo=abrirEjemplo; window.otroEjemplo=otroEjemplo; window.cerrarEjemplo=cerrarEjemplo;
   window.exTogglePuente=exTogglePuente;
+})();
+</script>
+
+<!-- ============================================================
+     GP-C · FICHAS PRO · C1a — PANEL DEL PROFESOR (Iago 4-jul-2026)
+     ------------------------------------------------------------
+     Generador de fichas de teoría de GRADO PROFESIONAL. Réplica del
+     circuito del elemental: el Diario crea el token (tarjeta Ficha de
+     la vista 2Gp) y abre esta pantalla con ?panel=profesor&ficha=N&
+     envio=TOKEN. Aquí se compone la ficha (catálogo PRO, máx. 10
+     ejercicios, tipos repetibles), se revisa (regenerar/quitar/ver),
+     y "Preparar envío a alumnos" llama a suite_ficha_enviar_con_token.
+     El modo alumno (?fichaId=...) llega en C1b.
+     ============================================================ -->
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style id="fp-css">
+  #view-fichapro{display:none;min-height:100vh;position:relative;overflow:hidden}
+  .fp-neb{position:fixed;inset:0;pointer-events:none;z-index:0}
+  .fp-neb i{position:absolute;border-radius:50%;filter:blur(70px);opacity:.5;animation:fpNeb 16s ease-in-out infinite alternate}
+  .fp-neb i:nth-child(1){width:560px;height:560px;left:-140px;top:-160px;background:radial-gradient(closest-side,rgba(212,175,55,.42),transparent 70%)}
+  .fp-neb i:nth-child(2){width:480px;height:480px;right:-120px;top:22%;background:radial-gradient(closest-side,rgba(251,191,36,.3),transparent 70%);animation-delay:-6s}
+  .fp-neb i:nth-child(3){width:520px;height:520px;left:28%;bottom:-220px;background:radial-gradient(closest-side,rgba(184,134,11,.34),transparent 70%);animation-delay:-11s}
+  @keyframes fpNeb{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,-26px) scale(1.12)}}
+  .fp-wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:18px 20px 60px}
+  .fp-kicker{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin:14px 0 4px}
+  .fp-titulo{font-size:clamp(26px,4.4vw,42px);font-weight:900;color:var(--ink);letter-spacing:.5px;margin:0 0 2px}
+  .fp-titulo b{color:var(--gold-soft)}
+  .fp-ventana{font-size:13.5px;color:var(--muted);margin:4px 0 0}
+  .fp-aviso-token{margin:14px 0 0;padding:12px 16px;border:1px solid rgba(255,120,120,.45);border-radius:12px;
+    background:rgba(255,80,80,.08);color:#ffc9c9;font-size:13.5px;font-weight:600}
+  .fp-sec{margin-top:26px}
+  .fp-sec h3{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);font-weight:800;margin:0 0 10px}
+  .fp-cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
+  .fp-tipo{position:relative;text-align:left;border-radius:14px;padding:13px 14px;cursor:pointer;
+    border:1px solid rgba(212,175,55,.4);background:linear-gradient(160deg,rgba(212,175,55,.14),rgba(20,14,4,.6));
+    color:var(--ink);font:800 15px/1.25 inherit;transition:transform .12s ease, box-shadow .12s ease}
+  .fp-tipo small{display:block;font-weight:600;font-size:11px;color:var(--muted2);margin-top:3px}
+  .fp-tipo .fp-add{position:absolute;right:10px;top:10px;width:24px;height:24px;border-radius:50%;display:flex;
+    align-items:center;justify-content:center;background:linear-gradient(135deg,#e9c96a,#b8860b);color:#1a1305;font-weight:900}
+  .fp-tipo:not(.off):hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(212,175,55,.22)}
+  .fp-tipo.off{cursor:default;opacity:.5;border-style:dashed;background:rgba(255,255,255,.03)}
+  .fp-chip{display:inline-block;font-size:9.5px;letter-spacing:.1em;font-weight:800;text-transform:uppercase;
+    border-radius:999px;padding:2px 8px;margin-top:6px}
+  .fp-chip.prox{background:rgba(212,175,55,.15);color:var(--gold-soft);border:1px solid rgba(212,175,55,.4)}
+  .fp-chip.constr{background:rgba(255,255,255,.06);color:#c9b88a;border:1px dashed rgba(255,255,255,.28)}
+  .fp-lista{display:flex;flex-direction:column;gap:9px}
+  .fp-ej{display:flex;align-items:center;gap:12px;border:1px solid rgba(212,175,55,.35);border-radius:13px;
+    padding:10px 14px;background:linear-gradient(160deg,rgba(212,175,55,.09),rgba(18,13,4,.5))}
+  .fp-ej-n{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
+    background:linear-gradient(135deg,#e9c96a,#b8860b);color:#1a1305;font-weight:900;font-size:14px}
+  .fp-ej-tipo{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:800}
+  .fp-ej-enun{font-size:17px;font-weight:800;color:var(--gold-soft)}
+  .fp-ej-btns{margin-left:auto;display:flex;gap:6px}
+  .fp-mini{border:1px solid rgba(212,175,55,.45);background:rgba(212,175,55,.1);color:var(--ink);
+    border-radius:9px;padding:6px 11px;font-weight:800;font-size:13px;cursor:pointer}
+  .fp-mini:hover{background:rgba(212,175,55,.22)}
+  .fp-mini.rojo{border-color:rgba(255,110,110,.5);color:#ffb4b4;background:rgba(255,80,80,.08)}
+  .fp-vacio{font-size:13.5px;color:var(--muted2);font-style:italic;padding:8px 2px}
+  .fp-pie{margin-top:22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+  .fp-valor{font-size:12.5px;color:var(--muted2)}
+  .fp-enviar{border:0;border-radius:14px;padding:15px 26px;font:900 16px inherit;cursor:pointer;color:#1a1305;
+    background:linear-gradient(120deg,#e9c96a,#d4af37 55%,#b8860b);box-shadow:0 10px 30px rgba(212,175,55,.35);
+    transition:transform .12s ease}
+  .fp-enviar:not(:disabled):hover{transform:translateY(-2px)}
+  .fp-enviar:disabled{opacity:.45;cursor:default;box-shadow:none}
+  .fp-status{margin-top:12px;font-size:14px;font-weight:700;min-height:20px}
+  .fp-status.ok{color:#8be3ae}.fp-status.err{color:#ffb4b4}.fp-status.info{color:var(--gold-soft)}
+  .fp-exito{margin-top:22px;padding:22px;border-radius:16px;border:1px solid rgba(139,227,174,.4);
+    background:rgba(52,211,153,.08);color:#c9f5dc;font-size:15.5px;line-height:1.6}
+  /* modal de previsualización */
+  #fpPrev{position:fixed;inset:0;z-index:800;display:none;align-items:center;justify-content:center;
+    background:rgba(6,4,1,.85);padding:20px}
+  #fpPrev.on{display:flex}
+  .fp-prev-panel{background:var(--panel);border:1px solid rgba(212,175,55,.4);border-radius:18px;
+    width:min(760px,96vw);max-height:92vh;overflow:auto;padding:18px 20px;position:relative;
+    box-shadow:0 30px 90px rgba(0,0,0,.6)}
+  .fp-prev-tit{font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--gold-soft);font-weight:800;margin:0 0 10px}
+  .fp-prev-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:0;cursor:pointer;
+    background:rgba(255,255,255,.1);color:var(--ink);font-weight:900}
+  .fp-prev-nota{margin-top:10px;font-size:12px;color:var(--muted2)}
+  /* --- modo alumno (C1b) --- */
+  .fp-alu-prog{height:8px;border-radius:999px;background:rgba(212,175,55,.15);margin:14px 0 20px;overflow:hidden}
+  .fp-alu-progfill{height:100%;width:0%;border-radius:999px;transition:width .5s ease;
+    background:linear-gradient(90deg,#e9c96a,#d4af37 60%,#b8860b)}
+  .fp-alu-card{border:1px solid rgba(212,175,55,.4);border-radius:18px;padding:18px 16px;
+    background:linear-gradient(165deg,rgba(212,175,55,.1),rgba(16,11,3,.6));
+    box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  .fp-alu-nav{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px}
+</style>
+<div id="view-fichapro">
+  <div class="fp-neb"><i></i><i></i><i></i></div>
+  <div class="fp-wrap">
+    <header class="top" style="position:relative;z-index:2">
+      <a class="brand" href="#" onclick="return false;" style="cursor:default;text-decoration:none;color:inherit">
+        <h1><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1>
+        <span class="brand-inline">Generador de fichas · Grado Profesional</span>
+      </a>
+    </header>
+    <div class="fp-kicker">Panel del profesor</div>
+    <h2 class="fp-titulo">FICHA <b id="fpNum">nº —</b></h2>
+    <p class="fp-ventana">Se activa para los alumnos el <b>viernes a las 19:00</b> · una semana de entrega · una semana de gracia.</p>
+    <div class="fp-aviso-token" id="fpSinToken" style="display:none">
+      ⚠ Esta pantalla se ha abierto <b>sin envío preparado</b>. Para poder mandar la ficha, créala desde la
+      tarjeta <b>Ficha de teoría</b> del Diario (vista 2Gp): allí eliges el nº y se genera el envío.
+      Puedes componer y previsualizar igualmente.
+    </div>
+    <section class="fp-sec">
+      <h3>Catálogo de ejercicios <span style="opacity:.6">· toca un tipo para añadirlo</span></h3>
+      <div class="fp-cat" id="fpCat"></div>
+    </section>
+    <section class="fp-sec">
+      <h3>Revisar ficha · <span id="fpCount">0</span>/10 ejercicios</h3>
+      <div class="fp-lista" id="fpLista"><div class="fp-vacio">Aún no hay ejercicios: añade del catálogo.</div></div>
+    </section>
+    <div class="fp-pie">
+      <button class="fp-enviar" id="fpEnviar" type="button">📨 Preparar envío a alumnos</button>
+      <span class="fp-valor" id="fpValor"></span>
+    </div>
+    <div class="fp-status" id="fpStatus"></div>
+    <div id="fpExitoHueco"></div>
+  </div>
+  <div id="fpPrev">
+    <div class="fp-prev-panel">
+      <button class="fp-prev-x" type="button" onclick="document.getElementById('fpPrev').classList.remove('on')">✕</button>
+      <div class="fp-prev-tit">Así lo verá el alumno · ejercicio <span id="fpPrevN"></span></div>
+      <div id="fpPrevHost"></div>
+      <div class="fp-prev-nota">Previsualización interactiva con el motor real (puedes tocar la rueda y las alteraciones; no afecta a la ficha).</div>
+    </div>
+  </div>
+</div>
+<script>
+(function(){
+'use strict';
+/* ================= FICHAS PRO · C1a · panel del profesor ================= */
+var FP_SB_URL='https://woiptkyrxkbpnvioypit.supabase.co';
+var FP_SB_ANON='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+function fpSb(){
+  if(window.__FP_SB) return window.__FP_SB;
+  if(window.supabase && window.supabase.createClient){
+    window.__FP_SB=window.supabase.createClient(FP_SB_URL, FP_SB_ANON);
+    return window.__FP_SB;
+  }
+  return null;
+}
+function fpUuid(){
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g,function(c){
+    var r=Math.random()*16|0, v=(c==='x')?r:(r&0x3|0x8); return v.toString(16);
+  });
+}
+function clon(o){ return JSON.parse(JSON.stringify(o)); }
+
+/* --------- catálogo (C1: solo Modos añadible) --------- */
+var CATALOGO=[
+  { key:'modos',         label:'Modos',           estado:'activo' },
+  { key:'seriearmonica', label:'Serie armónica',  estado:'prox', nota:'fase 2' },
+  { key:'acordespro',    label:'Acordes PRO',     estado:'prox', nota:'fase 2' },
+  { key:'cadencias',     label:'Cadencias',       estado:'prox', nota:'fase 2' },
+  { key:'intervalos',    label:'Intervalos',      estado:'prox', nota:'fase 2' },
+  { key:'tonalidades',   label:'Tonalidades',     estado:'prox', nota:'fase 2' },
+  { key:'escala_mayor',  label:'Escalas · Mayor', estado:'activo', desc:'una escala mayor (armadura + alteraciones)' },
+  { key:'escala_menor',  label:'Escalas · menor', estado:'activo', desc:'una escala menor (natural/armónica/melódica)' },
+  { key:'escala_otras',  label:'Escalas · otras', estado:'activo', desc:'pentatónica, hexátona o cromática' },
+  { key:'indiceacustico',label:'Índice acústico', estado:'prox', nota:'fase 2' },
+  { key:'transporte',    label:'Transporte',      estado:'prox', nota:'fase 2' },
+  { key:'compasespro',   label:'Compases PRO',    estado:'prox', nota:'fase 3' },
+  { key:'modulacion',    label:'Modulación',      estado:'prox', nota:'fase 3' },
+  { key:'enarmoniapro',  label:'Enarmonía PRO',   estado:'constr' },
+  { key:'dodecafonismo', label:'Dodecafonismo',   estado:'constr' },
+  { key:'cifrado',       label:'Cifrado',         estado:'constr' },
+  { key:'inversion',     label:'Inversión',       estado:'constr' }
+];
+var FP={ numero:null, token:null, ejercicios:[], MAX:10, enviado:false };
+
+function el(id){ return document.getElementById(id); }
+function status(msg, tipo){
+  var s=el('fpStatus'); if(!s) return;
+  s.textContent=msg||''; s.className='fp-status'+(tipo?' '+tipo:'');
+}
+
+/* --------- pintado --------- */
+function pintaCat(){
+  var host=el('fpCat'); host.innerHTML='';
+  CATALOGO.forEach(function(t){
+    var b=document.createElement('button'); b.type='button';
+    b.className='fp-tipo'+(t.estado==='activo'?'':' off');
+    var chip= t.estado==='prox'   ? '<span class="fp-chip prox">· '+t.nota+' ·</span>'
+            : t.estado==='constr' ? '<span class="fp-chip constr">en construcción</span>' : '';
+    b.innerHTML=(t.estado==='activo'?'<span class="fp-add">+</span>':'')+
+      t.label+'<small>'+(t.estado==='activo'?(t.desc||'construir el modo indicado'):'todavía no se puede añadir')+'</small>'+chip;
+    b.addEventListener('click', function(){
+      if(t.estado==='activo'){ anadir(t.key); return; }
+      status(t.estado==='constr'
+        ? '🔧 «'+t.label+'» está en construcción: todavía no se puede añadir a fichas.'
+        : '⏳ «'+t.label+'» se incorpora en la '+t.nota+' del generador.', 'info');
+    });
+    host.appendChild(b);
+  });
+}
+function pintaLista(){
+  var host=el('fpLista'); host.innerHTML='';
+  el('fpCount').textContent=FP.ejercicios.length;
+  var v=el('fpValor');
+  if(FP.ejercicios.length){
+    var val=Math.round((10/FP.ejercicios.length)*100)/100;
+    v.textContent='Puntuación: sobre 10 · cada ejercicio vale '+val+' puntos.';
+  } else v.textContent='';
+  if(!FP.ejercicios.length){
+    host.innerHTML='<div class="fp-vacio">Aún no hay ejercicios: añade del catálogo.</div>';
+  } else {
+    FP.ejercicios.forEach(function(e,i){
+      var row=document.createElement('div'); row.className='fp-ej';
+      row.innerHTML='<div class="fp-ej-n">'+(i+1)+'</div>'+
+        '<div><div class="fp-ej-tipo">'+e.label+'</div>'+
+        '<div class="fp-ej-enun">'+fpEnun(e)+'</div></div>'+
+        '<div class="fp-ej-btns">'+
+          '<button class="fp-mini" data-a="ver" data-i="'+i+'" type="button" title="Previsualizar como alumno">👁</button>'+
+          '<button class="fp-mini" data-a="re" data-i="'+i+'" type="button" title="Regenerar variante">🔁</button>'+
+          '<button class="fp-mini rojo" data-a="x" data-i="'+i+'" type="button" title="Quitar">✕</button>'+
+        '</div>';
+      host.appendChild(row);
+    });
+    host.querySelectorAll('.fp-mini').forEach(function(b){
+      b.addEventListener('click', function(){
+        var i=+b.dataset.i, a=b.dataset.a;
+        if(a==='x'){ FP.ejercicios.splice(i,1); pintaLista(); }
+        else if(a==='re'){ regenerar(i); }
+        else if(a==='ver'){ previsualizar(i); }
+      });
+    });
+  }
+  el('fpEnviar').disabled = FP.enviado || !FP.token || !FP.ejercicios.length;
+}
+function fpEnun(e){
+  try{
+    if(window.MODOS_MOTOR && e.spec && e.spec.tonica) return window.MODOS_MOTOR.enunciado(e.spec);
+  }catch(err){}
+  return e.label;
+}
+
+/* --------- acciones --------- */
+function fpGenera(key){
+  var M=window.MODOS_MOTOR; if(!M) return null;
+  if(key==='modos')        return M.nuevo();
+  if(key==='escala_mayor') return M.nuevoEscala('mayor');
+  if(key==='escala_menor') return M.nuevoEscala('menor');
+  if(key==='escala_otras') return M.nuevoEscala('otras');
+  return null;
+}
+function fpLabelDe(key){
+  var t=CATALOGO.find(function(x){return x.key===key;});
+  return (t && t.label) || 'Ejercicio';
+}
+function anadir(key){
+  if(FP.enviado){ status('La ficha ya se envió: crea una nueva desde el Diario.', 'err'); return; }
+  if(FP.ejercicios.length>=FP.MAX){ status('Máximo '+FP.MAX+' ejercicios por ficha.', 'err'); return; }
+  var it=fpGenera(key);
+  if(!it){ status('El motor de este tipo no está disponible.', 'err'); return; }
+  FP.ejercicios.push({ key:key, label:fpLabelDe(key), spec:clon(it) });
+  status('','');
+  pintaLista();
+}
+function regenerar(i){
+  var e=FP.ejercicios[i]; if(!e) return;
+  var firma=function(sp){ return sp ? ((sp._mode||sp.tipo||'')+'·'+((sp.tonica&&sp.tonica.nom)||'')) : ''; };
+  var prev=firma(e.spec), it=null, n=0;
+  do{ it=fpGenera(e.key); n++; }while(it && firma(it)===prev && n<30);
+  if(it){ e.spec=clon(it); pintaLista(); }
+}
+function previsualizar(i){
+  var e=FP.ejercicios[i]; if(!e) return;
+  el('fpPrevN').textContent=(i+1)+' · '+fpEnun(e);
+  var host=el('fpPrevHost'); host.innerHTML='';
+  el('fpPrev').classList.add('on');
+  requestAnimationFrame(function(){
+    try{ window.MODOS_MOTOR.montarEn(host, clon(e.spec)); }
+    catch(err){ host.innerHTML='<div class="fp-vacio">No se pudo montar la previsualización: '+((err&&err.message)||err)+'</div>'; }
+  });
+}
+
+/* --------- payload + envío --------- */
+function construirPayloadPRO(){
+  var now=new Date().toISOString();
+  var total=FP.ejercicios.length;
+  return {
+    tipo:'ficha_teoria',
+    app:'teoria_at_home_pro',
+    schema_version:1,
+    id:fpUuid(),
+    creada_en:now,
+    profesor:{ id:null, nombre:'Iago González Alonso' },
+    titulo:'Ficha '+(FP.numero!=null?FP.numero:'—'),
+    numero:(FP.numero!=null?+FP.numero:null),
+    curso:'GP',
+    puntuacion:{
+      modelo:'media_ponderada', escala:10, normaliza_sobre:10,
+      valor_por_ejercicio:Math.round((10/Math.max(1,total))*1000)/1000,
+      umbral_feedback:0.5, penaliza_caducar:0, solo_al_final:true
+    },
+    ejercicios: FP.ejercicios.map(function(e,k){
+      return {
+        n:k+1, key:e.key, label:e.label,
+        enun:fpEnun(e),
+        area:e.key, practica:e.key,   // "Necesito practicar más esto" -> vista interna del PRO
+        unidad:1,
+        motor:{ _interactivo:e.key, _spec:e.spec }
+      };
+    })
+  };
+}
+function enviar(){
+  if(FP.enviado) return;
+  if(!FP.token){ status('No hay envío preparado: abre esta pantalla desde el Diario.', 'err'); return; }
+  if(!FP.ejercicios.length){ status('Añade al menos un ejercicio.', 'err'); return; }
+  var sb=fpSb();
+  if(!sb){ status('Sin conexión con Supabase (¿cargó supabase-js?).', 'err'); return; }
+  var btn=el('fpEnviar'); btn.disabled=true;
+  status('Enviando la ficha…', 'info');
+  var payload=construirPayloadPRO();
+  sb.rpc('suite_ficha_enviar_con_token', { p_token:FP.token, p_ejercicios:payload })
+    .then(function(r){
+      if(r && r.error) throw r.error;
+      var d=r && r.data;
+      if(!d || d.ok===false) throw new Error((d && d.error) || 'respuesta_invalida');
+      FP.enviado=true;
+      status('','');
+      el('fpExitoHueco').innerHTML='<div class="fp-exito">✅ <b>Ficha '+(FP.numero!=null?FP.numero:'')+
+        ' preparada.</b> Los alumnos de 2º GP la recibirán en su campana el <b>viernes a las 19:00</b> '+
+        '(si ya pasó, al momento), con su semana de entrega y su semana de gracia. Puedes cerrar esta pestaña.</div>';
+      window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
+    })
+    .catch(function(e){
+      var c=(e && e.message)||'error';
+      var mp={ token_invalido:'El envío no es válido (token incorrecto).',
+               token_usado:'Este envío ya se usó: crea la ficha de nuevo desde el Diario.',
+               ya_usada:'Este envío ya se usó: crea la ficha de nuevo desde el Diario.',
+               caducado:'El envío caducó: créalo de nuevo desde el Diario.' };
+      status('⚠ No se pudo enviar: '+(mp[c]||c), 'err');
+      btn.disabled=false;
+      console.warn('[fichaspro] enviar', e);
+    });
+}
+
+/* --------- apertura + router --------- */
+function abrirPanel(numero, token){
+  FP.numero=(numero!=null && String(numero)!=='' ? numero : null);
+  FP.token=token||null;
+  var portal=el('view-portal'); if(portal) portal.style.display='none';
+  var v=el('view-fichapro'); v.style.display='block';
+  el('fpNum').textContent = FP.numero!=null ? ('nº '+FP.numero) : 'nº —';
+  el('fpSinToken').style.display = FP.token ? 'none' : 'block';
+  pintaCat(); pintaLista();
+  document.title='Ficha '+(FP.numero!=null?FP.numero:'')+' · TEORÍA at home PRO';
+}
+
+/* ================= FICHAS PRO · C1b · MODO ALUMNO ================= */
+/* Carrusel de ejercicios (uno por pantalla) con: guardado automático de
+   progreso en cada salto (Supabase + localStorage, "ficha a medias" en la
+   campana del portal), sonidito de refuerzo, barra de progreso dorada,
+   SIN feedback hasta el final, botón "Necesito practicar más esto", y
+   entrega con suite_ficha_entregar (nota sobre 10 + desglose). */
+var ALU=null;   // { cuenta, ficha, numero, items:[{n,key,label,enun,item}], i, entregada }
+
+function progClaveLS(cuenta, ficha){ return 'suite_ficha_prog_'+cuenta+'_'+ficha; }
+function respuestaDe(it){
+  // instantánea plana de lo que el alumno lleva puesto (rehidratable)
+  try{ return { userArm:(it.item.userArm!=null?it.item.userArm:null),
+                userSeq:clon(it.item.userSeq||[]) }; }catch(e){ return null; }
+}
+function aplicaRespuesta(it, r){
+  if(!r || typeof r!=='object') return;
+  try{
+    if(r.userArm!=null) it.item.userArm=r.userArm;
+    if(Array.isArray(r.userSeq) && Array.isArray(it.item.userSeq) &&
+       r.userSeq.length===it.item.userSeq.length){
+      it.item.userSeq=clon(r.userSeq);
+    }
+  }catch(e){}
+}
+function progGuardar(){
+  if(!ALU || ALU.entregada) return;
+  var respuestas=ALU.items.map(respuestaDe);
+  var hechos=ALU.items.filter(function(it){
+    var r=respuestaDe(it);
+    return r && Array.isArray(r.userSeq) && r.userSeq.some(function(n){ return n && n._touched; });
+  }).length;
+  var pack={ i:ALU.i|0, hechos:hechos, total:ALU.items.length, respuestas:respuestas, t:Date.now() };
+  try{ localStorage.setItem(progClaveLS(ALU.cuenta, ALU.ficha), JSON.stringify(pack)); }catch(e){}
+  var sb=fpSb(); if(!sb) return;
+  sb.rpc('suite_ficha_progreso_guardar', {
+    p_cuenta_id:ALU.cuenta, p_ficha_id:ALU.ficha,
+    p_ejercicio_actual:ALU.i|0, p_hechos:hechos, p_total:ALU.items.length,
+    p_respuestas:respuestas
+  }).then(function(r){ if(r&&r.error) console.warn('[fichaspro] progreso', r.error.message); })
+    .catch(function(e){ console.warn('[fichaspro] progreso', e); });
+}
+async function progLeer(cuenta, ficha){
+  var remoto=null;
+  try{
+    var sb=fpSb();
+    if(sb){
+      var r=await sb.rpc('suite_ficha_progreso_leer', { p_cuenta_id:cuenta, p_ficha_id:ficha });
+      var d=r && r.data;
+      if(!r.error && d && d.ok && d.progreso){
+        var p=d.progreso;
+        remoto={ i:p.ejercicio_actual|0, respuestas:p.respuestas||null, total:p.total|0,
+                 t:Date.parse(p.actualizado_en)||0 };
+      }
+    }
+  }catch(e){}
+  var local=null;
+  try{ local=JSON.parse(localStorage.getItem(progClaveLS(cuenta,ficha))||'null'); }catch(e){}
+  if(remoto && local) return ((local.t||0)>(remoto.t||0))?local:remoto;
+  return remoto||local||null;
+}
+function progBorrar(){
+  if(!ALU) return;
+  try{ localStorage.removeItem(progClaveLS(ALU.cuenta, ALU.ficha)); }catch(e){}
+  try{ var sb=fpSb(); if(sb) sb.rpc('suite_ficha_progreso_borrar',{p_cuenta_id:ALU.cuenta,p_ficha_id:ALU.ficha}).catch(function(){}); }catch(e){}
+}
+
+/* --------- sonidito de refuerzo (blip dorado suave) --------- */
+var _fpAc=null;
+function ding(exito){
+  try{
+    _fpAc=_fpAc||new (window.AudioContext||window.webkitAudioContext)();
+    if(_fpAc.state==='suspended') _fpAc.resume();
+    var t=_fpAc.currentTime;
+    var notas = exito ? [523.25, 659.25, 783.99] : [659.25];
+    notas.forEach(function(f,k){
+      var o=_fpAc.createOscillator(), g=_fpAc.createGain();
+      o.type='sine'; o.frequency.value=f;
+      g.gain.setValueAtTime(0.0001, t+k*0.09);
+      g.gain.exponentialRampToValueAtTime(0.12, t+k*0.09+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001, t+k*0.09+0.5);
+      o.connect(g); g.connect(_fpAc.destination);
+      o.start(t+k*0.09); o.stop(t+k*0.09+0.55);
+    });
+  }catch(e){}
+}
+
+/* --------- UI del carrusel --------- */
+function aluHtmlBase(){
+  return '<header class="top"><a class="brand" href="#" onclick="return false;" '+
+    'style="cursor:default;text-decoration:none;color:inherit">'+
+    '<h1><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> '+
+    '<span class="pro-seal-brand">PRO</span></h1>'+
+    '<span class="brand-inline">Ficha '+(ALU.numero!=null?ALU.numero:'')+' · Grado Profesional</span></a></header>'+
+    '<div class="fp-alu-prog"><div class="fp-alu-progfill" id="aluProgFill"></div></div>'+
+    '<div id="aluCuerpo"></div>';
+}
+function pintaAlu(){
+  var v=el('view-fichapro');
+  var wrap=v.querySelector('.fp-wrap');
+  if(!wrap.querySelector('#aluCuerpo')) wrap.innerHTML=aluHtmlBase();
+  var N=ALU.items.length, i=ALU.i;
+  var fill=el('aluProgFill');
+  if(fill) fill.style.width=Math.round(100*(i)/(N))+'%';
+  var it=ALU.items[i];
+  var c=el('aluCuerpo');
+  c.innerHTML=
+    '<div class="fp-kicker" style="text-align:center">Ejercicio '+(i+1)+' de '+N+'</div>'+
+    '<h2 class="fp-titulo" style="text-align:center;margin-bottom:14px">'+it.enun+'</h2>'+
+    '<div class="fp-alu-card"><div id="aluHost"></div></div>'+
+    '<div class="fp-alu-nav">'+
+      (i>0?'<button class="fp-mini" id="aluPrev" type="button">‹ Anterior</button>':'<span></span>')+
+      (i<N-1
+        ? '<button class="fp-enviar" id="aluNext" type="button" style="padding:12px 22px;font-size:15px">Siguiente ›</button>'
+        : '<button class="fp-enviar" id="aluFin" type="button" style="padding:12px 22px;font-size:15px">📨 Enviar al profesor y ver puntuación</button>')+
+    '</div>'+
+    '<div class="fp-status" id="fpStatus" style="text-align:center"></div>';
+  try{ window.MODOS_MOTOR.montarEn(el('aluHost'), it.item); }
+  catch(e){ el('aluHost').innerHTML='<div class="fp-vacio">No se pudo montar el ejercicio: '+((e&&e.message)||e)+'</div>'; }
+  var bp=el('aluPrev'), bn=el('aluNext'), bf=el('aluFin');
+  if(bp) bp.addEventListener('click', function(){ ding(false); ALU.i--; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
+  if(bn) bn.addEventListener('click', function(){ ding(false); ALU.i++; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
+  if(bf) bf.addEventListener('click', entregarFicha);
+}
+function entregarFicha(){
+  if(!ALU || ALU.entregada) return;
+  var N=ALU.items.length;
+  var pcts=ALU.items.map(function(it){
+    try{ return window.MODOS_MOTOR.puntua(it.item); }catch(e){ return 0; }
+  });
+  var suma=pcts.reduce(function(a,b){return a+b;},0);
+  var nota=Math.round((suma*10/N)*10)/10;
+  ALU.entregada=true;
+  ding(true);
+  window.scrollTo({top:0, behavior:'smooth'});
+  pintaResultado(nota, pcts);
+  var payload={
+    nota:nota, escala:10,
+    ejercicios:ALU.items.map(function(it,k){
+      return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(pcts[k]*100)/100 };
+    })
+  };
+  var sb=fpSb();
+  var pinta=function(msg,tipo){ var s2=el('aluEnvEstado'); if(s2){ s2.textContent=msg; s2.className='fp-status '+(tipo||''); } };
+  if(!sb){ pinta('⚠ Sin conexión: la nota NO se envió. Recarga con internet.', 'err'); return; }
+  pinta('Enviando tu nota a Iago…','info');
+  sb.rpc('suite_ficha_entregar', { p_cuenta_id:ALU.cuenta, p_ficha_id:ALU.ficha, p_nota:nota, p_payload:payload })
+    .then(function(r){
+      if(r && r.error) throw r.error;
+      var d=r && r.data;
+      if(d && d.ok===false) throw new Error(d.error||'error');
+      pinta('✓ Nota enviada a Iago.','ok');
+      progBorrar();
+    })
+    .catch(function(e){
+      var c=(e&&e.message)||'red';
+      var mp={ ya_entregada:'Esta ficha ya la habías entregado: no se envía de nuevo.',
+               fuera_de_plazo:'El plazo venció; la nota puede no contar.',
+               no_validado:'Tu cuenta no está validada; la nota no se ha guardado.' };
+      pinta(mp[c]?('ⓘ '+mp[c]):('⚠ NO se pudo enviar la nota ('+c+'). Tu ficha está corregida, pero Iago aún no la tiene.'),
+            c==='ya_entregada'?'info':'err');
+      console.warn('[fichaspro] entregar', e);
+    });
+}
+function pintaResultado(nota, pcts){
+  var fill=el('aluProgFill'); if(fill) fill.style.width='100%';
+  var c=el('aluCuerpo');
+  var filas=ALU.items.map(function(it,k){
+    var ok=pcts[k]>=0.5;
+    return '<div class="fp-ej" style="'+(ok?'':'border-color:rgba(255,110,110,.5)')+'">'+
+      '<div class="fp-ej-n" style="'+(ok?'':'background:linear-gradient(135deg,#ff9b9b,#c0392b);color:#fff')+'">'+it.n+'</div>'+
+      '<div><div class="fp-ej-tipo">'+it.label+'</div><div class="fp-ej-enun">'+it.enun+'</div></div>'+
+      '<div class="fp-ej-btns">'+
+        '<span style="font-weight:900;font-size:15px;color:'+(ok?'#8be3ae':'#ffb4b4')+'">'+
+          (ok?'✓':'✗')+' '+Math.round(pcts[k]*100)+'%</span>'+
+        (ok?'':'<button class="fp-mini" data-prac="'+it.key+'" type="button">💪 Necesito practicar más esto</button>')+
+      '</div></div>';
+  }).join('');
+  c.innerHTML=
+    '<div style="text-align:center;margin-top:8px">'+
+      '<div class="fp-kicker">Tu puntuación</div>'+
+      '<div style="font-size:clamp(54px,11vw,96px);font-weight:900;color:'+(nota>=5?'#8be3ae':'#ffb4b4')+';line-height:1">'+
+        String(nota).replace('.',',')+'</div>'+
+      '<div style="color:var(--muted);font-size:14px">sobre 10</div>'+
+      '<div class="fp-status" id="aluEnvEstado" style="margin-top:8px"></div>'+
+    '</div>'+
+    '<section class="fp-sec"><h3>Resumen · lo que hiciste bien y lo que conviene repasar</h3>'+
+    '<div class="fp-lista">'+filas+'</div></section>'+
+    '<p style="color:var(--muted2);font-size:13px;margin-top:16px;text-align:center">'+
+    'Los ejercicios en rojo son tus puntos flojos: repásalos en su apartado y vuelve más fuerte. 💪</p>';
+  c.querySelectorAll('[data-prac]').forEach(function(b){
+    b.addEventListener('click', function(){
+      var k=b.getAttribute('data-prac');
+      try{
+        el('view-fichapro').style.display='none';
+        if(k==='modos' && typeof window.abrirModos==='function') window.abrirModos();
+      }catch(e){}
+    });
+  });
+}
+
+/* --------- arranque alumno --------- */
+async function arrancarAlumno(fichaId, cuenta, nFallback){
+  var portal=el('view-portal'); if(portal) portal.style.display='none';
+  var v=el('view-fichapro'); v.style.display='block';
+  v.querySelector('.fp-wrap').innerHTML=
+    '<div style="min-height:70vh;display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px">'+
+    '<div style="width:52px;height:52px;border-radius:50%;border:4px solid rgba(212,175,55,.25);border-top-color:#e9c96a;animation:fpSpin .9s linear infinite"></div>'+
+    '<div id="aluMsg" style="color:var(--muted);font-weight:700">Abriendo tu ficha…</div></div>'+
+    '<style>@keyframes fpSpin{to{transform:rotate(360deg)}}</style>';
+  var msg=function(t){ var m=el('aluMsg'); if(m) m.textContent=t; };
+  try{
+    var intentos=0;
+    while(!(window.supabase && window.supabase.createClient) && intentos<60){ await new Promise(function(r){setTimeout(r,100);}); intentos++; }
+    var sb=fpSb(); if(!sb) throw new Error('sin_supabase');
+    var r=await sb.rpc('suite_ficha_abrir', { p_cuenta_id:cuenta, p_ficha_id:fichaId });
+    if(r.error) throw r.error;
+    var data=r.data;
+    if(!data || data.ok===false){ throw new Error((data&&data.error)||'no_abre'); }
+    var pack=fpExtraerPaquete(data);
+    if(!pack || !pack.ejercicios.length) throw new Error('ficha_vacia');
+    ALU={ cuenta:cuenta, ficha:fichaId,
+          numero:(pack.numero!=null?pack.numero:(nFallback||null)),
+          entregada:false, i:0,
+          items:pack.ejercicios.map(function(e){
+            var item=clon((e.motor&&e.motor._spec)||{});
+            return { n:e.n, key:e.key, label:e.label||'Ejercicio', enun:e.enun||'', item:item };
+          }) };
+    msg('Buscando progreso guardado…');
+    try{
+      var prog=await progLeer(cuenta, fichaId);
+      if(prog && Array.isArray(prog.respuestas) && (prog.total|0)===ALU.items.length){
+        prog.respuestas.forEach(function(rr,k){ if(ALU.items[k]) aplicaRespuesta(ALU.items[k], rr); });
+        if(prog.i>=0 && prog.i<ALU.items.length) ALU.i=prog.i|0;
+      }
+    }catch(e){}
+    pintaAlu();
+  }catch(e){
+    var c=(e&&e.message)||'error';
+    var mp={ ya_entregada:'Ya entregaste esta ficha. ¡Buen trabajo!',
+             fuera_de_plazo:'El plazo de esta ficha ya venció.',
+             caducada:'Esta ficha ya caducó.',
+             no_encontrada:'No encuentro esta ficha (¿el enlace es antiguo?).',
+             ficha_vacia:'La ficha llegó vacía: avisa a Iago.',
+             sin_supabase:'No se pudo conectar: revisa tu internet y recarga.' };
+    v.querySelector('.fp-wrap').innerHTML=
+      '<div style="max-width:560px;margin:14vh auto 0;text-align:center">'+
+      '<div style="font-size:48px">'+(mp[c]&&c==='ya_entregada'?'🏅':'😕')+'</div>'+
+      '<h2 class="fp-titulo" style="margin-top:10px">'+(mp[c]||'No se pudo abrir la ficha')+'</h2>'+
+      (mp[c]?'':'<p style="color:var(--muted)">('+c+') Inténtalo de nuevo o avisa a Iago.</p>')+'</div>';
+    console.warn('[fichaspro] abrir', e);
+  }
+}
+function fpExtraerPaquete(data){
+  if(!data) return null;
+  var cand=[ data.ejercicios_json, data.payload, data.ficha_json,
+             (data.ficha&&data.ficha.ejercicios_json), data ];
+  for(var k=0;k<cand.length;k++){
+    var c=cand[k];
+    if(c && Array.isArray(c.ejercicios) && c.ejercicios.length){
+      return { ejercicios:c.ejercicios, numero:(c.numero!=null?c.numero:(data.numero!=null?data.numero:null)) };
+    }
+  }
+  if(Array.isArray(data.ejercicios) && data.ejercicios.length){
+    return { ejercicios:data.ejercicios, numero:(data.numero!=null?data.numero:null) };
+  }
+  return null;
+}
+
+
+function pantallaAlumnoC1b(){
+  var portal=el('view-portal'); if(portal) portal.style.display='none';
+  var v=el('view-fichapro'); v.style.display='block';
+  v.querySelector('.fp-wrap').innerHTML=
+    '<header class="top"><a class="brand" href="#" onclick="return false;" style="cursor:default;text-decoration:none;color:inherit">'+
+    '<h1><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> <span class="pro-seal-brand">PRO</span></h1></a></header>'+
+    '<div style="max-width:640px;margin:10vh auto 0;text-align:center">'+
+    '<div style="font-size:52px">🛠️</div>'+
+    '<h2 class="fp-titulo" style="margin-top:10px">Tu ficha está guardada</h2>'+
+    '<p style="color:var(--muted);font-size:15.5px;line-height:1.7">El modo de hacer la ficha desde aquí se está '+
+    'terminando de construir. En cuanto esté listo, este mismo enlace de tu campana te abrirá el carrusel de '+
+    'ejercicios. No pierdes nada: la ficha te espera.</p></div>';
+}
+document.addEventListener('DOMContentLoaded', function(){
+  var qs=new URLSearchParams(location.search);
+  if(qs.get('panel')==='profesor'){ abrirPanel(qs.get('ficha'), qs.get('envio')); return; }
+  if(qs.get('fichaId')){ arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
+});
+try{
+  var b=el('fpEnviar');
+  if(b) b.addEventListener('click', enviar);
+  else document.addEventListener('DOMContentLoaded', function(){ el('fpEnviar').addEventListener('click', enviar); });
+}catch(e){}
+console.info('[teoriapro] FICHAS PRO C1+escalas (C2.1) activo');
 })();
 </script>
 
