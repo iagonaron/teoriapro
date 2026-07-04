@@ -205,16 +205,16 @@
   #view-intervalos .score svg{max-width:100%;height:auto}
 
   /* ===== Escalas PRO ===== */
-  #view-escalas .gr-row,#view-modos .gr-row{display:flex;gap:14px;align-items:center}
-  @media(max-width:720px){#view-escalas .gr-row,#view-modos .gr-row{flex-direction:column;align-items:stretch}}
-  #view-escalas .gr-ans,#view-modos .gr-ans{flex:0 0 230px;border:1px solid var(--line);border-radius:12px;padding:12px 10px;
+  #view-escalas .gr-row,#view-modos .gr-row,#aluHost .gr-row,.fp-ej-sol .gr-row{display:flex;gap:14px;align-items:center}
+  @media(max-width:720px){#view-escalas .gr-row,#view-modos .gr-row,#aluHost .gr-row{flex-direction:column;align-items:stretch}}
+  #view-escalas .gr-ans,#view-modos .gr-ans,#aluHost .gr-ans,.fp-ej-sol .gr-ans{flex:0 0 230px;border:1px solid var(--line);border-radius:12px;padding:12px 10px;
     background:rgba(233,201,106,.02)}
-  #view-escalas .gr-ans.ok,#view-modos .gr-ans.ok{border-color:var(--green);background:var(--green-soft)}
-  #view-escalas .gr-ans.bad,#view-modos .gr-ans.bad{border-color:var(--red);background:var(--red-soft)}
-  #view-escalas .gr-ans .sol,#view-modos .gr-ans .sol{font-size:12px;color:var(--muted);text-align:center}
-  #view-escalas .gr-preg,#view-modos .gr-preg{font-size:16px;font-weight:900;color:var(--gold-soft);text-align:center;margin-bottom:4px}
-  #view-escalas .gr-score,#view-modos .gr-score{flex:1 1 auto;min-width:0;background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:0 10px;overflow:hidden}
-  #view-escalas .gr-score svg,#view-modos .gr-score svg{max-width:100%;height:auto}
+  #view-escalas .gr-ans.ok,#view-modos .gr-ans.ok,#aluHost .gr-ans.ok{border-color:var(--green);background:var(--green-soft)}
+  #view-escalas .gr-ans.bad,#view-modos .gr-ans.bad,#aluHost .gr-ans.bad{border-color:var(--red);background:var(--red-soft)}
+  #view-escalas .gr-ans .sol,#view-modos .gr-ans .sol,#aluHost .gr-ans .sol{font-size:12px;color:var(--muted);text-align:center}
+  #view-escalas .gr-preg,#view-modos .gr-preg,#aluHost .gr-preg,.fp-ej-sol .gr-preg{font-size:16px;font-weight:900;color:var(--gold-soft);text-align:center;margin-bottom:4px}
+  #view-escalas .gr-score,#view-modos .gr-score,#aluHost .gr-score,.fp-ej-sol .gr-score{flex:1 1 auto;min-width:0;background:var(--paper);border-radius:12px;box-shadow:var(--shadow);padding:0 10px;overflow:hidden}
+  #view-escalas .gr-score svg,#view-modos .gr-score svg,#aluHost .gr-score svg,.fp-ej-sol .gr-score svg{max-width:100%;height:auto}
   #view-escalas .hint,#view-modos .hint{font-size:12.5px;color:var(--muted2);line-height:1.5}
   .esc-acc,.esc-var-acc{display:inline-flex;align-items:center;justify-content:center;min-width:32px;height:30px;
     font-size:16px;border:1px solid var(--line);border-radius:8px;background:rgba(233,201,106,.04);
@@ -4128,8 +4128,14 @@ window.MODOS_MOTOR = {
     if(item._corregido===undefined){ item._corregido=false; item._solVisible=false; item._okGreen=false; }
     // renderESCi(3) -> renderMODO(), que pinta dentro de #escRowsM: creamos ese
     // contenedor aquí para que TODA la interacción del motor quede ligada.
-    host.innerHTML='<div id="escRowsM"></div>';
+    host.innerHTML='<div id="escRowsM" style="width:100%"></div>';
     renderMODO();
+    // el pentagrama (scoreESC3) puede haberse dibujado con clientWidth=0 si la
+    // tarjeta aún no tenía ancho: re-render en el frame siguiente ya con layout.
+    requestAnimationFrame(function(){
+      try{ var sc=document.getElementById('scoreESC3');
+        if(sc && (!sc.querySelector('svg') || sc.clientWidth>0)){ renderESCStaveOne(3); } }catch(e){}
+    });
   },
   // corrige el ejercicio montado y devuelve 0..1
   corregirMontado: function(item, host){
@@ -4173,54 +4179,94 @@ window.MODOS_MOTOR = {
   }
 };
 
-/* corrección coloreada para el resumen del alumno (calco del elemental):
-   verde lo correcto, rojo lo que puso mal, azul la solución encima. */
+/* corrección coloreada para el resumen del alumno — PORT FIEL del elemental
+   (dibujarEscalaCorrArm): redondas; notas cubiertas por la armadura -> NEGRAS
+   (sin mérito, el alumno no las tocó); las que hay que alterar (accidentales):
+   acierto VERDE, fallo ROJO + correcta AZUL pegada, ausente AZUL. */
+var COR_NEG='#16203a', COR_OK='#16a34a', COR_BAD='#d11d1d', COR_SOL='#2f6df6', COR_AZUL_TXT='#7da6ff';
+function _nbKey(nb){ var ES={C:'c',D:'d',E:'e',F:'f',G:'g',A:'a',B:'b'}; return ES[nb.step]+'/'+nb.octave; }
+function _nbAcc(a){ return a===1?'#':a===-1?'b':a===2?'##':a===-2?'bb':'n'; }
+function _mkCorNote(VFx,nb,col,armA){
+  var sn=new VFx.StaveNote({keys:[_nbKey(nb)],duration:'w',clef:'treble'});
+  var a=nb.alter||0; if(a!==(armA||0)){ try{ sn.addModifier(new VFx.Accidental(_nbAcc(a)),0); }catch(e){} }
+  sn.setStyle({fillStyle:col,strokeStyle:col}); return sn;
+}
 function dibujarEscCorr(host, e){
-  var VF=Vex.Flow;
-  var COR_OK='#16a34a', COR_BAD='#d11d1d', COR_SOL='#2f6df6';
+  var VFx=Vex.Flow;
   host.innerHTML='';
-  var W=Math.max(340, host.clientWidth||520), H=150;
-  var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H);
-  var ctx=r.getContext();
   var conArm=(e._precolocada===true)||(e._conArmadura===true);
-  var fifths=(conArm && e.fifths!=null)?e.fifths:0;
-  var stave=new VF.Stave(6,20,W-14); stave.addClef('treble');
-  if(fifths!==0){ try{ stave.addKeySignature(KS_VF[String(fifths)]); }catch(_){} }
-  try{ stave.setEndBarType(VF.Barline.type.DOUBLE); }catch(_){}
-  stave.setContext(ctx).draw();
-  var sol=(e.notasSol||[]);
-  var got=(e.userSeq||[]).filter(function(n){return !n._opt;});
   var porAltura=(e.familia==='cromatica'||e.familia==='hexatona');
-  function nk(n){ return n.step.toLowerCase()+(n.alter===1?'#':n.alter===-1?'b':n.alter===2?'##':n.alter===-2?'bb':'')+'/'+n.octave; }
-  function eq(a,b){
-    if(!a||!b) return false;
-    if(porAltura){ var ma=(a.midi!=null?a.midi:midiNota(a.step,a.octave,a.alter)); var mb=(b.midi!=null?b.midi:midiNota(b.step,b.octave,b.alter)); return ma===mb; }
-    return a.step===b.step&&a.octave===b.octave&&(a.alter||0)===(b.alter||0);
+  var sol=(e.notasSol||[]);
+  var alumno=(e.userSeq||[]).filter(function(n){return !n._opt;});
+  var W=Math.max(host.clientWidth||0, 760), H=150;
+  var r=new VFx.Renderer(host, VFx.Renderer.Backends.SVG); r.resize(W,H);
+  var ctx=r.getContext();
+  var stave=new VFx.Stave(10,24,W-22); stave.addClef('treble');
+
+  // ---- rama SIN armadura (pentatónica / hexátona / cromática): nota a nota
+  //      por ALTURA; la tónica (dada) en negro, el resto verde/rojo/azul ----
+  if(!conArm){
+    try{ stave.setEndBarType(VFx.Barline.type.DOUBLE); }catch(_){}
+    stave.setContext(ctx).draw();
+    var dadas=1;   // la 1ª cabeza (tónica) viene dada
+    var tick=[];
+    var midiOf=function(n){ return n.midi!=null?n.midi:midiNota(n.step,n.octave,n.alter||0); };
+    var deletrea=function(n){
+      if(n && n.step) return n;
+      var DEL=[['C',0],['C',1],['D',0],['D',1],['E',0],['F',0],['F',1],['G',0],['G',1],['A',0],['A',1],['B',0]];
+      var m2=(n&&n.midi!=null)?n.midi:60, pc=((m2%12)+12)%12, d=DEL[pc];
+      return {step:d[0],octave:Math.floor(m2/12)-1,alter:d[1]};
+    };
+    var nn=Math.max(sol.length, alumno.length);
+    for(var i=0;i<nn;i++){
+      var sN=sol[i]?deletrea(sol[i]):null, u=alumno[i];
+      if(i<dadas){ if(sN) tick.push(_mkCorNote(VFx,sN,COR_NEG,0)); continue; }
+      if(u && sN && midiOf(u)===midiOf(sN)){ tick.push(_mkCorNote(VFx,u,COR_OK,0)); }        // acertó -> verde
+      else if(u && sN){ tick.push(_mkCorNote(VFx,u,COR_BAD,0)); tick.push(_mkCorNote(VFx,sN,COR_SOL,0)); }  // rojo + azul
+      else if(sN){ tick.push(_mkCorNote(VFx,sN,COR_SOL,0)); }                                  // faltó -> azul
+    }
+    if(tick.length){
+      try{ var v0=new VFx.Voice({num_beats:tick.length*4,beat_value:4}).setStrict(false); v0.addTickables(tick);
+        new VFx.Formatter().joinVoices([v0]).format([v0], W-100); v0.draw(ctx, stave); }catch(e){}
+    }
+    var svg0=host.querySelector('svg'); if(svg0){ svg0.classList.add('penta'); svg0.setAttribute('viewBox','0 0 '+W+' '+H); svg0.removeAttribute('width'); svg0.removeAttribute('height'); svg0.style.maxWidth='100%'; svg0.style.width='100%'; svg0.style.height='auto'; }
+    return true;
   }
-  var notas=[], solExtra=[];
-  var nn=Math.max(sol.length, got.length);
-  for(var k=0;k<nn;k++){
-    var g=got[k], sN=sol[k];
-    if(g){
-      var ok=eq(g,sN);
-      var sn=new VF.StaveNote({clef:'treble', keys:[nk(g)], duration:'q'});
-      if((g.alter||0)!==0){ try{ sn.addModifier(new VF.Accidental(g.alter===1?'#':g.alter===-1?'b':g.alter===2?'##':'bb'),0); }catch(_){} }
-      sn.setStyle({fillStyle: ok?COR_OK:COR_BAD, strokeStyle: ok?COR_OK:COR_BAD});
-      notas.push(sn);
-      if(!ok && sN){ var ss=new VF.StaveNote({clef:'treble', keys:[nk(sN)], duration:'q'});
-        if((sN.alter||0)!==0){ try{ ss.addModifier(new VF.Accidental(sN.alter===1?'#':sN.alter===-1?'b':sN.alter===2?'##':'bb'),0); }catch(_){} }
-        ss.setStyle({fillStyle:COR_SOL, strokeStyle:COR_SOL}); solExtra.push({at:notas.length-1, sn:ss}); }
-    } else if(sN){
-      var sm=new VF.StaveNote({clef:'treble', keys:[nk(sN)], duration:'q'});
-      if((sN.alter||0)!==0){ try{ sm.addModifier(new VF.Accidental(sN.alter===1?'#':sN.alter===-1?'b':sN.alter===2?'##':'bb'),0); }catch(_){} }
-      sm.setStyle({fillStyle:COR_SOL, strokeStyle:COR_SOL}); notas.push(sm);
+
+  // ---- rama CON armadura (modos / mayor / menor): calco del GE ----
+  var fifths=(e.fifths!=null)?e.fifths:0;
+  var alumnoArm=(e.userArm!=null)?e.userArm:0, armOk=(alumnoArm===fifths);
+  var armCol = armOk ? COR_OK : COR_SOL;
+  if(fifths!==0 && KS_VF[String(fifths)]){
+    try{ var ksig=new VFx.KeySignature(KS_VF[String(fifths)]); if(ksig.setStyle) ksig.setStyle({fillStyle:armCol,strokeStyle:armCol}); stave.addModifier(ksig); }
+    catch(e){ try{ stave.addKeySignature(KS_VF[String(fifths)]); }catch(_){} }
+  }
+  try{ stave.setEndBarType(VFx.Barline.type.DOUBLE); }catch(_){}
+  stave.setContext(ctx).draw();
+  var tick2=[];
+  for(var k=0;k<sol.length;k++){
+    var s2=sol[k]; if(!s2) continue; var u2=alumno[k];
+    var armA=armAlterFor(s2.step, fifths);
+    var esAcc=((s2.alter||0)!==armA);
+    if(!esAcc){ tick2.push(_mkCorNote(VFx,s2,COR_NEG,armA)); }                                  // dada -> negra
+    else {
+      var acerto = u2 && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
+      if(acerto){ tick2.push(_mkCorNote(VFx,s2,COR_OK,armA)); }                                 // acertó accidental -> VERDE
+      else if(u2){ tick2.push(_mkCorNote(VFx,u2,COR_BAD,armAlterFor(u2.step,fifths))); tick2.push(_mkCorNote(VFx,s2,COR_SOL,armA)); }  // rojo + azul
+      else { tick2.push(_mkCorNote(VFx,s2,COR_SOL,armA)); }                                      // faltó -> azul
     }
   }
-  if(!notas.length) return false;
-  var v=new VF.Voice({num_beats:notas.length, beat_value:4}).setMode(VF.Voice.Mode.SOFT);
-  v.addTickables(notas);
-  new VF.Formatter().joinVoices([v]).formatToStave([v], stave);
-  v.draw(ctx, stave);
+  try{ var v=new VFx.Voice({num_beats:tick2.length*4,beat_value:4}).setStrict(false); v.addTickables(tick2);
+    new VFx.Formatter().joinVoices([v]).format([v], W-100); v.draw(ctx, stave); }catch(e){}
+  var svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; }
+  // feedback de armadura textual
+  var fmt=function(f){ return f===0?'sin alteraciones':(Math.abs(f)+(f>0?' ♯':' ♭')); };
+  var arm=document.createElement('div'); arm.style.cssText='margin-top:8px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+  var et=document.createElement('span'); et.textContent='Armadura:'; et.style.color='#fbf3df'; arm.appendChild(et);
+  if(armOk){ var sp=document.createElement('span'); sp.textContent='✓ '+fmt(fifths); sp.style.color=COR_OK; arm.appendChild(sp); }
+  else if(alumnoArm===0){ var c1=document.createElement('span'); c1.textContent=fmt(fifths); c1.style.color=COR_AZUL_TXT; arm.appendChild(c1); var n1=document.createElement('span'); n1.textContent='(faltaba)'; n1.style.cssText='color:#b39a5f;font-weight:600'; arm.appendChild(n1); }
+  else { var t1=document.createElement('span'); t1.textContent='✗ '+fmt(alumnoArm); t1.style.color=COR_BAD; arm.appendChild(t1); var a1=document.createElement('span'); a1.textContent='→'; a1.style.color='#b39a5f'; arm.appendChild(a1); var c2=document.createElement('span'); c2.textContent=fmt(fifths); c2.style.color=COR_AZUL_TXT; arm.appendChild(c2); }
+  host.appendChild(arm);
   return true;
 }
 })();
@@ -6466,6 +6512,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
      ============================================================ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
 <style id="fp-css">
   #view-fichapro{display:none;min-height:100vh;position:relative;overflow:hidden}
   .fp-neb{position:fixed;inset:0;pointer-events:none;z-index:0}
@@ -6476,7 +6523,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   @keyframes fpNeb{from{transform:translate(0,0) scale(1)}to{transform:translate(40px,-26px) scale(1.12)}}
   .fp-wrap{position:relative;z-index:1;max-width:1080px;margin:0 auto;padding:18px 20px 60px}
   .fp-kicker{font-size:11px;letter-spacing:.28em;text-transform:uppercase;color:var(--muted2);font-weight:800;margin:14px 0 4px}
-  .fp-titulo{font-size:clamp(26px,4.4vw,42px);font-weight:900;color:var(--ink);letter-spacing:.5px;margin:0 0 2px}
+  .fp-titulo{font-size:clamp(26px,4.4vw,42px);font-weight:900;color:var(--ink);letter-spacing:0;margin:0 0 2px}
+  #aluCuerpo .fp-titulo{letter-spacing:0;word-spacing:normal}
   .fp-titulo b{color:var(--gold-soft)}
   .fp-ventana{font-size:13.5px;color:var(--muted);margin:4px 0 0}
   .fp-aviso-token{margin:14px 0 0;padding:12px 16px;border:1px solid rgba(255,120,120,.45);border-radius:12px;
@@ -6573,7 +6621,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     </section>
     <div class="fp-pie">
       <button class="fp-enviar" id="fpEnviar" type="button">📨 Preparar envío a alumnos</button>
-      <button class="fp-mini" id="fpPdf" type="button" style="padding:13px 18px;font-size:14.5px">🖨 Generar PDF (alumno + solución)</button>
+      <button class="fp-mini" id="fpPdf" type="button" style="padding:13px 18px;font-size:14.5px">🖨 Generar PDF (ZIP: alumno + solución)</button>
       <span class="fp-valor" id="fpValor"></span>
     </div>
     <div class="fp-status" id="fpStatus"></div>
@@ -6878,6 +6926,18 @@ function fpInstruccion(key){
   if(key==='escala_otras') return 'Escribe las notas de la escala pedida (y su armadura si la lleva).';
   return 'Escribe la armadura y añade las alteraciones necesarias.';
 }
+function fpPdfSafe(s){
+  return String(s==null?'':s).replace(/♯/g,'#').replace(/♭/g,'b').replace(/♮/g,'')
+    .replace(/𝄪/g,'x').replace(/𝄫/g,'bb').replace(/→/g,'a').replace(/[–—]/g,'-')
+    .replace(/↑/g,'asc.').replace(/↓/g,'desc.');
+}
+// título del ejercicio para el PDF: sin redundancia. "Escalas. La Mayor tipo 1"
+function fpTituloPDF(e){
+  var enun=fpEnun(e);
+  if(e.key==='escala_mayor'||e.key==='escala_menor'||e.key==='escala_otras') return fpPdfSafe('Escalas. '+enun);
+  if(e.key==='modos') return fpPdfSafe('Modos. '+enun);
+  return fpPdfSafe(e.label+' — '+enun);
+}
 function fpBloquePng(spec, resuelto){
   return new Promise(function(res){
     var tmp=document.createElement('div');
@@ -6945,13 +7005,8 @@ async function fpConstruirPDF(esSolucion){
       doc.text((k+1)+'.', M+4, by+8);
       var numW=doc.getTextWidth((k+1)+'.  ');
       doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(30,30,30);
-      doc.text(e.label+' — '+fpEnun(e), M+4+numW, by+8);
-      var yImg=by+11;
-      if(!esSolucion){
-        doc.setFontSize(8); doc.setTextColor(125,125,125);
-        doc.text(fpInstruccion(e.key), M+4+numW, by+12.5);
-        yImg=by+14;
-      }
+      doc.text(fpTituloPDF(e), M+4+numW, by+8);
+      var yImg=by+12;   // sin subtítulo/instrucción (Iago: no lo quiere en estos)
       if(img){
         var availH=blockH-3-(yImg-by)-2, imgW=CW-12, imgH=imgW*img.h/img.w;
         if(imgH>availH){ imgH=Math.max(8,availH); imgW=imgH*img.w/img.h; }
@@ -6965,12 +7020,27 @@ async function fpGenerarPDF(){
   if(!FP.ejercicios.length){ status('Añade al menos un ejercicio para generar el PDF.', 'err'); return; }
   if(!(window.jspdf && window.jspdf.jsPDF)){ status('No se pudo cargar el generador de PDF (jsPDF).', 'err'); return; }
   var bp=el('fpPdf'); if(bp) bp.disabled=true;
-  status('Generando los dos PDF (alumno + solución)…', 'info');
+  status('Generando el ZIP (alumno + solución)…', 'info');
   try{
     var N=(FP.numero!=null?FP.numero:'X');
-    var dA=await fpConstruirPDF(false); dA.save('(alumno) Ficha_'+N+'.pdf');
-    var dS=await fpConstruirPDF(true);  dS.save('(solucion) Ficha_'+N+'.pdf');
-    status('✓ PDFs generados: (alumno) y (solucion) Ficha_'+N+'.', 'ok');
+    var dA=await fpConstruirPDF(false);
+    var dS=await fpConstruirPDF(true);
+    if(window.JSZip){
+      var zip=new JSZip();
+      zip.file('(alumno) Ficha_'+N+'.pdf',   dA.output('blob'));
+      zip.file('(solucion) Ficha_'+N+'.pdf', dS.output('blob'));
+      var blob=await zip.generateAsync({type:'blob'});
+      var a=document.createElement('a');
+      a.href=URL.createObjectURL(blob); a.download='Ficha_'+N+'.zip';
+      document.body.appendChild(a); a.click();
+      setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
+      status('✓ ZIP generado: Ficha_'+N+'.zip (alumno + solución).', 'ok');
+    } else {
+      // sin JSZip: caemos a dos descargas separadas
+      dA.save('(alumno) Ficha_'+N+'.pdf');
+      dS.save('(solucion) Ficha_'+N+'.pdf');
+      status('✓ PDFs generados (no se pudo empaquetar en ZIP): descargados por separado.', 'ok');
+    }
   }catch(e){
     status('⚠ Error generando el PDF: '+((e&&e.message)||e), 'err');
     console.warn('[fichaspro] pdf', e);
