@@ -4133,25 +4133,46 @@ window.MODOS_MOTOR = {
   montarEn: function(host, item){
     dataESC[3]=item;
     if(item._corregido===undefined){ item._corregido=false; item._solVisible=false; item._okGreen=false; }
-    // renderESCi(3) -> renderMODO(), que pinta dentro de #escRowsM: creamos ese
-    // contenedor aquí para que TODA la interacción del motor quede ligada.
-    host.innerHTML='<div id="escRowsM" style="width:100%"></div>';
-    renderMODO();
-    // el pentagrama (scoreESC3) puede dibujarse con clientWidth=0 si la tarjeta
-    // aún no tiene ancho (recién insertada u oculta): re-render cuando el layout
-    // ya asentó — doble pasada (rAF + timeout) para curarlo con seguridad.
-    var _reMODO=function(){
-      try{ var sc=document.getElementById('scoreESC3');
-        if(sc){ if(!sc.clientWidth){ sc.style.minWidth='520px'; } renderESCStaveOne(3); } }catch(e){}
-    };
-    requestAnimationFrame(_reMODO);
-    setTimeout(_reMODO, 60);
-    setTimeout(_reMODO, 220);
+    // CAUSA RAÍZ del pentagrama vacío (Iago 4-jul): renderMODO usa
+    // getElementById('escRowsM'), que devuelve SIEMPRE el primer escRowsM del
+    // documento — el de la vista Modos OCULTA (no el nuestro). El ejercicio se
+    // pintaba ahí, invisible. Aquí construimos la fila directamente en el host,
+    // reutilizando buildEscVarControls + renderESCStaveOne (que sí usan el
+    // hueco 3 = scoreESC3), sin pasar por renderMODO.
+    host.innerHTML='';
+    var row=document.createElement('div'); row.className='gr-row';
+    var ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC3';
+    var preg=document.createElement('div'); preg.className='gr-preg';
+    preg.textContent=(item.tonica&&item.tonica.nom||'')+' '+(item.tipo||'');
+    ans.appendChild(preg);
+    try{ buildEscVarControls(ans, item, 3); }
+    catch(err){
+      console.error('[fichaspro] buildEscVarControls falló:', err);
+      host.innerHTML='<div style="background:#2a0f0f;border:1px solid #ff6b6b;border-radius:10px;padding:14px;color:#ffb4b4;font-size:13px;font-family:monospace"><b>⚠ Error montando controles:</b> '+((err&&err.message)||err)+'</div>';
+      return;
+    }
+    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
+    ans.appendChild(tag);
+    var sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC3';
+    row.appendChild(ans); row.appendChild(sc);
+    host.appendChild(row);
+    // render del pentagrama; re-render en varias pasadas por si la tarjeta aún
+    // no tenía ancho (el fix de fitSvgToContent ya cubre el getBBox=0).
+    var _re=function(){ try{ renderESCStaveOne(3); }catch(e){ console.warn('[fichaspro] renderStave', e); } };
+    _re();
+    requestAnimationFrame(_re);
+    setTimeout(_re, 80);
+    setTimeout(_re, 240);
   },
   // corrige el ejercicio montado y devuelve 0..1
   corregirMontado: function(item, host){
     dataESC[3]=item;
-    if(typeof corregirMODO==='function') corregirMODO();
+    // corregir directamente sobre NUESTRO ansESC3 (dentro del host), no vía
+    // corregirMODO (que buscaría por id y podría topar con el de la vista oculta)
+    try{
+      var ans=(host&&host.querySelector('#ansESC3'))||document.getElementById('ansESC3');
+      if(ans && typeof corregirESCVar==='function') corregirESCVar(item,3,ans);
+    }catch(e){ console.warn('[fichaspro] corregirMontado', e); }
     return window.MODOS_MOTOR.puntua(item);
   },
   // puntuación SILENCIOSA 0..1 (misma comparación que corregirESCVar)
@@ -7447,7 +7468,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO r7 · getBBox-fix + binario + 2 pentagramas activo');
+console.info('[teoriapro] FICHAS PRO r8 · FIX escRowsM duplicado (pentagrama) activo');
 })();
 </script>
 
