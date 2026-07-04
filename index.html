@@ -2029,6 +2029,266 @@ function corregirBUILD(){
 /* botón global: regenera ambos ejercicios */
 function nuevoTODO(){ nuevoID(); nuevoBUILD(); }
 
+/* ============================================================
+   FACHADA ACORDES_MOTOR — para fichas de GP (un acorde por ejercicio)
+   Dos catálogos: 'basico' (tríadas may/men/aum/dis, SIN 7ª) y
+   'pro' (los 10 tipos: + sus4, d7, m7, maj7, dim7, m7b5).
+   Cada ejercicio es 'id' (identificar) o 'build' (construir).
+   Expone: generar, enunciado, montarEn, puntua, corregirVisual.
+   ============================================================ */
+(function(){
+  var CAT_BASICO=['dis','men','may','aum'];            // tríadas, sin sus4 ni 7ª
+  var CAT_PRO=['dis','men','may','aum','sus4','d7','m7','maj7','dim7','m7b5'];
+  var NOTAS_ES_A=["Do","Re","Mi","Fa","Sol","La","Si"];
+
+  function sortea(tipo){
+    var ac=null,n=0;
+    do{ ac=acoSorteaTipo(tipo,new Set()); n++; }while(!ac && n<8);
+    return ac;
+  }
+  // genera un acorde individual. subtipo: 'basico_id','basico_build','pro_id','pro_build'
+  function generar(subtipo){
+    var pro=/^pro/.test(subtipo);
+    var modo=/build$/.test(subtipo)?'build':'id';
+    var cat=pro?CAT_PRO:CAT_BASICO;
+    var tipo=cat[Math.floor(Math.random()*cat.length)];
+    var ac=sortea(tipo); if(!ac) ac=sortea('may');
+    var it={ _aco:true, _cat:pro?'pro':'basico', modo:modo, tipo:ac.tipo, notas:ac.notas };
+    if(modo==='id'){ it.selNota=null; it.selAlt=''; it.selTipo=null; }
+    else { it.fund=ac.notas[0]; it.objetivo=ac.notas.slice(1); it.userSeq=[]; it._selVar=null; }
+    return it;
+  }
+  function enunciado(it){
+    if(!it) return 'Acorde';
+    if(it.modo==='id') return 'Identifica el acorde: nombre de la fundamental y tipo.';
+    return 'Construye el acorde '+noteName(it.fund)+' '+ACO_TIPOS[it.tipo].texto+(ACO_TIPOS[it.tipo].ab?' '+ACO_TIPOS[it.tipo].ab:'')+' (coloca las notas que faltan).';
+  }
+  // catálogo de tipos para la rueda, según básico/pro
+  function tiposDe(cat){
+    return (cat==='pro'?CAT_PRO:CAT_BASICO).slice();
+  }
+
+  /* ---------- MONTAJE ---------- */
+  function montarEn(host, it){
+    if(!host||!it) return;
+    host.innerHTML='';
+    host.__acoItem=it;
+    var sc=document.createElement('div'); sc.className='aco-fp-score'; sc.style.cssText='position:relative;background:#f3f5ff;border-radius:12px;padding:8px 10px;min-height:150px'; host.appendChild(sc);
+    var ans=document.createElement('div'); ans.className='aco-fp-ans'; ans.style.cssText='margin-top:12px'; host.appendChild(ans);
+    it.__sc=sc; it.__ans=ans;
+    pintarScore(it, sc);
+    if(it.modo==='id') pintarId(it, ans, sc);
+    else { pintarBuild(it, ans, sc); wireBuild(it, sc); }
+  }
+
+  function pintarScore(it, sc){
+    if(!window.Vex){ sc.textContent='(sin notación)'; return; }
+    var VF=Vex.Flow;
+    sc.innerHTML='';
+    var W=Math.max(sc.clientWidth||0, 300), H=150;
+    var r=new VF.Renderer(sc, VF.Renderer.Backends.SVG); r.resize(W,H);
+    var ctx=r.getContext();
+    var stave=new VF.Stave(10, 24, W-24);
+    stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.DOUBLE);
+    stave.setContext(ctx).draw();
+    it.__stave=stave;
+    // notas a dibujar
+    var chordNotes;
+    if(it.modo==='id'){ chordNotes=it.notas.slice(); }
+    else if(it._solVisible){ chordNotes=[Object.assign({},it.fund)]; it.objetivo.forEach(function(n){ chordNotes.push(Object.assign({},n,{_blue:true})); }); }
+    else { chordNotes=[it.fund].concat(it.userSeq); }
+    chordNotes.sort(function(a,b){ return midiNota(a.step,a.octave,a.alter)-midiNota(b.step,b.octave,b.alter); });
+    var keys=chordNotes.map(function(n){ return notaToKey(n); });
+    var sn=new VF.StaveNote({keys:keys, duration:'w', clef:'treble'});
+    chordNotes.forEach(function(n,idx){ if(n.alter && !n._inherited) sn.addModifier(new VF.Accidental(accStr(n.alter)), idx); });
+    chordNotes.forEach(function(n,idx){
+      if(n._blue) sn.setKeyStyle(idx,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
+      else if(it.modo==='build' && it._selVar!=null && it.userSeq[it._selVar] &&
+              n.step===it.userSeq[it._selVar].step && n.octave===it.userSeq[it._selVar].octave && !it._solVisible)
+        sn.setKeyStyle(idx,{fillStyle:'#e9c96a',strokeStyle:'#e9c96a'});
+    });
+    try{
+      var voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
+      voice.addTickables([sn]);
+      new VF.Formatter().joinVoices([voice]).format([voice], W-90);
+      voice.draw(ctx,stave);
+      it.__noteX=sn.getAbsoluteX();
+    }catch(err){}
+    if(it.modo==='build'){ buildYMapFp(it, stave); }
+  }
+
+  /* ---- IDENTIFICAR: rueda nombre + ♯♭ + rueda tipo ---- */
+  function pintarId(it, ans, sc){
+    var cap=document.createElement('div'); cap.style.cssText='font-size:12px;font-weight:800;color:#3a2e0a;text-align:center;margin-bottom:6px'; cap.textContent='Identifica el acorde'; ans.appendChild(cap);
+    var wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:14px;align-items:flex-start;justify-content:center'; ans.appendChild(wrap);
+    // nombre
+    var colN=document.createElement('div'); colN.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px';
+    var wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:96px;width:60px';
+    var accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px';
+    accRow.innerHTML='<button class="acc-btn aco-acc" data-a="b">♭</button><button class="acc-btn aco-acc" data-a="#">♯</button>';
+    colN.appendChild(wN); colN.appendChild(accRow);
+    // tipo
+    var colT=document.createElement('div'); colT.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px';
+    var wT=document.createElement('div'); wT.className='wheel'; wT.style.cssText='height:96px;width:70px';
+    var capT=document.createElement('div'); capT.style.cssText='font-size:10px;color:#7a6a3a;height:24px;display:flex;align-items:center'; capT.textContent='Tipo';
+    colT.appendChild(wT); colT.appendChild(capT);
+    wrap.appendChild(colN); wrap.appendChild(colT);
+    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:8px;font-size:12px'; ans.appendChild(tag); it.__tag=tag;
+    // rueda de nombre: notas invertidas + guion al final (guion en medio, Do encima)
+    var NOTAS_INV=NOTAS_ES_A.slice().reverse();
+    var nItems=NOTAS_INV.concat(['—']);
+    var wNapi=makeWheel(wN, nItems, nItems.length-1, function(idx){
+      var v=nItems[idx]; it.selNota=(v==='—')?null:v; it.selAlt='';
+      repaintNota(it, wNapi, accRow, NOTAS_INV);
+    });
+    it._wN=wNapi; it.selNota=null;
+    accRow.querySelectorAll('.aco-acc').forEach(function(b){ b.addEventListener('click', function(){
+      if(!it.selNota) return;
+      it.selAlt=(it.selAlt===b.dataset.a)?'':b.dataset.a;
+      repaintNota(it, wNapi, accRow, NOTAS_INV);
+    }); });
+    // rueda de tipo (guion en medio)
+    var tItems=tipoItemsRueda(it._cat);
+    var startT=tItems.indexOf('—');
+    var wTapi=makeWheel(wT, tItems, startT, function(idx){
+      var v=tItems[idx]; it.selTipo=(v==='—')?null:codigoDeAb(v);
+    });
+    it._wT=wTapi;
+  }
+  // rueda de tipo: para básico ordenada como pediste; para pro, lista con guion en medio
+  function tipoItemsRueda(cat){
+    if(cat==='pro'){
+      // guion en medio; arriba cuatríadas, abajo tríadas (agrupadas)
+      return ['maj7','m7','d7','dim7','m7b5','—','sus4','may','men','aum','dis'].map(abDe);
+    }
+    // básico: Aum, PM(may), —, Pm(men), Dis  (con la lógica de Iago)
+    return [abDe('aum'), abDe('may'), '—', abDe('men'), abDe('dis')];
+  }
+  function abDe(cod){ var t=ACO_TIPOS[cod]; return t? (t.ab? (t.texto+' '+t.ab) : t.texto) : cod; }
+  function codigoDeAb(lbl){ for(var k in ACO_TIPOS){ var t=ACO_TIPOS[k]; var s=t.ab?(t.texto+' '+t.ab):t.texto; if(s===lbl) return k; } return null; }
+  function repaintNota(it, api, accRow, NOTAS_INV){
+    var acc=it.selAlt==='#'?'♯':it.selAlt==='b'?'♭':'';
+    var items=NOTAS_INV.map(function(n){ return n===it.selNota?(n+acc):n; }).concat(['—']);
+    var idx=it.selNota? NOTAS_INV.indexOf(it.selNota) : items.length-1;
+    api.setItems(items,true); api.setIndex(idx,true);
+    accRow.querySelectorAll('.aco-acc').forEach(function(x){ x.classList.toggle('on', x.dataset.a===it.selAlt && it.selAlt!==''); });
+  }
+
+  /* ---- CONSTRUIR: panel ♯♮♭ + dobles + colocación por ghost/táctil ---- */
+  function pintarBuild(it, ans, sc){
+    var cap=document.createElement('div'); cap.style.cssText='font-size:12px;font-weight:800;color:#3a2e0a;text-align:center;margin-bottom:6px';
+    var t=ACO_TIPOS[it.tipo]; cap.innerHTML='Construye: '+noteName(it.fund)+' '+t.texto+(t.ab?' '+t.ab:''); ans.appendChild(cap);
+    var accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px;justify-content:center'; ans.appendChild(accRow);
+    accRow.innerHTML='<button class="acc-btn aco-var-acc" data-a="-2">𝄫</button>'+
+                     '<button class="acc-btn aco-var-acc" data-a="-1">♭</button>'+
+                     '<button class="acc-btn aco-var-acc" data-a="0">♮</button>'+
+                     '<button class="acc-btn aco-var-acc" data-a="1">♯</button>'+
+                     '<button class="acc-btn aco-var-acc" data-a="2">𝄪</button>';
+    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:8px;font-size:12px'; ans.appendChild(tag); it.__tag=tag;
+    accRow.querySelectorAll('.aco-var-acc').forEach(function(b){ b.addEventListener('click', function(){
+      var a=+b.dataset.a;
+      if(it._selVar!=null && it.userSeq[it._selVar]){ it.userSeq[it._selVar].alter=a; it.userSeq[it._selVar]._touched=true; pintarScore(it, sc); }
+      else { it.__pendAlt=(it.__pendAlt===a)?0:a; accRow.querySelectorAll('.aco-var-acc').forEach(function(x){ x.classList.toggle('on', +x.dataset.a===it.__pendAlt && it.__pendAlt!==0); }); }
+    }); });
+  }
+
+  function buildYMapFp(it, stave){
+    try{
+      var yTop=stave.getYForLine(0), yBot=stave.getYForLine(4);
+      var half=(yBot-yTop)/8;
+      var refStep=diatonicStep(midiNota("F",5,0));
+      var map={};
+      for(var oct=3;oct<=6;oct++) for(var si=0;si<STEPS.length;si++){ var st=STEPS[si]; var m=midiNota(st,oct,0); if(m<53||m>86) continue; var ds=diatonicStep(m); map[st+oct]={step:st,octave:oct,y:yTop+(refStep-ds)*half}; }
+      it.__ymap=map;
+    }catch(e){}
+  }
+  function nearestY(it, my){ var map=it.__ymap; if(!map) return null; var best=null,bd=1e9; for(var k in map){ var o=map[k]; var d=Math.abs(o.y-my); if(d<bd){bd=d;best=o;} } return best; }
+  function yRealFp(it, step, octave){ var o=it.__ymap && it.__ymap[step+octave]; return o?o.y:null; }
+
+  function wireBuild(it, sc){
+    if(sc._acoWired) return; sc._acoWired=true; sc.style.position='relative'; sc._touchHandled=false;
+    sc.addEventListener('mousemove', function(ev){ onHover(it, sc, ev); });
+    sc.addEventListener('mouseleave', function(){ clearGhost(sc); });
+    sc.addEventListener('click', function(ev){ if(sc._touchHandled){ sc._touchHandled=false; return; } onClick(it, sc, ev); });
+    sc.addEventListener('touchstart', function(ev){ if(ev.touches&&ev.touches[0]) onHover(it, sc, ev.touches[0]); }, {passive:true});
+    sc.addEventListener('touchmove', function(ev){ if(ev.touches&&ev.touches[0]){ onHover(it, sc, ev.touches[0]); ev.preventDefault(); } }, {passive:false});
+    sc.addEventListener('touchend', function(ev){ var t=(ev.changedTouches&&ev.changedTouches[0]); sc._touchHandled=true; if(t){ onClick(it, sc, t); } clearGhost(sc); setTimeout(function(){ sc._touchHandled=false; },400); ev.preventDefault(); }, {passive:false});
+    sc.addEventListener('contextmenu', function(ev){ ev.preventDefault(); if(it.userSeq.length){ it.userSeq.pop(); it._selVar=null; pintarScore(it, sc); } });
+  }
+  function svgP(sc, ev){ var svg=sc.querySelector('svg'); if(!svg) return null; var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; try{ return pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ return null; } }
+  function onHover(it, sc, ev){
+    var p=svgP(sc, ev); if(!p){ clearGhost(sc); return; }
+    if(it.userSeq.length>=it.objetivo.length){ clearGhost(sc); return; }
+    var nat=nearestY(it, p.y); if(!nat){ clearGhost(sc); return; }
+    showGhost(it, sc, nat);
+  }
+  function onClick(it, sc, ev){
+    var p=svgP(sc, ev); if(!p) return;
+    // ¿sobre una nota ya puesta? -> seleccionarla
+    for(var k=0;k<it.userSeq.length;k++){ var y=yRealFp(it, it.userSeq[k].step, it.userSeq[k].octave); if(y!=null && Math.abs(y-p.y)<8){ it._selVar=k; pintarScore(it, sc); return; } }
+    if(it.userSeq.length>=it.objetivo.length) return;
+    var nat=nearestY(it, p.y); if(!nat) return;
+    var nb={step:nat.step, octave:nat.octave, alter:0};
+    if(it.__pendAlt===1||it.__pendAlt===-1||it.__pendAlt===2||it.__pendAlt===-2){ nb.alter=it.__pendAlt; }
+    it.userSeq.push(nb); it.__pendAlt=0;
+    it._selVar=it.userSeq.length-1;
+    pintarScore(it, sc);
+  }
+  function showGhost(it, sc, nat){
+    var g=document.getElementById('acoFpGhost_'+(sc.__gid||(sc.__gid=Math.random().toString(36).slice(2,7))));
+    if(!g){ g=document.createElement('div'); g.id='acoFpGhost_'+sc.__gid; g.style.cssText='position:absolute;pointer-events:none;z-index:6;width:12px;height:10px;border:2px solid #e9c96a;border-radius:50%;box-sizing:border-box'; sc.appendChild(g); }
+    var svg=sc.querySelector('svg'); if(!svg){ g.style.display='none'; return; }
+    var yInt=yRealFp(it, nat.step, nat.octave); if(yInt==null){ g.style.display='none'; return; }
+    var xInt=it.__noteX||60;
+    try{ var pt=svg.createSVGPoint(); pt.x=xInt; pt.y=yInt; var spt=pt.matrixTransform(svg.getScreenCTM()); var hr=sc.getBoundingClientRect(); g.style.left=(spt.x-hr.left-6)+'px'; g.style.top=(spt.y-hr.top-5)+'px'; g.style.display='block'; }catch(e){ g.style.display='none'; }
+  }
+  function clearGhost(sc){ if(sc.__gid){ var g=document.getElementById('acoFpGhost_'+sc.__gid); if(g) g.style.display='none'; } }
+
+  /* ---------- PUNTUACIÓN ---------- */
+  function puntua(it){
+    try{
+      if(!it) return 0;
+      if(it.modo==='id'){
+        var fund=it.notas[0];
+        var nombreOk = it.selNota && nombreCoincide(it.selNota, it.selAlt, fund);
+        var tipoOk = (it.selTipo===it.tipo);
+        return (nombreOk && tipoOk)?1:0;
+      } else {
+        var got=it.userSeq.slice(), obj=it.objetivo;
+        if(got.length!==obj.length) return 0;
+        var norm=function(arr){ return arr.map(function(n){ return n.step+n.octave+'_'+(n.alter||0); }).sort(); };
+        var a=norm(got), b=norm(obj);
+        for(var k=0;k<a.length;k++){ if(a[k]!==b[k]) return 0; }
+        return 1;
+      }
+    }catch(e){ return 0; }
+  }
+  function nombreCoincide(nombreEs, alt, fund){
+    var MAP={Do:'C',Re:'D',Mi:'E',Fa:'F',Sol:'G',La:'A',Si:'B'};
+    var step=MAP[nombreEs]; if(!step) return false;
+    var alter=alt==='#'?1:alt==='b'?-1:0;
+    return step===fund.step && alter===(fund.alter||0);
+  }
+
+  /* ---------- CORRECCIÓN VISUAL ---------- */
+  function corregirVisual(host, it){
+    if(!host||!it) return puntua(it);
+    var sc=it.__sc||host.querySelector('.aco-fp-score');
+    var tag=it.__tag;
+    var p=puntua(it);
+    if(it.modo==='id'){
+      var t=ACO_TIPOS[it.tipo];
+      if(tag){ if(p===1){ tag.style.color='#16a34a'; tag.textContent='✓ Correcto'; } else { tag.style.color='#2f6df6'; tag.innerHTML='Solución: '+noteName(it.notas[0])+' '+t.texto+(t.ab?' '+t.ab:''); } }
+    } else {
+      if(p!==1){ it._solVisible=true; if(sc) pintarScore(it, sc); if(tag){ tag.innerHTML='<span style="color:#16a34a">acierto</span> · <span style="color:#d11d1d">error</span> · <span style="color:#2f6df6">faltaba</span>'; } }
+      else if(tag){ tag.style.color='#16a34a'; tag.textContent='✓ Correcto'; }
+    }
+    return p;
+  }
+
+  window.ACORDES_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual };
+})();
+
 /* arranque */
 /* arranque controlado por abrirAcordes() */
 window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dataBUILD.length) renderBUILDScore(); });
@@ -3352,6 +3612,165 @@ function nuevoIVTODO(){ nuevoA(); nuevoB(); }
 window.nuevoA=nuevoA; window.corregirA=corregirA; window.redrawA=redrawA;
 window.nuevoB=nuevoB; window.corregirB=corregirB; window.redrawB=redrawB;
 window.nuevoIVTODO=nuevoIVTODO;
+
+/* ============================================================
+   FACHADA INTERVALOS_MOTOR — para fichas de GP (un intervalo por ejercicio)
+   Dos modos: 'id' (identificar: rueda número + especie) y
+   'build' (construir: coloca la 2ª nota; táctil incluido).
+   Expone: generar, enunciado, montarEn, puntua, corregirVisual.
+   ============================================================ */
+(function(){
+  var _seq=0;
+  function generar(subtipo){
+    var modo=/build$/.test(subtipo)?'build':'id';
+    var base=elegirIntervalos(1)[0];
+    var it={ _iv:true, modo:modo };
+    if(modo==='id'){
+      it.item=Object.assign({}, base, {tipo:chance(0.4)?'arm':'mel'});
+      it.sel={num:null, esp:'—'};
+    } else {
+      it.item=Object.assign({}, base, {tipo:'mel', _n2cat:base.n2});
+      it.item.n2=null;
+      it.resp=null;
+    }
+    return it;
+  }
+  function enunciado(it){
+    if(!it) return 'Intervalo';
+    if(it.modo==='id') return 'Identifica el intervalo: número y especie.';
+    var i=it.item; return 'Construye el intervalo '+i.num+especieLbl(i.code)+(i.direccion==='asc'?' ascendente':' descendente')+' (coloca la 2ª nota).';
+  }
+  function especieLbl(code){ return ESP_LABEL[code]||''; }
+
+  function montarEn(host, it){
+    if(!host||!it) return;
+    host.innerHTML='';
+    var sid='ivfp_'+(++_seq);
+    var sc=document.createElement('div'); sc.id=sid; sc.className='iv-fp-score'; sc.style.cssText='position:relative;background:#f3f5ff;border-radius:12px;padding:8px 10px;min-height:120px'; host.appendChild(sc);
+    var ans=document.createElement('div'); ans.style.cssText='margin-top:14px'; host.appendChild(ans);
+    it.__scId=sid; it.__sc=sc; it.__ans=ans;
+    if(it.modo==='id'){
+      dibujarCompases(sid, [it.item], {});
+      pintarIdControls(it, ans);
+    } else {
+      it.__meta=dibujarCompases(sid, [Object.assign({}, it.item, {n2:it.item.n2||null})], {modoB:true});
+      wireBuild(it, sc);
+      pintarBuildControls(it, ans);
+    }
+  }
+
+  /* ---- IDENTIFICAR: rueda número + especie ---- */
+  function pintarIdControls(it, ans){
+    var cell=document.createElement('div'); cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:8px';
+    var dual=document.createElement('div'); dual.style.cssText='display:flex;gap:10px';
+    var wNum=document.createElement('div'); wNum.className='wheel'; wNum.style.cssText='height:96px;width:60px';
+    var wEsp=document.createElement('div'); wEsp.className='wheel'; wEsp.style.cssText='height:96px;width:76px';
+    dual.appendChild(wNum); dual.appendChild(wEsp);
+    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:16px;font-size:12px;text-align:center'; it.__tag=tag;
+    cell.appendChild(dual); cell.appendChild(tag); ans.appendChild(cell);
+    var numItems=numerosDisponibles();
+    var espApi=null;
+    var numApi=makeWheel(wNum, numItems, idxGuion(numItems), function(ni){
+      var raw=numItems[ni]; var num=(raw==='—')?null:parseInt(raw,10);
+      it.sel.num=num;
+      var esps=especiesParaNumero(num);
+      espApi.setItems(esps,true); espApi.setIndex(idxDefecto(esps),true);
+      it.sel.esp=esps[idxDefecto(esps)];
+    });
+    var espInit=especiesParaNumero(null);
+    espApi=makeWheel(wEsp, espInit, idxDefecto(espInit), function(){ it.sel.esp=espApi.getValue(); });
+    it.sel.esp='—';
+  }
+
+  /* ---- CONSTRUIR: colocación (ratón + táctil) ---- */
+  function pintarBuildControls(it, ans){
+    var i=it.item;
+    var cell=document.createElement('div'); cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px';
+    var lbl=document.createElement('div'); lbl.style.cssText='font-size:13px;font-weight:800;color:#3a2e0a';
+    lbl.textContent=i.num+especieLbl(i.code)+(i.direccion==='asc'?' ↑':' ↓'); cell.appendChild(lbl);
+    var cur=document.createElement('div'); cur.style.cssText='font-size:12px;color:#5a4a1a;min-height:16px'; cur.textContent=it.resp?noteName(it.resp):'—'; it.__cur=cur; cell.appendChild(cur);
+    var accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:5px'; 
+    var mk=function(sym,a){ var b=document.createElement('button'); b.className='acc-btn'; b.textContent=sym; b.style.cssText='min-width:34px;height:32px;font-size:15px'; b.onclick=function(){ setAlt(it, a); }; return b; };
+    accRow.appendChild(mk('𝄫',-2)); accRow.appendChild(mk('♭',-1)); accRow.appendChild(mk('♮',0)); accRow.appendChild(mk('♯',1)); accRow.appendChild(mk('𝄪',2));
+    cell.appendChild(accRow);
+    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:16px;font-size:12px;text-align:center'; it.__tag=tag;
+    cell.appendChild(tag); ans.appendChild(cell);
+  }
+  function setAlt(it, alter){
+    if(!it.resp) return;
+    it.resp={step:it.resp.step, octave:it.resp.octave, alter:alter};
+    it.item.n2={...it.resp}; it.item._userPlaced=true;
+    remontaBuild(it);
+  }
+  function remontaBuild(it){
+    it.__meta=dibujarCompases(it.__scId, [Object.assign({}, it.item, {n2:it.item.n2||null})], {modoB:true});
+    it.__sc._ivWired=false; wireBuild(it, it.__sc);
+    if(it.__cur) it.__cur.textContent=it.resp?noteName(it.resp):'—';
+  }
+  function wireBuild(it, sc){
+    if(sc._ivWired) return; sc._ivWired=true; sc.style.position='relative'; sc._touchHandled=false;
+    sc.addEventListener('mousemove', function(e){ onHover(it, sc, e); });
+    sc.addEventListener('mouseleave', function(){ clearGhost(sc); });
+    sc.addEventListener('click', function(e){ if(sc._touchHandled){ sc._touchHandled=false; return; } onClick(it, sc, e); });
+    sc.addEventListener('touchstart', function(e){ if(e.touches&&e.touches[0]) onHover(it, sc, e.touches[0]); }, {passive:true});
+    sc.addEventListener('touchmove', function(e){ if(e.touches&&e.touches[0]){ onHover(it, sc, e.touches[0]); e.preventDefault(); } }, {passive:false});
+    sc.addEventListener('touchend', function(e){ var t=(e.changedTouches&&e.changedTouches[0]); sc._touchHandled=true; if(t){ onClick(it, sc, t); } clearGhost(sc); setTimeout(function(){ sc._touchHandled=false; },400); e.preventDefault(); }, {passive:false});
+  }
+  function svgPt(sc, ev){ var svg=sc.querySelector('svg'); var meta=null; if(!svg) return null; var rect=svg.getBoundingClientRect(); var vb=svg.viewBox&&svg.viewBox.baseVal; if(!vb) return null; var sx=vb.width/rect.width, sy=vb.height/rect.height; return {svg:svg, rect:rect, vx:(ev.clientX-rect.left)*sx, vy:(ev.clientY-rect.top)*sy+vb.y}; }
+  function onHover(it, sc, ev){
+    var meta=it.__meta; if(!meta||!meta.ymap){ clearGhost(sc); return; }
+    var p=svgPt(sc, ev); if(!p){ clearGhost(sc); return; }
+    var near=nearestByY(meta, p.vy); if(!near){ clearGhost(sc); return; }
+    var xG=(meta.noteX&&meta.noteX[0]!=null)?meta.noteX[0]:60;
+    showGhost(it, sc, xG, near.y);
+  }
+  function onClick(it, sc, ev){
+    var meta=it.__meta; if(!meta||!meta.ymap) return;
+    var p=svgPt(sc, ev); if(!p) return;
+    var near=nearestByY(meta, p.vy); if(!near) return;
+    it.resp={step:near.step, octave:near.octave, alter:0};
+    it.item.n2={...it.resp}; it.item._userPlaced=true;
+    remontaBuild(it);
+  }
+  function nearestByY(meta, my){ if(!meta||!meta.ymap) return null; var best=null,bd=1e9; for(var k in meta.ymap){ var e=meta.ymap[k]; var d=Math.abs(e.y-my); if(d<bd){bd=d;best=e;} } return best; }
+  function showGhost(it, sc, xG, yG){
+    var g=document.getElementById('ivFpGhost_'+(sc.__gid||(sc.__gid=Math.random().toString(36).slice(2,7))));
+    if(!g){ g=document.createElement('div'); g.id='ivFpGhost_'+sc.__gid; g.style.cssText='position:absolute;pointer-events:none;z-index:6;width:13px;height:11px;border:2px solid #e9c96a;border-radius:50%;box-sizing:border-box;opacity:.85'; sc.appendChild(g); }
+    var svg=sc.querySelector('svg'); if(!svg){ g.style.display='none'; return; }
+    try{ var pt=svg.createSVGPoint(); pt.x=xG; pt.y=yG; var spt=pt.matrixTransform(svg.getScreenCTM()); var hr=sc.getBoundingClientRect(); g.style.left=(spt.x-hr.left-6)+'px'; g.style.top=(spt.y-hr.top-5)+'px'; g.style.display='block'; }catch(e){ g.style.display='none'; }
+  }
+  function clearGhost(sc){ if(sc.__gid){ var g=document.getElementById('ivFpGhost_'+sc.__gid); if(g) g.style.display='none'; } }
+
+  /* ---------- PUNTUACIÓN ---------- */
+  function puntua(it){
+    try{
+      if(!it) return 0;
+      if(it.modo==='id'){
+        var target=catToSel(it.item); var got=it.sel;
+        return (got.num===target.num && got.esp===target.esp)?1:0;
+      } else {
+        var want=it.item._n2cat, got2=it.resp;
+        return (got2 && got2.step===want.step && got2.octave===want.octave && (got2.alter||0)===(want.alter||0))?1:0;
+      }
+    }catch(e){ return 0; }
+  }
+
+  /* ---------- CORRECCIÓN VISUAL ---------- */
+  function corregirVisual(host, it){
+    if(!host||!it) return puntua(it);
+    var p=puntua(it), tag=it.__tag;
+    if(it.modo==='id'){
+      if(tag){ if(p===1){ tag.style.color='#16a34a'; tag.textContent='✓ Correcto'; } else { tag.style.color='#2f6df6'; tag.innerHTML='Solución: '+it.item.num+especieLbl(it.item.code); } }
+    } else {
+      if(p!==1){ it.item.n2=Object.assign({}, it.item._n2cat); it.item._solB=true; remontaBuild(it); if(tag){ tag.style.color='#2f6df6'; tag.innerHTML='Era: '+noteName(it.item._n2cat); } }
+      else if(tag){ tag.style.color='#16a34a'; tag.textContent='✓ Correcto'; }
+    }
+    return p;
+  }
+
+  window.INTERVALOS_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual };
+})();
+
 })();
 </script>
 
@@ -6746,23 +7165,25 @@ function clon(o){ return JSON.parse(JSON.stringify(o)); }
 
 /* --------- catálogo (C1: solo Modos añadible) --------- */
 var CATALOGO=[
-  { key:'modos',         label:'Modos',           estado:'activo' },
-  { key:'seriearmonica', label:'Serie armónica',  estado:'prox', nota:'fase 2' },
-  { key:'acordespro',    label:'Acordes PRO',     estado:'prox', nota:'fase 2' },
-  { key:'cadencias',     label:'Cadencias',       estado:'prox', nota:'fase 2' },
-  { key:'intervalos',    label:'Intervalos',      estado:'prox', nota:'fase 2' },
-  { key:'tonalidades',   label:'Tonalidades',     estado:'prox', nota:'fase 2' },
-  { key:'escala_mayor',  label:'Escalas · Mayor', estado:'activo', desc:'una escala mayor (armadura + alteraciones)' },
-  { key:'escala_menor',  label:'Escalas · menor', estado:'activo', desc:'una escala menor (natural/armónica/melódica)' },
-  { key:'escala_otras',  label:'Escalas · otras', estado:'activo', desc:'pentatónica, hexátona o cromática' },
-  { key:'indiceacustico',label:'Índice acústico', estado:'prox', nota:'fase 2' },
-  { key:'transporte',    label:'Transporte',      estado:'prox', nota:'fase 2' },
-  { key:'compasespro',   label:'Compases PRO',    estado:'prox', nota:'fase 3' },
-  { key:'modulacion',    label:'Modulación',      estado:'prox', nota:'fase 3' },
-  { key:'enarmoniapro',  label:'Enarmonía PRO',   estado:'constr' },
-  { key:'dodecafonismo', label:'Dodecafonismo',   estado:'constr' },
-  { key:'cifrado',       label:'Cifrado',         estado:'constr' },
-  { key:'inversion',     label:'Inversión',       estado:'constr' }
+  { key:'modos',            label:'Modos',                estado:'activo' },
+  { key:'escala_mayor',     label:'Escalas · Mayor',      estado:'activo', desc:'una escala mayor (armadura + alteraciones)' },
+  { key:'escala_menor',     label:'Escalas · menor',      estado:'activo', desc:'una escala menor (natural/armónica/melódica)' },
+  { key:'escala_otras',     label:'Escalas · otras',      estado:'activo', desc:'pentatónica, hexátona o cromática' },
+  { key:'intervalos_id',    label:'Intervalos · identificar', estado:'activo', desc:'di el número y la especie del intervalo' },
+  { key:'intervalos_build', label:'Intervalos · construir',   estado:'activo', desc:'coloca la 2ª nota del intervalo dado' },
+  { key:'acordes_id',       label:'Acordes · identificar',    estado:'activo', desc:'tríada: nombre de la fundamental y tipo' },
+  { key:'acordes_build',    label:'Acordes · construir',      estado:'activo', desc:'coloca la 3ª y la 5ª de la tríada' },
+  { key:'acordespro_id',    label:'Acordes PRO · identificar',estado:'activo', desc:'incluye sus4 y cuatríadas (7ªs)' },
+  { key:'acordespro_build', label:'Acordes PRO · construir',  estado:'activo', desc:'construye acordes con 7ª, sus4, etc.' },
+  { key:'seriearmonica',    label:'Serie armónica',       estado:'prox', nota:'fase 2' },
+  { key:'cadencias',        label:'Cadencias',            estado:'prox', nota:'fase 2' },
+  { key:'tonalidades',      label:'Tonalidades',          estado:'prox', nota:'fase 2' },
+  { key:'indiceacustico',   label:'Índice acústico',      estado:'prox', nota:'fase 2' },
+  { key:'transporte',       label:'Transporte',           estado:'prox', nota:'fase 2' },
+  { key:'compasespro',      label:'Compases PRO',         estado:'prox', nota:'fase 3' },
+  { key:'modulacion',       label:'Modulación',           estado:'prox', nota:'fase 3' },
+  { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'constr' },
+  { key:'dodecafonismo',    label:'Dodecafonismo',        estado:'constr' }
 ];
 var FP={ numero:null, token:null, ejercicios:[], MAX:10, enviado:false };
 
@@ -6898,18 +7319,39 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
 }
 function fpEnun(e){
   try{
-    if(window.MODOS_MOTOR && e.spec && e.spec.tonica) return window.MODOS_MOTOR.enunciado(e.spec);
+    var M=fpMotorDe(e.spec);
+    if(M && e.spec){
+      if(e.spec._aco || e.spec._iv) return M.enunciado(e.spec);
+      if(e.spec.tonica) return M.enunciado(e.spec);
+    }
   }catch(err){}
   return e.label;
 }
 
-/* --------- acciones --------- */
+/* --------- router de motores por tipo de ejercicio --------- */
+// devuelve el motor (fachada) adecuado según el spec del ejercicio
+function fpMotorDe(spec){
+  if(spec && spec._aco) return window.ACORDES_MOTOR;
+  if(spec && spec._iv)  return window.INTERVALOS_MOTOR;
+  return window.MODOS_MOTOR;
+}
+// mapa key -> cómo generar
 function fpGenera(key){
-  var M=window.MODOS_MOTOR; if(!M) return null;
-  if(key==='modos')        return M.nuevo();
-  if(key==='escala_mayor') return M.nuevoEscala('mayor');
-  if(key==='escala_menor') return M.nuevoEscala('menor');
-  if(key==='escala_otras') return M.nuevoEscala('otras');
+  var M=window.MODOS_MOTOR;
+  if(key==='modos')        return M?M.nuevo():null;
+  if(key==='escala_mayor') return M?M.nuevoEscala('mayor'):null;
+  if(key==='escala_menor') return M?M.nuevoEscala('menor'):null;
+  if(key==='escala_otras') return M?M.nuevoEscala('otras'):null;
+  // acordes
+  var A=window.ACORDES_MOTOR;
+  if(key==='acordes_id')     return A?A.generar('basico_id'):null;
+  if(key==='acordes_build')  return A?A.generar('basico_build'):null;
+  if(key==='acordespro_id')  return A?A.generar('pro_id'):null;
+  if(key==='acordespro_build')return A?A.generar('pro_build'):null;
+  // intervalos
+  var I=window.INTERVALOS_MOTOR;
+  if(key==='intervalos_id')    return I?I.generar('id'):null;
+  if(key==='intervalos_build') return I?I.generar('build'):null;
   return null;
 }
 function fpLabelDe(key){
@@ -6938,7 +7380,7 @@ function previsualizar(i){
   var host=el('fpPrevHost'); host.innerHTML='';
   el('fpPrev').classList.add('on');
   requestAnimationFrame(function(){
-    try{ window.MODOS_MOTOR.montarEn(host, clon(e.spec)); }
+    try{ fpMotorDe(e.spec).montarEn(host, clon(e.spec)); }
     catch(err){ host.innerHTML='<div class="fp-vacio">No se pudo montar la previsualización: '+((err&&err.message)||err)+'</div>'; }
   });
 }
@@ -7266,7 +7708,7 @@ function pintaAlu(){
         : '<button class="fp-enviar" id="aluFin" type="button" style="padding:12px 22px;font-size:15px">📨 Enviar al profesor y ver puntuación</button>')+
     '</div>'+
     '<div class="fp-status" id="fpStatus" style="text-align:center"></div>';
-  try{ window.MODOS_MOTOR.montarEn(el('aluHost'), it.item); }
+  try{ fpMotorDe(it.item).montarEn(el('aluHost'), it.item); }
   catch(e){ el('aluHost').innerHTML='<div class="fp-vacio">No se pudo montar el ejercicio: '+((e&&e.message)||e)+'</div>'; }
   var bpr=el('aluPractica'); if(bpr) bpr.addEventListener('click', function(){ fpModalPracticar(it.key); });
   var bp=el('aluPrev'), bn=el('aluNext'), bf=el('aluFin');
@@ -7274,7 +7716,7 @@ function pintaAlu(){
   if(bn) bn.addEventListener('click', function(){ ding(false); ALU.i++; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
   if(bf) bf.addEventListener('click', entregarFicha);
 }
-var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas' };
+var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordes', acordespro_build:'acordes' };
 function fpModalPracticar(key){
   var ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(6,4,1,.7);z-index:100001;display:flex;align-items:center;justify-content:center;padding:22px';
@@ -7304,7 +7746,7 @@ function entregarFicha(){
   if(!ALU || ALU.entregada) return;
   var N=ALU.items.length;
   var pcts=ALU.items.map(function(it){
-    try{ return window.MODOS_MOTOR.puntua(it.item); }catch(e){ return 0; }
+    try{ return fpMotorDe(it.item).puntua(it.item); }catch(e){ return 0; }
   });
   var suma=pcts.reduce(function(a,b){return a+b;},0);
   var nota=Math.round((suma*10/N)*10)/10;
@@ -7378,7 +7820,7 @@ function pintaResultado(nota, pcts){
     c.querySelectorAll('.fp-corr-host').forEach(function(h){
       var it=ALU.items[+h.dataset.k];
       var hecho=false;
-      try{ hecho=window.MODOS_MOTOR.corregirVisual(h, it.item); }catch(e){}
+      try{ hecho=fpMotorDe(it.item).corregirVisual(h, it.item); }catch(e){}
       if(!hecho){ h.innerHTML='<div class="fp-vacio">(no se pudo dibujar la corrección)</div>'; }
     });
   });
@@ -7499,7 +7941,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO r11 · interaccion completa (tactil+herencia+octava+seleccion) activo');
+console.info('[teoriapro] FICHAS PRO r12 · acordes (basico+PRO) e intervalos cableados a fichas · activo');
 })();
 </script>
 
