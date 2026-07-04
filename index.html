@@ -6419,6 +6419,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
      El modo alumno (?fichaId=...) llega en C1b.
      ============================================================ -->
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style id="fp-css">
   #view-fichapro{display:none;min-height:100vh;position:relative;overflow:hidden}
   .fp-neb{position:fixed;inset:0;pointer-events:none;z-index:0}
@@ -6521,7 +6522,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     </section>
     <div class="fp-pie">
       <button class="fp-enviar" id="fpEnviar" type="button">📨 Preparar envío a alumnos</button>
-      <button class="fp-mini" id="fpPdf" type="button" style="padding:13px 18px;font-size:14.5px">🖨 Generar PDF</button>
+      <button class="fp-mini" id="fpPdf" type="button" style="padding:13px 18px;font-size:14.5px">🖨 Generar PDF (alumno + solución)</button>
       <span class="fp-valor" id="fpValor"></span>
     </div>
     <div class="fp-status" id="fpStatus"></div>
@@ -6621,7 +6622,6 @@ function pintaLista(){
         '<div><div class="fp-ej-tipo">'+e.label+'</div>'+
         '<div class="fp-ej-enun">'+fpEnun(e)+'</div></div>'+
         '<div class="fp-ej-btns">'+
-          '<button class="fp-mini" data-a="ver" data-i="'+i+'" type="button" title="Previsualizar como alumno">👁</button>'+
           '<button class="fp-mini" data-a="re" data-i="'+i+'" type="button" title="Regenerar variante">🔁</button>'+
           '<button class="fp-mini rojo" data-a="x" data-i="'+i+'" type="button" title="Quitar">✕</button>'+
         '</div>'+
@@ -6640,7 +6640,6 @@ function pintaLista(){
         var i=+b.dataset.i, a=b.dataset.a;
         if(a==='x'){ FP.ejercicios.splice(i,1); pintaLista(); }
         else if(a==='re'){ regenerar(i); }
-        else if(a==='ver'){ previsualizar(i); }
       });
     });
   }
@@ -6675,6 +6674,14 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
     stave.setContext(ctx).draw();
     var fuente = resuelto ? (spec.notasSol||[]) : (spec.userSeq||[]).filter(function(n){return !n._opt;});
     if(!fuente.length) return;   // "otras" en papel: pentagrama vacío
+    // cromática: el motor entrega {midi} pelado -> deletreo ascendente con ♯
+    var DELETREO=[['C',0],['C',1],['D',0],['D',1],['E',0],['F',0],['F',1],['G',0],['G',1],['A',0],['A',1],['B',0]];
+    fuente=fuente.map(function(n){
+      if(n && n.step) return n;
+      var m=(n && n.midi!=null)?n.midi:60;
+      var pc=((m%12)+12)%12, d=DELETREO[pc];
+      return { step:d[0], octave:Math.floor(m/12)-1, alter:d[1] };
+    });
     var acc={};
     var notas=fuente.map(function(n){
       var alter=(resuelto ? (n.alter!=null?n.alter:0) : 0);
@@ -6810,56 +6817,110 @@ function enviar(){
     });
 }
 
-/* --------- PDF: páginas del alumno + hoja de soluciones --------- */
-function fpSvgDe(spec, resuelto){
-  var tmp=document.createElement('div');
-  tmp.style.cssText='position:absolute;left:-9999px;top:0;width:700px';
-  document.body.appendChild(tmp);
-  fpPintaEjercicio(tmp, spec, resuelto, 700);
-  var svg=tmp.querySelector('svg'), out='';
-  if(svg){
-    var w=svg.getAttribute('width'), h=svg.getAttribute('height');
-    if(w&&h && !svg.getAttribute('viewBox')) svg.setAttribute('viewBox','0 0 '+w+' '+h);
-    svg.removeAttribute('width'); svg.removeAttribute('height');
-    svg.style.width='100%'; svg.style.height='auto';
-    out=svg.outerHTML;
-  }
-  tmp.remove();
-  return out;
-}
+/* --------- PDF · calco del sistema del ELEMENTAL (jsPDF + VexFlow→PNG):
+       dos archivos "(alumno)" y "(solucion)", tarjetas del mismo tamaño y
+       reparto ceil(n/2) por carilla para que SIEMPRE quepa en 2 páginas --------- */
 function fpInstruccion(key){
   if(key==='escala_otras') return 'Escribe las notas de la escala pedida (y su armadura si la lleva).';
   return 'Escribe la armadura y añade las alteraciones necesarias.';
 }
-function fpGenerarPDF(){
-  if(!FP.ejercicios.length){ status('Añade al menos un ejercicio para generar el PDF.', 'err'); return; }
+function fpBloquePng(spec, resuelto){
+  return new Promise(function(res){
+    var tmp=document.createElement('div');
+    tmp.style.cssText='position:absolute;left:-9999px;top:0;width:1000px';
+    document.body.appendChild(tmp);
+    fpPintaEjercicio(tmp, spec, resuelto, 1000);
+    var svg=tmp.querySelector('svg');
+    if(!svg){ tmp.remove(); res(null); return; }
+    var w=+svg.getAttribute('width')||1000, h=+svg.getAttribute('height')||120;
+    var xml=new XMLSerializer().serializeToString(svg);
+    var img=new Image();
+    img.onload=function(){
+      try{
+        var esc=2, c=document.createElement('canvas');
+        c.width=w*esc; c.height=h*esc;
+        var cx=c.getContext('2d');
+        cx.fillStyle='#fff'; cx.fillRect(0,0,c.width,c.height);
+        cx.scale(esc,esc); cx.drawImage(img,0,0);
+        tmp.remove();
+        res({ data:c.toDataURL('image/png'), w:w, h:h });
+      }catch(e){ tmp.remove(); res(null); }
+    };
+    img.onerror=function(){ tmp.remove(); res(null); };
+    img.src='data:image/svg+xml;charset=utf-8,'+encodeURIComponent(xml);
+  });
+}
+async function fpConstruirPDF(esSolucion){
+  var jsPDF=window.jspdf.jsPDF;
+  var doc=new jsPDF({unit:'mm', format:'a4'});
+  var W=210, H=297, M=14, CW=W-2*M;
   var N=(FP.numero!=null?FP.numero:'—');
-  var css='@page{margin:13mm}body{font-family:\'Helvetica Neue\',Arial,sans-serif;color:#111;margin:0}'+
-    'h1{font-size:20px;margin:0 0 2px;letter-spacing:.02em}'+
-    '.sub{font-size:12px;color:#555;margin:0 0 6px}'+
-    '.meta{font-size:13px;margin:10px 0 18px;display:flex;gap:26px}'+
-    '.meta b{font-weight:700}.meta span{border-bottom:1px solid #999;min-width:200px;display:inline-block}'+
-    '.ej{margin:0 0 16px;page-break-inside:avoid}'+
-    '.ej-cab{font-size:14px;font-weight:800;margin-bottom:2px}'+
-    '.ej-ins{font-size:11px;color:#666;margin-bottom:4px}'+
-    '.salto{page-break-before:always}'+
-    '.rojo{color:#d11d1d}';
-  var html='<h1>FICHA Nº '+N+' · TEORÍA</h1><p class="sub">2º de Grado Profesional · LMPRO at home · CMUS A Coruña</p>'+
-    '<div class="meta"><div><b>Nombre:</b> <span></span></div><div><b>Fecha:</b> <span style="min-width:110px"></span></div></div>';
-  FP.ejercicios.forEach(function(e,i){
-    html+='<div class="ej"><div class="ej-cab">'+(i+1)+'. '+e.label+' — '+fpEnun(e)+'</div>'+
-      '<div class="ej-ins">'+fpInstruccion(e.key)+'</div>'+fpSvgDe(e.spec,false)+'</div>';
-  });
-  html+='<div class="salto"></div><h1 class="rojo">SOLUCIONES · Ficha nº '+N+'</h1>'+
-    '<p class="sub">Solo para el profesor / corrección en clase</p>';
-  FP.ejercicios.forEach(function(e,i){
-    html+='<div class="ej"><div class="ej-cab">'+(i+1)+'. '+e.label+' — '+fpEnun(e)+'</div>'+fpSvgDe(e.spec,true)+'</div>';
-  });
-  var w=window.open('','_blank');
-  if(!w){ status('El navegador bloqueó la ventana del PDF: permite ventanas emergentes.', 'err'); return; }
-  w.document.write('<html><head><title>Ficha '+N+' · Teoría 2º GP</title><style>'+css+'</style></head><body>'+
-    html+'<script>setTimeout(function(){window.print();},400);<\/script></body></html>');
-  w.document.close();
+  var n=FP.ejercicios.length;
+  var porPagina=Math.min(5, Math.max(1, Math.ceil(n/2)));   // <=10 -> 5/carilla -> 2 carillas
+  var nPaginas=Math.max(2, Math.ceil(n/porPagina));
+  var yBot=H-10;
+  var topDe=function(p){ return p===1?36:16; };
+  var imgs=[];
+  for(var i=0;i<n;i++) imgs.push(await fpBloquePng(FP.ejercicios[i].spec, esSolucion));
+  for(var page=1; page<=nPaginas; page++){
+    if(page>1) doc.addPage();
+    if(page===1){
+      doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(26,19,5);
+      doc.text('FICHA Nº '+N+' · TEORÍA'+(esSolucion?' — SOLUCIÓN':''), M, 16);
+      doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(140,120,70);
+      doc.text('TEORÍA at home PRO · 2º Grado Profesional', W-M, 16, {align:'right'});
+      doc.setDrawColor(212,175,55); doc.setLineWidth(0.6); doc.line(M,19,W-M,19);
+      if(esSolucion){
+        doc.setTextColor(192,57,43); doc.setFontSize(9.5);
+        doc.text('Corrección — solo para el profesor', M, 26);
+      } else {
+        doc.setTextColor(40,40,40); doc.setFontSize(9.5);
+        doc.text('Nombre: ____________________________________', M, 26);
+        doc.text('Fecha: ________________', W-M-48, 26);
+      }
+    }
+    var yTop=topDe(page), blockH=(yBot-yTop)/porPagina;
+    var desde=(page-1)*porPagina, hasta=Math.min(n, page*porPagina);
+    for(var k=desde;k<hasta;k++){
+      var e=FP.ejercicios[k], img=imgs[k], fila=k-desde, by=yTop+fila*blockH;
+      doc.setDrawColor(220,206,160); doc.setLineWidth(0.3);
+      doc.roundedRect(M, by+1.5, CW, blockH-3, 2.5, 2.5);
+      doc.setFont('helvetica','bold'); doc.setFontSize(10.5);
+      if(esSolucion) doc.setTextColor(192,57,43); else doc.setTextColor(184,134,11);
+      doc.text((k+1)+'.', M+4, by+8);
+      var numW=doc.getTextWidth((k+1)+'.  ');
+      doc.setFont('helvetica','normal'); doc.setFontSize(10.5); doc.setTextColor(30,30,30);
+      doc.text(e.label+' — '+fpEnun(e), M+4+numW, by+8);
+      var yImg=by+11;
+      if(!esSolucion){
+        doc.setFontSize(8); doc.setTextColor(125,125,125);
+        doc.text(fpInstruccion(e.key), M+4+numW, by+12.5);
+        yImg=by+14;
+      }
+      if(img){
+        var availH=blockH-3-(yImg-by)-2, imgW=CW-12, imgH=imgW*img.h/img.w;
+        if(imgH>availH){ imgH=Math.max(8,availH); imgW=imgH*img.w/img.h; }
+        doc.addImage(img.data, 'PNG', M+6+(CW-12-imgW)/2, yImg, imgW, imgH);
+      }
+    }
+  }
+  return doc;
+}
+async function fpGenerarPDF(){
+  if(!FP.ejercicios.length){ status('Añade al menos un ejercicio para generar el PDF.', 'err'); return; }
+  if(!(window.jspdf && window.jspdf.jsPDF)){ status('No se pudo cargar el generador de PDF (jsPDF).', 'err'); return; }
+  var bp=el('fpPdf'); if(bp) bp.disabled=true;
+  status('Generando los dos PDF (alumno + solución)…', 'info');
+  try{
+    var N=(FP.numero!=null?FP.numero:'X');
+    var dA=await fpConstruirPDF(false); dA.save('(alumno) Ficha_'+N+'.pdf');
+    var dS=await fpConstruirPDF(true);  dS.save('(solucion) Ficha_'+N+'.pdf');
+    status('✓ PDFs generados: (alumno) y (solucion) Ficha_'+N+'.', 'ok');
+  }catch(e){
+    status('⚠ Error generando el PDF: '+((e&&e.message)||e), 'err');
+    console.warn('[fichaspro] pdf', e);
+  }
+  if(bp) bp.disabled=false;
 }
 
 /* --------- apertura + router --------- */
@@ -7170,7 +7231,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO C1+escalas+PDF r2 activo');
+console.info('[teoriapro] FICHAS PRO r3 · PDF jsPDF calco GE activo');
 })();
 </script>
 
