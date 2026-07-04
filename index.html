@@ -3562,7 +3562,7 @@ function refreshEscAccButtons(i,edCol){
 function buildEscVarControls(ans, e, i){
   const pre=e._precolocada===true;
   const conArm = pre || e._conArmadura===true;   // tiene rueda de armadura
-  const conPanel = !e._conArmadura;              // pentatónica NO tiene panel de alteraciones
+  const conPanel = !pre;   // panel ♯♮♭ siempre que NO esté precolocada (pentatónica/hexátona/cromática): el alumno coloca notas y debe poder alterarlas
   const wrap=document.createElement('div'); wrap.style.cssText='display:flex;gap:14px;align-items:center;justify-content:center;margin-top:4px;flex-wrap:wrap';
   if(conArm){
     const armCol=document.createElement('div'); armCol.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px';
@@ -3791,9 +3791,24 @@ let escPendingAlt={};
 function escWireVarOne(i){
   const host=document.getElementById('scoreESC'+i); if(!host||host._escWired) return; host._escWired=true;
   host.style.position='relative';
+  host._touchHandled=false;   // suprime el click FANTASMA tras un toque (iPad)
   host.addEventListener('mousemove',(ev)=>onEscHover(i,ev));
   host.addEventListener('mouseleave',()=>clearEscGhost(i));
-  host.addEventListener('click',(ev)=>onEscClick(i,ev));
+  host.addEventListener('click',(ev)=>{
+    if(host._touchHandled){ host._touchHandled=false; return; }   // ignora click sintético del toque
+    onEscClick(i,ev);
+  });
+  // ---- TÁCTIL (iPad): un toque = una nota; arrastrar-y-soltar = una nota ----
+  host.addEventListener('touchstart',(ev)=>{ if(ev.touches && ev.touches[0]) onEscHover(i, ev.touches[0]); }, {passive:true});
+  host.addEventListener('touchmove',(ev)=>{ if(ev.touches && ev.touches[0]){ onEscHover(i, ev.touches[0]); ev.preventDefault(); } }, {passive:false});
+  host.addEventListener('touchend',(ev)=>{
+    const t=(ev.changedTouches && ev.changedTouches[0]);
+    host._touchHandled=true;
+    if(t){ onEscClick(i, t); }
+    clearEscGhost(i);
+    setTimeout(function(){ host._touchHandled=false; }, 400);
+    ev.preventDefault();
+  }, {passive:false});
   // clic derecho = borrar la última nota (solo en escalas con ghost, no precolocadas)
   host.addEventListener('contextmenu',(ev)=>{
     const e=dataESC[i]; if(e._precolocada){ return; }
@@ -3974,7 +3989,11 @@ function onEscClick(i,ev){
   if(e.userSeq.length>=e.nNotas){ if(e._selVar!=null){ e._selVar=null; renderESCi(i); } return; }
   const nat=escNearestByY(i,p.y); if(nat==null){ return; }
   let nb={step:nat.step,octave:nat.octave,alter:0};
-  // CONVIVENCIA: hereda la alteración de la última nota de la misma letra+octava ya colocada
+  // HERENCIA DE ARMADURA (Iago 4-jul): si la escala tiene armadura y esta nota
+  // está afectada por ella, asumir la alteración de la armadura.
+  var armActiva = (e._conArmadura===true || e._precolocada===true) ? (e.userArm||0) : 0;
+  if(armActiva!==0){ nb.alter = armAlterFor(nb.step, armActiva); if(nb.alter!==0) nb._inherited=true; }
+  // CONVIVENCIA: si ya hay una nota de la misma letra+octava, hereda SU alteración
   for(let k=e.userSeq.length-1;k>=0;k--){
     const prev=e.userSeq[k];
     if(prev._opt) continue;
@@ -3984,10 +4003,9 @@ function onEscClick(i,ev){
   const pend=escPendingAlt[i];
   if(pend===1||pend===-1){ nb.alter=pend; nb._inherited=false; }
   e.userSeq.push(nb); escPendingAlt[i]=0;
-  // cromática y hexátona: la nueva queda SELECCIONADA (rosa) para alterarla al momento,
-  // pero el ghost sigue disponible para seguir colocando
-  const fijaSel = (e.familia==='cromatica' || e.familia==='hexatona');
-  e._selVar = fijaSel ? (e.userSeq.length-1) : null;
+  // la nota recién colocada queda SIEMPRE SELECCIONADA (dorada) hasta que el
+  // alumno toque otra -> así puede alterarla justo después de ponerla.
+  e._selVar = e.userSeq.length-1;
   renderESCi(i);
 }
 
@@ -4079,7 +4097,11 @@ function nuevoMODO(){
 }
 function renderMODO(){
   const e=dataESC[3]; if(!e) return;
-  const host=document.getElementById('escRowsM'); if(!host) return; host.innerHTML='';
+  // Si YA hay pentagrama montado, NO reconstruir -> solo redibujar (si no, la
+  // interacción perdía la selección y la geometría del clic).
+  const scExist=document.getElementById('scoreESC3');
+  if(scExist){ renderESCStaveOne(3); return; }
+  const host=(window.__FP_HOST)||document.getElementById('escRowsM'); if(!host) return; host.innerHTML='';
   const row=document.createElement('div'); row.className='gr-row';
   const ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC3';
   const preg=document.createElement('div'); preg.className='gr-preg';
@@ -4121,50 +4143,16 @@ window._escInit=function(){ nuevoESCtodos(); };
 window.__fpMontaEnHost = function(host, item){
   if(!host) return;
   dataESC[3]=item;
-  // limpiar IDs del hueco 3 de montajes ANTERIORES que sigan en el DOM (el
-  // carrusel no borra el host previo) -> si no, getElementById('scoreESC3')
-  // devolvería el del ejercicio anterior y el nuevo se pintaría allí.
+  window.__FP_HOST=host; window.__FP_ITEM=item;
   try{
-    document.querySelectorAll('#scoreESC3').forEach(function(n){ if(n!==host) n.removeAttribute('id'); });
+    document.querySelectorAll('#scoreESC3').forEach(function(n){ n.removeAttribute('id'); });
     document.querySelectorAll('#ansESC3').forEach(function(n){ n.removeAttribute('id'); });
-    // escRowsM del div OCULTO no se toca; solo limpiamos duplicados en tarjetas
   }catch(e){}
   host.innerHTML='';
-  var row=document.createElement('div'); row.className='gr-row';
-  var ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC3';
-  var preg=document.createElement('div'); preg.className='gr-preg';
-  preg.textContent=(item.tonica&&item.tonica.nom||'')+' '+(item.tipo||'');
-  ans.appendChild(preg);
-  try{ buildEscVarControls(ans, item, 3); }
-  catch(err){
-    console.error('[fichaspro] buildEscVarControls falló:', err);
-    host.innerHTML='<div style="background:#2a0f0f;border:1px solid #ff6b6b;border-radius:10px;padding:14px;color:#ffb4b4;font-size:13px;font-family:monospace"><b>⚠ Error montando controles:</b> '+((err&&err.message)||err)+'</div>';
-    return;
-  }
-  var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
-  ans.appendChild(tag);
-  var sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC3';
-  row.appendChild(ans); row.appendChild(sc);
-  host.appendChild(row);
-  var _re=function(){ try{ renderESCStaveOne(3); }catch(e){ console.warn('[fichaspro] renderStave', e); } };
-  _re();
-  requestAnimationFrame(_re);
-  setTimeout(_re, 80);
-  setTimeout(_re, 240);
+  renderMODO();
+  var _re=function(){ try{ if(document.getElementById('scoreESC3')) renderESCStaveOne(3); }catch(e){} };
+  requestAnimationFrame(_re); setTimeout(_re,80); setTimeout(_re,240);
 };
-// PARCHE: cuando la interacción del hueco 3 llama a renderMODO (vía renderESCi),
-// re-montamos en el host activo del carrusel — NO en el escRowsM oculto.
-(function(){
-  var _origRenderMODO = window.renderMODO;
-  window.renderMODO = function(){
-    if(window.__FP_HOST && dataESC[3]===window.__FP_ITEM){
-      // preservar el estado del item (userArm, userSeq, _selVar) y re-montar
-      window.__fpMontaEnHost(window.__FP_HOST, dataESC[3]);
-      return;
-    }
-    if(typeof _origRenderMODO==='function') return _origRenderMODO();
-  };
-})();
 
 window.MODOS_MOTOR = {
   // ---- generadores (INTERACTIVO: cabezas precolocadas naturales en modos y
@@ -4203,40 +4191,38 @@ window.MODOS_MOTOR = {
   // puntuación SILENCIOSA 0..1 (misma comparación que corregirESCVar)
   puntua: function(e){
     try{
-      var conArm=(e._precolocada===true)||(e._conArmadura===true);
-      var porAltura=(e.familia==='cromatica'||e.familia==='hexatona');
+      var precol=(e._precolocada===true);
+      var conArm=(e._conArmadura===true)||precol;
       var sol=e.notasSol||[];
       var got=(e.userSeq||[]).filter(function(n){return !n._opt;});
-      if(!conArm){
-        // pentatónica/hexátona/cromática: la 1ª (tónica) viene dada; el resto lo
-        // pone el alumno tocando el pentagrama. Cuenta por nota colocada correcta.
+      var midiOf=function(n){ return n.midi!=null?n.midi:midiNota(n.step,n.octave,n.alter||0); };
+      var pc=function(n){ return ((midiOf(n)%12)+12)%12; };
+      if(!precol){
+        // pentatónica/hexátona/cromática: el alumno coloca por altura. Se corrige
+        // por CLASE DE ALTURA (la octava se da por buena). Si lleva armadura
+        // (pentatónica), también debe coincidir. BINARIO: todo bien o 0.
         if(!got.length) return 0;
-        var total=sol.length, aciertos=0;
-        var midiOf=function(n){ return n.midi!=null?n.midi:midiNota(n.step,n.octave,n.alter||0); };
-        for(var i=0;i<sol.length;i++){
-          if(i===0){ aciertos++; continue; }   // tónica dada
-          var g=got[i];
-          if(g && sol[i] && midiOf(g)===midiOf(sol[i])) aciertos++;
-        }
-        return total? aciertos/total : 0;
+        if(conArm && (e.userArm||0)!==((e.fifths!=null)?e.fifths:0)) return 0;
+        var solPC=sol.map(pc).sort(function(a,b){return a-b;});
+        var aluPC=got.map(pc).sort(function(a,b){return a-b;});
+        if(solPC.length!==aluPC.length) return 0;
+        for(var t=0;t<solPC.length;t++){ if(solPC[t]!==aluPC[t]) return 0; }
+        return 1;
       }
-      // CON armadura (modos/mayor/menor): BINARIO todo-o-nada (criterio de Iago).
-      // Está bien SOLO si: armadura correcta Y todas las notas que hay que
-      // alterar están correctas. Cualquier fallo -> 0. El alumno puede acertar
-      // "sin hacer nada" únicamente si la escala no requiere armadura ni
-      // alteraciones (p.ej. Do jónico): entonces dejarlo tal cual ES correcto.
+      // precolocada (modos/mayor/menor): BINARIO todo-o-nada. Armadura correcta Y
+      // todas las accidentales correctas. Do jónico sin tocar nada = correcto.
       var armSol=(e.fifths!=null)?e.fifths:0;
-      if((e.userArm||0)!==armSol) return 0;              // armadura mal -> 0
+      if((e.userArm||0)!==armSol) return 0;
       for(var k=0;k<sol.length;k++){
         var s2=sol[k];
         var armA=armAlterFor(s2.step, armSol);
         var esAcc=((s2.alter||0)!==armA);
-        if(!esAcc) continue;                             // nota cubierta por armadura: no se toca
+        if(!esAcc) continue;
         var u2=got[k];
         var acierta = u2 && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
-        if(!acierta) return 0;                           // una accidental mal -> 0
+        if(!acierta) return 0;
       }
-      return 1;                                          // todo correcto
+      return 1;
     }catch(err){ console.warn('[MODOS_MOTOR] puntua', err); return 0; }
   },
   // ---- CORRECCIÓN VISUAL para el resumen (verde=bien / rojo=mal / azul=solución) ----
@@ -4279,13 +4265,24 @@ function dibujarEscCorr(host, e){
   var midiN=function(n){ return n.midi!=null?n.midi:midiNota(n.step,n.octave,n.alter||0); };
   var deletrea=function(n){ if(n&&n.step)return n; var DEL=[['C',0],['C',1],['D',0],['D',1],['E',0],['F',0],['F',1],['G',0],['G',1],['A',0],['A',1],['B',0]]; var m2=(n&&n.midi!=null)?n.midi:60,pc=((m2%12)+12)%12,d=DEL[pc]; return {step:d[0],octave:Math.floor(m2/12)-1,alter:d[1]}; };
 
+  var precol=(e._precolocada===true);
+  var pc=function(n){ return ((midiN(n)%12)+12)%12; };   // pitch class (ignora octava)
   // ¿todo correcto? (para decidir verde vs. rojo+solución)
   var todoOk=true;
-  if(conArm){
+  if(precol){
+    // precolocada (modos/mayor/menor): armadura + accidentales (grado+octava fijos)
     if((e.userArm||0)!==fifths) todoOk=false;
     else for(var t=0;t<sol.length;t++){ var s0=sol[t],a0=armAlterFor(s0.step,fifths); if((s0.alter||0)!==a0){ var u0=alumno[t]; if(!(u0&&u0.step===s0.step&&u0.octave===s0.octave&&(u0.alter||0)===(s0.alter||0))){ todoOk=false; break; } } }
   } else {
-    for(var t2=0;t2<sol.length;t2++){ if(t2===0) continue; var g2=alumno[t2],sd=deletrea(sol[t2]); if(!(g2&&midiN(g2)===midiN(sd))){ todoOk=false; break; } }
+    // pentatónica/hexátona/cromática: alumno coloca por altura -> comparar por
+    // CLASE DE ALTURA (la octava se da por buena) + armadura si la lleva.
+    if(conArm && (e.userArm||0)!==fifths) todoOk=false;
+    else {
+      var solPC=sol.map(pc).sort(function(a,b){return a-b;});
+      var aluPC=alumno.map(pc).sort(function(a,b){return a-b;});
+      if(solPC.length!==aluPC.length) todoOk=false;
+      else for(var t2=0;t2<solPC.length;t2++){ if(solPC[t2]!==aluPC[t2]){ todoOk=false; break; } }
+    }
   }
 
   var H = todoOk ? 150 : 250;
@@ -7502,7 +7499,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO r10 · interaccion+navegacion carrusel OK activo');
+console.info('[teoriapro] FICHAS PRO r11 · interaccion completa (tactil+herencia+octava+seleccion) activo');
 })();
 </script>
 
