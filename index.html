@@ -1338,6 +1338,9 @@
 
   // Acciones de cada pad: abrir su vista interna (los pendientes no hacen nada).
   // Modulación es una página propia (modulacion.html), por eso navega en vez de abrir vista interna.
+  window.abrirModos=abrirModos; window.abrirEscalas=abrirEscalas;
+  window.abrirIntervalos=abrirIntervalos; window.abrirTonalidades=abrirTonalidades;
+  window.abrirIndice=abrirIndice; window.abrirTransporte=abrirTransporte;
   var ACCIONES = {
     compasespro: function(){ window.location.href='compases.html'; },
     seriearmonica: abrirSerie,
@@ -4107,46 +4110,34 @@ window._escInit=function(){ nuevoESCtodos(); };
    payload y se rehidratan con JSON.
    ====================================================================== */
 window.MODOS_MOTOR = {
-  // genera un ítem nuevo de "construye el modo indicado"
+  // ---- generadores (INTERACTIVO: cabezas precolocadas naturales en modos y
+  //      en escalas mayor/menor; "otras" sin cabezas — igual que el elemental) ----
   nuevo: function(){ return escItemModo(); },
-  // C2 (Iago 4-jul): escalas para fichas — UNA escala por ejercicio (regla
-  // permanente). familia: 'mayor' | 'menor' | 'otras' (pent/hexátona/cromática)
   nuevoEscala: function(familia){
     if(familia==='mayor') return escItem7('mayor');
     if(familia==='menor') return escItem7('menor');
     var fam=pick(['pentatonica','hexatona','cromatica']);
     return escItemVariable(fam);
   },
-  // enunciado legible ("Re dórico", "Fa lidio"...)
   enunciado: function(item){ return (item.tonica&&item.tonica.nom||'')+' '+(item.tipo||''); },
-  // monta el ejercicio INTERACTIVO dentro de `host` (misma UI que la vista)
-  montarEn: function(host, item, opts){
-    opts=opts||{};
+  // monta el ejercicio INTERACTIVO en `host`, usando el HUECO 3 del motor
+  // (escRows3/scoreESC3) para que TODO el ligado rueda<->pentagrama<->botones
+  // ♯♮♭ y el clic en notas funcionen exactamente como en la vista Modos.
+  montarEn: function(host, item){
     dataESC[3]=item;
-    if(!opts.corregido){ item._corregido=false; item._solVisible=false; item._okGreen=false; }
-    host.innerHTML='';
-    var row=document.createElement('div'); row.className='gr-row';
-    var ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC3';
-    var preg=document.createElement('div'); preg.className='gr-preg';
-    preg.textContent=(item.tonica&&item.tonica.nom||'')+' '+(item.tipo||'');
-    ans.appendChild(preg);
-    buildEscVarControls(ans,item,3);
-    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
-    ans.appendChild(tag);
-    var sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC3';
-    row.appendChild(ans); row.appendChild(sc);
-    host.appendChild(row);
-    renderESCStaveOne(3);
+    if(item._corregido===undefined){ item._corregido=false; item._solVisible=false; item._okGreen=false; }
+    // renderESCi(3) -> renderMODO(), que pinta dentro de #escRowsM: creamos ese
+    // contenedor aquí para que TODA la interacción del motor quede ligada.
+    host.innerHTML='<div id="escRowsM"></div>';
+    renderMODO();
   },
-  // corrige el ejercicio actualmente montado (feedback visual del motor)
+  // corrige el ejercicio montado y devuelve 0..1
   corregirMontado: function(item, host){
     dataESC[3]=item;
-    var ans=host.querySelector('#ansESC3')||host;
-    corregirESCVar(item,3,ans);
+    if(typeof corregirMODO==='function') corregirMODO();
     return window.MODOS_MOTOR.puntua(item);
   },
-  // puntuación SILENCIOSA 0..1 (misma comparación que corregirESCVar):
-  // notas por grafía (o por altura en cromática/hexátona) + armadura si aplica
+  // puntuación SILENCIOSA 0..1 (misma comparación que corregirESCVar)
   puntua: function(e){
     try{
       var porAltura=(e.familia==='cromatica'||e.familia==='hexatona');
@@ -4165,8 +4156,6 @@ window.MODOS_MOTOR = {
           }
         }
       }
-      // armadura: la solución vive en e.fifths (escalas 7 notas, pentatónicas
-      // y modos la traen; hexátona/cromática no llevan armadura)
       var conArm=(e._precolocada===true)||(e._conArmadura===true);
       var armSol=(e.fifths!=null)?e.fifths:(e.armSol!=null?e.armSol:null);
       if(conArm && armSol!=null){
@@ -4175,8 +4164,65 @@ window.MODOS_MOTOR = {
       }
       return notasOk?1:0;
     }catch(err){ console.warn('[MODOS_MOTOR] puntua', err); return 0; }
+  },
+  // ---- CORRECCIÓN VISUAL para el resumen (verde=bien / rojo=mal / azul=solución) ----
+  // Re-renderiza el pentagrama del alumno coloreando nota a nota + armadura.
+  corregirVisual: function(host, item){
+    try{ return dibujarEscCorr(host, item); }
+    catch(e){ console.warn('[MODOS_MOTOR] corregirVisual', e); return false; }
   }
 };
+
+/* corrección coloreada para el resumen del alumno (calco del elemental):
+   verde lo correcto, rojo lo que puso mal, azul la solución encima. */
+function dibujarEscCorr(host, e){
+  var VF=Vex.Flow;
+  var COR_OK='#16a34a', COR_BAD='#d11d1d', COR_SOL='#2f6df6';
+  host.innerHTML='';
+  var W=Math.max(340, host.clientWidth||520), H=150;
+  var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H);
+  var ctx=r.getContext();
+  var conArm=(e._precolocada===true)||(e._conArmadura===true);
+  var fifths=(conArm && e.fifths!=null)?e.fifths:0;
+  var stave=new VF.Stave(6,20,W-14); stave.addClef('treble');
+  if(fifths!==0){ try{ stave.addKeySignature(KS_VF[String(fifths)]); }catch(_){} }
+  try{ stave.setEndBarType(VF.Barline.type.DOUBLE); }catch(_){}
+  stave.setContext(ctx).draw();
+  var sol=(e.notasSol||[]);
+  var got=(e.userSeq||[]).filter(function(n){return !n._opt;});
+  var porAltura=(e.familia==='cromatica'||e.familia==='hexatona');
+  function nk(n){ return n.step.toLowerCase()+(n.alter===1?'#':n.alter===-1?'b':n.alter===2?'##':n.alter===-2?'bb':'')+'/'+n.octave; }
+  function eq(a,b){
+    if(!a||!b) return false;
+    if(porAltura){ var ma=(a.midi!=null?a.midi:midiNota(a.step,a.octave,a.alter)); var mb=(b.midi!=null?b.midi:midiNota(b.step,b.octave,b.alter)); return ma===mb; }
+    return a.step===b.step&&a.octave===b.octave&&(a.alter||0)===(b.alter||0);
+  }
+  var notas=[], solExtra=[];
+  var nn=Math.max(sol.length, got.length);
+  for(var k=0;k<nn;k++){
+    var g=got[k], sN=sol[k];
+    if(g){
+      var ok=eq(g,sN);
+      var sn=new VF.StaveNote({clef:'treble', keys:[nk(g)], duration:'q'});
+      if((g.alter||0)!==0){ try{ sn.addModifier(new VF.Accidental(g.alter===1?'#':g.alter===-1?'b':g.alter===2?'##':'bb'),0); }catch(_){} }
+      sn.setStyle({fillStyle: ok?COR_OK:COR_BAD, strokeStyle: ok?COR_OK:COR_BAD});
+      notas.push(sn);
+      if(!ok && sN){ var ss=new VF.StaveNote({clef:'treble', keys:[nk(sN)], duration:'q'});
+        if((sN.alter||0)!==0){ try{ ss.addModifier(new VF.Accidental(sN.alter===1?'#':sN.alter===-1?'b':sN.alter===2?'##':'bb'),0); }catch(_){} }
+        ss.setStyle({fillStyle:COR_SOL, strokeStyle:COR_SOL}); solExtra.push({at:notas.length-1, sn:ss}); }
+    } else if(sN){
+      var sm=new VF.StaveNote({clef:'treble', keys:[nk(sN)], duration:'q'});
+      if((sN.alter||0)!==0){ try{ sm.addModifier(new VF.Accidental(sN.alter===1?'#':sN.alter===-1?'b':sN.alter===2?'##':'bb'),0); }catch(_){} }
+      sm.setStyle({fillStyle:COR_SOL, strokeStyle:COR_SOL}); notas.push(sm);
+    }
+  }
+  if(!notas.length) return false;
+  var v=new VF.Voice({num_beats:notas.length, beat_value:4}).setMode(VF.Voice.Mode.SOFT);
+  v.addTickables(notas);
+  new VF.Formatter().joinVoices([v]).formatToStave([v], stave);
+  v.draw(ctx, stave);
+  return true;
+}
 })();
 </script>
 
@@ -6453,7 +6499,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-lista{display:flex;flex-direction:column;gap:9px}
   .fp-ej{display:flex;align-items:center;gap:12px;border:1px solid rgba(212,175,55,.35);border-radius:13px;
     padding:10px 14px;background:linear-gradient(160deg,rgba(212,175,55,.09),rgba(18,13,4,.5));flex-wrap:wrap}
-  .fp-ej-sol{flex:1 1 100%;background:#fff;border-radius:10px;margin-top:8px;padding:6px 8px;min-height:70px}
+  .fp-ej-sol{flex:1 1 100%;background:#fff;border-radius:10px;margin-top:8px;padding:10px 8px 16px;min-height:96px}
   .fp-ej-n{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
     background:linear-gradient(135deg,#e9c96a,#b8860b);color:#1a1305;font-weight:900;font-size:14px}
   .fp-ej-tipo{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:800}
@@ -6490,9 +6536,14 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-alu-prog{height:8px;border-radius:999px;background:rgba(212,175,55,.15);margin:14px 0 20px;overflow:hidden}
   .fp-alu-progfill{height:100%;width:0%;border-radius:999px;transition:width .5s ease;
     background:linear-gradient(90deg,#e9c96a,#d4af37 60%,#b8860b)}
-  .fp-alu-card{border:1px solid rgba(212,175,55,.4);border-radius:18px;padding:18px 16px;
+  .fp-alu-card{border:1px solid rgba(212,175,55,.4);border-radius:18px;padding:22px 16px 30px;
     background:linear-gradient(165deg,rgba(212,175,55,.1),rgba(16,11,3,.6));
     box-shadow:0 18px 50px rgba(0,0,0,.35)}
+  .fp-alu-card #aluHost .score, .fp-alu-card #aluHost svg{min-height:150px}
+  .fp-practica{border:1px solid rgba(212,175,55,.55);background:rgba(212,175,55,.12);color:#f3e4b0;
+    border-radius:11px;padding:9px 16px;font-weight:800;font-size:14px;cursor:pointer;transition:background .12s}
+  .fp-practica:hover{background:rgba(212,175,55,.24)}
+  .fp-practica-sm{padding:5px 12px;font-size:13px}
   .fp-alu-nav{display:flex;align-items:center;justify-content:space-between;gap:14px;margin-top:18px}
 </style>
 <div id="view-fichapro">
@@ -6672,8 +6723,11 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
     }
     try{ stave.setEndBarType(VF.Barline.type.DOUBLE); }catch(e){}
     stave.setContext(ctx).draw();
-    var fuente = resuelto ? (spec.notasSol||[]) : (spec.userSeq||[]).filter(function(n){return !n._opt;});
-    if(!fuente.length) return;   // "otras" en papel: pentagrama vacío
+    // MODO PAPEL (no resuelto): solo pentagrama con clave (y armadura NO, la
+    // pone el alumno). El alumno escribe las cabezas a mano -> no dibujamos notas.
+    if(!resuelto){ return; }
+    var fuente = (spec.notasSol||[]);
+    if(!fuente.length) return;
     // cromática: el motor entrega {midi} pelado -> deletreo ascendente con ♯
     var DELETREO=[['C',0],['C',1],['D',0],['D',1],['E',0],['F',0],['F',1],['G',0],['G',1],['A',0],['A',1],['B',0]];
     fuente=fuente.map(function(n){
@@ -6856,10 +6910,11 @@ async function fpConstruirPDF(esSolucion){
   var W=210, H=297, M=14, CW=W-2*M;
   var N=(FP.numero!=null?FP.numero:'—');
   var n=FP.ejercicios.length;
-  var porPagina=Math.min(5, Math.max(1, Math.ceil(n/2)));   // <=10 -> 5/carilla -> 2 carillas
-  var nPaginas=Math.max(2, Math.ceil(n/porPagina));
+  var porPagina=5;                                   // tamaño de tarjeta ESTÁNDAR
+  var nPaginas=Math.max(1, Math.ceil(n/porPagina));  // 4 ej. -> 1 carilla; 6 -> 2...
   var yBot=H-10;
   var topDe=function(p){ return p===1?36:16; };
+  var BLOCK_STD=(yBot-topDe(1))/porPagina;           // altura fija por ejercicio
   var imgs=[];
   for(var i=0;i<n;i++) imgs.push(await fpBloquePng(FP.ejercicios[i].spec, esSolucion));
   for(var page=1; page<=nPaginas; page++){
@@ -6879,7 +6934,7 @@ async function fpConstruirPDF(esSolucion){
         doc.text('Fecha: ________________', W-M-48, 26);
       }
     }
-    var yTop=topDe(page), blockH=(yBot-yTop)/porPagina;
+    var yTop=topDe(page), blockH=BLOCK_STD;
     var desde=(page-1)*porPagina, hasta=Math.min(n, page*porPagina);
     for(var k=desde;k<hasta;k++){
       var e=FP.ejercicios[k], img=imgs[k], fila=k-desde, by=yTop+fila*blockH;
@@ -7044,6 +7099,9 @@ function pintaAlu(){
     '<div class="fp-kicker" style="text-align:center">Ejercicio '+(i+1)+' de '+N+'</div>'+
     '<h2 class="fp-titulo" style="text-align:center;margin-bottom:14px">'+it.enun+'</h2>'+
     '<div class="fp-alu-card"><div id="aluHost"></div></div>'+
+    '<div style="text-align:center;margin-top:12px">'+
+      '<button class="fp-practica" id="aluPractica" type="button">💪 Necesito practicar más esto</button>'+
+    '</div>'+
     '<div class="fp-alu-nav">'+
       (i>0?'<button class="fp-mini" id="aluPrev" type="button">‹ Anterior</button>':'<span></span>')+
       (i<N-1
@@ -7053,10 +7111,37 @@ function pintaAlu(){
     '<div class="fp-status" id="fpStatus" style="text-align:center"></div>';
   try{ window.MODOS_MOTOR.montarEn(el('aluHost'), it.item); }
   catch(e){ el('aluHost').innerHTML='<div class="fp-vacio">No se pudo montar el ejercicio: '+((e&&e.message)||e)+'</div>'; }
+  var bpr=el('aluPractica'); if(bpr) bpr.addEventListener('click', function(){ fpModalPracticar(it.key); });
   var bp=el('aluPrev'), bn=el('aluNext'), bf=el('aluFin');
   if(bp) bp.addEventListener('click', function(){ ding(false); ALU.i--; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
   if(bn) bn.addEventListener('click', function(){ ding(false); ALU.i++; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
   if(bf) bf.addEventListener('click', entregarFicha);
+}
+var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas' };
+function fpModalPracticar(key){
+  var ov=document.createElement('div');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(6,4,1,.7);z-index:100001;display:flex;align-items:center;justify-content:center;padding:22px';
+  var card=document.createElement('div');
+  card.style.cssText='background:linear-gradient(160deg,#221908,#160f04);border:1px solid rgba(212,175,55,.5);border-radius:18px;max-width:440px;width:100%;padding:26px 28px;box-shadow:0 26px 80px #00000070;color:#fbf7ec;font-family:inherit';
+  card.innerHTML=
+    '<div style="font-size:19px;font-weight:900;color:#e9c96a;margin-bottom:10px">Vamos a practicar esto 💪</div>'+
+    '<div style="font-size:14.5px;line-height:1.6;color:#d8caa6">'+
+      'Te voy a llevar a un <b>generador</b> de este tipo de ejercicio en una <b>pestaña nueva</b>, donde puedes practicar tranquilo, ver <b>ejemplos resueltos</b> y repetir cuanto quieras.'+
+      '<br><br>Ten a mano tus <b>apuntes de teoría</b> por si necesitas repasar.'+
+      '<br><br>No te preocupes: <b>la ficha seguirá abierta</b> aquí, justo donde la dejaste.'+
+    '</div>'+
+    '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px">'+
+      '<button id="fpMpCancel" type="button" style="border:0;background:rgba(255,255,255,.08);color:#fbf7ec;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer">Ahora no</button>'+
+      '<button id="fpMpOk" type="button" style="border:0;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer">Abrir y practicar ↗</button>'+
+    '</div>';
+  ov.appendChild(card); document.body.appendChild(ov);
+  var cerrar=function(){ try{ document.body.removeChild(ov); }catch(e){} };
+  card.querySelector('#fpMpCancel').onclick=cerrar;
+  ov.addEventListener('click', function(e){ if(e.target===ov) cerrar(); });
+  card.querySelector('#fpMpOk').onclick=function(){
+    try{ var base=location.origin+location.pathname; window.open(base+'?practice='+encodeURIComponent(key), '_blank'); }catch(e){}
+    cerrar();
+  };
 }
 function entregarFicha(){
   if(!ALU || ALU.entregada) return;
@@ -7101,37 +7186,47 @@ function entregarFicha(){
 function pintaResultado(nota, pcts){
   var fill=el('aluProgFill'); if(fill) fill.style.width='100%';
   var c=el('aluCuerpo');
+  var aprob=nota>=5;
   var filas=ALU.items.map(function(it,k){
-    var ok=pcts[k]>=0.5;
-    return '<div class="fp-ej" style="'+(ok?'':'border-color:rgba(255,110,110,.5)')+'">'+
-      '<div class="fp-ej-n" style="'+(ok?'':'background:linear-gradient(135deg,#ff9b9b,#c0392b);color:#fff')+'">'+it.n+'</div>'+
-      '<div><div class="fp-ej-tipo">'+it.label+'</div><div class="fp-ej-enun">'+it.enun+'</div></div>'+
-      '<div class="fp-ej-btns">'+
-        '<span style="font-weight:900;font-size:15px;color:'+(ok?'#8be3ae':'#ffb4b4')+'">'+
-          (ok?'✓':'✗')+' '+Math.round(pcts[k]*100)+'%</span>'+
-        (ok?'':'<button class="fp-mini" data-prac="'+it.key+'" type="button">💪 Necesito practicar más esto</button>')+
-      '</div></div>';
+    var pct=Math.round(pcts[k]*100), ok=pct>=50;
+    var practicar = ok ? '' :
+      '<div style="margin-top:10px;display:flex;align-items:center;gap:9px;flex-wrap:wrap">'+
+        '<span style="font-size:13px;color:#e9c96a;font-weight:700">Ey, soy Iago:</span>'+
+        '<button class="fp-practica fp-practica-sm" data-prac="'+it.key+'" type="button">practica esto, anda ↗</button>'+
+      '</div>';
+    return '<div style="border-top:1px solid rgba(212,175,55,.18);padding:16px 0">'+
+        '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
+          '<div style="font-size:14px;color:#fbf7ec;font-weight:800">'+(k+1)+'. '+it.enun+'</div>'+
+          '<span style="flex:none;background:'+(ok?'rgba(52,211,153,.18)':'rgba(255,92,92,.16)')+';color:'+(ok?'#8be3ae':'#ffb4b4')+';font-weight:900;font-size:13px;padding:5px 11px;border-radius:99px">'+pct+'%</span>'+
+        '</div>'+
+        '<div class="fp-corr-host" data-k="'+k+'"></div>'+
+        practicar+
+      '</div>';
   }).join('');
   c.innerHTML=
-    '<div style="text-align:center;margin-top:8px">'+
-      '<div class="fp-kicker">Tu puntuación</div>'+
-      '<div style="font-size:clamp(54px,11vw,96px);font-weight:900;color:'+(nota>=5?'#8be3ae':'#ffb4b4')+';line-height:1">'+
-        String(nota).replace('.',',')+'</div>'+
-      '<div style="color:var(--muted);font-size:14px">sobre 10</div>'+
-      '<div class="fp-status" id="aluEnvEstado" style="margin-top:8px"></div>'+
+    '<div style="text-align:center;margin-top:4px">'+
+      '<div style="font-size:28px;font-weight:900;color:#fbf7ec">¡Ficha terminada! ✨</div>'+
+      '<div style="margin-top:12px;display:inline-block;background:linear-gradient(120deg,'+(aprob?'#e9c96a,#b8860b':'#ff9b9b,#c0392b')+');color:'+(aprob?'#1a1305':'#fff')+';font-weight:900;font-size:20px;padding:12px 28px;border-radius:99px;box-shadow:0 12px 30px rgba(212,175,55,.35)">Puntuación: '+String(nota).replace('.',',')+' / 10</div>'+
+      '<div style="margin-top:12px;color:var(--muted);font-size:13.5px">Resumen de tus respuestas. Los ejercicios con menos del 50% tienen un enlace para practicar.</div>'+
+      '<div style="margin-top:10px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;font-weight:700">'+
+        '<span style="color:#16a34a">● lo que hiciste bien</span>'+
+        '<span style="color:#d11d1d">● lo que fallaste</span>'+
+        '<span style="color:#2f6df6">● la respuesta correcta</span>'+
+      '</div>'+
+      '<div class="fp-status" id="aluEnvEstado" style="margin:14px auto 0;max-width:560px"></div>'+
     '</div>'+
-    '<section class="fp-sec"><h3>Resumen · lo que hiciste bien y lo que conviene repasar</h3>'+
-    '<div class="fp-lista">'+filas+'</div></section>'+
-    '<p style="color:var(--muted2);font-size:13px;margin-top:16px;text-align:center">'+
-    'Los ejercicios en rojo son tus puntos flojos: repásalos en su apartado y vuelve más fuerte. 💪</p>';
-  c.querySelectorAll('[data-prac]').forEach(function(b){
-    b.addEventListener('click', function(){
-      var k=b.getAttribute('data-prac');
-      try{
-        el('view-fichapro').style.display='none';
-        if(k==='modos' && typeof window.abrirModos==='function') window.abrirModos();
-      }catch(e){}
+    '<div style="margin-top:8px">'+filas+'</div>';
+  // re-render coloreado de cada ejercicio (verde/rojo/azul) — calco del GE
+  requestAnimationFrame(function(){
+    c.querySelectorAll('.fp-corr-host').forEach(function(h){
+      var it=ALU.items[+h.dataset.k];
+      var hecho=false;
+      try{ hecho=window.MODOS_MOTOR.corregirVisual(h, it.item); }catch(e){}
+      if(!hecho){ h.innerHTML='<div class="fp-vacio">(no se pudo dibujar la corrección)</div>'; }
     });
+  });
+  c.querySelectorAll('[data-prac]').forEach(function(b){
+    b.addEventListener('click', function(){ fpModalPracticar(b.getAttribute('data-prac')); });
   });
 }
 
@@ -7221,6 +7316,22 @@ document.addEventListener('DOMContentLoaded', function(){
   var qs=new URLSearchParams(location.search);
   if(qs.get('panel')==='profesor'){ abrirPanel(qs.get('ficha'), qs.get('envio')); return; }
   if(qs.get('fichaId')){ arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
+  var prac=qs.get('practice');
+  if(prac){
+    var vista=FP_PRACTICE_VIEW[prac]||prac;
+    // el generador de esa vista puede definirse en otro <script>: reintentamos
+    // un instante hasta que abrirModos/abrirEscalas estén disponibles.
+    var intentos=0;
+    var abre=function(){
+      try{
+        if(vista==='modos' && typeof window.abrirModos==='function'){ window.abrirModos(); return true; }
+        if(vista==='escalas' && typeof window.abrirEscalas==='function'){ window.abrirEscalas(); return true; }
+      }catch(e){}
+      return false;
+    };
+    if(!abre()){ var t=setInterval(function(){ if(abre()||++intentos>40) clearInterval(t); }, 80); }
+    return;
+  }
 });
 try{
   var b=el('fpEnviar');
@@ -7231,7 +7342,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO r3 · PDF jsPDF calco GE activo');
+console.info('[teoriapro] FICHAS PRO r4 · calco GE (interacción+practicar+resumen coloreado) activo');
 })();
 </script>
 
