@@ -3387,8 +3387,15 @@ function midiToNatural(midi){
 function fitSvgToContent(host, W){
   try{
     const svg=host.querySelector('svg'); if(!svg) return;
-    const bb=svg.getBBox(); const pad=10;
-    const top=Math.max(0,bb.y-pad); const newH=bb.height+pad*2;
+    let bb=null; try{ bb=svg.getBBox(); }catch(e){}
+    const pad=10;
+    // BUG FIX (Iago 4-jul): en el carrusel de fichas el SVG aún no tiene layout
+    // y getBBox devuelve height 0 -> pentagrama de ~20px invisible. Si la altura
+    // medida es ridícula, respetamos la altura con la que se renderizó (attr height).
+    const attrH=parseFloat(svg.getAttribute('height'))||0;
+    let newH, top=0;
+    if(bb && bb.height>40){ top=Math.max(0,bb.y-pad); newH=bb.height+pad*2; }
+    else { newH=Math.max(attrH, 130); top=0; }   // fallback robusto
     svg.setAttribute('viewBox','0 '+top+' '+W+' '+newH);
     svg.setAttribute('height',newH); svg.setAttribute('width',W);
   }catch(e){}
@@ -4167,25 +4174,23 @@ window.MODOS_MOTOR = {
         }
         return total? aciertos/total : 0;
       }
-      // CON armadura (modos/mayor/menor): puntos = armadura + cada accidental que
-      // el alumno DEBE alterar. La inacción NO puntúa: una nota solo cuenta si la
-      // tocó (_touched) y coincide; las notas ya cubiertas por la armadura no dan
-      // mérito (el alumno no las toca).
+      // CON armadura (modos/mayor/menor): BINARIO todo-o-nada (criterio de Iago).
+      // Está bien SOLO si: armadura correcta Y todas las notas que hay que
+      // alterar están correctas. Cualquier fallo -> 0. El alumno puede acertar
+      // "sin hacer nada" únicamente si la escala no requiere armadura ni
+      // alteraciones (p.ej. Do jónico): entonces dejarlo tal cual ES correcto.
       var armSol=(e.fifths!=null)?e.fifths:0;
-      var unidades=1;                          // la armadura es 1 unidad
-      var logrados=((e.userArm||0)===armSol)?1:0;
+      if((e.userArm||0)!==armSol) return 0;              // armadura mal -> 0
       for(var k=0;k<sol.length;k++){
         var s2=sol[k];
         var armA=armAlterFor(s2.step, armSol);
         var esAcc=((s2.alter||0)!==armA);
-        if(!esAcc) continue;                   // nota dada por armadura: no es unidad evaluable
-        unidades++;
+        if(!esAcc) continue;                             // nota cubierta por armadura: no se toca
         var u2=got[k];
-        var toco=u2 && u2._touched===true;
-        var acierta=toco && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
-        if(acierta) logrados++;
+        var acierta = u2 && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
+        if(!acierta) return 0;                           // una accidental mal -> 0
       }
-      return unidades? logrados/unidades : 0;
+      return 1;                                          // todo correcto
     }catch(err){ console.warn('[MODOS_MOTOR] puntua', err); return 0; }
   },
   // ---- CORRECCIÓN VISUAL para el resumen (verde=bien / rojo=mal / azul=solución) ----
@@ -4196,112 +4201,100 @@ window.MODOS_MOTOR = {
   }
 };
 
-/* corrección coloreada para el resumen del alumno — PORT FIEL del elemental
-   (dibujarEscalaCorrArm): redondas; notas cubiertas por la armadura -> NEGRAS
-   (sin mérito, el alumno no las tocó); las que hay que alterar (accidentales):
-   acierto VERDE, fallo ROJO + correcta AZUL pegada, ausente AZUL. */
+/* corrección del resumen — DOS PENTAGRAMAS (Iago 4-jul):
+   arriba lo que hizo el alumno; si todo bien va en VERDE y no hay más; si hay
+   error, sus fallos en ROJO (aciertos en verde) y DEBAJO un segundo pentagrama
+   con la solución completa en AZUL. Redondas; 8ª atenuada; grave a la izquierda. */
 var COR_NEG='#16203a', COR_OK='#16a34a', COR_BAD='#d11d1d', COR_SOL='#2f6df6', COR_AZUL_TXT='#7da6ff';
 function _nbKey(nb){ var ES={C:'c',D:'d',E:'e',F:'f',G:'g',A:'a',B:'b'}; return ES[nb.step]+'/'+nb.octave; }
-function _nbAcc(a){ return a===1?'#':a===-1?'b':a===2?'##':a===-2?'bb':'n'; }
-function _mkCorNote(VFx,nb,col,armA){
+function _accName(a){ return a===1?'#':a===-1?'b':a===2?'##':a===-2?'bb':'n'; }
+function _mkNote(VFx,nb,col,armA){
   var sn=new VFx.StaveNote({keys:[_nbKey(nb)],duration:'w',clef:'treble'});
-  var a=nb.alter||0; if(a!==(armA||0)){ try{ sn.addModifier(new VFx.Accidental(_nbAcc(a)),0); }catch(e){} }
+  var a=nb.alter||0; if(a!==(armA||0)){ try{ sn.addModifier(new VFx.Accidental(_accName(a)),0); }catch(e){} }
+  if(nb._opt){ try{ sn.addModifier(new VFx.Parenthesis(VFx.Modifier.Position.LEFT),0); sn.addModifier(new VFx.Parenthesis(VFx.Modifier.Position.RIGHT),0); }catch(e){} }
   sn.setStyle({fillStyle:col,strokeStyle:col}); return sn;
+}
+function _dibujaFila(ctx, VFx, y, W, conArm, fifths, notas){
+  var stave=new VFx.Stave(10,y,W-22); stave.addClef('treble');
+  if(conArm && fifths!==0 && KS_VF[String(fifths)]){ try{ stave.addKeySignature(KS_VF[String(fifths)]); }catch(e){} }
+  try{ stave.setEndBarType(VFx.Barline.type.DOUBLE); }catch(e){}
+  stave.setContext(ctx).draw();
+  if(notas.length){ try{ var v=new VFx.Voice({num_beats:notas.length*4,beat_value:4}).setStrict(false); v.addTickables(notas);
+    new VFx.Formatter().joinVoices([v]).format([v], W-100); v.draw(ctx, stave); }catch(e){} }
 }
 function dibujarEscCorr(host, e){
   var VFx=Vex.Flow;
   host.innerHTML='';
   var conArm=(e._precolocada===true)||(e._conArmadura===true);
   var porAltura=(e.familia==='cromatica'||e.familia==='hexatona');
+  var fifths=conArm?((e.fifths!=null)?e.fifths:0):0;
   var sol=(e.notasSol||[]);
   var alumno=(e.userSeq||[]).filter(function(n){return !n._opt;});
-  var W=Math.max(host.clientWidth||0, 760), H=150;
+  var midiN=function(n){ return n.midi!=null?n.midi:midiNota(n.step,n.octave,n.alter||0); };
+  var deletrea=function(n){ if(n&&n.step)return n; var DEL=[['C',0],['C',1],['D',0],['D',1],['E',0],['F',0],['F',1],['G',0],['G',1],['A',0],['A',1],['B',0]]; var m2=(n&&n.midi!=null)?n.midi:60,pc=((m2%12)+12)%12,d=DEL[pc]; return {step:d[0],octave:Math.floor(m2/12)-1,alter:d[1]}; };
+
+  // ¿todo correcto? (para decidir verde vs. rojo+solución)
+  var todoOk=true;
+  if(conArm){
+    if((e.userArm||0)!==fifths) todoOk=false;
+    else for(var t=0;t<sol.length;t++){ var s0=sol[t],a0=armAlterFor(s0.step,fifths); if((s0.alter||0)!==a0){ var u0=alumno[t]; if(!(u0&&u0.step===s0.step&&u0.octave===s0.octave&&(u0.alter||0)===(s0.alter||0))){ todoOk=false; break; } } }
+  } else {
+    for(var t2=0;t2<sol.length;t2++){ if(t2===0) continue; var g2=alumno[t2],sd=deletrea(sol[t2]); if(!(g2&&midiN(g2)===midiN(sd))){ todoOk=false; break; } }
+  }
+
+  var H = todoOk ? 150 : 250;
+  var W=Math.max(host.clientWidth||0, 760);
   var r=new VFx.Renderer(host, VFx.Renderer.Backends.SVG); r.resize(W,H);
   var ctx=r.getContext();
-  var stave=new VFx.Stave(10,24,W-22); stave.addClef('treble');
 
-  // ---- rama SIN armadura (pentatónica / hexátona / cromática): nota a nota
-  //      por ALTURA; la tónica (dada) en negro, el resto verde/rojo/azul ----
-  if(!conArm){
-    try{ stave.setEndBarType(VFx.Barline.type.DOUBLE); }catch(_){}
-    stave.setContext(ctx).draw();
-    var dadas=1;   // la 1ª cabeza (tónica) viene dada
-    var tick=[];
-    var midiOf=function(n){ return n.midi!=null?n.midi:midiNota(n.step,n.octave,n.alter||0); };
-    var deletrea=function(n){
-      if(n && n.step) return n;
-      var DEL=[['C',0],['C',1],['D',0],['D',1],['E',0],['F',0],['F',1],['G',0],['G',1],['A',0],['A',1],['B',0]];
-      var m2=(n&&n.midi!=null)?n.midi:60, pc=((m2%12)+12)%12, d=DEL[pc];
-      return {step:d[0],octave:Math.floor(m2/12)-1,alter:d[1]};
-    };
-    var nn=Math.max(sol.length, alumno.length);
-    for(var i=0;i<nn;i++){
-      var sN=sol[i]?deletrea(sol[i]):null, u=alumno[i];
-      if(i<dadas){ if(sN) tick.push(_mkCorNote(VFx,sN,COR_NEG,0)); continue; }
-      var tocoO = u && u._touched===true;
-      if(tocoO && sN && midiOf(u)===midiOf(sN)){ tick.push(_mkCorNote(VFx,u,COR_OK,0)); }        // acertó -> verde
-      else if(tocoO && sN){                                                                     // rojo+azul, grave a la izquierda
-        var uN=_mkCorNote(VFx,u,COR_BAD,0), sN2=_mkCorNote(VFx,sN,COR_SOL,0);
-        if(midiOf(u)<=midiOf(sN)){ tick.push(uN); tick.push(sN2); } else { tick.push(sN2); tick.push(uN); }
-      }
-      else if(sN){ tick.push(_mkCorNote(VFx,sN,COR_SOL,0)); }                                  // no tocó -> solo azul
-    }
-    if(tick.length){
-      try{ var v0=new VFx.Voice({num_beats:tick.length*4,beat_value:4}).setStrict(false); v0.addTickables(tick);
-        new VFx.Formatter().joinVoices([v0]).format([v0], W-100); v0.draw(ctx, stave); }catch(e){}
-    }
-    var svg0=host.querySelector('svg'); if(svg0){ svg0.classList.add('penta'); svg0.setAttribute('viewBox','0 0 '+W+' '+H); svg0.removeAttribute('width'); svg0.removeAttribute('height'); svg0.style.maxWidth='100%'; svg0.style.width='100%'; svg0.style.height='auto'; }
-    return true;
-  }
-
-  // ---- rama CON armadura (modos / mayor / menor): calco del GE ----
-  var fifths=(e.fifths!=null)?e.fifths:0;
-  var alumnoArm=(e.userArm!=null)?e.userArm:0, armOk=(alumnoArm===fifths);
-  var armCol = armOk ? COR_OK : COR_SOL;
-  if(fifths!==0 && KS_VF[String(fifths)]){
-    try{ var ksig=new VFx.KeySignature(KS_VF[String(fifths)]); if(ksig.setStyle) ksig.setStyle({fillStyle:armCol,strokeStyle:armCol}); stave.addModifier(ksig); }
-    catch(e){ try{ stave.addKeySignature(KS_VF[String(fifths)]); }catch(_){} }
-  }
-  try{ stave.setEndBarType(VFx.Barline.type.DOUBLE); }catch(_){}
-  stave.setContext(ctx).draw();
-  var tick2=[];
-  var midiN=function(n){ return midiNota(n.step,n.octave,n.alter||0); };
+  // ---- FILA 1: lo que hizo el alumno ----
+  var fila1=[];
   for(var k=0;k<sol.length;k++){
-    var s2=sol[k]; if(!s2) continue; var u2=alumno[k];
-    var armA=armAlterFor(s2.step, fifths);
-    var esAcc=((s2.alter||0)!==armA);
-    if(!esAcc){ tick2.push(_mkCorNote(VFx,s2,COR_NEG,armA)); }                                  // dada -> negra/redonda negra
-    else {
-      // VERDE solo si el alumno REALMENTE la tocó (la inacción no da mérito)
-      var toco = u2 && u2._touched===true;
-      var acerto = toco && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
-      if(acerto){ tick2.push(_mkCorNote(VFx,s2,COR_OK,armA)); }                                 // acertó accidental -> VERDE
-      else if(toco){
-        // alumno puso algo distinto: rojo (su nota) + azul (correcta), la MÁS GRAVE a la izquierda
-        var uNote=_mkCorNote(VFx,u2,COR_BAD,armAlterFor(u2.step,fifths));
-        var sNote=_mkCorNote(VFx,s2,COR_SOL,armA);
-        if(midiN(u2)<=midiN(s2)){ tick2.push(uNote); tick2.push(sNote); }
-        else { tick2.push(sNote); tick2.push(uNote); }
-      }
-      else {
-        // el alumno NO tocó: solo la correcta en azul (sin nota roja, no hizo nada)
-        tick2.push(_mkCorNote(VFx,s2,COR_SOL,armA));
-      }
-    }
+    var s2=conArm?sol[k]:deletrea(sol[k]); if(!s2) continue;
+    var u2=alumno[k];
+    var armA=conArm?armAlterFor(s2.step,fifths):0;
+    var dada = conArm ? ((s2.alter||0)===armA) : (k===0);   // nota dada (no evaluable)
+    if(dada){ fila1.push(_mkNote(VFx, u2||s2, COR_NEG, armA)); continue; }
+    if(todoOk){ fila1.push(_mkNote(VFx, s2, COR_OK, armA)); }        // todo bien -> verde
+    else if(u2){                                                     // hizo algo
+      var ok = conArm ? (u2.step===s2.step&&u2.octave===s2.octave&&(u2.alter||0)===(s2.alter||0)) : (midiN(u2)===midiN(s2));
+      fila1.push(_mkNote(VFx, u2, ok?COR_OK:COR_BAD, conArm?armAlterFor(u2.step,fifths):0));
+    } else { fila1.push(_mkNote(VFx, s2, COR_BAD, armA)); }          // no puso nada donde debía -> marca roja de la que falta (se ve en azul abajo)
   }
-  // 8ª opcional atenuada al final (duplicar octava) en modos/mayor/menor
-  if(sol.length){ var t0=sol[0]; var oct=_mkCorNote(VFx,{step:t0.step,octave:t0.octave+1,alter:t0.alter||0},'#2f6df655',armAlterFor(t0.step,fifths)); tick2.push(oct); }
-  try{ var v=new VFx.Voice({num_beats:tick2.length*4,beat_value:4}).setStrict(false); v.addTickables(tick2);
-    new VFx.Formatter().joinVoices([v]).format([v], W-100); v.draw(ctx, stave); }catch(e){}
+  // 8ª atenuada
+  if(sol.length && conArm){ var to=conArm?sol[0]:deletrea(sol[0]); fila1.push(_mkNote(VFx,{step:to.step,octave:to.octave+1,alter:to.alter||0,_opt:true}, todoOk?COR_OK:COR_NEG, armAlterFor(to.step,fifths))); }
+  _dibujaFila(ctx, VFx, 24, W, conArm, (conArm&&(e.userArm!=null)?e.userArm:fifths), fila1);
+
+  // ---- FILA 2: solución en azul (solo si hay error) ----
+  if(!todoOk){
+    var fila2=[];
+    for(var j=0;j<sol.length;j++){
+      var sj=conArm?sol[j]:deletrea(sol[j]); if(!sj) continue;
+      var armAj=conArm?armAlterFor(sj.step,fifths):0;
+      var col = (conArm ? ((sj.alter||0)!==armAj) : (j>0)) ? COR_SOL : COR_NEG;   // lo que había que poner en azul; lo dado en negro
+      fila2.push(_mkNote(VFx, sj, col, armAj));
+    }
+    if(sol.length && conArm){ var t2b=sol[0]; fila2.push(_mkNote(VFx,{step:t2b.step,octave:t2b.octave+1,alter:t2b.alter||0,_opt:true}, COR_NEG, armAlterFor(t2b.step,fifths))); }
+    _dibujaFila(ctx, VFx, 150, W, conArm, fifths, fila2);
+  }
+
   var svg=host.querySelector('svg'); if(svg){ svg.classList.add('penta'); svg.setAttribute('viewBox','0 0 '+W+' '+H); svg.removeAttribute('width'); svg.removeAttribute('height'); svg.style.maxWidth='100%'; svg.style.width='100%'; svg.style.height='auto'; }
-  // feedback de armadura textual
-  var fmt=function(f){ return f===0?'sin alteraciones':(Math.abs(f)+(f>0?' ♯':' ♭')); };
-  var arm=document.createElement('div'); arm.style.cssText='margin-top:8px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
-  var et=document.createElement('span'); et.textContent='Armadura:'; et.style.color='#fbf3df'; arm.appendChild(et);
-  if(armOk){ var sp=document.createElement('span'); sp.textContent='✓ '+fmt(fifths); sp.style.color=COR_OK; arm.appendChild(sp); }
-  else if(alumnoArm===0){ var c1=document.createElement('span'); c1.textContent=fmt(fifths); c1.style.color=COR_AZUL_TXT; arm.appendChild(c1); var n1=document.createElement('span'); n1.textContent='(faltaba)'; n1.style.cssText='color:#b39a5f;font-weight:600'; arm.appendChild(n1); }
-  else { var t1=document.createElement('span'); t1.textContent='✗ '+fmt(alumnoArm); t1.style.color=COR_BAD; arm.appendChild(t1); var a1=document.createElement('span'); a1.textContent='→'; a1.style.color='#b39a5f'; arm.appendChild(a1); var c2=document.createElement('span'); c2.textContent=fmt(fifths); c2.style.color=COR_AZUL_TXT; arm.appendChild(c2); }
-  host.appendChild(arm);
+
+  // etiqueta "Tu respuesta / Solución" cuando hay dos filas
+  if(!todoOk){
+    var lab=document.createElement('div'); lab.style.cssText='margin-top:6px;font-size:12px;color:'+COR_AZUL_TXT+';font-weight:700';
+    lab.textContent='↑ tu respuesta · ↓ la solución (en azul)'; host.appendChild(lab);
+  }
+  // feedback de armadura (solo con armadura)
+  if(conArm){
+    var fmt=function(f){ return f===0?'sin alteraciones':(Math.abs(f)+(f>0?' ♯':' ♭')); };
+    var armDiv=document.createElement('div'); armDiv.style.cssText='margin-top:6px;font-size:14px;font-weight:700;display:flex;align-items:center;gap:8px;flex-wrap:wrap';
+    var et=document.createElement('span'); et.textContent='Armadura:'; et.style.color='#fbf3df'; armDiv.appendChild(et);
+    var armOk=((e.userArm||0)===fifths);
+    if(armOk){ var sp=document.createElement('span'); sp.textContent='✓ '+fmt(fifths); sp.style.color=COR_OK; armDiv.appendChild(sp); }
+    else { var t1=document.createElement('span'); t1.textContent='✗ '+((e.userArm||0)===0?'(sin poner)':fmt(e.userArm||0)); t1.style.color=COR_BAD; armDiv.appendChild(t1); var a1=document.createElement('span'); a1.textContent='→'; a1.style.color='#b39a5f'; armDiv.appendChild(a1); var c2=document.createElement('span'); c2.textContent=fmt(fifths); c2.style.color=COR_AZUL_TXT; armDiv.appendChild(c2); }
+    host.appendChild(armDiv);
+  }
   return true;
 }
 })();
@@ -7454,7 +7447,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO r6 · redondas+8va+inaccion+penta+grave-izq activo');
+console.info('[teoriapro] FICHAS PRO r7 · getBBox-fix + binario + 2 pentagramas activo');
 })();
 </script>
 
