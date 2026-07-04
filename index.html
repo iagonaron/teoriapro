@@ -4116,6 +4116,56 @@ window._escInit=function(){ nuevoESCtodos(); };
    así que no hay colisión. Los ítems son datos planos: viajan en el
    payload y se rehidratan con JSON.
    ====================================================================== */
+// Monta el ejercicio (controles + pentagrama) en un host concreto. La usa
+// montarEn Y el parche de renderMODO (para que la interacción repinte aquí).
+window.__fpMontaEnHost = function(host, item){
+  if(!host) return;
+  dataESC[3]=item;
+  // limpiar IDs del hueco 3 de montajes ANTERIORES que sigan en el DOM (el
+  // carrusel no borra el host previo) -> si no, getElementById('scoreESC3')
+  // devolvería el del ejercicio anterior y el nuevo se pintaría allí.
+  try{
+    document.querySelectorAll('#scoreESC3').forEach(function(n){ if(n!==host) n.removeAttribute('id'); });
+    document.querySelectorAll('#ansESC3').forEach(function(n){ n.removeAttribute('id'); });
+    // escRowsM del div OCULTO no se toca; solo limpiamos duplicados en tarjetas
+  }catch(e){}
+  host.innerHTML='';
+  var row=document.createElement('div'); row.className='gr-row';
+  var ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC3';
+  var preg=document.createElement('div'); preg.className='gr-preg';
+  preg.textContent=(item.tonica&&item.tonica.nom||'')+' '+(item.tipo||'');
+  ans.appendChild(preg);
+  try{ buildEscVarControls(ans, item, 3); }
+  catch(err){
+    console.error('[fichaspro] buildEscVarControls falló:', err);
+    host.innerHTML='<div style="background:#2a0f0f;border:1px solid #ff6b6b;border-radius:10px;padding:14px;color:#ffb4b4;font-size:13px;font-family:monospace"><b>⚠ Error montando controles:</b> '+((err&&err.message)||err)+'</div>';
+    return;
+  }
+  var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
+  ans.appendChild(tag);
+  var sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC3';
+  row.appendChild(ans); row.appendChild(sc);
+  host.appendChild(row);
+  var _re=function(){ try{ renderESCStaveOne(3); }catch(e){ console.warn('[fichaspro] renderStave', e); } };
+  _re();
+  requestAnimationFrame(_re);
+  setTimeout(_re, 80);
+  setTimeout(_re, 240);
+};
+// PARCHE: cuando la interacción del hueco 3 llama a renderMODO (vía renderESCi),
+// re-montamos en el host activo del carrusel — NO en el escRowsM oculto.
+(function(){
+  var _origRenderMODO = window.renderMODO;
+  window.renderMODO = function(){
+    if(window.__FP_HOST && dataESC[3]===window.__FP_ITEM){
+      // preservar el estado del item (userArm, userSeq, _selVar) y re-montar
+      window.__fpMontaEnHost(window.__FP_HOST, dataESC[3]);
+      return;
+    }
+    if(typeof _origRenderMODO==='function') return _origRenderMODO();
+  };
+})();
+
 window.MODOS_MOTOR = {
   // ---- generadores (INTERACTIVO: cabezas precolocadas naturales en modos y
   //      en escalas mayor/menor; "otras" sin cabezas — igual que el elemental) ----
@@ -4133,36 +4183,11 @@ window.MODOS_MOTOR = {
   montarEn: function(host, item){
     dataESC[3]=item;
     if(item._corregido===undefined){ item._corregido=false; item._solVisible=false; item._okGreen=false; }
-    // CAUSA RAÍZ del pentagrama vacío (Iago 4-jul): renderMODO usa
-    // getElementById('escRowsM'), que devuelve SIEMPRE el primer escRowsM del
-    // documento — el de la vista Modos OCULTA (no el nuestro). El ejercicio se
-    // pintaba ahí, invisible. Aquí construimos la fila directamente en el host,
-    // reutilizando buildEscVarControls + renderESCStaveOne (que sí usan el
-    // hueco 3 = scoreESC3), sin pasar por renderMODO.
-    host.innerHTML='';
-    var row=document.createElement('div'); row.className='gr-row';
-    var ans=document.createElement('div'); ans.className='gr-ans'; ans.id='ansESC3';
-    var preg=document.createElement('div'); preg.className='gr-preg';
-    preg.textContent=(item.tonica&&item.tonica.nom||'')+' '+(item.tipo||'');
-    ans.appendChild(preg);
-    try{ buildEscVarControls(ans, item, 3); }
-    catch(err){
-      console.error('[fichaspro] buildEscVarControls falló:', err);
-      host.innerHTML='<div style="background:#2a0f0f;border:1px solid #ff6b6b;border-radius:10px;padding:14px;color:#ffb4b4;font-size:13px;font-family:monospace"><b>⚠ Error montando controles:</b> '+((err&&err.message)||err)+'</div>';
-      return;
-    }
-    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='min-height:18px;margin-top:6px';
-    ans.appendChild(tag);
-    var sc=document.createElement('div'); sc.className='score gr-score'; sc.id='scoreESC3';
-    row.appendChild(ans); row.appendChild(sc);
-    host.appendChild(row);
-    // render del pentagrama; re-render en varias pasadas por si la tarjeta aún
-    // no tenía ancho (el fix de fitSvgToContent ya cubre el getBBox=0).
-    var _re=function(){ try{ renderESCStaveOne(3); }catch(e){ console.warn('[fichaspro] renderStave', e); } };
-    _re();
-    requestAnimationFrame(_re);
-    setTimeout(_re, 80);
-    setTimeout(_re, 240);
+    // Guardamos el host activo para que la INTERACCIÓN (rueda/botones, que
+    // llaman renderESCi(3)->renderMODO) re-monte AQUÍ y no en el div oculto.
+    window.__FP_HOST = host;
+    window.__FP_ITEM = item;
+    window.__fpMontaEnHost(host, item);
   },
   // corrige el ejercicio montado y devuelve 0..1
   corregirMontado: function(item, host){
@@ -4268,23 +4293,32 @@ function dibujarEscCorr(host, e){
   var r=new VFx.Renderer(host, VFx.Renderer.Backends.SVG); r.resize(W,H);
   var ctx=r.getContext();
 
-  // ---- FILA 1: lo que hizo el alumno ----
+  // ---- FILA 1: EXACTAMENTE lo que hizo el alumno (Iago 4-jul) ----
+  // Regla: se dibuja tal cual el alumno lo dejó, con SU armadura (o sin ella si
+  // no la puso). Verde SOLO si el ejercicio está entero correcto (todoOk).
+  // Si sacó 0, NADA en verde. Donde el alumno no colocó nota, hueco (GhostNote).
   var fila1=[];
+  var armAlumno = conArm ? (e.userArm||0) : 0;   // la armadura que el alumno puso
   for(var k=0;k<sol.length;k++){
     var s2=conArm?sol[k]:deletrea(sol[k]); if(!s2) continue;
     var u2=alumno[k];
-    var armA=conArm?armAlterFor(s2.step,fifths):0;
-    var dada = conArm ? ((s2.alter||0)===armA) : (k===0);   // nota dada (no evaluable)
-    if(dada){ fila1.push(_mkNote(VFx, u2||s2, COR_NEG, armA)); continue; }
-    if(todoOk){ fila1.push(_mkNote(VFx, s2, COR_OK, armA)); }        // todo bien -> verde
-    else if(u2){                                                     // hizo algo
-      var ok = conArm ? (u2.step===s2.step&&u2.octave===s2.octave&&(u2.alter||0)===(s2.alter||0)) : (midiN(u2)===midiN(s2));
-      fila1.push(_mkNote(VFx, u2, ok?COR_OK:COR_BAD, conArm?armAlterFor(u2.step,fifths):0));
-    } else { fila1.push(_mkNote(VFx, s2, COR_BAD, armA)); }          // no puso nada donde debía -> marca roja de la que falta (se ve en azul abajo)
+    var esTonica = (k===0);
+    if(u2){
+      // el alumno tiene una nota aquí: se pinta TAL CUAL, con la alteración que
+      // implica SU armadura + lo que él tocase. Verde solo si todoOk; si no,
+      // negro para las dadas/naturales y sin inventar aciertos.
+      var uArmA = conArm ? armAlterFor(u2.step, armAlumno) : 0;
+      var col = todoOk ? COR_OK : COR_NEG;   // sin mérito verde si no está todo bien
+      fila1.push(_mkNote(VFx, u2, col, uArmA));
+    } else {
+      // el alumno NO puso nada aquí -> hueco (salvo la tónica dada)
+      if(esTonica){ fila1.push(_mkNote(VFx, s2, COR_NEG, conArm?armAlterFor(s2.step,armAlumno):0)); }
+      else { try{ fila1.push(new VFx.GhostNote({duration:'w'})); }catch(e2){ var gh=_mkNote(VFx,s2,'rgba(0,0,0,0)',0); fila1.push(gh); } }
+    }
   }
-  // 8ª atenuada
-  if(sol.length && conArm){ var to=conArm?sol[0]:deletrea(sol[0]); fila1.push(_mkNote(VFx,{step:to.step,octave:to.octave+1,alter:to.alter||0,_opt:true}, todoOk?COR_OK:COR_NEG, armAlterFor(to.step,fifths))); }
-  _dibujaFila(ctx, VFx, 24, W, conArm, (conArm&&(e.userArm!=null)?e.userArm:fifths), fila1);
+  // 8ª atenuada (solo si el alumno llegó hasta ahí; con armadura del alumno)
+  if(sol.length && conArm && alumno.length>=sol.length){ var to=sol[0]; fila1.push(_mkNote(VFx,{step:to.step,octave:to.octave+1,alter:to.alter||0,_opt:true}, todoOk?COR_OK:COR_NEG, armAlterFor(to.step,armAlumno))); }
+  _dibujaFila(ctx, VFx, 24, W, conArm, armAlumno, fila1);
 
   // ---- FILA 2: solución en azul (solo si hay error) ----
   if(!todoOk){
@@ -7468,7 +7502,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO r8 · FIX escRowsM duplicado (pentagrama) activo');
+console.info('[teoriapro] FICHAS PRO r10 · interaccion+navegacion carrusel OK activo');
 })();
 </script>
 
