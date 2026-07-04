@@ -6451,7 +6451,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-chip.constr{background:rgba(255,255,255,.06);color:#c9b88a;border:1px dashed rgba(255,255,255,.28)}
   .fp-lista{display:flex;flex-direction:column;gap:9px}
   .fp-ej{display:flex;align-items:center;gap:12px;border:1px solid rgba(212,175,55,.35);border-radius:13px;
-    padding:10px 14px;background:linear-gradient(160deg,rgba(212,175,55,.09),rgba(18,13,4,.5))}
+    padding:10px 14px;background:linear-gradient(160deg,rgba(212,175,55,.09),rgba(18,13,4,.5));flex-wrap:wrap}
+  .fp-ej-sol{flex:1 1 100%;background:#fff;border-radius:10px;margin-top:8px;padding:6px 8px;min-height:70px}
   .fp-ej-n{width:30px;height:30px;border-radius:50%;flex:none;display:flex;align-items:center;justify-content:center;
     background:linear-gradient(135deg,#e9c96a,#b8860b);color:#1a1305;font-weight:900;font-size:14px}
   .fp-ej-tipo{font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:800}
@@ -6520,6 +6521,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     </section>
     <div class="fp-pie">
       <button class="fp-enviar" id="fpEnviar" type="button">📨 Preparar envío a alumnos</button>
+      <button class="fp-mini" id="fpPdf" type="button" style="padding:13px 18px;font-size:14.5px">🖨 Generar PDF</button>
       <span class="fp-valor" id="fpValor"></span>
     </div>
     <div class="fp-status" id="fpStatus"></div>
@@ -6622,8 +6624,16 @@ function pintaLista(){
           '<button class="fp-mini" data-a="ver" data-i="'+i+'" type="button" title="Previsualizar como alumno">👁</button>'+
           '<button class="fp-mini" data-a="re" data-i="'+i+'" type="button" title="Regenerar variante">🔁</button>'+
           '<button class="fp-mini rojo" data-a="x" data-i="'+i+'" type="button" title="Quitar">✕</button>'+
-        '</div>';
+        '</div>'+
+        '<div class="fp-ej-sol" data-sol="'+i+'"></div>';
       host.appendChild(row);
+    });
+    // la solución de cada ejercicio, A LA VISTA (calco del elemental)
+    requestAnimationFrame(function(){
+      host.querySelectorAll('.fp-ej-sol').forEach(function(d){
+        var e=FP.ejercicios[+d.dataset.sol];
+        if(e) fpPintaEjercicio(d, e.spec, true);
+      });
     });
     host.querySelectorAll('.fp-mini').forEach(function(b){
       b.addEventListener('click', function(){
@@ -6635,6 +6645,60 @@ function pintaLista(){
     });
   }
   el('fpEnviar').disabled = FP.enviado || !FP.token || !FP.ejercicios.length;
+}
+/* --- render VexFlow de un ejercicio: resuelto (solución en ROJO, calco GE)
+       o versión alumno para papel (naturales precolocadas, sin armadura) --- */
+var FP_KS_POS=['C','G','D','A','E','B','F#','C#'], FP_KS_NEG=['C','F','Bb','Eb','Ab','Db','Gb','Cb'];
+var FP_SHARPS=['F','C','G','D','A','E','B'], FP_FLATS=['B','E','A','D','G','C','F'];
+function fpKsAlter(fifths, letter){
+  if(fifths>0) return FP_SHARPS.slice(0,fifths).indexOf(letter)>=0 ? 1 : 0;
+  if(fifths<0) return FP_FLATS.slice(0,-fifths).indexOf(letter)>=0 ? -1 : 0;
+  return 0;
+}
+function fpAccName(a){ return a===1?'#':a===-1?'b':a===2?'##':a===-2?'bb':'n'; }
+function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
+  try{
+    var VF=Vex.Flow;
+    host.innerHTML='';
+    var W=anchoFijo||Math.max(320, host.clientWidth||520), H=112;
+    var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H);
+    var ctx=r.getContext();
+    var stave=new VF.Stave(4,10,W-10);
+    stave.addClef('treble');
+    var conArm=(spec._precolocada===true)||(spec._conArmadura===true);
+    var fifths=(conArm && spec.fifths!=null)?spec.fifths:0;
+    if(resuelto && conArm && fifths!==0){
+      var ks=(fifths>0?FP_KS_POS[fifths]:FP_KS_NEG[-fifths]);
+      try{ stave.addKeySignature(ks); }catch(e){}
+    }
+    try{ stave.setEndBarType(VF.Barline.type.DOUBLE); }catch(e){}
+    stave.setContext(ctx).draw();
+    var fuente = resuelto ? (spec.notasSol||[]) : (spec.userSeq||[]).filter(function(n){return !n._opt;});
+    if(!fuente.length) return;   // "otras" en papel: pentagrama vacío
+    var acc={};
+    var notas=fuente.map(function(n){
+      var alter=(resuelto ? (n.alter!=null?n.alter:0) : 0);
+      var head=n.step.toLowerCase()+(alter===1?'#':alter===-1?'b':alter===2?'##':alter===-2?'bb':'')+'/'+n.octave;
+      var sn=new VF.StaveNote({clef:'treble', keys:[head], duration:'q'});
+      if(resuelto){
+        var idn=n.step+'/'+n.octave;
+        var base=(acc[idn]!==undefined)?acc[idn]:fpKsAlter(conArm?fifths:0, n.step);
+        if(alter!==base){
+          try{ sn.addModifier(new VF.Accidental(fpAccName(alter)),0); }catch(e){}
+          acc[idn]=alter;
+        }
+        sn.setStyle({fillStyle:'#d11d1d', strokeStyle:'#d11d1d'});
+      }
+      return sn;
+    });
+    var v=new VF.Voice({num_beats:Math.max(1,notas.length), beat_value:4}).setMode(VF.Voice.Mode.SOFT);
+    v.addTickables(notas);
+    new VF.Formatter().joinVoices([v]).formatToStave([v], stave);
+    v.draw(ctx, stave);
+  }catch(e){
+    host.innerHTML='<div class="fp-vacio">(no se pudo dibujar: '+((e&&e.message)||e)+')</div>';
+    console.warn('[fichaspro] pintaEjercicio', e);
+  }
 }
 function fpEnun(e){
   try{
@@ -6744,6 +6808,58 @@ function enviar(){
       btn.disabled=false;
       console.warn('[fichaspro] enviar', e);
     });
+}
+
+/* --------- PDF: páginas del alumno + hoja de soluciones --------- */
+function fpSvgDe(spec, resuelto){
+  var tmp=document.createElement('div');
+  tmp.style.cssText='position:absolute;left:-9999px;top:0;width:700px';
+  document.body.appendChild(tmp);
+  fpPintaEjercicio(tmp, spec, resuelto, 700);
+  var svg=tmp.querySelector('svg'), out='';
+  if(svg){
+    var w=svg.getAttribute('width'), h=svg.getAttribute('height');
+    if(w&&h && !svg.getAttribute('viewBox')) svg.setAttribute('viewBox','0 0 '+w+' '+h);
+    svg.removeAttribute('width'); svg.removeAttribute('height');
+    svg.style.width='100%'; svg.style.height='auto';
+    out=svg.outerHTML;
+  }
+  tmp.remove();
+  return out;
+}
+function fpInstruccion(key){
+  if(key==='escala_otras') return 'Escribe las notas de la escala pedida (y su armadura si la lleva).';
+  return 'Escribe la armadura y añade las alteraciones necesarias.';
+}
+function fpGenerarPDF(){
+  if(!FP.ejercicios.length){ status('Añade al menos un ejercicio para generar el PDF.', 'err'); return; }
+  var N=(FP.numero!=null?FP.numero:'—');
+  var css='@page{margin:13mm}body{font-family:\'Helvetica Neue\',Arial,sans-serif;color:#111;margin:0}'+
+    'h1{font-size:20px;margin:0 0 2px;letter-spacing:.02em}'+
+    '.sub{font-size:12px;color:#555;margin:0 0 6px}'+
+    '.meta{font-size:13px;margin:10px 0 18px;display:flex;gap:26px}'+
+    '.meta b{font-weight:700}.meta span{border-bottom:1px solid #999;min-width:200px;display:inline-block}'+
+    '.ej{margin:0 0 16px;page-break-inside:avoid}'+
+    '.ej-cab{font-size:14px;font-weight:800;margin-bottom:2px}'+
+    '.ej-ins{font-size:11px;color:#666;margin-bottom:4px}'+
+    '.salto{page-break-before:always}'+
+    '.rojo{color:#d11d1d}';
+  var html='<h1>FICHA Nº '+N+' · TEORÍA</h1><p class="sub">2º de Grado Profesional · LMPRO at home · CMUS A Coruña</p>'+
+    '<div class="meta"><div><b>Nombre:</b> <span></span></div><div><b>Fecha:</b> <span style="min-width:110px"></span></div></div>';
+  FP.ejercicios.forEach(function(e,i){
+    html+='<div class="ej"><div class="ej-cab">'+(i+1)+'. '+e.label+' — '+fpEnun(e)+'</div>'+
+      '<div class="ej-ins">'+fpInstruccion(e.key)+'</div>'+fpSvgDe(e.spec,false)+'</div>';
+  });
+  html+='<div class="salto"></div><h1 class="rojo">SOLUCIONES · Ficha nº '+N+'</h1>'+
+    '<p class="sub">Solo para el profesor / corrección en clase</p>';
+  FP.ejercicios.forEach(function(e,i){
+    html+='<div class="ej"><div class="ej-cab">'+(i+1)+'. '+e.label+' — '+fpEnun(e)+'</div>'+fpSvgDe(e.spec,true)+'</div>';
+  });
+  var w=window.open('','_blank');
+  if(!w){ status('El navegador bloqueó la ventana del PDF: permite ventanas emergentes.', 'err'); return; }
+  w.document.write('<html><head><title>Ficha '+N+' · Teoría 2º GP</title><style>'+css+'</style></head><body>'+
+    html+'<script>setTimeout(function(){window.print();},400);<\/script></body></html>');
+  w.document.close();
 }
 
 /* --------- apertura + router --------- */
@@ -7047,10 +7163,14 @@ document.addEventListener('DOMContentLoaded', function(){
 });
 try{
   var b=el('fpEnviar');
-  if(b) b.addEventListener('click', enviar);
-  else document.addEventListener('DOMContentLoaded', function(){ el('fpEnviar').addEventListener('click', enviar); });
+  var engancha=function(){
+    var b2=el('fpEnviar'); if(b2 && !b2._fp){ b2._fp=true; b2.addEventListener('click', enviar); }
+    var bp=el('fpPdf');    if(bp && !bp._fp){ bp._fp=true; bp.addEventListener('click', fpGenerarPDF); }
+  };
+  if(b) engancha();
+  document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO C1+escalas (C2.1) activo');
+console.info('[teoriapro] FICHAS PRO C1+escalas+PDF r2 activo');
 })();
 </script>
 
