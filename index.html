@@ -2427,10 +2427,11 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
     if(g.modo==='id') pintarIdG(g, ans, sc);
     else { pintarBuildG(g, ans, sc); wireBuildG(g, sc); }
   }
+  function nomTipoCorto(code){ return ESC_ESP[code] || (ACO_TIPOS[code]||{}).texto || code; }
   function pintarScoreG(g, sc){
     if(!window.Vex){ sc.textContent='(sin notación)'; return; }
     var VF=Vex.Flow; sc.innerHTML='';
-    var W=Math.max(sc.clientWidth||0, 460), H=156, top=42;
+    var W=Math.max(sc.clientWidth||0, 460), H=(g.__reviewMode?206:156), top=42;
     var r=new VF.Renderer(sc, VF.Renderer.Backends.SVG); r.resize(W,H);
     var ctx=r.getContext();
     var x0=8, right=8, clefW=44, usable=W-x0-right;
@@ -2463,13 +2464,41 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
           t.setAttribute('x', mx); t.setAttribute('font-size','14'); t.setAttribute('fill','#9a8a5a'); t.textContent=String(m2+1);
         }
         svg.appendChild(t);
+        // leyenda de corrección (resumen) en identificar: tu respuesta / correcta, debajo del compás
+        if(g.__reviewMode && g.modo==='id'){
+          var cxc2=g.__meas[m2].x+mW/2;
+          var okT=(sub.selTipo===sub.tipo);
+          var tuTxt='Tú: '+(sub.selTipo?nomTipoCorto(sub.selTipo):'—');
+          var l1=document.createElementNS('http://www.w3.org/2000/svg','text');
+          l1.setAttribute('x',cxc2); l1.setAttribute('y',H-24); l1.setAttribute('text-anchor','middle');
+          l1.setAttribute('font-size','10.5'); l1.setAttribute('font-weight','bold'); l1.setAttribute('font-family','DejaVu Sans, Helvetica, Arial, sans-serif');
+          l1.setAttribute('fill', okT?'#16a34a':'#d11d1d'); l1.textContent=tuTxt; svg.appendChild(l1);
+          if(!okT){
+            var l2=document.createElementNS('http://www.w3.org/2000/svg','text');
+            l2.setAttribute('x',cxc2); l2.setAttribute('y',H-9); l2.setAttribute('text-anchor','middle');
+            l2.setAttribute('font-size','10.5'); l2.setAttribute('font-weight','bold'); l2.setAttribute('font-family','DejaVu Sans, Helvetica, Arial, sans-serif');
+            l2.setAttribute('fill','#2f6df6'); l2.textContent='Correcto: '+nomTipoCorto(sub.tipo); svg.appendChild(l2);
+          }
+        }
       }
     }
   }
   function dibujaCompas(g, m, ctx){
     var VF=Vex.Flow; var sub=g.subs[m]; var st=g.__meas[m].stave;
     var chordNotes;
-    if(sub.modo==='id'){ chordNotes=sub.notas.slice(); }
+    if(sub._corrView){
+      // vista de corrección (resumen): verde=acierto, rojo=error, azul=faltaba
+      if(sub.modo==='id'){ chordNotes=sub.notas.slice(); }
+      else {
+        var objK={}, usrK={};
+        sub.objetivo.forEach(function(n){ objK[n.step+n.octave+'_'+(n.alter||0)]=1; });
+        (sub.userSeq||[]).forEach(function(n){ usrK[n.step+n.octave+'_'+(n.alter||0)]=1; });
+        chordNotes=[Object.assign({},sub.fund)];
+        sub.objetivo.forEach(function(n){ var k=n.step+n.octave+'_'+(n.alter||0); chordNotes.push(Object.assign({},n,{_corr: usrK[k]?'ok':'faltaba'})); });
+        (sub.userSeq||[]).forEach(function(n){ var k=n.step+n.octave+'_'+(n.alter||0); if(!objK[k]) chordNotes.push(Object.assign({},n,{_corr:'err'})); });
+      }
+    }
+    else if(sub.modo==='id'){ chordNotes=sub.notas.slice(); }
     else if(sub._solVisible){ chordNotes=[Object.assign({},sub.fund)]; sub.objetivo.forEach(function(n){ chordNotes.push(Object.assign({},n,{_blue:true})); }); }
     else { chordNotes=[sub.fund].concat(sub.userSeq); }
     chordNotes.sort(function(a,b){ return midiNota(a.step,a.octave,a.alter)-midiNota(b.step,b.octave,b.alter); });
@@ -2477,9 +2506,12 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
     var sn=new VF.StaveNote({keys:keys, duration:'w', clef:'treble'});
     chordNotes.forEach(function(n,idx){ if(n.alter && !n._inherited) sn.addModifier(new VF.Accidental(accStr(n.alter)), idx); });
     chordNotes.forEach(function(n,idx){
-      if(n._blue) sn.setKeyStyle(idx,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
+      if(n._corr==='ok') sn.setKeyStyle(idx,{fillStyle:'#16a34a',strokeStyle:'#16a34a'});
+      else if(n._corr==='faltaba') sn.setKeyStyle(idx,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
+      else if(n._corr==='err') sn.setKeyStyle(idx,{fillStyle:'#d11d1d',strokeStyle:'#d11d1d'});
+      else if(n._blue) sn.setKeyStyle(idx,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
       else if(sub.modo==='build' && sub._selVar!=null && sub.userSeq[sub._selVar] &&
-              n.step===sub.userSeq[sub._selVar].step && n.octave===sub.userSeq[sub._selVar].octave && !sub._solVisible)
+              n.step===sub.userSeq[sub._selVar].step && n.octave===sub.userSeq[sub._selVar].octave && !sub._solVisible && !sub._corrView)
         sn.setKeyStyle(idx,{fillStyle:'#e9c96a',strokeStyle:'#e9c96a'});
     });
     try{
@@ -2542,10 +2574,11 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
   function onClickG(g, sc, ev){
     var p=svgP(sc, ev); if(!p) return;
     var m=measFromX(g, p.x), sub=g.subs[m];
-    for(var k=0;k<sub.userSeq.length;k++){ var y=yRealG(g, sub.userSeq[k].step, sub.userSeq[k].octave); if(y!=null && Math.abs(y-p.y)<8){ g._selM=m; sub._selVar=k; pintarScoreG(g, sc); return; } }
+    var nat=nearestYG(g, p.y); if(!nat) return;                    // posición diatónica más cercana
+    // ¿ya hay una nota del usuario EXACTAMENTE en esa posición? -> seleccionarla (para alterarla)
+    for(var k=0;k<sub.userSeq.length;k++){ if(sub.userSeq[k].step===nat.step && sub.userSeq[k].octave===nat.octave){ g._selM=m; sub._selVar=k; pintarScoreG(g, sc); return; } }
     if(sub.userSeq.length>=sub.objetivo.length) return;
-    var nat=nearestYG(g, p.y); if(!nat) return;
-    var nb={step:nat.step, octave:nat.octave, alter:0};
+    var nb={step:nat.step, octave:nat.octave, alter:0};            // si no, coloca ahí (permite 2ª sobre otra nota)
     if(g.__pendAlt===1||g.__pendAlt===-1||g.__pendAlt===2||g.__pendAlt===-2){ nb.alter=g.__pendAlt; }
     sub.userSeq.push(nb); g.__pendAlt=0; g._selM=m; sub._selVar=sub.userSeq.length-1;
     pintarScoreG(g, sc);
@@ -2643,23 +2676,24 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
   function corregirVisual(host, g){
     try{
       g=asGrupo(g); if(!g||!g.subs) return 0;
-      var sc=g.__sc||(host&&host.querySelector('.aco-fp-score'));
       var p=puntua(g);
-      if(g.modo==='build'){
-        var anyErr=false; g.subs.forEach(function(sub){ if(puntuaUno(sub)!==1){ sub._solVisible=true; anyErr=true; } });
-        if(sc) pintarScoreG(g, sc);
-        if(g.__tag){ if(!anyErr){ g.__tag.style.color='#16a34a'; g.__tag.textContent='✓ Correcto'; } else { g.__tag.innerHTML='<span style="color:#16a34a">acierto</span> · <span style="color:#d11d1d">error</span> · <span style="color:#2f6df6">faltaba</span>'; } }
-      } else {
-        // identificar: marca el tipo correcto (verde) y el elegido erróneo (rojo) en cada compás
-        var ok=0;
-        g.subs.forEach(function(sub){
-          if(sub._btns){
-            if(sub._btns[sub.tipo]) estiloBtn(sub._btns[sub.tipo], 'ok');
-            if(sub.selTipo && sub.selTipo!==sub.tipo && sub._btns[sub.selTipo]) estiloBtn(sub._btns[sub.selTipo], 'bad');
-          }
-          if(puntuaUno(sub)===1) ok++;
-        });
-        if(g.__tag){ g.__tag.style.color = ok===4?'#8be28b':'#e9d9a8'; g.__tag.textContent='Aciertos: '+ok+'/4'+(ok<4?'  (verde = tipo correcto)':''); }
+      var sc=g.__sc;
+      // pantalla de RESUMEN: host vacío -> montamos un score de corrección de cero
+      if(host && (!sc || !host.contains(sc))){
+        host.innerHTML='';
+        sc=document.createElement('div'); sc.className='aco-fp-score';
+        sc.style.cssText='position:relative;background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:8px 10px';
+        host.appendChild(sc); g.__sc=sc; g.__ans=null; g.__tag=null; g.__reviewMode=true;
+      }
+      g.subs.forEach(function(sub){ sub._corrView=true; });          // colorea notas verde/rojo/azul
+      // en modo interactivo (con pads) también marcamos los botones del identificar
+      if(g.modo==='id' && !g.__reviewMode){
+        g.subs.forEach(function(sub){ if(sub._btns){ if(sub._btns[sub.tipo]) estiloBtn(sub._btns[sub.tipo],'ok'); if(sub.selTipo && sub.selTipo!==sub.tipo && sub._btns[sub.selTipo]) estiloBtn(sub._btns[sub.selTipo],'bad'); } });
+      }
+      if(sc) pintarScoreG(g, sc);
+      if(g.__tag){
+        if(g.modo==='build'){ var anyErr=g.subs.some(function(s){return puntuaUno(s)!==1;}); if(!anyErr){ g.__tag.style.color='#16a34a'; g.__tag.textContent='✓ Correcto'; } else { g.__tag.innerHTML='<span style="color:#16a34a">acierto</span> · <span style="color:#d11d1d">error</span> · <span style="color:#2f6df6">faltaba</span>'; } }
+        else { var ok=0; g.subs.forEach(function(s){ if(puntuaUno(s)===1) ok++; }); g.__tag.style.color=ok===4?'#8be28b':'#e9d9a8'; g.__tag.textContent='Aciertos: '+ok+'/4'+(ok<4?'  (verde = tipo correcto)':''); }
       }
       return p;
     }catch(e){ return puntua(g); }
@@ -9572,9 +9606,9 @@ function pintaResultado(nota, pcts){
   requestAnimationFrame(function(){
     c.querySelectorAll('.fp-corr-host').forEach(function(h){
       var it=ALU.items[+h.dataset.k];
-      var hecho=false;
-      try{ hecho=fpMotorDe(it.item).corregirVisual(h, it.item); }catch(e){}
-      if(!hecho){ h.innerHTML='<div class="fp-vacio">(no se pudo dibujar la corrección)</div>'; }
+      try{ fpMotorDe(it.item).corregirVisual(h, it.item); }catch(e){}
+      // se considera dibujado si el host tiene contenido (no solo por el valor de retorno)
+      if(!h.firstChild || !(h.querySelector('svg')||h.textContent.trim())){ h.innerHTML='<div class="fp-vacio">(no se pudo dibujar la corrección)</div>'; }
     });
   });
   c.querySelectorAll('[data-prac]').forEach(function(b){
