@@ -10289,7 +10289,8 @@ function fpPintaTonNombre(host, spec, resuelto, anchoFijo){
     var totalNotes=bars.reduce(function(a,b){return a+b.length;},0);
     var W=Math.max((host.clientWidth||520), totalNotes*38+60), H=96;
     var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
-    drawRhythmCtx(ctx, bars, 8, 22, W-16, opts);
+    var o2={}; for(var k in opts){ o2[k]=opts[k]; } o2.clef=true;   // el interactivo lleva clave de sol
+    drawRhythmCtx(ctx, bars, 8, 22, W-16, o2);
   }
   /* dibuja ritmo en un CTX compartido a (x0,y0,totalW) — para el PDF */
   function drawRhythmCtx(ctx, bars, x0, y0, totalW, opts){
@@ -10301,6 +10302,7 @@ function fpPintaTonNombre(host, spec, resuelto, anchoFijo){
       var last=(bi===bars.length-1);
       var wBar= last ? (x0+totalW - x) : Math.max(60, Math.round(totalW*weights[bi]/wsum));
       var stave=new VF.Stave(x, y0, wBar, {space_above_staff_ln:sa, space_below_staff_ln:0});
+      if(bi===0 && opts.clef){ try{ stave.addClef('treble','small'); }catch(e){} }
       try{ stave.setBegBarType(VF.Barline.type.NONE); }catch(e){}
       try{ stave.setEndBarType( (last && opts.finalDouble) ? VF.Barline.type.END : VF.Barline.type.SINGLE ); }catch(e){}
       stave.setContext(ctx).draw();
@@ -10621,10 +10623,10 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
     var v=el('span','min-width:44px;text-align:center;font-size:21px;font-weight:800;color:'+CL.ink+';font-family:Georgia,serif',''+get());
     w.appendChild(btn('−',-1)); w.appendChild(v); w.appendChild(btn('+',1)); return w;
   }
-  function chipRow(items){   // items: [{html, sel, onClick}]
-    var row=el('span','display:inline-flex;flex-wrap:wrap;gap:7px;justify-content:center');
+  function chipRow(items, tight){   // items: [{html, sel, onClick}]
+    var row=el('span','display:inline-flex;flex-wrap:wrap;gap:'+(tight?'6px':'7px')+';justify-content:center'+(tight?';max-width:150px':''));
     items.forEach(function(it){ var b=el('button'); b.type='button'; b.innerHTML=it.html;
-      b.style.cssText='min-width:44px;height:44px;padding:0 11px;border:1px solid '+(it.sel?CL.gold1:CL.line)+';border-radius:11px;background:'+(it.sel?'rgba(212,175,55,.16)':CL.panel)+';color:'+(it.sel?CL.soft:CL.muted)+';font-weight:800;cursor:pointer;font-family:Georgia,serif;font-size:17px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1';
+      b.style.cssText='min-width:'+(tight?'40':'44')+'px;height:'+(tight?'40':'44')+'px;padding:0 '+(tight?'8':'11')+'px;border:1px solid '+(it.sel?CL.gold1:CL.line)+';border-radius:11px;background:'+(it.sel?'rgba(212,175,55,.16)':CL.panel)+';color:'+(it.sel?CL.soft:CL.muted)+';font-weight:800;cursor:pointer;font-family:Georgia,serif;font-size:'+(tight?'15':'17')+'px;display:inline-flex;flex-direction:column;align-items:center;justify-content:center;line-height:1';
       b.onclick=it.onClick; row.appendChild(b); });
     return row;
   }
@@ -10644,8 +10646,8 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
     var grid=el('div','display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px'); wrap.appendChild(grid);
     // celda dado
     var fd=el('div','display:flex;flex-direction:column;gap:5px'); fd.appendChild(zt('Dado'));
-    var cd=el('div','position:relative;border:1px solid '+CL.gold1+';border-radius:16px;background:linear-gradient(180deg,'+CL.paper2+','+CL.paper+');min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px');
-    var dst=el('div'); cd.appendChild(dst); drawDado(dst, g.dispar);
+    var cd=el('div','position:relative;border:1px solid '+CL.gold1+';border-radius:16px;background:linear-gradient(180deg,'+CL.paper2+','+CL.paper+');min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px');
+    var dst=el('div','font-size:40px;font-weight:800;color:'+CL.inkd); dst.innerHTML=P().specHtml('dispar', g.dispar); cd.appendChild(dst);
     cd.appendChild(el('div','font-size:10px;color:#8a7a52;font-weight:700','compás de partida')); fd.appendChild(cd); grid.appendChild(fd);
     // 4 celdas construibles
     FORMS4.forEach(function(f){
@@ -10689,12 +10691,12 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
     function refresh(){
       body.innerHTML='';
       if(form==='mixto'){
-        var mx=el('div','display:flex;align-items:center;gap:12px;justify-content:center;flex-wrap:wrap');
+        var mx=el('div','display:flex;align-items:flex-start;gap:10px;justify-content:center');
         work.terms.forEach(function(t,ti){
-          if(ti>0) mx.appendChild(el('span','font-family:Georgia,serif;font-size:24px;font-weight:700;color:'+CL.soft,'+'));
-          var term=el('div','display:flex;flex-direction:column;align-items:center;gap:9px;border:1px solid '+CL.line+';border-radius:14px;background:rgba(0,0,0,.18);padding:14px 12px;min-width:150px');
+          if(ti>0) mx.appendChild(el('span','align-self:center;font-family:Georgia,serif;font-size:24px;font-weight:700;color:'+CL.soft,'+'));
+          var term=el('div','display:flex;flex-direction:column;align-items:center;gap:9px;border:1px solid '+CL.line+';border-radius:14px;background:rgba(0,0,0,.18);padding:14px 10px;width:158px');
           var z1=el('div'); z1.appendChild(zt('Numerador')); z1.appendChild(stepEl(function(){return t.num;},function(v){t.num=v;},1,16,refresh)); term.appendChild(z1);
-          var z2=el('div'); z2.appendChild(zt('Denominador')); z2.appendChild(chipRow(DENS.map(function(d){ return {html:''+d, sel:t.den===d, onClick:function(){ t.den=d; refresh(); }}; }))); term.appendChild(z2);
+          var z2=el('div'); z2.appendChild(zt('Denominador')); z2.appendChild(chipRow(DENS.map(function(d){ return {html:''+d, sel:t.den===d, onClick:function(){ t.den=d; refresh(); }}; }), true)); term.appendChild(z2);
           mx.appendChild(term);
         });
         body.appendChild(mx);
@@ -10744,7 +10746,7 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
         var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:12px';
         var top=document.createElement('div'); top.style.cssText='text-align:center;margin-bottom:8px';
         top.appendChild(el('div','font-size:12px;font-weight:800;color:#b8860b;margin-bottom:4px','Compás dado'));
-        var gstaff=document.createElement('div'); gstaff.style.cssText='display:inline-block'; top.appendChild(gstaff); drawDado(gstaff, g.dispar);
+        var gfr=el('div','font-size:32px;font-weight:800;color:#2a1f0c'); gfr.innerHTML=P().specHtml('dispar', g.dispar); top.appendChild(gfr);
         wrap.appendChild(top);
         var can=P().canonicalForms(g.dispar), ok=0;
         FORMS4.forEach(function(f){
@@ -10766,26 +10768,25 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
 })();
 function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
   try{
-    var VF=Vex.Flow; host.innerHTML='';
+    host.innerHTML='';
     var info=window.COMP_REPLICAR_MOTOR.pdfInfo(spec);
     var svgns='http://www.w3.org/2000/svg';
-    var W=anchoFijo||Math.max(360, host.clientWidth||520), H=200;
-    var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
-    // compás dado (arriba-izquierda) en un pentagrama corto
-    window.CMP_PURE.drawStaffCompas(ctx, 150, 8, 150, 'dispar', info.dispar, [], '#1a1a1a');
-    var svg=host.querySelector('svg'); if(!svg) return;
+    var W=anchoFijo||Math.max(360, host.clientWidth||520), H=196;
+    var svg=document.createElementNS(svgns,'svg'); svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox','0 0 '+W+' '+H); host.appendChild(svg);
     function T(x,y,txt,fill,size,anchor){ var t=document.createElementNS(svgns,'text'); t.setAttribute('x',x); t.setAttribute('y',y); t.setAttribute('text-anchor',anchor||'start'); t.setAttribute('font-size',size||13); t.setAttribute('font-weight','bold'); t.setAttribute('font-family','DejaVu Sans, Helvetica, Arial, sans-serif'); t.setAttribute('fill',fill); t.textContent=txt; svg.appendChild(t); }
     function BOX(x,y,w,h){ var rc=document.createElementNS(svgns,'rect'); rc.setAttribute('x',x);rc.setAttribute('y',y);rc.setAttribute('width',w);rc.setAttribute('height',h);rc.setAttribute('rx',9);rc.setAttribute('fill','#fff');rc.setAttribute('stroke','#cbb98a');rc.setAttribute('stroke-width','1'); svg.appendChild(rc); }
-    T(14, 40, 'Compás dado:', '#3a2f12', 14, 'start');
+    // compás dado como fracción (sin pentagrama)
+    T(14, 44, 'Compás dado:', '#3a2f12', 14, 'start');
+    window.CMP_PURE.drawCompas(svg, 165, 38, 'dispar', info.dispar, '#2a1f0c');
     // 3 cajas etiquetadas
-    var padX=14, gap=14, y=92, bh=88, bw=(W-2*padX-2*gap)/3;
+    var padX=14, gap=14, y=86, bh=94, bw=(W-2*padX-2*gap)/3;
     info.forms.forEach(function(f, i){
       var x=padX+i*(bw+gap);
       T(x+bw/2, y-6, f.label, '#b8860b', 11, 'middle');
       BOX(x, y, bw, bh);
-      if(resuelto) window.CMP_PURE.drawCompas(svg, x+bw/2-10, y+bh/2, f.form, f.spec, '#c0392b');
+      if(resuelto){ var cw=window.CMP_PURE.compasWidth(f.form, f.spec); window.CMP_PURE.drawCompas(svg, x+bw/2-cw/2, y+bh/2, f.form, f.spec, '#c0392b'); }
     });
-    svg.setAttribute('height', H); svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    svg.setAttribute('viewBox','0 0 '+W+' '+H);
   }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar compases replicar: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaCompReplicar', e); }
 }
 </script>
