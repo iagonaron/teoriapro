@@ -1395,6 +1395,8 @@
     inversion: function(){ abrirPlaceholder('Inversión'); },
     modulacion: function(){ window.location.href='modulacion.html'; }
   };
+  // permite abrir una vista concreta desde fuera del IIFE (p.ej. "practica esto, anda")
+  window.__abrirVista=function(v){ var fn=ACCIONES[v]; if(typeof fn==='function'){ try{ fn(); return true; }catch(e){} } return false; };
   document.querySelectorAll('.mode-card[data-path]').forEach(function(btn){
     btn.addEventListener('click', function(){
       var fn = ACCIONES[btn.getAttribute('data-path')];
@@ -2410,9 +2412,10 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
   }
   function enunciado(g){
     g=asGrupo(g); if(!g||!g.subs) return 'Acordes';
+    var pre=(g._cat==='pro')?'Acordes PRO · ':'Acordes · ';
     return g.modo==='id'
-      ? 'Identifica el tipo de cada acorde (4 compases).'
-      : 'Construye los 4 acordes indicados (coloca las notas que faltan).';
+      ? pre+'Identifica el tipo de cada acorde (4 compases).'
+      : pre+'Construye los 4 acordes indicados (coloca las notas que faltan).';
   }
   function tiposDe(cat){ return (cat==='pro'?CAT_PRO:CAT_BASICO).slice(); }
 
@@ -9244,7 +9247,8 @@ function fpPdfSafe(s){
 function fpTituloPDF(e){
   if(e.spec && e.spec._aco && window.ACORDES_MOTOR && window.ACORDES_MOTOR.pdfInfo){
     var ia=window.ACORDES_MOTOR.pdfInfo(e.spec);
-    return fpPdfSafe(ia.modo==='build' ? 'Acordes. Construye los acordes indicados' : 'Acordes. Identifica el tipo de cada acorde');
+    var pre=(e.spec._cat==='pro')?'Acordes PRO. ':'Acordes. ';
+    return fpPdfSafe(ia.modo==='build' ? (pre+'Construye los acordes indicados') : (pre+'Identifica el tipo de cada acorde'));
   }
   var enun=fpEnun(e);
   if(e.key==='escala_mayor'||e.key==='escala_menor'||e.key==='escala_otras') return fpPdfSafe('Escalas. '+enun);
@@ -9503,7 +9507,7 @@ function pintaAlu(){
   if(bn) bn.addEventListener('click', function(){ ding(false); ALU.i++; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
   if(bf) bf.addEventListener('click', entregarFicha);
 }
-var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordes', acordespro_build:'acordes' };
+var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', indice:'indiceacustico', tonalidades:'tonalidades' };
 function fpModalPracticar(key){
   var ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(6,4,1,.7);z-index:100001;display:flex;align-items:center;justify-content:center;padding:22px';
@@ -9709,6 +9713,7 @@ document.addEventListener('DOMContentLoaded', function(){
     // un instante hasta que abrirModos/abrirEscalas estén disponibles.
     var intentos=0;
     var abre=function(){
+      try{ if(typeof window.__abrirVista==='function' && window.__abrirVista(vista)) return true; }catch(e){}
       try{
         if(vista==='modos' && typeof window.abrirModos==='function'){ window.abrirModos(); return true; }
         if(vista==='escalas' && typeof window.abrirEscalas==='function'){ window.abrirEscalas(); return true; }
