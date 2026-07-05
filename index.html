@@ -8745,6 +8745,7 @@ var CATALOGO=[
   { key:'cadencias',        label:'Cadencias',                estado:'activo', desc:'identifica el tipo de cadencia (4 voces)' },
   { key:'tonalidades',      label:'Tonalidades',              estado:'activo', desc:'nombrar, armadura y tonos vecinos (3 apartados)' },
   { key:'ton_nombre',       label:'Tonalidades · indica tonalidad', estado:'activo', desc:'4 armaduras: escribe la Mayor y su menor relativa' },
+  { key:'ton_armadura',     label:'Tonalidades · indica armadura',  estado:'activo', desc:'4 tonalidades: coloca su armadura' },
   { key:'seriearmonica',    label:'Serie armónica',       estado:'prox', nota:'fase 2' },
   { key:'transporte',       label:'Transporte',           estado:'prox', nota:'fase 2' },
   { key:'compasespro',      label:'Compases PRO',         estado:'prox', nota:'fase 3' },
@@ -9104,6 +9105,7 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
   if(spec && spec._ia){ return fpPintaIndice(host, spec, resuelto, anchoFijo); }
   if(spec && spec._cad){ return fpPintaCadencia(host, spec, resuelto, anchoFijo); }
   if(spec && spec._tonA){ return fpPintaTonNombre(host, spec, resuelto, anchoFijo); }
+  if(spec && spec._tonB){ return fpPintaTonArmadura(host, spec, resuelto, anchoFijo); }
   if(spec && spec._ton){ return fpPintaTonalidades(host, spec, resuelto, anchoFijo); }
   if(spec && spec._aco){ return fpPintaAcordes(host, spec, resuelto, anchoFijo); }
   if(spec && spec._iv){ return fpPintaIntervalos(host, spec, resuelto, anchoFijo); }
@@ -9165,7 +9167,7 @@ function fpEnun(e){
   try{
     var M=fpMotorDe(e.spec);
     if(M && e.spec){
-      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA) return M.enunciado(e.spec);
+      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB) return M.enunciado(e.spec);
       if(e.spec.tonica) return M.enunciado(e.spec);
     }
   }catch(err){}
@@ -9180,6 +9182,7 @@ function fpMotorDe(spec){
   if(spec && spec._ia)  return window.INDICE_MOTOR;
   if(spec && spec._cad) return window.CADENCIAS_MOTOR;
   if(spec && spec._tonA) return window.TON_NOMBRE_MOTOR;
+  if(spec && spec._tonB) return window.TON_ARMADURA_MOTOR;
   if(spec && spec._ton) return window.TONALIDADES_MOTOR;
   return window.MODOS_MOTOR;
 }
@@ -9210,6 +9213,7 @@ function fpGenera(key){
   var TO=window.TONALIDADES_MOTOR;
   if(key==='tonalidades')      return TO?TO.generar():null;
   if(key==='ton_nombre')       return window.TON_NOMBRE_MOTOR?window.TON_NOMBRE_MOTOR.generar():null;
+  if(key==='ton_armadura')     return window.TON_ARMADURA_MOTOR?window.TON_ARMADURA_MOTOR.generar():null;
   return null;
 }
 function fpLabelDe(key){
@@ -9328,6 +9332,7 @@ function fpTituloPDF(e){
     return fpPdfSafe(ia.modo==='build' ? (pre+'Construye los acordes indicados') : (pre+'Identifica el tipo de cada acorde'));
   }
   if(e.spec && e.spec._tonA){ return fpPdfSafe('Tonalidades. Escribe la tonalidad Mayor y su menor relativa'); }
+  if(e.spec && e.spec._tonB){ return fpPdfSafe('Tonalidades. Coloca la armadura de cada tonalidad'); }
   if(e.spec && e.spec._iv && window.INTERVALOS_MOTOR && window.INTERVALOS_MOTOR.pdfInfo){
     var iv=window.INTERVALOS_MOTOR.pdfInfo(e.spec);
     return fpPdfSafe(iv.modo==='build' ? 'Intervalos. Construye los intervalos indicados' : 'Intervalos. Identifica el numero y la especie');
@@ -9905,6 +9910,92 @@ console.info('[teoriapro] FICHAS PRO r16 · vista Acordes basico (motor foto: 1 
   function pdfInfo(g){ return { apart:'a', subs:(g.subs||[]).map(function(sub){ var cM=tpc(sub.f,'M'), cm=tpc(sub.f,'m'); return { f:sub.f, may:nb(cM.nom), men:nb(cm.nom) }; }) }; }
   window.TON_NOMBRE_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
 })();
+/* ============================================================
+   FICHAS · TONALIDADES tipo B — "Indica la armadura" (SOLO fichas).
+   4 tonalidades -> coloca su armadura (rueda de nº de alteraciones).
+   ============================================================ */
+(function(){
+  var FIF=[7,6,5,4,3,2,1,0,-1,-2,-3,-4,-5,-6,-7];   // arriba sostenidos, abajo bemoles
+  function itFif(f){ return f===0?'0':(Math.abs(f)+(f>0?'♯':'♭')); }
+  function P(){ return window.TON_PURE; }
+  function nb(nom){ return window.TON_nomBonito? window.TON_nomBonito(nom) : nom; }
+  function generar(){
+    var tons=[], used={}, n=0;
+    while(tons.length<4 && n<400){ var t=P().sorteaTon(false); n++; var k=t.nom; if(used[k]) continue; used[k]=1; tons.push({f:t.f, nom:t.nom}); }
+    while(tons.length<4){ tons.push({f:0, nom:'DoM'}); }
+    var subs=tons.map(function(t){ return { f:t.f, nom:t.nom, sel:0 }; });
+    return { _tonB:true, _apart:'b', subs:subs };
+  }
+  function enunciado(g){ return 'Tonalidades · Coloca la armadura de cada tonalidad.'; }
+  function montarEn(host, g){
+    if(!host||!g||!g.subs) return;
+    host.innerHTML='';
+    var sc=document.createElement('div'); sc.style.cssText='position:relative;background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:8px 10px;min-height:110px'; host.appendChild(sc);
+    var ans=document.createElement('div'); ans.style.cssText='margin-top:12px;background:linear-gradient(160deg,#241c09,#151004);border:1px solid #6b551d;border-radius:14px;padding:12px 12px 14px'; host.appendChild(ans);
+    g.__sc=sc; g.__ans=ans;
+    renderScore(g, sc); pintarAns(g, ans);
+  }
+  function renderScore(g, sc){
+    if(!window.Vex){ sc.textContent='(sin notación)'; return; }
+    var VF=Vex.Flow; sc.innerHTML='';
+    var W=Math.max(sc.clientWidth||0, 460), H=110;
+    var r=new VF.Renderer(sc, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+    var x0=10, usable=W-20, wC=usable/4;
+    g.subs.forEach(function(sub,i){ P().staveConArmadura(ctx, x0+i*wC, 14, wC, sub.sel||0, i===0, i===3); });
+  }
+  function pintarAns(g, ans){
+    var cap=document.createElement('div'); cap.style.cssText='font-size:12px;font-weight:800;color:#e9d9a8;text-align:center;margin-bottom:8px'; cap.textContent='Desliza cada rueda para poner la armadura (↑ sostenidos · ↓ bemoles)'; ans.appendChild(cap);
+    var row=document.createElement('div'); row.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;padding:0 10px'; ans.appendChild(row);
+    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:10px;font-size:12px;color:#e9d9a8';
+    g.subs.forEach(function(sub, i){
+      var cell=document.createElement('div'); cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid #6b551d;border-radius:12px;padding:8px 6px;background:rgba(255,255,255,.02)';
+      var nom=document.createElement('div'); nom.style.cssText='font-size:14px;font-weight:800;color:#f0e6c8'; nom.textContent=nb(sub.nom); cell.appendChild(nom);
+      var w=document.createElement('div'); w.className='wheel'; w.style.cssText='height:84px;width:64px'; cell.appendChild(w);
+      var stag=document.createElement('div'); stag.className='sol'; stag.style.cssText='min-height:14px;font-size:11px;text-align:center;color:#c9b978'; cell.appendChild(stag); sub.__stag=stag;
+      row.appendChild(cell);
+      var items=FIF.map(itFif);
+      var start=FIF.indexOf(0);
+      makeWheel(w, items, start, function(idx){ sub.sel=FIF[idx]; renderScore(g, g.__sc); });
+      sub.sel=0;
+    });
+    ans.appendChild(tag); g.__tag=tag;
+  }
+  function puntua(g){ try{ if(!g||!g.subs) return 0; var ok=0; g.subs.forEach(function(s){ if(s.sel===s.f) ok++; }); return ok/g.subs.length; }catch(e){ return 0; } }
+  function corregirVisual(host, g){
+    try{
+      if(!g||!g.subs) return 0;
+      if(host && (!g.__sc || !host.contains(g.__sc))){ montarEn(host, g); }
+      var ok=0; g.subs.forEach(function(sub){ var good=sub.sel===sub.f; if(good) ok++; if(sub.__stag){ if(good){ sub.__stag.style.color='#8be28b'; sub.__stag.textContent='✓'; } else { sub.__stag.style.color='#5b9dff'; sub.__stag.textContent='Correcto: '+itFif(sub.f); } } });
+      if(g.__tag){ g.__tag.style.color= ok===g.subs.length?'#8be28b':'#e9d9a8'; g.__tag.textContent='Aciertos: '+ok+'/'+g.subs.length; }
+      return puntua(g);
+    }catch(e){ return puntua(g); }
+  }
+  function pdfInfo(g){ return { apart:'b', subs:(g.subs||[]).map(function(sub){ return { nom:nb(sub.nom), f:sub.f }; }) }; }
+  window.TON_ARMADURA_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
+})();
+function fpPintaTonArmadura(host, spec, resuelto, anchoFijo){
+  try{
+    var VF=Vex.Flow; host.innerHTML='';
+    var info=window.TON_ARMADURA_MOTOR.pdfInfo(spec); var subs=info.subs||[];
+    var pure=window.TON_PURE;
+    var W=anchoFijo||Math.max(360, host.clientWidth||520), H=150;
+    var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+    var x0=8, usable=W-16, wC=usable/Math.max(1,subs.length);
+    // nombres arriba (siempre)
+    var svg;
+    // dibuja los pentagramas: en alumno vacíos; en solución con su armadura en rojo
+    if(resuelto){ try{ ctx.setFillStyle('#c0392b'); ctx.setStrokeStyle('#c0392b'); }catch(e){} }
+    subs.forEach(function(su,i){ pure.staveConArmadura(ctx, x0+i*wC, 52, wC, resuelto?su.f:0, i===0, i===subs.length-1); });
+    svg=host.querySelector('svg');
+    if(svg){
+      subs.forEach(function(su,i){
+        var cx=x0+i*wC+wC/2;
+        var t=document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('x',cx); t.setAttribute('y',30); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','14'); t.setAttribute('font-weight','bold'); t.setAttribute('font-family','DejaVu Sans, Helvetica, Arial, sans-serif'); t.setAttribute('fill','#222'); t.textContent=su.nom; svg.appendChild(t);
+      });
+      svg.setAttribute('height', H); svg.setAttribute('viewBox','0 0 '+W+' '+H);
+    }
+  }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar tonalidades B: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaTonArmadura', e); }
+}
 function fpPintaTonNombre(host, spec, resuelto, anchoFijo){
   try{
     var VF=Vex.Flow; host.innerHTML='';
