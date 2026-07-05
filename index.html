@@ -8746,6 +8746,7 @@ var CATALOGO=[
   { key:'ton_nombre',       label:'Tonalidades · indica tonalidad', estado:'activo', desc:'4 armaduras: escribe la Mayor y su menor relativa' },
   { key:'ton_armadura',     label:'Tonalidades · indica armadura',  estado:'activo', desc:'4 tonalidades: coloca su armadura' },
   { key:'ton_vecinos',      label:'Tonalidades · tonos vecinos',    estado:'activo', desc:'1 tonalidad central: escribe sus 5 tonos vecinos' },
+  { key:'comp_elegir',      label:'Compases · elegir',              estado:'activo', desc:'rodea el compás correcto (3 ritmos)' },
   { key:'seriearmonica',    label:'Serie armónica',       estado:'prox', nota:'fase 2' },
   { key:'transporte',       label:'Transporte',           estado:'prox', nota:'fase 2' },
   { key:'compasespro',      label:'Compases PRO',         estado:'prox', nota:'fase 3' },
@@ -9107,6 +9108,7 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
   if(spec && spec._tonA){ return fpPintaTonNombre(host, spec, resuelto, anchoFijo); }
   if(spec && spec._tonB){ return fpPintaTonArmadura(host, spec, resuelto, anchoFijo); }
   if(spec && spec._tonC){ return fpPintaTonVecinos(host, spec, resuelto, anchoFijo); }
+  if(spec && spec._cel){ return fpPintaCompElegir(host, spec, resuelto, anchoFijo); }
   if(spec && spec._ton){ return fpPintaTonalidades(host, spec, resuelto, anchoFijo); }
   if(spec && spec._aco){ return fpPintaAcordes(host, spec, resuelto, anchoFijo); }
   if(spec && spec._iv){ return fpPintaIntervalos(host, spec, resuelto, anchoFijo); }
@@ -9168,7 +9170,7 @@ function fpEnun(e){
   try{
     var M=fpMotorDe(e.spec);
     if(M && e.spec){
-      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC) return M.enunciado(e.spec);
+      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel) return M.enunciado(e.spec);
       if(e.spec.tonica) return M.enunciado(e.spec);
     }
   }catch(err){}
@@ -9185,6 +9187,7 @@ function fpMotorDe(spec){
   if(spec && spec._tonA) return window.TON_NOMBRE_MOTOR;
   if(spec && spec._tonB) return window.TON_ARMADURA_MOTOR;
   if(spec && spec._tonC) return window.TON_VECINOS_MOTOR;
+  if(spec && spec._cel) return window.COMP_ELEGIR_MOTOR;
   if(spec && spec._ton) return window.TONALIDADES_MOTOR;
   return window.MODOS_MOTOR;
 }
@@ -9217,6 +9220,7 @@ function fpGenera(key){
   if(key==='ton_nombre')       return window.TON_NOMBRE_MOTOR?window.TON_NOMBRE_MOTOR.generar():null;
   if(key==='ton_armadura')     return window.TON_ARMADURA_MOTOR?window.TON_ARMADURA_MOTOR.generar():null;
   if(key==='ton_vecinos')      return window.TON_VECINOS_MOTOR?window.TON_VECINOS_MOTOR.generar():null;
+  if(key==='comp_elegir')      return window.COMP_ELEGIR_MOTOR?window.COMP_ELEGIR_MOTOR.generar():null;
   return null;
 }
 function fpLabelDe(key){
@@ -9337,6 +9341,7 @@ function fpTituloPDF(e){
   if(e.spec && e.spec._tonA){ return fpPdfSafe('Tonalidades. Escribe la tonalidad Mayor y su menor relativa'); }
   if(e.spec && e.spec._tonB){ return fpPdfSafe('Tonalidades. Coloca la armadura de cada tonalidad'); }
   if(e.spec && e.spec._tonC){ return fpPdfSafe('Tonalidades. Escribe los 5 tonos vecinos'); }
+  if(e.spec && e.spec._cel){ return fpPdfSafe('Compases. Rodea el compas correcto'); }
   if(e.spec && e.spec._iv && window.INTERVALOS_MOTOR && window.INTERVALOS_MOTOR.pdfInfo){
     var iv=window.INTERVALOS_MOTOR.pdfInfo(e.spec);
     return fpPdfSafe(iv.modo==='build' ? 'Intervalos. Construye los intervalos indicados' : 'Intervalos. Identifica el numero y la especie');
@@ -10190,6 +10195,179 @@ function fpPintaTonNombre(host, spec, resuelto, anchoFijo){
       svg.setAttribute('height', H); svg.setAttribute('viewBox','0 0 '+W+' '+H);
     }
   }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar tonalidades A: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaTonNombre', e); }
+}
+</script>
+
+<script>
+/* ============================================================
+   FICHAS · COMPASES — núcleo compartido (portado de banco_compases.html)
+   ============================================================ */
+(function(){
+  function gcd(a,b){ a=Math.abs(a); b=Math.abs(b); while(b){ var t=b; b=a%b; a=t; } return a||1; }
+  function R(n,d){ if(d<0){ n=-n; d=-d; } var g=gcd(n,d); return {n:Math.round(n/g), d:Math.round(d/g)}; }
+  function Radd(x,y){ return R(x.n*y.d + y.n*x.d, x.d*y.d); }
+  function Rsub(x,y){ return R(x.n*y.d - y.n*x.d, x.d*y.d); }
+  function Rmul32(x){ return R(x.n*3, x.d*2); }
+  function Req(x,y){ return x.n===y.n && x.d===y.d; }
+  function Rcmp(x,y){ return x.n*y.d - y.n*x.d; }
+  function Rtxt(x){ return x.n+'/'+x.d; }
+  var DISPARES=[ {n:5,d:8},{n:7,d:8},{n:11,d:8},{n:13,d:8},{n:5,d:16},{n:7,d:16} ];
+  var BPOOL=[{n:5,d:8},{n:7,d:8},{n:9,d:8},{n:11,d:8},{n:13,d:8},{n:5,d:16},{n:7,d:16},{n:9,d:16},{n:11,d:16},{n:3,d:8}];
+  var FRACS=[ {n:1,d:2,g:'½',dec:'5'}, {n:1,d:4,g:'¼',dec:'25'}, {n:3,d:4,g:'¾',dec:'75'} ];
+  var FIGS=[ {code:'w',name:'redonda',R:R(1,1)},{code:'h',name:'blanca',R:R(1,2)},{code:'q',name:'negra',R:R(1,4)},{code:'8',name:'corchea',R:R(1,8)},{code:'16',name:'semicorchea',R:R(1,16)},{code:'32',name:'fusa',R:R(1,32)},{code:'64',name:'semifusa',R:R(1,64)} ];
+  function canonicalForms(disp){
+    var n=disp.n, d=disp.d, half=FRACS[0];
+    if(d===8){ return { dispar:{n:n,d:d}, mixto:{terms:[{num:(n-1)/2,den:4},{num:1,den:8}]}, decimal:{int:(n-1)/2,frac:half,den:4}, fracPlus:{base:(n-1)/2,frac:half,sign:1,den:4}, fracMinus:{base:(n+1)/2,frac:half,sign:-1,den:4} }; }
+    return { dispar:{n:n,d:d}, mixto:{terms:[{num:(n-1)/2,den:8},{num:1,den:16}]}, decimal:{int:(n-1)/2,frac:half,den:8}, fracPlus:{base:(n-1)/2,frac:half,sign:1,den:8}, fracMinus:{base:(n+1)/2,frac:half,sign:-1,den:8} };
+  }
+  function shuffle(a){ for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+  function genRhythmB(objRr){
+    var U=Math.round(objRr.n*16/objRr.d);
+    var pool=[{u:4,dur:'q',dotted:false},{u:6,dur:'q',dotted:true},{u:2,dur:'8',dotted:false},{u:3,dur:'8',dotted:true},{u:1,dur:'16',dotted:false}];
+    var items=[], rem=U, guard=0;
+    while(rem>0 && guard++<40){ var cands=pool.filter(function(p){return p.u<=rem;}); if(rem>=4){ var big=cands.filter(function(p){return p.u>=2;}); if(big.length) cands=big; } var pick=cands[Math.floor(Math.random()*cands.length)]; items.push({dur:pick.dur,dotted:pick.dotted,rest:false}); rem-=pick.u; }
+    return items;
+  }
+  /* símbolos de compás (HTML, para lo interactivo) */
+  function tsHtml(numHtml, denHtml, cls){ return '<span class="cmpts '+(cls||'')+'" style="display:inline-flex;flex-direction:column;align-items:center;line-height:1;vertical-align:middle;font-weight:800"><span>'+numHtml+'</span><span style="border-top:1.4px solid currentColor;padding-top:1px">'+denHtml+'</span></span>'; }
+  function disparHtml(s){ return tsHtml(String(s.n), String(s.d)); }
+  function mixtoHtml(spec){ return '<span style="display:inline-flex;align-items:center;gap:3px">'+spec.terms.map(function(t){return tsHtml(String(t.num),String(t.den));}).join('<span style="font-weight:800">+</span>')+'</span>'; }
+  function decimalHtml(spec){ return tsHtml(String(spec.int)+'’'+spec.frac.dec, String(spec.den)); }
+  function fracHtml(spec){ var sg=spec.sign<0?'−':'+'; return tsHtml(String(spec.base)+'<sup style="font-size:.62em">'+sg+spec.frac.g+'</sup>', String(spec.den)); }
+  function specHtml(type, spec){ if(type==='mixto') return mixtoHtml(spec); if(type==='decimal') return decimalHtml(spec); if(type==='dispar') return disparHtml(spec); return fracHtml(spec); }
+  /* texto plano de un compás (para PDF/etiquetas) */
+  function disparTxt(s){ return s.n+'/'+s.d; }
+  /* render de ritmo en un HOST propio (interactivo) */
+  function renderStaves(host, bars, opts){
+    opts=opts||{}; if(!host) return; host.innerHTML='';
+    if(typeof Vex==='undefined'){ host.innerHTML='<div class="fp-vacio">Sin notación</div>'; return; }
+    var VF=Vex.Flow;
+    var totalNotes=bars.reduce(function(a,b){return a+b.length;},0);
+    var W=Math.max((host.clientWidth||520), totalNotes*38+60), H=96;
+    var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+    drawRhythmCtx(ctx, bars, 8, 22, W-16, opts);
+  }
+  /* dibuja ritmo en un CTX compartido a (x0,y0,totalW) — para el PDF */
+  function drawRhythmCtx(ctx, bars, x0, y0, totalW, opts){
+    opts=opts||{}; var VF=Vex.Flow;
+    var weights=bars.map(function(b){ return Math.max(1.4, b.length); });
+    var wsum=weights.reduce(function(a,c){return a+c;},0), x=x0;
+    bars.forEach(function(items, bi){
+      var last=(bi===bars.length-1);
+      var wBar= last ? (x0+totalW - x) : Math.max(60, Math.round(totalW*weights[bi]/wsum));
+      var stave=new VF.Stave(x, y0, wBar);
+      try{ stave.setBegBarType(VF.Barline.type.NONE); }catch(e){}
+      try{ stave.setEndBarType( (last && opts.finalDouble) ? VF.Barline.type.END : VF.Barline.type.SINGLE ); }catch(e){}
+      stave.setContext(ctx).draw();
+      if(items.length){
+        var notes=items.map(function(it){ var dur=it.dur+(it.rest?'r':''); var sn=new VF.StaveNote({keys:['b/4'], duration:dur, stem_direction:1}); if(it.dotted){ try{ VF.Dot.buildAndAttach([sn],{all:true}); }catch(e){} } return sn; });
+        var voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); voice.addTickables(notes);
+        var beams=[], run=[]; function flush(){ if(run.length>=2) beams.push(new VF.Beam(run.slice())); run=[]; }
+        items.forEach(function(it,i){ var bm=!it.rest && (it.dur==='8'||it.dur==='16'||it.dur==='32'||it.dur==='64'); if(bm) run.push(notes[i]); else flush(); });
+        flush();
+        try{ new VF.Formatter().joinVoices([voice]).format([voice], Math.max(50, wBar-22)); }catch(e){}
+        voice.draw(ctx, stave);
+        beams.forEach(function(b){ try{ b.setContext(ctx).draw(); }catch(e){} });
+      }
+      x+=wBar;
+    });
+  }
+  window.CMP_PURE={ R:R,Radd:Radd,Rsub:Rsub,Rmul32:Rmul32,Req:Req,Rcmp:Rcmp,Rtxt:Rtxt,
+    DISPARES:DISPARES,BPOOL:BPOOL,FRACS:FRACS,FIGS:FIGS, canonicalForms:canonicalForms, shuffle:shuffle, genRhythmB:genRhythmB,
+    disparHtml:disparHtml, specHtml:specHtml, disparTxt:disparTxt, renderStaves:renderStaves, drawRhythmCtx:drawRhythmCtx };
+})();
+
+/* ============================================================
+   FICHAS · COMPASES tipo ELEGIR — rodea el compás correcto (3 ritmos).
+   ============================================================ */
+(function(){
+  function P(){ return window.CMP_PURE; }
+  function generar(){
+    var C=P(), subs=[], used=[];
+    for(var k=0;k<3;k++){
+      var cor; do{ cor=C.DISPARES[Math.floor(Math.random()*C.DISPARES.length)]; }while(used.indexOf(cor.n+'/'+cor.d)>=0);
+      used.push(cor.n+'/'+cor.d);
+      var cR=C.R(cor.n,cor.d);
+      var bars=[ C.genRhythmB(cR), C.genRhythmB(cR) ];
+      var distract=C.shuffle(C.BPOOL.filter(function(p){ return C.Rcmp(C.R(p.n,p.d),cR)!==0; }).slice()).slice(0,2);
+      var options=C.shuffle([{n:cor.n,d:cor.d,ok:true}].concat(distract.map(function(p){return {n:p.n,d:p.d,ok:false};})));
+      subs.push({ bars:bars, options:options, sel:null });
+    }
+    return { _cel:true, _grupo:true, subs:subs };
+  }
+  function enunciado(g){ return 'Compases · Rodea el compás correcto de cada ritmo.'; }
+  function montarEn(host, g){
+    if(!host||!g||!g.subs) return; host.innerHTML='';
+    var wrap=document.createElement('div'); wrap.style.cssText='display:flex;flex-direction:column;gap:12px'; host.appendChild(wrap);
+    g.subs.forEach(function(sub, idx){
+      var card=document.createElement('div'); card.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap'; wrap.appendChild(card);
+      var staff=document.createElement('div'); staff.style.cssText='flex:1 1 300px;min-width:260px'; card.appendChild(staff);
+      var opts=document.createElement('div'); opts.style.cssText='display:flex;gap:8px'; card.appendChild(opts);
+      P().renderStaves(staff, sub.bars, {finalDouble:true});
+      sub.options.forEach(function(o,j){
+        var b=document.createElement('button'); b.type='button'; b.style.cssText='border:1.5px solid #cbb98a;background:#fff;border-radius:10px;padding:8px 12px;min-width:56px;font-weight:800;font-size:15px;cursor:pointer;color:#3a2f12';
+        b.innerHTML=P().disparHtml({n:o.n,d:o.d});
+        b.addEventListener('click', function(){ sub.sel=j; opts.querySelectorAll('button').forEach(function(x,jj){ x.style.borderColor=(jj===j)?'#b8860b':'#cbb98a'; x.style.background=(jj===j)?'#f6e6b8':'#fff'; x.style.boxShadow=(jj===j)?'0 0 0 2px rgba(184,134,11,.35)':'none'; }); });
+        opts.appendChild(b);
+      });
+    });
+  }
+  function puntua(g){ try{ if(!g||!g.subs) return 0; var ok=0; g.subs.forEach(function(s){ if(s.sel!=null && s.options[s.sel] && s.options[s.sel].ok) ok++; }); return ok/g.subs.length; }catch(e){ return 0; } }
+  function corregirVisual(host, g){
+    try{
+      if(!g||!g.subs) return 0;
+      if(host){
+        host.innerHTML='';
+        var wrap=document.createElement('div'); wrap.style.cssText='display:flex;flex-direction:column;gap:10px'; host.appendChild(wrap);
+        var ok=0;
+        g.subs.forEach(function(sub){
+          var good=(sub.sel!=null && sub.options[sub.sel] && sub.options[sub.sel].ok); if(good) ok++;
+          var card=document.createElement('div'); card.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:8px 10px;display:flex;align-items:center;gap:12px;flex-wrap:wrap'; wrap.appendChild(card);
+          var staff=document.createElement('div'); staff.style.cssText='flex:1 1 300px;min-width:260px'; card.appendChild(staff);
+          var opts=document.createElement('div'); opts.style.cssText='display:flex;gap:8px'; card.appendChild(opts);
+          P().renderStaves(staff, sub.bars, {finalDouble:true});
+          sub.options.forEach(function(o,j){
+            var b=document.createElement('div'); b.style.cssText='border:2px solid #cbb98a;border-radius:10px;padding:7px 11px;min-width:56px;font-weight:800;font-size:15px;text-align:center;color:#3a2f12;background:#fff';
+            b.innerHTML=P().disparHtml({n:o.n,d:o.d});
+            var chosen=(sub.sel===j);
+            if(o.ok){ b.style.borderColor='#16a34a'; b.style.color='#16a34a'; b.style.background='#eafaf0'; }       // el correcto siempre en verde
+            if(chosen && !o.ok){ b.style.borderColor='#d11d1d'; b.style.color='#d11d1d'; b.style.background='#fdecec'; } // tu fallo en rojo
+            opts.appendChild(b);
+          });
+        });
+        var tag=document.createElement('div'); tag.style.cssText='text-align:center;margin-top:2px;font-size:12.5px;font-weight:800;color:'+(ok===g.subs.length?'#16a34a':'#8a6d1a'); tag.textContent='Aciertos: '+ok+'/'+g.subs.length; host.appendChild(tag);
+      }
+      return puntua(g);
+    }catch(e){ return puntua(g); }
+  }
+  function pdfInfo(g){ return { subs:(g.subs||[]).map(function(s){ return { bars:s.bars, options:s.options }; }) }; }
+  window.COMP_ELEGIR_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
+})();
+function fpPintaCompElegir(host, spec, resuelto, anchoFijo){
+  try{
+    var VF=Vex.Flow; host.innerHTML='';
+    var info=window.COMP_ELEGIR_MOTOR.pdfInfo(spec); var subs=info.subs||[];
+    var svgns='http://www.w3.org/2000/svg';
+    var W=anchoFijo||Math.max(360, host.clientWidth||520);
+    var rowH=66, H=rowH*subs.length+10;
+    var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+    var staffX=8, staffW=Math.round(W*0.56), optX0=staffX+staffW+22;
+    var optW=(W-optX0-8-2*10)/3, boxH=34;
+    subs.forEach(function(sub,i){ var staffY=10+i*rowH; window.CMP_PURE.drawRhythmCtx(ctx, sub.bars, staffX, staffY, staffW, {finalDouble:true}); });
+    var svg=host.querySelector('svg'); if(!svg) return;
+    subs.forEach(function(sub,i){
+      var cy=10+i*rowH+22;   // centro del pentagrama de esa fila
+      sub.options.forEach(function(o,j){
+        var x=optX0+j*(optW+10), y=cy-boxH/2;
+        var esOk=(resuelto && o.ok);
+        var rect=document.createElementNS(svgns,'rect'); rect.setAttribute('x',x); rect.setAttribute('y',y); rect.setAttribute('width',optW); rect.setAttribute('height',boxH); rect.setAttribute('rx',9);
+        rect.setAttribute('fill','#ffffff'); rect.setAttribute('stroke', esOk?'#c0392b':'#c9b98a'); rect.setAttribute('stroke-width', esOk?'2.2':'1.2'); svg.appendChild(rect);
+        var t=document.createElementNS(svgns,'text'); t.setAttribute('x',x+optW/2); t.setAttribute('y',y+boxH/2+5); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','15'); t.setAttribute('font-weight','bold'); t.setAttribute('font-family','DejaVu Sans, Helvetica, Arial, sans-serif'); t.setAttribute('fill', esOk?'#c0392b':'#2b2b2b'); t.textContent=o.n+'/'+o.d; svg.appendChild(t);
+        if(esOk){ var el=document.createElementNS(svgns,'ellipse'); el.setAttribute('cx',x+optW/2); el.setAttribute('cy',y+boxH/2); el.setAttribute('rx',optW/2+4); el.setAttribute('ry',boxH/2+4); el.setAttribute('fill','none'); el.setAttribute('stroke','#c0392b'); el.setAttribute('stroke-width','1.6'); svg.appendChild(el); }
+      });
+    });
+    svg.setAttribute('height', H); svg.setAttribute('viewBox','0 0 '+W+' '+H);
+  }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar compases elegir: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaCompElegir', e); }
 }
 </script>
 
