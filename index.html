@@ -4708,15 +4708,16 @@ window.nuevoIVTODO=nuevoIVTODO;
 
 /* =====================================================================
    TONALIDADES · motor para FICHAS (interactivo + PDF)
-   Usa window.TON_PURE (piezas puras del motor del portal).
-   Ejercicio con 3 apartados: a) nombrar M/m de armaduras · b) armadura de
-   tonalidades · c) 5 tonos vecinos. Estado propio por instancia.
+   REUTILIZA el motor del portal (nuevoTA/TB/TC, corregirTA/TB/TC) con sus
+   RUEDAS y celdas reales — la misma interfaz que el banco de prueba.
+   La ficha monta la estructura de los 3 apartados en su host y delega en
+   el motor del portal (estado global único -> un ejercicio de tonalidades
+   por ficha, que es el caso normal).
    spec._ton = true
    ===================================================================== */
 (function(){
-  if(typeof Vex==='undefined') return;
-  var VF=Vex.Flow;
-  function P(){ return window.TON_PURE; }
+  function pure(){ return window.TON_PURE; }
+  function ST(){ return window.TON_STATE; }
   function nomBonito(nom){
     if(!nom) return '?';
     var NOTAS=['Do','Re','Mi','Fa','Sol','La','Si'];
@@ -4728,177 +4729,158 @@ window.nuevoIVTODO=nuevoIVTODO;
     var a=resto==='#'?'\u266f':resto==='b'?'\u266d':'';
     return nota+a+' '+modo;
   }
+  window.TON_nomBonito=nomBonito;
 
-  function generar(){
-    var pure=P(); if(!pure) return {_ton:true,_err:'sin TON_PURE'};
-    // apartado A: 4 armaduras distintas para nombrar
-    var usados={}, A=[];
-    for(var i=0;i<4;i++){ var f, t=0; do{ f=pure.sorteaFifths(); t++; }while(usados[f] && t<30); usados[f]=1; A.push(f); }
-    // apartado B: 4 tonalidades para poner armadura
-    var B=[]; for(var j=0;j<4;j++){ B.push(pure.sorteaTon(false)); }
-    // apartado C: 1 tonalidad central con 5 vecinos
-    var centro=pure.sorteaTon(true);
-    var vec=pure.vecinos(centro).map(function(t){ return t.nom; });
-    return {
-      _ton:true,
-      A:A,                                   // fifths[]
-      B:B.map(function(t){ return t.nom; }), // nombres
-      C:{ centro:centro.nom, vecinos:vec },
-      selA:A.map(function(){ return {may:null, men:null}; }),
-      selB:B.map(function(){ return null; }),   // fifths que ponga el alumno
-      selC:[null,null,null,null,null]
-    };
-  }
+  // el spec solo marca el tipo; el estado real vive en el motor del portal
+  function generar(){ return { _ton:true }; }
 
   function enunciado(it){ return 'Tonalidades: nombra, coloca la armadura y escribe los tonos vecinos.'; }
 
-  // ---- MONTAJE INTERACTIVO (3 apartados) ----
+  // estructura HTML de los 3 apartados (mismos IDs que el portal -> reutiliza su motor)
+  var HTML_APARTADOS =
+    '<div class="ex-card" id="cardTA" style="margin-bottom:16px">'+
+      '<div class="ex-letter" style="font-weight:800;color:#b8860b;margin-bottom:6px"><b>a</b> Escribe la tonalidad Mayor y su menor relativa</div>'+
+      '<div class="score" id="scoreTA" style="background:#f3f5ff;border-radius:12px;padding:8px;overflow:hidden"></div>'+
+      '<div class="answers" id="answersTA"></div>'+
+    '</div>'+
+    '<div class="ex-card" id="cardTB" style="margin-bottom:16px">'+
+      '<div class="ex-letter" style="font-weight:800;color:#b8860b;margin-bottom:6px"><b>b</b> Coloca la armadura de cada tonalidad</div>'+
+      '<div class="score" id="scoreTB" style="background:#f3f5ff;border-radius:12px;padding:8px;overflow:hidden"></div>'+
+      '<div class="answers" id="answersTB"></div>'+
+    '</div>'+
+    '<div class="ex-card" id="cardTC">'+
+      '<div class="ex-letter" style="font-weight:800;color:#b8860b;margin-bottom:6px"><b>c</b> Completa los tonos vecinos</div>'+
+      '<div id="gridTC" class="vecinos-grid"></div>'+
+      '<p class="hint" id="hintTC" style="margin-top:10px;font-size:12px;color:#8a7a4a">Haz clic en una casilla vacía y elige la tonalidad. El orden no importa.</p>'+
+    '</div>';
+
+  // NOTA: el motor del portal usa IDs fijos (scoreTA, gridTC...). Para no duplicarlos,
+  // la ficha TOMA PRESTADOS los 3 apartados reales de la vista del portal y los mueve
+  // a su host; al desmontar los devuelve. Así se usa la interfaz real (ruedas, celdas).
+  var _prestamo=null;   // {cards:[...], placeholders:[...]}
+
+  function tomarPrestado(host){
+    devolver();
+    var wrap=document.createElement('div'); wrap.className='ton-fp-wrap'; wrap.style.cssText='display:flex;flex-direction:column;gap:16px';
+    host.appendChild(wrap);
+    var cards=[], placeholders=[];
+    ['cardTA','cardTB','cardTC'].forEach(function(id){
+      var card=document.getElementById(id);
+      if(!card){ return; }
+      // marcador para devolverlo a su sitio original
+      var ph=document.createComment('ton-'+id); card.parentNode.insertBefore(ph, card);
+      wrap.appendChild(card);            // mover el apartado real al host de la ficha
+      card.style.display='block';
+      cards.push(card); placeholders.push(ph);
+    });
+    _prestamo={cards:cards, placeholders:placeholders, wrap:wrap};
+  }
+  function devolver(){
+    if(!_prestamo) return;
+    _prestamo.cards.forEach(function(card,i){
+      var ph=_prestamo.placeholders[i];
+      if(ph && ph.parentNode){ ph.parentNode.insertBefore(card, ph); ph.parentNode.removeChild(ph); }
+    });
+    if(_prestamo.wrap && _prestamo.wrap.parentNode) _prestamo.wrap.parentNode.removeChild(_prestamo.wrap);
+    _prestamo=null;
+  }
+  window.TON_FICHA_DEVOLVER=devolver;
+
+  // ---- MONTAJE INTERACTIVO: reutiliza la vista real del portal ----
   function montarEn(host, it){
-    if(!host||!it) return;
+    if(!host) return;
     host.innerHTML='';
-    var wrap=document.createElement('div'); wrap.style.cssText='display:flex;flex-direction:column;gap:16px'; host.appendChild(wrap);
-    // Apartado A
-    var cA=bloque(wrap, 'a) Escribe la tonalidad Mayor y su menor relativa de cada armadura');
-    var scA=document.createElement('div'); scA.style.cssText='background:#f3f5ff;border-radius:12px;padding:8px;overflow:hidden'; cA.appendChild(scA);
-    renderArmaduras(scA, it.A);
-    var gridA=document.createElement('div'); gridA.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:8px'; cA.appendChild(gridA);
-    it.A.forEach(function(f,i){
-      var cell=document.createElement('div'); cell.style.cssText='display:flex;flex-direction:column;gap:4px;align-items:center';
-      var inM=inp('Mayor'); var inm=inp('menor');
-      inM.addEventListener('input',function(){ it.selA[i].may=inM.value.trim(); });
-      inm.addEventListener('input',function(){ it.selA[i].men=inm.value.trim(); });
-      cell.appendChild(inM); cell.appendChild(inm); gridA.appendChild(cell);
-      it.selA[i].__inM=inM; it.selA[i].__inm=inm;
-    });
-    // Apartado B
-    var cB=bloque(wrap, 'b) Coloca la armadura de cada tonalidad (escribe cuántas alteraciones y de qué tipo)');
-    var gridB=document.createElement('div'); gridB.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px'; cB.appendChild(gridB);
-    it.B.forEach(function(nom,i){
-      var cell=document.createElement('div'); cell.style.cssText='display:flex;flex-direction:column;gap:4px;align-items:center';
-      var lab=document.createElement('div'); lab.style.cssText='font-weight:700;font-size:13px'; lab.textContent=nomBonito(nom);
-      var inA=inp('ej: 2♯ / 3♭');
-      inA.addEventListener('input',function(){ it.selB[i]=inA.value.trim(); });
-      cell.appendChild(lab); cell.appendChild(inA); gridB.appendChild(cell);
-      it.__selBinp=it.__selBinp||[]; it.__selBinp[i]=inA;
-    });
-    // Apartado C
-    var cCen = it.C.centro;
-    var cC=bloque(wrap, 'c) Escribe los 5 tonos vecinos de: '+nomBonito(cCen));
-    var gridC=document.createElement('div'); gridC.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:8px'; cC.appendChild(gridC);
-    for(var k=0;k<5;k++){ (function(k){
-      var inV=inp('tonalidad vecina');
-      inV.addEventListener('input',function(){ it.selC[k]=inV.value.trim(); });
-      gridC.appendChild(inV);
-      it.__selCinp=it.__selCinp||[]; it.__selCinp[k]=inV;
-    })(k); }
-    it.__host=host;
-  }
-  function bloque(parent, titulo){
-    var d=document.createElement('div');
-    var h=document.createElement('div'); h.style.cssText='font-weight:800;font-size:13px;color:#b8860b;margin-bottom:6px'; h.textContent=titulo;
-    d.appendChild(h); parent.appendChild(d); return d;
-  }
-  function inp(ph){ var i=document.createElement('input'); i.type='text'; i.placeholder=ph; i.style.cssText='width:100%;box-sizing:border-box;padding:6px 8px;border:1px solid #e6ddc9;border-radius:8px;font-size:13px'; return i; }
-
-  function renderArmaduras(host, fifthsArr){
-    host.innerHTML='';
-    var W=Math.max(host.clientWidth||0, 460), H=110;
-    var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H);
-    var ctx=r.getContext(); var pure=P();
-    var x0=8, usable=W-16, wC=usable/fifthsArr.length;
-    fifthsArr.forEach(function(f,i){ pure.staveConArmadura(ctx, x0+i*wC, 12, wC, f, i===0, i===fifthsArr.length-1); });
-    try{ var svg=host.querySelector('svg'); var bb=svg.getBBox(); var pad=8; svg.setAttribute('viewBox','0 '+Math.max(0,bb.y-pad)+' '+W+' '+(bb.height+pad*2)); svg.setAttribute('height',bb.height+pad*2); }catch(e){}
+    tomarPrestado(host);
+    function montar(){
+      try{
+        if(window.nuevoTA) window.nuevoTA();
+        if(window.nuevoTB) window.nuevoTB();
+        if(window.nuevoTC) window.nuevoTC();
+      }catch(e){ console.warn('[TON ficha] montar', e); }
+    }
+    montar();
+    if(typeof requestAnimationFrame==='function') requestAnimationFrame(montar);
+    it.__montado=true;
   }
 
-  // ---- PUNTUACIÓN ----
-  function normNom(s){
-    // normaliza "Do#M", "do sostenido mayor", "Do♯ Mayor" -> forma comparable
-    if(!s) return '';
-    s=s.toLowerCase().replace(/\s+/g,'').replace(/mayor/,'m_M').replace(/menor/,'m_m');
-    s=s.replace(/sostenido|#|\u266f/,'#').replace(/bemol|b|\u266d/,'b');
-    return s;
-  }
-  function tonToComparable(nom){ return normNom(nomBonito(nom)); }
+  // ---- PUNTUACIÓN: lee el estado global del portal ----
   function puntua(it){
     try{
+      var st=ST(); if(!st) return 0;
+      var p=pure();
       var total=0, ok=0;
-      // A: 4 armaduras × (mayor + menor) = 8
-      var pure=P();
-      it.A.forEach(function(f,i){
-        var may=pure.tonPorClave(f,'M'), men=pure.tonPorClave(f,'m');
-        total+=2;
-        if(may && normNom(it.selA[i].may)===tonToComparable(may.nom)) ok++;
-        if(men && normNom(it.selA[i].men)===tonToComparable(men.nom)) ok++;
-      });
-      // B: 4 armaduras (comparar nº alteraciones)
-      it.B.forEach(function(nom,i){
-        total++;
-        var t=pure.TONS.find(function(x){return x.nom===nom;});
-        if(t){ var esperado=armaduraTxt(t.f); if(armaduraNorm(it.selB[i])===armaduraNorm(esperado)) ok++; }
-      });
-      // C: 5 vecinos (orden libre)
-      total+=5;
-      var esperadosC=it.C.vecinos.map(tonToComparable);
-      var dadosC=(it.selC||[]).map(normNom).filter(Boolean);
-      var usados={};
-      dadosC.forEach(function(d){ var idx=esperadosC.indexOf(d); if(idx>=0 && !usados[idx]){ usados[idx]=1; ok++; } });
+      // A: 4 armaduras × (Mayor + menor)
+      var A=st.getA();
+      if(A && A.data){
+        A.data.forEach(function(f,i){
+          var may=p.tonPorClave(f,'M'), men=p.tonPorClave(f,'m');
+          total+=2;
+          var s=A.sel[i];
+          if(may && s[0].nota===may.nota && s[0].alt===may.alt) ok++;
+          if(men && s[1].nota===men.nota && s[1].alt===men.alt) ok++;
+        });
+      }
+      // B: 4 armaduras (fifths que puso el alumno === correcto)
+      var B=st.getB();
+      if(B && B.data){
+        B.data.forEach(function(ton,i){
+          total++;
+          if(B.sel[i]===ton.f) ok++;
+        });
+      }
+      // C: conjunto de 6 tonalidades vecinas (orden libre)
+      var C=st.getC();
+      if(C && C.sol && C.celdas){
+        var esperadas=C.sol.map(function(t){return t.nom;});
+        var restantes=esperadas.slice();
+        // total = nº de celdas a rellenar (las no-dadas)
+        var aRellenar=0;
+        C.celdas.forEach(function(c){ if(c && c.given){ var j=restantes.indexOf(c.ton.nom); if(j>=0) restantes.splice(j,1); } else { aRellenar++; } });
+        total+=aRellenar;
+        C.celdas.forEach(function(c){
+          if(c && !c.given && c.ton){ var j=restantes.indexOf(c.ton.nom); if(j>=0){ restantes.splice(j,1); ok++; } }
+        });
+      }
       return total>0?ok/total:0;
-    }catch(e){ return 0; }
+    }catch(e){ console.warn('[TON ficha] puntua', e); return 0; }
   }
-  function armaduraTxt(f){ if(f===0) return '0'; return Math.abs(f)+(f>0?'#':'b'); }
-  function armaduraNorm(s){ if(!s) return ''; s=s.toLowerCase().replace(/\s+/g,'').replace(/sostenidos?|\u266f/g,'#').replace(/bemol(es)?|\u266d/g,'b').replace(/alteraciones?/g,'').replace(/sin/,'0'); return s; }
 
-  // ---- CORRECCIÓN VISUAL ----
+  // ---- CORRECCIÓN VISUAL: delega en el motor del portal ----
   function corregirVisual(host, it){
-    if(!host||!it) return puntua(it);
-    var p=puntua(it); var pure=P();
-    // marcar A
-    it.A.forEach(function(f,i){
-      var may=pure.tonPorClave(f,'M'), men=pure.tonPorClave(f,'m');
-      marca(it.selA[i].__inM, may && normNom(it.selA[i].may)===tonToComparable(may.nom), may?nomBonito(may.nom):'');
-      marca(it.selA[i].__inm, men && normNom(it.selA[i].men)===tonToComparable(men.nom), men?nomBonito(men.nom):'');
-    });
-    // B
-    if(it.__selBinp) it.B.forEach(function(nom,i){
-      var t=pure.TONS.find(function(x){return x.nom===nom;});
-      var esperado=t?armaduraTxt(t.f):'';
-      marca(it.__selBinp[i], armaduraNorm(it.selB[i])===armaduraNorm(esperado), esperado.replace('#','\u266f').replace('b','\u266d'));
-    });
-    // C
-    if(it.__selCinp){
-      var esperadosC=it.C.vecinos.map(tonToComparable);
-      it.__selCinp.forEach(function(inp,k){
-        var val=normNom(it.selC[k]);
-        marca(inp, esperadosC.indexOf(val)>=0, '');
-      });
-      // mostrar los correctos debajo
-    }
+    var p=puntua(it);
+    try{
+      if(window.corregirTA) window.corregirTA();
+      if(window.corregirTB) window.corregirTB();
+      if(window.corregirTC) window.corregirTC();
+    }catch(e){ console.warn('[TON ficha] corregir', e); }
     return p;
   }
-  function marca(inp, ok, sol){
-    if(!inp) return;
-    inp.style.borderColor=ok?'#16a34a':'#d11d1d';
-    inp.style.background=ok?'rgba(22,163,74,.08)':'rgba(209,29,29,.06)';
-    if(!ok && sol){ inp.title='Solución: '+sol; if(!inp.value) inp.placeholder=sol; }
-  }
 
-  // ---- DATOS PARA PDF ----
+  // ---- DATOS PARA PDF (usa el estado actual del portal) ----
   function pdfInfo(it){
-    var pure=P();
-    return {
-      A: it.A,
-      Asol: it.A.map(function(f){ return { may:nomBonito(pure.tonPorClave(f,'M').nom), men:nomBonito(pure.tonPorClave(f,'m').nom) }; }),
-      B: it.B.map(function(nom){ return nomBonito(nom); }),
-      Bsol: it.B.map(function(nom){ var t=pure.TONS.find(function(x){return x.nom===nom;}); return t?armaduraTxt(t.f):''; }),
-      Ccentro: nomBonito(it.C.centro),
-      CcentroMayor: it.C.centro.charAt(it.C.centro.length-1)==='M',
-      Cvecinos: it.C.vecinos.map(nomBonito)
-    };
+    var st=ST(), p=pure();
+    var A=st?st.getA():null, B=st?st.getB():null, C=st?st.getC():null;
+    var out={ A:[], Asol:[], B:[], Bsol:[], Ccentro:'', CcentroMayor:false, Cvecinos:[] };
+    if(A && A.data){
+      out.A=A.data.slice();
+      out.Asol=A.data.map(function(f){ return { may:nomBonito(p.tonPorClave(f,'M').nom), men:nomBonito(p.tonPorClave(f,'m').nom) }; });
+    }
+    if(B && B.data){
+      out.B=B.data.map(function(t){ return nomBonito(t.nom); });
+      out.Bsol=B.data.map(function(t){ return armaduraTxt(t.f); });
+    }
+    if(C && C.centro){
+      out.Ccentro=nomBonito(C.centro.nom);
+      out.CcentroMayor=C.centro.nom.charAt(C.centro.nom.length-1)==='M';
+      if(C.sol) out.Cvecinos=C.sol.map(function(t){ return nomBonito(t.nom); }).filter(function(n,i){ return C.sol[i].nom!==C.centro.nom; });
+    }
+    return out;
   }
-  window.TON_nomBonito=nomBonito;
+  function armaduraTxt(f){ if(f===0) return '0'; return Math.abs(f)+(f>0?'\u266f':'\u266d'); }
 
   window.TONALIDADES_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
 })();
+
 
 
 
@@ -6269,6 +6251,13 @@ function nuevoTONtodos(){ nuevoTA(); nuevoTB(); nuevoTC(); }
 /* exponer al ámbito global (onclick del HTML) */
 window.nuevoTA=nuevoTA; window.nuevoTB=nuevoTB; window.nuevoTC=nuevoTC;
 window.corregirTA=corregirTA; window.corregirTB=corregirTB; window.corregirTC=corregirTC;
+/* acceso al estado interno para el motor de FICHAS (calcular puntuación) */
+window.TON_STATE={
+  getA:function(){ return {data:dataTA, sel:selTA}; },
+  getB:function(){ return {data:dataTB, sel:selTB}; },
+  getC:function(){ return {celdas:(typeof tcCeldas!=='undefined'?tcCeldas:null), centro:(typeof tcCentro!=='undefined'?tcCentro:null), sol:(typeof tcSol!=='undefined'?tcSol:null)}; },
+  tonPorClave:tonPorClave, vecinos:vecinos
+};
 window.nuevoTONtodos=nuevoTONtodos; window._tonInit=_tonInit;
 /* piezas puras reutilizables por el motor de FICHAS de tonalidades */
 window.TON_PURE={ TONS:TONS, KS_VF:KS_VF, tonPorClave:tonPorClave, vecinos:vecinos, sorteaFifths:sorteaFifths, sorteaTon:sorteaTon, staveConArmadura:staveConArmadura };
@@ -7256,6 +7245,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   }
   window.serieInit=serieInit;
   window.serieCompute=serieFromFund;
+  /* piezas puras reutilizables por el motor de FICHAS de serie armónica */
+  window.SERIE_PURE={ serieFromFund:serieFromFund, drawGrand:drawGrand, FUNDS:FUNDS, nom:nom, keyOf:keyOf, accOf:accOf, midi:midi };
   window.serieNuevoTodo=serieNuevoTodo;
   window.serieCorregirB=corregirB;
   window.serieListen=serieListen;
@@ -9249,7 +9240,7 @@ try{
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
 }catch(e){}
-console.info('[teoriapro] FICHAS PRO r15 · vista Acordes basico (motor foto: 1 pentagrama 2+2, PM/AUM, ejemplos) · tarjetas Acordes+PRO juntas · activo');
+console.info('[teoriapro] FICHAS PRO r16 · vista Acordes basico (motor foto: 1 pentagrama 2+2, PM/AUM, ejemplos) · tarjetas Acordes+PRO juntas · activo');
 })();
 </script>
 
