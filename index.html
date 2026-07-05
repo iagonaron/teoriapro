@@ -8752,6 +8752,7 @@ var CATALOGO=[
   { key:'comp_replicar',    label:'Compases PRO · replicar',        estado:'activo', desc:'dado un compás, escribe sus 3 formas equivalentes' },
   { key:'seriearmonica',    label:'Serie armónica',       estado:'activo', desc:'construye la serie (8 armónicos) a partir de la fundamental' },
   { key:'dode_construir',   label:'Dodecafonismo · construye',  estado:'activo', desc:'coloca 12 sonidos distintos (serie dodecafónica)' },
+  { key:'dode_completa',    label:'Dodecafonismo · completa',   estado:'activo', desc:'P0 + una variante (R/I): completa las notas que faltan' },
   { key:'transporte',       label:'Transporte',           estado:'prox', nota:'fase 2' },
   { key:'modulacion',       label:'Modulación',           estado:'prox', nota:'fase 3' },
   { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'constr' },
@@ -9116,6 +9117,7 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
   if(spec && spec._rep){ return fpPintaCompReplicar(host, spec, resuelto, anchoFijo); }
   if(spec && spec._serie){ return fpPintaSerie(host, spec, resuelto, anchoFijo); }
   if(spec && spec._dodeA){ return fpPintaDodeA(host, spec, resuelto, anchoFijo); }
+  if(spec && spec._dodeB){ return fpPintaDodeB(host, spec, resuelto, anchoFijo); }
   if(spec && spec._ton){ return fpPintaTonalidades(host, spec, resuelto, anchoFijo); }
   if(spec && spec._aco){ return fpPintaAcordes(host, spec, resuelto, anchoFijo); }
   if(spec && spec._iv){ return fpPintaIntervalos(host, spec, resuelto, anchoFijo); }
@@ -9177,7 +9179,7 @@ function fpEnun(e){
   try{
     var M=fpMotorDe(e.spec);
     if(M && e.spec){
-      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA) return M.enunciado(e.spec);
+      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA || e.spec._dodeB) return M.enunciado(e.spec);
       if(e.spec.tonica) return M.enunciado(e.spec);
     }
   }catch(err){}
@@ -9199,6 +9201,7 @@ function fpMotorDe(spec){
   if(spec && spec._rep) return window.COMP_REPLICAR_MOTOR;
   if(spec && spec._serie) return window.SERIE_MOTOR;
   if(spec && spec._dodeA) return window.DODE_A_MOTOR;
+  if(spec && spec._dodeB) return window.DODE_B_MOTOR;
   if(spec && spec._ton) return window.TONALIDADES_MOTOR;
   return window.MODOS_MOTOR;
 }
@@ -9236,6 +9239,7 @@ function fpGenera(key){
   if(key==='comp_replicar')    return window.COMP_REPLICAR_MOTOR?window.COMP_REPLICAR_MOTOR.generar():null;
   if(key==='seriearmonica')    return window.SERIE_MOTOR?window.SERIE_MOTOR.generar():null;
   if(key==='dode_construir')   return window.DODE_A_MOTOR?window.DODE_A_MOTOR.generar():null;
+  if(key==='dode_completa')    return window.DODE_B_MOTOR?window.DODE_B_MOTOR.generar():null;
   return null;
 }
 function fpLabelDe(key){
@@ -9361,6 +9365,7 @@ function fpTituloPDF(e){
   if(e.spec && e.spec._rep){ return fpPdfSafe('Compases. Escribe las 3 formas equivalentes'); }
   if(e.spec && e.spec._serie){ return fpPdfSafe('Serie armonica. Construye los ocho primeros armonicos desde la nota fundamental'); }
   if(e.spec && e.spec._dodeA){ return fpPdfSafe('Dodecafonismo. Construye una serie de 12 sonidos distintos'); }
+  if(e.spec && e.spec._dodeB){ return fpPdfSafe('Dodecafonismo. Completa la serie variante'); }
   if(e.spec && e.spec._iv && window.INTERVALOS_MOTOR && window.INTERVALOS_MOTOR.pdfInfo){
     var iv=window.INTERVALOS_MOTOR.pdfInfo(e.spec);
     return fpPdfSafe(iv.modo==='build' ? 'Intervalos. Construye los intervalos indicados' : 'Intervalos. Identifica el numero y la especie');
@@ -10980,6 +10985,13 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
   function effAlter(notes, i){ var n=notes[i]; if(!n) return 0; if(n.acc!==''&&n.acc!=null) return ACCV[n.acc];
     for(var j=i-1;j>=0;j--){ var m=notes[j]; if(m&&m.step===n.step&&m.octave===n.octave&&m.acc!==''&&m.acc!=null) return ACCV[m.acc]; } return 0; }
   function soundingPcs(g){ var out=[]; for(var i=0;i<12;i++){ var n=g.notes[i]; if(!n) continue; out.push(D().pcOf(n.step, effAlter(g.notes,i))); } return out; }
+  var SEMI={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+  function midiOf(g,i){ var n=g.notes[i]; return (n.octave+1)*12 + SEMI[n.step] + effAlter(g.notes,i); }
+  // mayor racha de grados conjuntos (2ª: 1-2 semitonos) SEGUIDOS y EN LA MISMA DIRECCIÓN (en nº de pasos)
+  function rachaDir(g){ var mids=[]; for(var i=0;i<12;i++){ if(g.notes[i]) mids.push(midiOf(g,i)); }
+    var best=0, run=0, cur=0; for(var k=1;k<mids.length;k++){ var d=mids[k]-mids[k-1], conj=(Math.abs(d)===1||Math.abs(d)===2), sign=d>0?1:-1;
+      if(conj){ if(run>0 && sign===cur) run++; else { run=1; cur=sign; } if(run>best) best=run; } else run=0; } return best; }
+  function reglaViola(g){ return rachaDir(g)>=3; }   // >=3 pasos misma dirección = 4+ notas por grados conjuntos
   function keyOf(n){ return n.step.toLowerCase()+'/'+n.octave; }
   function repetidos(g){ // índices de notas cuya altura sonante ya salió antes
     var seen={}, bad={}; for(var i=0;i<12;i++){ var n=g.notes[i]; if(!n) continue; var pc=D().pcOf(n.step, effAlter(g.notes,i)); if(seen[pc]!=null){ bad[i]=1; bad[seen[pc]]=1; } else seen[pc]=i; } return bad; }
@@ -10989,7 +11001,6 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     host.innerHTML=''; var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
     var x0=8, staveW=W-16, sy=52;
     var stave=new VF.Stave(x0, sy, staveW); stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
-    var bad=forCorr?g.__bad:repetidos(g);
     var tickables=g.notes.map(function(n,i){
       if(!n) return new VF.GhostNote({duration:'w'});
       var sn=new VF.StaveNote({keys:[keyOf(n)], duration:'w', clef:'treble'});
@@ -10998,8 +11009,7 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
       else if(n.acc==='n') sn.addModifier(new VF.Accidental('n'),0);
       var st=null;
       if(forCorr){ st = (g.__bad&&g.__bad[i]) ? {fillStyle:'#e0556b',strokeStyle:'#e0556b'} : {fillStyle:'#39c08a',strokeStyle:'#39c08a'}; }
-      else if(!forCorr && bad&&bad[i]){ st={fillStyle:'#e0556b',strokeStyle:'#e0556b'}; }
-      else if(g.__sel===i){ st={fillStyle:'#d4af37',strokeStyle:'#d4af37'}; }
+      else if(g.__sel===i){ st={fillStyle:'#d4af37',strokeStyle:'#d4af37'}; }   // sin pistas de repetidos hasta corregir
       else st={fillStyle:'#10131f',strokeStyle:'#10131f'};
       try{ sn.setStyle(st); }catch(e){}
       return sn;
@@ -11020,12 +11030,12 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
   function svgPt(host,ev){ var svg=host.querySelector('svg'); if(!svg) return null; try{ var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y,svg:svg}; }catch(e){ return null; } }
   function wireGhost(g){ var host=g.__host;
     host.onmousemove=function(ev){ onHover(g,ev); };
-    host.onmouseleave=function(){ clearGhost(g); };
+    host.onmouseleave=function(){ clearGhost(g); delXUnlessSel(g); };
     host.onclick=function(ev){ onClick(g,ev); };
     host.oncontextmenu=function(ev){ ev.preventDefault(); var p=svgPt(host,ev); if(!p) return; var sl=slotFromX(g,p.x); if(sl>=0&&g.notes[sl]){ g.notes[sl]=null; if(g.__sel===sl) g.__sel=null; refresh(g); } };
   }
-  function onHover(g,ev){ var host=g.__host, p=svgPt(host,ev); if(!p){ clearGhost(g); return; } var sl=slotFromX(g,p.x); if(sl<0){ clearGhost(g); return; }
-    if(g.notes[sl]){ host.style.cursor='pointer'; clearGhost(g); return; } var nat=nearestStepByY(g,p.y); host.style.cursor='pointer'; showGhost(g, g.__geo.xs[sl], nat); }
+  function onHover(g,ev){ var host=g.__host, p=svgPt(host,ev); if(!p){ clearGhost(g); return; } var sl=slotFromX(g,p.x); if(sl<0){ clearGhost(g); delXUnlessSel(g); return; }
+    if(g.notes[sl]){ host.style.cursor='pointer'; clearGhost(g); showDelX(g,sl); return; } var nat=nearestStepByY(g,p.y); host.style.cursor='pointer'; delXUnlessSel(g); showGhost(g, g.__geo.xs[sl], nat); }
   function ghostEl(g){ var e=g.__host.querySelector('.dodeF-ghost'); if(!e){ e=document.createElement('div'); e.className='dodeF-ghost'; e.style.cssText='position:absolute;pointer-events:none;z-index:6;width:14px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host.appendChild(e); } return e; }
   function showGhost(g,xc,nat){ var host=g.__host, e=ghostEl(g), svg=host.querySelector('svg'); if(!svg){ e.style.display='none'; return; }
     try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=nat.y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect();
@@ -11037,24 +11047,26 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
       var ln=document.createElement('div'); ln.className='dodeF-ledger'; ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:22px;background:#c8b06a;opacity:.7';
       ln.style.left=(sp.x-hr.left-11)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln); }catch(e){} }); }
   function clearGhost(g){ var e=g.__host.querySelector('.dodeF-ghost'); if(e) e.style.display='none'; g.__host.querySelectorAll('.dodeF-ledger').forEach(function(x){x.remove();}); }
+  function showDelX(g, slot){ var host=g.__host, svg=host.querySelector('svg'); if(!svg||!g.notes[slot]) return; var n=g.notes[slot], x=g.__geo.xs[slot]; if(x==null) return; var y=yFor(g,n.step,n.octave);
+    var el=host.querySelector('.dodeF-delx'); if(!el){ el=document.createElement('div'); el.className='dodeF-delx'; el.textContent='×'; el.style.cssText='position:absolute;z-index:9;width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;background:rgba(20,16,4,.85);color:#fff;border:1px solid rgba(233,201,106,.65);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)'; host.appendChild(el); }
+    var del=function(ev){ ev.stopPropagation(); if(ev.preventDefault) ev.preventDefault(); g.notes[slot]=null; if(g.__sel===slot) g.__sel=null; refresh(g); };
+    el.onclick=del; el.ontouchstart=del;
+    try{ var pt=svg.createSVGPoint(); pt.x=x; pt.y=y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect(); el.style.left=(sp.x-hr.left+11)+'px'; el.style.top=(sp.y-hr.top-11)+'px'; el.style.display='block'; }catch(e){} }
+  function hideDelX(g){ var el=g.__host.querySelector('.dodeF-delx'); if(el) el.style.display='none'; }
+  function delXUnlessSel(g){ if(g.__sel!=null) showDelX(g,g.__sel); else hideDelX(g); }
   function onClick(g,ev){ var p=svgPt(g.__host,ev); if(!p) return; var sl=slotFromX(g,p.x); if(sl<0) return;
     if(g.notes[sl]){ g.__sel=(g.__sel===sl)?null:sl; refresh(g); return; }
     var nat=nearestStepByY(g,p.y); g.notes[sl]={step:nat.step,octave:nat.octave,acc:''}; g.__sel=sl; refresh(g); }
   function accToolbar(g){ var tb=g.__tb; if(!tb) return; var active=(g.__sel!=null && g.notes[g.__sel]); tb.style.opacity=active?'1':'.4';
     var acc=active?g.notes[g.__sel].acc:''; tb.querySelectorAll('[data-a]').forEach(function(b){ var on=(active&&b.dataset.a===acc); b.style.background=on?'linear-gradient(135deg,#d4af37,#b8860b)':'#fff'; b.style.color=on?'#1a1407':'#3a2f12'; }); }
   function setAcc(g,a){ if(g.__sel==null||!g.notes[g.__sel]) return; var n=g.notes[g.__sel]; n.acc=(n.acc===a)?'':a; refresh(g); }
-  function avisos(g){ var box=g.__avisos; if(!box) return; var pcs=soundingPcs(g), v=D().valida(pcs), msgs=[];
-    var rep=repetidos(g); var nrep=Object.keys(rep).length;
-    if(nrep) msgs.push('<span style="color:#c0392b">⚠ Hay sonidos repetidos (en rojo). Recuerda el acarreo: usa ♮ si hace falta.</span>');
-    if(v.cromatica) msgs.push('<span style="color:#c0392b">⚠ No está permitida la escala cromática.</span>');
-    if(v.rachaConj>3) msgs.push('<span style="color:#c0392b">⚠ No más de 3 notas seguidas por grados conjuntos.</span>');
-    var puestas=pcs.length;
-    box.innerHTML='<b>'+puestas+'/12</b> sonidos'+(msgs.length?' · '+msgs.join(' · '):(puestas===12?' · <span style="color:#16a34a">✓ serie válida</span>':'')); }
-  function refresh(g){ renderStaff(g,false); accToolbar(g); avisos(g); }
+  function avisos(g){ var box=g.__avisos; if(!box) return; var puestas=0; for(var i=0;i<12;i++){ if(g.notes[i]) puestas++; }
+    box.innerHTML='<b>'+puestas+'/12</b> sonidos colocados'+(puestas===12?' · pulsa <b>Corregir</b> para comprobar':''); }   // sin pistas hasta corregir
+  function refresh(g){ renderStaff(g,false); accToolbar(g); avisos(g); delXUnlessSel(g); }
   function montarEn(host, g){
     if(!host||!g) return; host.innerHTML=''; g.__sel=null;
     var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
-    var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:6px'; cap.innerHTML='Coloca <b>12 sonidos distintos</b> · pincha en el pentagrama (clic derecho para borrar). No vale escala cromática ni más de 3 notas seguidas por grados conjuntos.'; wrap.appendChild(cap);
+    var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:6px'; cap.innerHTML='Coloca <b>12 sonidos distintos</b> · pincha en el pentagrama para colocar; pasa el ratón por una nota (o púlsala) y toca la <b>×</b> para borrarla. No vale escala cromática ni más de 3 notas por grados conjuntos en la misma dirección.'; wrap.appendChild(cap);
     var score=document.createElement('div'); score.style.cssText='position:relative;overflow:visible'; wrap.appendChild(score); g.__host=score;
     var tb=document.createElement('div'); tb.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border:1px solid #e7d9a8;border-radius:10px;background:#faf6ea'; wrap.appendChild(tb); g.__tb=tb;
     var l=document.createElement('span'); l.style.cssText='font-size:12px;font-weight:800;color:#7a6a3a'; l.textContent='Alteración:'; tb.appendChild(l);
@@ -11062,22 +11074,25 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     var av=document.createElement('div'); av.style.cssText='margin-top:8px;font-size:12px;color:#5a5030;line-height:1.5'; wrap.appendChild(av); g.__avisos=av;
     refresh(g);
   }
-  function puntua(g){ try{ var pcs=soundingPcs(g); var v=D().valida(pcs); if(v.ok) return 1; // válida completa
-      var distintas=(function(){ var s={},c=0; pcs.forEach(function(p){ if(!s[p]){s[p]=1;c++;} }); return c; })();
-      var base=distintas/12; if(v.cromatica||v.rachaConj>3) base*=0.6; return base; }catch(e){ return 0; } }
+  function esValida(g){ var pcs=soundingPcs(g); return pcs.length===12 && D().todosDistintos(pcs) && !reglaViola(g); }
+  function distintasCount(g){ var pcs=soundingPcs(g), s={}, c=0; pcs.forEach(function(p){ if(!s[p]){ s[p]=1; c++; } }); return c; }
+  function penConj(g){ var r=rachaDir(g); return r>=3 ? (0.25 + 0.10*(r-3)) : 0; }   // 4 notas: 25%; +10% por cada extra
+  function puntua(g){ try{ var nMal=12 - distintasCount(g); var sc=1 - 0.25*nMal - penConj(g); return Math.max(0, Math.round(sc*100)/100); }catch(e){ return 0; } }
   function corregirVisual(host, g){
     try{
       if(!g) return 0;
       if(host){
         host.innerHTML='';
         var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
-        var pcs=soundingPcs(g), v=D().valida(pcs); g.__bad=repetidos(g);
+        var pcs=soundingPcs(g); g.__bad=repetidos(g); var ok=esValida(g);
         var score=document.createElement('div'); score.style.cssText='position:relative'; wrap.appendChild(score); g.__host=score;
         renderStaff(g,true);
-        var msgs=[]; var nrep=Object.keys(g.__bad).length;
-        if(nrep) msgs.push('sonidos repetidos (rojo)'); if(v.cromatica) msgs.push('escala cromática'); if(v.rachaConj>3) msgs.push('más de 3 grados conjuntos seguidos'); if(pcs.length<12) msgs.push('faltan sonidos ('+pcs.length+'/12)');
-        var t=document.createElement('div'); t.style.cssText='text-align:center;margin-top:10px;font-size:12.5px;font-weight:800;color:'+(v.ok?'#16a34a':'#c0392b');
-        t.textContent=v.ok?'✓ Serie dodecafónica válida (12 sonidos distintos)':('✗ '+(msgs.join(' · ')||'incompleta')); wrap.appendChild(t);
+        var nMal=12-distintasCount(g), r=rachaDir(g), pc=puntua(g);
+        var det=[];
+        if(nMal>0) det.push('<span style="color:#c0392b">'+nMal+' sonido(s) incorrecto(s) o que faltan (repetidos en rojo): −'+(25*nMal)+'%</span>');
+        if(r>=3) det.push('<span style="color:#c0392b">'+(r+1)+' notas por grados conjuntos en la misma dirección: −25%'+(r>3?(' y −10% × '+(r-3)+' extra'):'')+' = −'+Math.round(penConj(g)*100)+'%</span>');
+        if(!det.length) det.push('<span style="color:#16a34a">✓ 12 sonidos distintos y sin cadenas por grados conjuntos: serie válida</span>');
+        var box=document.createElement('div'); box.style.cssText='margin-top:10px;font-size:12px;line-height:1.6;color:#5a5030'; box.innerHTML=det.join('<br>')+'<div style="margin-top:6px;font-weight:900;color:'+(pc>=0.5?'#16a34a':'#c0392b')+'">Puntuación: '+Math.round(pc*100)+'%</div>'; wrap.appendChild(box);
       }
       return puntua(g);
     }catch(e){ return puntua(g); }
@@ -11090,17 +11105,131 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
     var VF=Vex.Flow; host.innerHTML='';
     var W=anchoFijo||940, H=150;
     var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
-    var stave=new VF.Stave(10, 46, W-20); stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
-    if(resuelto){
-      // ejemplo de serie válida (no hay solución única en construcción)
-      var pcs=window.DODE_PURE.generaP0();
-      var notes=pcs.map(function(pc,i){ var nt=window.DODE_PURE.noteFromPc(pc, (pc<5?5:4)); var sn=new VF.StaveNote({keys:[nt.step.toLowerCase()+'/'+nt.octave],duration:'w',clef:'treble'}); if(nt.alter===-1) sn.addModifier(new VF.Accidental('b'),0); try{sn.setStyle({fillStyle:'#c0392b',strokeStyle:'#c0392b'});}catch(e){} return sn; });
-      var voice=new VF.Voice({num_beats:12,beat_value:4}).setStrict(false); voice.addTickables(notes);
-      try{ new VF.Formatter().joinVoices([voice]).format([voice], W-20-(stave.getNoteStartX()-10)-24); }catch(e){}
-      voice.draw(ctx, stave);
-      var svg=host.querySelector('svg'); if(svg){ var t=document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('x',12); t.setAttribute('y',20); t.setAttribute('font-size','11'); t.setAttribute('font-family','DejaVu Sans, Helvetica, Arial'); t.setAttribute('fill','#8a6d1a'); t.textContent='Ejemplo (la construcción no tiene solución única):'; svg.appendChild(t); }
-    }
+    var stave=new VF.Stave(10, 44, W-20); stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    // construcción libre: solo el pentagrama (el enunciado va en el título de la tarjeta)
   }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar dodecafonismo A: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaDodeA', e); }
+}
+
+/* ============================================================
+   FICHAS · DODECAFONISMO B — Completa. P0 dada + variante (Rn/In) con huecos.
+   ============================================================ */
+(function(){
+  function D(){ return window.DODE_PURE; }
+  var ORD={C:0,D:1,E:2,F:3,G:4,A:5,B:6}, SEMI={C:0,D:2,E:4,F:5,G:7,A:9,B:11}, ACCV={'':0,'n':0,'b':-1,'#':1}, PC_FLAT=[['C',0],['D',-1],['D',0],['E',-1],['E',0],['F',0],['G',-1],['G',0],['A',-1],['A',0],['B',-1],['B',0]];
+  function spellSeq(pcs){ var eff={}, out=[]; pcs.forEach(function(pc){ var s=PC_FLAT[((pc%12)+12)%12], step=s[0], alter=s[1]; var oct=(step==='C'||step==='D')?5:4; var key=step+oct; var cur=(eff[key]==null)?0:eff[key]; var acc=''; if(alter!==cur){ acc=alter===-1?'b':alter===1?'#':'n'; eff[key]=alter; } out.push({step:step,octave:oct,acc:acc}); }); return out; }
+  function effAlter(notes,i){ var n=notes[i]; if(!n) return 0; if(n.acc!==''&&n.acc!=null) return ACCV[n.acc]; for(var j=i-1;j>=0;j--){ var m=notes[j]; if(m&&m.step===n.step&&m.octave===n.octave&&m.acc!==''&&m.acc!=null) return ACCV[m.acc]; } return 0; }
+  function pcAt(notes,i){ return D().pcOf(notes[i].step, effAlter(notes,i)); }
+  function keyOf(n){ return n.step.toLowerCase()+'/'+n.octave; }
+  function generar(){
+    var p0=D().generaP0(); var kind=Math.random()<0.5?'R':'I'; var n=Math.floor(Math.random()*12);
+    var varPcs=D().variant(p0, kind, n);
+    var p0notes=spellSeq(p0), varNotes=spellSeq(varPcs);
+    var nMiss=(kind==='R')?4:2; var idx=[]; for(var i=0;i<12;i++) idx.push(i); for(var k=idx.length-1;k>0;k--){ var j=Math.floor(Math.random()*(k+1)); var t=idx[k];idx[k]=idx[j];idx[j]=t; } var missing=idx.slice(0,nMiss).sort(function(a,b){return a-b;});
+    var shown=varNotes.map(function(nt,i){ return missing.indexOf(i)>=0?null:{step:nt.step,octave:nt.octave,acc:nt.acc}; });
+    return { _dodeB:true, kind:kind, n:n, p0notes:p0notes, varNotes:varNotes, missing:missing, shown:shown };
+  }
+  function enunciado(g){ return 'Dodecafonismo · Completa la serie variante (faltan '+g.missing.length+' notas).'; }
+  function drawRow(host, notes, opts){
+    opts=opts||{}; var VF=Vex.Flow, W=Math.max(620, host.clientWidth||780), H=110;
+    host.innerHTML=''; var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+    var x0=8, staveW=W-16, sy=30; var stave=new VF.Stave(x0,sy,staveW); stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    var ticks=notes.map(function(n,i){ if(!n) return new VF.GhostNote({duration:'w'}); var sn=new VF.StaveNote({keys:[keyOf(n)],duration:'w',clef:'treble'});
+      if(n.acc==='#') sn.addModifier(new VF.Accidental('#'),0); else if(n.acc==='b') sn.addModifier(new VF.Accidental('b'),0); else if(n.acc==='n') sn.addModifier(new VF.Accidental('n'),0);
+      var st=null; if(opts.marks&&opts.marks[i]) st={fillStyle:opts.marks[i],strokeStyle:opts.marks[i]}; else if(opts.sel===i) st={fillStyle:'#d4af37',strokeStyle:'#d4af37'}; else st={fillStyle:'#10131f',strokeStyle:'#10131f'};
+      try{ sn.setStyle(st); }catch(e){} return sn; });
+    var voice=new VF.Voice({num_beats:12,beat_value:4}).setStrict(false); voice.addTickables(ticks);
+    var clefW=stave.getNoteStartX()-x0; try{ new VF.Formatter().joinVoices([voice]).format([voice], staveW-clefW-24); }catch(e){}
+    voice.draw(ctx, stave);
+    var xs=ticks.map(function(t){ try{ return t.getAbsoluteX(); }catch(e){ return null; } });
+    return { stave:stave, xs:xs, yLine0:stave.getYForLine(0), yBot:stave.getYForLine(4), half:(stave.getYForLine(4)-stave.getYForLine(0))/8, refDia:5*7+ORD['F'] };
+  }
+  function yFor(geo,step,octave){ return geo.yLine0+(geo.refDia-(octave*7+ORD[step]))*geo.half; }
+  function nearestStep(geo,my){ var best=null,bd=1e9; for(var o=2;o<=6;o++){ for(var s in ORD){ var y=yFor(geo,s,o); var d=Math.abs(y-my); if(d<bd){bd=d;best={step:s,octave:o,y:y};} } } return best; }
+  function slotFromX(geo,px){ var best=-1,bd=1e9; for(var i=0;i<12;i++){ if(geo.xs[i]==null) continue; var d=Math.abs(geo.xs[i]-px); if(d<bd){bd=d;best=i;} } return best; }
+  function svgPt(host,ev){ var svg=host.querySelector('svg'); if(!svg) return null; try{ var pt=svg.createSVGPoint(); pt.x=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; pt.y=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y}; }catch(e){ return null; } }
+  function editable(g,slot){ return g.missing.indexOf(slot)>=0; }
+  function render2(g){ var geo=drawRow(g.__host2, g.shown, {sel:g.__corr?null:g.__sel}); g.__geo2=geo; if(!g.__corr) wire2(g); }
+  function wire2(g){ var host=g.__host2;
+    host.onmousemove=function(ev){ hover2(g,ev); }; host.onmouseleave=function(){ clearG(g); delXUnless(g); };
+    host.onclick=function(ev){ click2(g,ev); };
+    host.oncontextmenu=function(ev){ ev.preventDefault(); var p=svgPt(host,ev); if(!p) return; var sl=slotFromX(g.__geo2,p.x); if(sl>=0&&editable(g,sl)&&g.shown[sl]){ g.shown[sl]=null; if(g.__sel===sl)g.__sel=null; refresh(g); } };
+  }
+  function hover2(g,ev){ var host=g.__host2, p=svgPt(host,ev); if(!p){ clearG(g); return; } var sl=slotFromX(g.__geo2,p.x); if(sl<0||!editable(g,sl)){ clearG(g); delXUnless(g); host.style.cursor='default'; return; }
+    if(g.shown[sl]){ host.style.cursor='pointer'; clearG(g); showDelX(g,sl); return; } var nat=nearestStep(g.__geo2,p.y); host.style.cursor='pointer'; delXUnless(g); showGhost(g,g.__geo2.xs[sl],nat); }
+  function click2(g,ev){ var p=svgPt(g.__host2,ev); if(!p) return; var sl=slotFromX(g.__geo2,p.x); if(sl<0||!editable(g,sl)) return;
+    if(g.shown[sl]){ g.__sel=(g.__sel===sl)?null:sl; refresh(g); return; } var nat=nearestStep(g.__geo2,p.y); g.shown[sl]={step:nat.step,octave:nat.octave,acc:''}; g.__sel=sl; refresh(g); }
+  function ghostEl(g){ var e=g.__host2.querySelector('.dodeB-ghost'); if(!e){ e=document.createElement('div'); e.className='dodeB-ghost'; e.style.cssText='position:absolute;pointer-events:none;z-index:6;width:14px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host2.appendChild(e); } return e; }
+  function showGhost(g,xc,nat){ var host=g.__host2, e=ghostEl(g), svg=host.querySelector('svg'); if(!svg){e.style.display='none';return;} try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=nat.y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect(); e.style.left=(sp.x-hr.left-7)+'px'; e.style.top=(sp.y-hr.top-5)+'px'; e.style.display='block'; ledger(g,svg,hr,xc,nat); }catch(er){ e.style.display='none'; } }
+  function ledger(g,svg,hr,xc,nat){ var host=g.__host2; host.querySelectorAll('.dodeB-ledger').forEach(function(x){x.remove();}); var geo=g.__geo2, half=geo.half, lines=[],y; y=geo.yLine0-2*half; while(y>=nat.y-1){ lines.push(y); y-=2*half; } y=geo.yBot+2*half; while(y<=nat.y+1){ lines.push(y); y+=2*half; } lines.forEach(function(yL){ try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=yL; var sp=pt.matrixTransform(svg.getScreenCTM()); var ln=document.createElement('div'); ln.className='dodeB-ledger'; ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:22px;background:#c8b06a;opacity:.7'; ln.style.left=(sp.x-hr.left-11)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln); }catch(e){} }); }
+  function clearG(g){ var e=g.__host2.querySelector('.dodeB-ghost'); if(e) e.style.display='none'; g.__host2.querySelectorAll('.dodeB-ledger').forEach(function(x){x.remove();}); }
+  function showDelX(g,slot){ var host=g.__host2, svg=host.querySelector('svg'); if(!svg||!g.shown[slot]) return; var n=g.shown[slot], x=g.__geo2.xs[slot]; if(x==null) return; var y=yFor(g.__geo2,n.step,n.octave);
+    var el=host.querySelector('.dodeB-delx'); if(!el){ el=document.createElement('div'); el.className='dodeB-delx'; el.textContent='×'; el.style.cssText='position:absolute;z-index:9;width:20px;height:20px;line-height:18px;text-align:center;border-radius:50%;background:rgba(20,16,4,.85);color:#fff;border:1px solid rgba(233,201,106,.65);font-size:14px;font-weight:700;cursor:pointer;box-shadow:0 1px 4px rgba(0,0,0,.4)'; host.appendChild(el); }
+    var del=function(ev){ ev.stopPropagation(); if(ev.preventDefault)ev.preventDefault(); g.shown[slot]=null; if(g.__sel===slot)g.__sel=null; refresh(g); }; el.onclick=del; el.ontouchstart=del;
+    try{ var pt=svg.createSVGPoint(); pt.x=x; pt.y=y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect(); el.style.left=(sp.x-hr.left+11)+'px'; el.style.top=(sp.y-hr.top-11)+'px'; el.style.display='block'; }catch(e){} }
+  function hideDelX(g){ var el=g.__host2.querySelector('.dodeB-delx'); if(el) el.style.display='none'; }
+  function delXUnless(g){ if(g.__sel!=null) showDelX(g,g.__sel); else hideDelX(g); }
+  function accToolbar(g){ var tb=g.__tb; if(!tb) return; var active=(g.__sel!=null && g.shown[g.__sel] && editable(g,g.__sel)); tb.style.opacity=active?'1':'.4'; var acc=active?g.shown[g.__sel].acc:''; tb.querySelectorAll('[data-a]').forEach(function(b){ var on=(active&&b.dataset.a===acc); b.style.background=on?'linear-gradient(135deg,#d4af37,#b8860b)':'#fff'; b.style.color=on?'#1a1407':'#3a2f12'; }); }
+  function setAcc(g,a){ if(g.__sel==null||!g.shown[g.__sel]||!editable(g,g.__sel)) return; var n=g.shown[g.__sel]; n.acc=(n.acc===a)?'':a; refresh(g); }
+  function faltan(g){ var c=0; g.missing.forEach(function(i){ if(!g.shown[i]) c++; }); return c; }
+  function refresh(g){ render2(g); accToolbar(g); delXUnless(g); if(g.__info) g.__info.innerHTML='Faltan <b>'+faltan(g)+'</b> de '+g.missing.length+' notas'+(faltan(g)===0?' · pulsa <b>Corregir</b>':''); }
+  function montarEn(host, g){
+    if(!host||!g) return; host.innerHTML=''; g.__corr=false; g.__sel=null;
+    var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
+    wrap.appendChild(rowLabel('P0 (serie principal)'));
+    var r1=document.createElement('div'); wrap.appendChild(r1); drawRow(r1, g.p0notes, {});
+    wrap.appendChild(rowLabel(g.kind+g.n+' — completa las '+g.missing.length+' notas que faltan'));
+    var r2=document.createElement('div'); r2.style.cssText='position:relative;overflow:visible'; wrap.appendChild(r2); g.__host2=r2;
+    var tb=document.createElement('div'); tb.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border:1px solid #e7d9a8;border-radius:10px;background:#faf6ea'; wrap.appendChild(tb); g.__tb=tb;
+    var l=document.createElement('span'); l.style.cssText='font-size:12px;font-weight:800;color:#7a6a3a'; l.textContent='Alteración:'; tb.appendChild(l);
+    [['b','♭'],['n','♮'],['#','♯']].forEach(function(pr){ var b=document.createElement('button'); b.type='button'; b.dataset.a=pr[0]; b.textContent=pr[1]; b.style.cssText='width:36px;height:36px;border:1px solid #cbb98a;border-radius:8px;background:#fff;color:#3a2f12;font-size:16px;cursor:pointer'; b.onclick=function(){ setAcc(g,pr[0]); }; tb.appendChild(b); });
+    var info=document.createElement('div'); info.style.cssText='margin-top:8px;font-size:12px;color:#5a5030'; wrap.appendChild(info); g.__info=info;
+    render2(g); accToolbar(g); refresh(g);
+  }
+  function rowLabel(t){ var d=document.createElement('div'); d.style.cssText='font-size:11px;font-weight:900;color:#b8860b;margin:6px 0 2px;text-transform:uppercase;letter-spacing:.03em'; d.textContent=t; return d; }
+  function puntua(g){ try{ var ok=0; g.missing.forEach(function(i){ if(g.shown[i] && pcAt(g.shown,i)===pcAt(g.varNotes,i)) ok++; }); return g.missing.length?ok/g.missing.length:0; }catch(e){ return 0; } }
+  function corregirVisual(host, g){
+    try{
+      if(!g) return 0;
+      if(host){
+        host.innerHTML=''; g.__corr=true; g.__sel=null;
+        var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
+        wrap.appendChild(rowLabel('P0 (serie principal)'));
+        var r1=document.createElement('div'); wrap.appendChild(r1); drawRow(r1, g.p0notes, {});
+        wrap.appendChild(rowLabel(g.kind+g.n));
+        var marks={}, ok=0; g.missing.forEach(function(i){ var good=g.shown[i] && pcAt(g.shown,i)===pcAt(g.varNotes,i); marks[i]=good?'#39c08a':'#e0556b'; if(good) ok++; });
+        var r2=document.createElement('div'); r2.style.cssText='position:relative'; wrap.appendChild(r2);
+        // para los huecos vacíos o mal, dibujamos la solución (varNotes) en su sitio en azul encima
+        var shownCorr=g.shown.map(function(n,i){ if(g.missing.indexOf(i)<0) return n; return n?n:null; });
+        var geo=drawRow(r2, shownCorr, {marks:marks});
+        // solución azul de los que faltan/fallan como texto debajo
+        var svg=r2.querySelector('svg');
+        if(svg){ g.missing.forEach(function(i){ var good=g.shown[i]&&pcAt(g.shown,i)===pcAt(g.varNotes,i); if(good) return; var vn=g.varNotes[i]; var lbl=document.createElement('div'); lbl.textContent=D().nomEs(vn.step,ACCV[vn.acc]||0); lbl.style.cssText='position:absolute;z-index:7;font-size:11px;font-weight:800;color:#2f6df6;transform:translateX(-50%);white-space:nowrap';
+          try{ var pt=svg.createSVGPoint(); pt.x=geo.xs[i]; pt.y=geo.yBot+26; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=r2.getBoundingClientRect(); lbl.style.left=(sp.x-hr.left)+'px'; lbl.style.top=(sp.y-hr.top)+'px'; r2.appendChild(lbl); }catch(e){} }); }
+        var t=document.createElement('div'); t.style.cssText='text-align:center;margin-top:12px;font-size:12.5px;font-weight:800;color:'+(ok===g.missing.length?'#16a34a':'#8a6d1a'); t.textContent='Correctas: '+ok+'/'+g.missing.length+(ok<g.missing.length?' · solución en azul (se admiten enarmonías)':''); wrap.appendChild(t);
+      }
+      return puntua(g);
+    }catch(e){ return puntua(g); }
+  }
+  function pdfInfo(g){ return { kind:g.kind, n:g.n, p0notes:g.p0notes, varNotes:g.varNotes, missing:g.missing }; }
+  window.DODE_B_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
+})();
+function fpPintaDodeB(host, spec, resuelto, anchoFijo){
+  try{
+    var VF=Vex.Flow; host.innerHTML='';
+    var info=window.DODE_B_MOTOR.pdfInfo(spec);
+    var W=anchoFijo||940, H=200, svgns='http://www.w3.org/2000/svg';
+    var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+    function row(notes, y, marks){ var st=new VF.Stave(30,y,W-40); st.addClef('treble'); st.setEndBarType(VF.Barline.type.END); st.setContext(ctx).draw();
+      var ticks=notes.map(function(n,i){ if(!n) return new VF.GhostNote({duration:'w'}); var sn=new VF.StaveNote({keys:[n.step.toLowerCase()+'/'+n.octave],duration:'w',clef:'treble'}); if(n.acc==='#')sn.addModifier(new VF.Accidental('#'),0); else if(n.acc==='b')sn.addModifier(new VF.Accidental('b'),0); else if(n.acc==='n')sn.addModifier(new VF.Accidental('n'),0); if(marks&&marks[i]){ try{sn.setStyle({fillStyle:marks[i],strokeStyle:marks[i]});}catch(e){} } return sn; });
+      var v=new VF.Voice({num_beats:12,beat_value:4}).setStrict(false); v.addTickables(ticks); try{ new VF.Formatter().joinVoices([v]).format([v], (W-40)-(st.getNoteStartX()-30)-24); }catch(e){} v.draw(ctx, st); return st; }
+    row(info.p0notes, 34, null);
+    var shown, marks=null;
+    if(resuelto){ shown=info.varNotes; marks={}; info.missing.forEach(function(i){ marks[i]='#c0392b'; }); }
+    else { shown=info.varNotes.map(function(n,i){ return info.missing.indexOf(i)>=0?null:n; }); }
+    row(shown, 120, marks);
+    var svg=host.querySelector('svg'); if(svg){ function T(x,y,txt){ var t=document.createElementNS(svgns,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('font-size','12');t.setAttribute('font-weight','bold');t.setAttribute('font-family','DejaVu Sans, Helvetica, Arial');t.setAttribute('fill','#b8860b');t.textContent=txt;svg.appendChild(t); }
+      T(6,26,'P0'); T(6,112,info.kind+info.n); }
+  }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar dodecafonismo B: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaDodeB', e); }
 }
 </script>
 
