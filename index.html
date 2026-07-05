@@ -8743,9 +8743,9 @@ var CATALOGO=[
   { key:'acordespro_build', label:'Acordes PRO · construir',  estado:'activo', desc:'construye acordes con 7ª, sus4, etc.' },
   { key:'indice',           label:'Índice acústico',          estado:'activo', desc:'nombre y octava de 4 notas (claves de sol y fa)' },
   { key:'cadencias',        label:'Cadencias',                estado:'activo', desc:'identifica el tipo de cadencia (4 voces)' },
-  { key:'tonalidades',      label:'Tonalidades',              estado:'activo', desc:'nombrar, armadura y tonos vecinos (3 apartados)' },
   { key:'ton_nombre',       label:'Tonalidades · indica tonalidad', estado:'activo', desc:'4 armaduras: escribe la Mayor y su menor relativa' },
   { key:'ton_armadura',     label:'Tonalidades · indica armadura',  estado:'activo', desc:'4 tonalidades: coloca su armadura' },
+  { key:'ton_vecinos',      label:'Tonalidades · tonos vecinos',    estado:'activo', desc:'1 tonalidad central: escribe sus 5 tonos vecinos' },
   { key:'seriearmonica',    label:'Serie armónica',       estado:'prox', nota:'fase 2' },
   { key:'transporte',       label:'Transporte',           estado:'prox', nota:'fase 2' },
   { key:'compasespro',      label:'Compases PRO',         estado:'prox', nota:'fase 3' },
@@ -9106,6 +9106,7 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
   if(spec && spec._cad){ return fpPintaCadencia(host, spec, resuelto, anchoFijo); }
   if(spec && spec._tonA){ return fpPintaTonNombre(host, spec, resuelto, anchoFijo); }
   if(spec && spec._tonB){ return fpPintaTonArmadura(host, spec, resuelto, anchoFijo); }
+  if(spec && spec._tonC){ return fpPintaTonVecinos(host, spec, resuelto, anchoFijo); }
   if(spec && spec._ton){ return fpPintaTonalidades(host, spec, resuelto, anchoFijo); }
   if(spec && spec._aco){ return fpPintaAcordes(host, spec, resuelto, anchoFijo); }
   if(spec && spec._iv){ return fpPintaIntervalos(host, spec, resuelto, anchoFijo); }
@@ -9167,7 +9168,7 @@ function fpEnun(e){
   try{
     var M=fpMotorDe(e.spec);
     if(M && e.spec){
-      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB) return M.enunciado(e.spec);
+      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC) return M.enunciado(e.spec);
       if(e.spec.tonica) return M.enunciado(e.spec);
     }
   }catch(err){}
@@ -9183,6 +9184,7 @@ function fpMotorDe(spec){
   if(spec && spec._cad) return window.CADENCIAS_MOTOR;
   if(spec && spec._tonA) return window.TON_NOMBRE_MOTOR;
   if(spec && spec._tonB) return window.TON_ARMADURA_MOTOR;
+  if(spec && spec._tonC) return window.TON_VECINOS_MOTOR;
   if(spec && spec._ton) return window.TONALIDADES_MOTOR;
   return window.MODOS_MOTOR;
 }
@@ -9214,6 +9216,7 @@ function fpGenera(key){
   if(key==='tonalidades')      return TO?TO.generar():null;
   if(key==='ton_nombre')       return window.TON_NOMBRE_MOTOR?window.TON_NOMBRE_MOTOR.generar():null;
   if(key==='ton_armadura')     return window.TON_ARMADURA_MOTOR?window.TON_ARMADURA_MOTOR.generar():null;
+  if(key==='ton_vecinos')      return window.TON_VECINOS_MOTOR?window.TON_VECINOS_MOTOR.generar():null;
   return null;
 }
 function fpLabelDe(key){
@@ -9333,6 +9336,7 @@ function fpTituloPDF(e){
   }
   if(e.spec && e.spec._tonA){ return fpPdfSafe('Tonalidades. Escribe la tonalidad Mayor y su menor relativa'); }
   if(e.spec && e.spec._tonB){ return fpPdfSafe('Tonalidades. Coloca la armadura de cada tonalidad'); }
+  if(e.spec && e.spec._tonC){ return fpPdfSafe('Tonalidades. Escribe los 5 tonos vecinos'); }
   if(e.spec && e.spec._iv && window.INTERVALOS_MOTOR && window.INTERVALOS_MOTOR.pdfInfo){
     var iv=window.INTERVALOS_MOTOR.pdfInfo(e.spec);
     return fpPdfSafe(iv.modo==='build' ? 'Intervalos. Construye los intervalos indicados' : 'Intervalos. Identifica el numero y la especie');
@@ -9897,14 +9901,38 @@ console.info('[teoriapro] FICHAS PRO r16 · vista Acordes basico (motor foto: 1 
     return o;
   }
   function puntua(g){ try{ if(!g||!g.subs) return 0; var ok=0; g.subs.forEach(function(s){ ok+=okUno(s); }); return ok/(g.subs.length*2); }catch(e){ return 0; } }
+  function selStr(sel, suf){ if(!sel||!sel.nota) return '(en blanco)'; var acc=sel.alt==='#'?'♯':sel.alt==='b'?'♭':''; return sel.nota+acc+' '+(suf==='M'?'Mayor':'menor'); }
   function corregirVisual(host, g){
     try{
       if(!g||!g.subs) return 0;
-      if(host && (!g.__sc || !host.contains(g.__sc))){ montarEn(host, g); }
-      var p=puntua(g), all=0;
-      g.subs.forEach(function(sub){ var o=okUno(sub); all+=o; if(sub.__stag){ var cM=tpc(sub.f,'M'), cm=tpc(sub.f,'m'); if(o===2){ sub.__stag.style.color='#8be28b'; sub.__stag.textContent='✓'; } else { sub.__stag.style.color='#5b9dff'; sub.__stag.innerHTML=nb(cM.nom)+' / '+nb(cm.nom); } } });
-      if(g.__tag){ var tot=g.subs.length*2; g.__tag.style.color= all===tot?'#8be28b':'#e9d9a8'; g.__tag.textContent='Aciertos: '+all+'/'+tot; }
-      return p;
+      if(host){
+        host.innerHTML='';
+        var sc=document.createElement('div'); sc.style.cssText='position:relative;background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:8px 10px;min-height:120px'; host.appendChild(sc);
+        if(window.Vex){
+          var VF=Vex.Flow; var W=Math.max(sc.clientWidth||0,460), H=120;
+          var r=new VF.Renderer(sc, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+          var x0=10, usable=W-20, wC=usable/4;
+          g.subs.forEach(function(sub,i){ P().staveConArmadura(ctx, x0+i*wC, 14, wC, sub.f, i===0, i===3); });
+        } else { sc.textContent='(sin notación)'; }
+        var grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px'; host.appendChild(grid);
+        var all=0;
+        g.subs.forEach(function(sub,i){
+          var cM=tpc(sub.f,'M'), cm=tpc(sub.f,'m');
+          var okM=cM && sub.selM.nota===cM.nota && (sub.selM.alt||'')===(cM.alt||'');
+          var okm=cm && sub.selm.nota===cm.nota && (sub.selm.alt||'')===(cm.alt||'');
+          if(okM) all++; if(okm) all++;
+          var cell=document.createElement('div'); cell.style.cssText='border:1px solid #e7d9a8;border-radius:10px;padding:8px 6px;text-align:center;background:#fff';
+          var num=document.createElement('div'); num.style.cssText='font-size:11px;font-weight:800;color:#8a6d1a;margin-bottom:4px'; num.textContent='Armadura '+(i+1); cell.appendChild(num);
+          [['M',sub.selM,okM,cM],['m',sub.selm,okm,cm]].forEach(function(t){
+            var tu=document.createElement('div'); tu.style.cssText='font-size:12px;font-weight:800;color:'+(t[2]?'#16a34a':'#d11d1d'); tu.textContent='Tú: '+selStr(t[1],t[0]); cell.appendChild(tu);
+            if(!t[2]){ var co=document.createElement('div'); co.style.cssText='font-size:11px;font-weight:700;color:#2f6df6;margin:1px 0 4px'; co.textContent='Correcto: '+nb(t[3].nom); cell.appendChild(co); }
+          });
+          grid.appendChild(cell);
+        });
+        var tot=g.subs.length*2;
+        var tag=document.createElement('div'); tag.style.cssText='text-align:center;margin-top:10px;font-size:12.5px;font-weight:800;color:'+(all===tot?'#16a34a':'#8a6d1a'); tag.textContent='Aciertos: '+all+'/'+tot; host.appendChild(tag);
+      }
+      return puntua(g);
     }catch(e){ return puntua(g); }
   }
   function pdfInfo(g){ return { apart:'a', subs:(g.subs||[]).map(function(sub){ var cM=tpc(sub.f,'M'), cm=tpc(sub.f,'m'); return { f:sub.f, may:nb(cM.nom), men:nb(cm.nom) }; }) }; }
@@ -9961,18 +9989,153 @@ console.info('[teoriapro] FICHAS PRO r16 · vista Acordes basico (motor foto: 1 
     ans.appendChild(tag); g.__tag=tag;
   }
   function puntua(g){ try{ if(!g||!g.subs) return 0; var ok=0; g.subs.forEach(function(s){ if(s.sel===s.f) ok++; }); return ok/g.subs.length; }catch(e){ return 0; } }
+  function fmtF(f){ return f===0?'sin alteraciones (0)':itFif(f); }
   function corregirVisual(host, g){
     try{
       if(!g||!g.subs) return 0;
-      if(host && (!g.__sc || !host.contains(g.__sc))){ montarEn(host, g); }
-      var ok=0; g.subs.forEach(function(sub){ var good=sub.sel===sub.f; if(good) ok++; if(sub.__stag){ if(good){ sub.__stag.style.color='#8be28b'; sub.__stag.textContent='✓'; } else { sub.__stag.style.color='#5b9dff'; sub.__stag.textContent='Correcto: '+itFif(sub.f); } } });
-      if(g.__tag){ g.__tag.style.color= ok===g.subs.length?'#8be28b':'#e9d9a8'; g.__tag.textContent='Aciertos: '+ok+'/'+g.subs.length; }
+      if(host){
+        host.innerHTML='';
+        // pentagrama con la armadura que puso el alumno (así ve lo que hizo)
+        var sc=document.createElement('div'); sc.style.cssText='position:relative;background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:8px 10px;min-height:110px'; host.appendChild(sc);
+        if(window.Vex){
+          var VF=Vex.Flow; var W=Math.max(sc.clientWidth||0,460), H=110;
+          var r=new VF.Renderer(sc, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+          var x0=10, usable=W-20, wC=usable/4;
+          g.subs.forEach(function(sub,i){ P().staveConArmadura(ctx, x0+i*wC, 14, wC, sub.sel||0, i===0, i===3); });
+        } else { sc.textContent='(sin notación)'; }
+        var grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-top:12px'; host.appendChild(grid);
+        var ok=0;
+        g.subs.forEach(function(sub){
+          var good=sub.sel===sub.f; if(good) ok++;
+          var cell=document.createElement('div'); cell.style.cssText='border:1px solid #e7d9a8;border-radius:10px;padding:8px 6px;text-align:center;background:#fff';
+          var nom=document.createElement('div'); nom.style.cssText='font-size:13px;font-weight:800;color:#3a2f12;margin-bottom:4px'; nom.textContent=nb(sub.nom); cell.appendChild(nom);
+          var tu=document.createElement('div'); tu.style.cssText='font-size:12px;font-weight:800;color:'+(good?'#16a34a':'#d11d1d'); tu.textContent='Tú: '+fmtF(sub.sel); cell.appendChild(tu);
+          if(!good){ var co=document.createElement('div'); co.style.cssText='font-size:11.5px;font-weight:700;color:#2f6df6;margin-top:2px'; co.textContent='Correcto: '+fmtF(sub.f); cell.appendChild(co); }
+          grid.appendChild(cell);
+        });
+        var tag=document.createElement('div'); tag.style.cssText='text-align:center;margin-top:10px;font-size:12.5px;font-weight:800;color:'+(ok===g.subs.length?'#16a34a':'#8a6d1a'); tag.textContent='Aciertos: '+ok+'/'+g.subs.length; host.appendChild(tag);
+      }
       return puntua(g);
     }catch(e){ return puntua(g); }
   }
   function pdfInfo(g){ return { apart:'b', subs:(g.subs||[]).map(function(sub){ return { nom:nb(sub.nom), f:sub.f }; }) }; }
   window.TON_ARMADURA_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
 })();
+/* ============================================================
+   FICHAS · TONALIDADES tipo C — "Tonos vecinos" (SOLO fichas).
+   1 tonalidad central + 5 vecinos (orden libre).
+   ============================================================ */
+(function(){
+  var NOTAS_ES=["Do","Re","Mi","Fa","Sol","La","Si"];
+  function P(){ return window.TON_PURE; }
+  function nb(nom){ return window.TON_nomBonito? window.TON_nomBonito(nom) : nom; }
+  function nomDe(sel){ if(!sel.nota) return null; return sel.nota+(sel.alt||'')+sel.modo; }
+  function generar(){
+    var c=P().sorteaTon(true);
+    var vec=P().vecinos(c).map(function(t){ return t.nom; });
+    var cells=[]; for(var k=0;k<6;k++){ cells.push({ picker:true, nota:null, alt:'', modo:'M' }); }
+    cells[4]={ central:true, nom:c.nom };
+    return { _tonC:true, _apart:'c', central:c.nom, vecinos:vec, cells:cells };
+  }
+  function enunciado(g){ return 'Tonalidades · Escribe los 5 tonos vecinos de la tonalidad dada.'; }
+  function montarEn(host, g){
+    if(!host||!g||!g.cells) return;
+    host.innerHTML='';
+    var wrap=document.createElement('div'); wrap.style.cssText='background:linear-gradient(160deg,#241c09,#151004);border:1px solid #6b551d;border-radius:14px;padding:14px'; host.appendChild(wrap);
+    var cap=document.createElement('div'); cap.style.cssText='font-size:13px;font-weight:800;color:#e9d9a8;text-align:center;margin-bottom:10px'; cap.innerHTML='Escribe los 5 tonos vecinos de <b style="color:#e6c04a">'+nb(g.central)+'</b> (el orden no importa)'; wrap.appendChild(cap);
+    var grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px'; wrap.appendChild(grid);
+    g.cells.forEach(function(cell, ci){
+      var box=document.createElement('div'); box.style.cssText='border:1px solid #6b551d;border-radius:12px;padding:8px 6px;min-height:120px;display:flex;flex-direction:column;align-items:center;gap:5px;background:rgba(255,255,255,.02)';
+      if(cell.central){
+        box.style.background='linear-gradient(160deg,#e6c04a,#b8860b)'; box.style.border='0';
+        var c=document.createElement('div'); c.style.cssText='font-size:15px;font-weight:900;color:#1a1305;margin:auto'; c.textContent=nb(cell.nom); box.appendChild(c);
+      } else {
+        var wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:64px;width:52px'; box.appendChild(wNota);
+        var accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:3px';
+        accRow.innerHTML='<button class="acc-btn" data-a="b">♭</button><button class="acc-btn" data-a="#">♯</button>'; box.appendChild(accRow);
+        var modRow=document.createElement('div'); modRow.style.cssText='display:flex;gap:3px';
+        modRow.innerHTML='<button class="acc-btn tc-mod" data-m="M">M</button><button class="acc-btn tc-mod" data-m="m">m</button>'; box.appendChild(modRow);
+        var stag=document.createElement('div'); stag.className='sol'; stag.style.cssText='min-height:14px;font-size:11px;text-align:center;color:#c9b978'; box.appendChild(stag); cell.__stag=stag;
+        var REV=NOTAS_ES.slice().reverse(); var GUION=NOTAS_ES.length;
+        var items=REV.concat(['—']);
+        var api=makeWheel(wNota, items, GUION, function(idx){ cell.nota=(idx===GUION)?null:REV[idx]; cell.alt=''; repaint(api,cell,accRow,REV,GUION); });
+        accRow.querySelectorAll('.acc-btn').forEach(function(b){ b.addEventListener('click', function(){ if(!cell.nota) return; cell.alt=(cell.alt===b.dataset.a)?'':b.dataset.a; repaint(api,cell,accRow,REV,GUION); }); });
+        modRow.querySelectorAll('.tc-mod').forEach(function(b){ b.addEventListener('click', function(){ cell.modo=b.dataset.m; modRow.querySelectorAll('.tc-mod').forEach(function(x){ x.classList.toggle('on', x.dataset.m===cell.modo); }); }); });
+        modRow.querySelector('.tc-mod').classList.add('on');
+      }
+      grid.appendChild(box);
+    });
+    var tag=document.createElement('div'); tag.className='sol'; tag.style.cssText='text-align:center;min-height:18px;margin-top:10px;font-size:12px;color:#e9d9a8'; wrap.appendChild(tag); g.__tag=tag;
+  }
+  function repaint(api, cell, accRow, REV, GUION){
+    var acc=cell.alt==='#'?'♯':cell.alt==='b'?'♭':'';
+    var items=REV.map(function(n){ return n===cell.nota?(n+acc):n; }).concat(['—']);
+    var idx=cell.nota? REV.indexOf(cell.nota) : GUION;
+    api.setItems(items,true); api.setIndex(idx,true);
+    accRow.querySelectorAll('.acc-btn').forEach(function(x){ x.classList.toggle('on', x.dataset.a===cell.alt && cell.alt!==''); });
+  }
+  function puntua(g){
+    try{
+      if(!g||!g.cells) return 0;
+      var esperadas=g.vecinos.slice();
+      var ok=0;
+      g.cells.forEach(function(cell){ if(cell.central) return; var nom=nomDe(cell); if(!nom) return; var j=esperadas.indexOf(nom); if(j>=0){ esperadas.splice(j,1); ok++; } });
+      return ok/5;
+    }catch(e){ return 0; }
+  }
+  function corregirVisual(host, g){
+    try{
+      if(!g||!g.cells) return 0;
+      if(host){
+        host.innerHTML='';
+        var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:14px;padding:14px'; host.appendChild(wrap);
+        var cap=document.createElement('div'); cap.style.cssText='font-size:13px;font-weight:800;color:#3a2f12;text-align:center;margin-bottom:10px'; cap.innerHTML='Tonos vecinos de <b style="color:#b8860b">'+nb(g.central)+'</b>'; wrap.appendChild(cap);
+        var grid=document.createElement('div'); grid.style.cssText='display:grid;grid-template-columns:repeat(3,1fr);gap:10px'; wrap.appendChild(grid);
+        var esperadas=g.vecinos.slice(); var ok=0;
+        g.cells.forEach(function(cell){
+          var box=document.createElement('div'); box.style.cssText='border:1px solid #e7d9a8;border-radius:12px;padding:10px 6px;min-height:64px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:#fff';
+          if(cell.central){
+            box.style.background='linear-gradient(160deg,#e6c04a,#b8860b)'; box.style.border='0';
+            var c=document.createElement('div'); c.style.cssText='font-size:15px;font-weight:900;color:#1a1305'; c.textContent=nb(cell.nom); box.appendChild(c);
+          } else {
+            var nom=nomDe(cell); var good=false;
+            if(nom){ var j=esperadas.indexOf(nom); if(j>=0){ esperadas.splice(j,1); good=true; ok++; } }
+            var tu=document.createElement('div'); tu.style.cssText='font-size:13px;font-weight:800;color:'+(good?'#16a34a':'#d11d1d'); tu.textContent=(good?'✓ ':'✗ ')+(nom?nb(nom):'(en blanco)'); box.appendChild(tu);
+          }
+          grid.appendChild(box);
+        });
+        var faltan=esperadas.map(nb).join(' · ');
+        var tag=document.createElement('div'); tag.style.cssText='text-align:center;margin-top:10px;font-size:12.5px;font-weight:800;color:'+(ok===5?'#16a34a':'#8a6d1a');
+        tag.innerHTML='Aciertos: '+ok+'/5'+(esperadas.length?('  · faltaban: <span style="color:#2f6df6">'+faltan+'</span>'):''); wrap.appendChild(tag);
+      }
+      return puntua(g);
+    }catch(e){ return puntua(g); }
+  }
+  function pdfInfo(g){ return { apart:'c', central:nb(g.central), vecinos:(g.vecinos||[]).map(nb) }; }
+  window.TON_VECINOS_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
+})();
+function fpPintaTonVecinos(host, spec, resuelto, anchoFijo){
+  try{
+    host.innerHTML='';
+    var info=window.TON_VECINOS_MOTOR.pdfInfo(spec);
+    var W=anchoFijo||Math.max(360, host.clientWidth||520), H=210;
+    var svgns='http://www.w3.org/2000/svg';
+    var svg=document.createElementNS(svgns,'svg'); svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox','0 0 '+W+' '+H); host.appendChild(svg);
+    var cols=3, rows=2, gap=12, padX=40, padY=10;
+    var bw=(W-2*padX-(cols-1)*gap)/cols, bh=(H-2*padY-(rows-1)*gap-14)/rows;
+    var vecinos=(info.vecinos||[]).slice();
+    for(var idx=0; idx<6; idx++){
+      var r=Math.floor(idx/3), c=idx%3;
+      var x=padX+c*(bw+gap), y=padY+14+r*(bh+gap);
+      var rect=document.createElementNS(svgns,'rect'); rect.setAttribute('x',x); rect.setAttribute('y',y); rect.setAttribute('width',bw); rect.setAttribute('height',bh); rect.setAttribute('rx',10);
+      rect.setAttribute('fill', idx===4?'#f6e6b8':'#ffffff'); rect.setAttribute('stroke', idx===4?'#b8860b':'#cbb98a'); rect.setAttribute('stroke-width', idx===4?'1.6':'1'); svg.appendChild(rect);
+      var txt=null;
+      if(idx===4){ txt=info.central; }
+      else if(resuelto && vecinos.length){ txt=vecinos.shift(); }
+      if(txt){ var t=document.createElementNS(svgns,'text'); t.setAttribute('x',x+bw/2); t.setAttribute('y',y+bh/2+5); t.setAttribute('text-anchor','middle'); t.setAttribute('font-size','14'); t.setAttribute('font-weight','bold'); t.setAttribute('font-family','DejaVu Sans, Helvetica, Arial, sans-serif'); t.setAttribute('fill', idx===4?'#3a2e0a':'#c0392b'); t.textContent=txt; svg.appendChild(t); }
+    }
+  }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar tonalidades C: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaTonVecinos', e); }
+}
 function fpPintaTonArmadura(host, spec, resuelto, anchoFijo){
   try{
     var VF=Vex.Flow; host.innerHTML='';
@@ -9981,12 +10144,20 @@ function fpPintaTonArmadura(host, spec, resuelto, anchoFijo){
     var W=anchoFijo||Math.max(360, host.clientWidth||520), H=150;
     var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
     var x0=8, usable=W-16, wC=usable/Math.max(1,subs.length);
-    // nombres arriba (siempre)
-    var svg;
-    // dibuja los pentagramas: en alumno vacíos; en solución con su armadura en rojo
-    if(resuelto){ try{ ctx.setFillStyle('#c0392b'); ctx.setStrokeStyle('#c0392b'); }catch(e){} }
-    subs.forEach(function(su,i){ pure.staveConArmadura(ctx, x0+i*wC, 52, wC, resuelto?su.f:0, i===0, i===subs.length-1); });
-    svg=host.querySelector('svg');
+    subs.forEach(function(su,i){
+      var yy=52, first=(i===0), last=(i===subs.length-1);
+      if(resuelto && su.f!==0){
+        // 1) stave COMPLETO en rojo (líneas + clave + armadura)
+        try{ ctx.save(); ctx.setFillStyle('#c0392b'); ctx.setStrokeStyle('#c0392b'); }catch(e){}
+        var sr=new VF.Stave(x0+i*wC, yy, wC); if(first) sr.addClef('treble'); if(last) sr.setEndBarType(VF.Barline.type.DOUBLE); sr.addKeySignature(pure.KS_VF[String(su.f)]); sr.setContext(ctx).draw();
+        try{ ctx.restore(); }catch(e){}
+        // 2) stave SIN armadura en negro ENCIMA (tapa líneas y clave rojas; deja la armadura roja)
+        var sb=new VF.Stave(x0+i*wC, yy, wC); if(first) sb.addClef('treble'); if(last) sb.setEndBarType(VF.Barline.type.DOUBLE); sb.setContext(ctx).draw();
+      } else {
+        var s=new VF.Stave(x0+i*wC, yy, wC); if(first) s.addClef('treble'); if(last) s.setEndBarType(VF.Barline.type.DOUBLE); s.setContext(ctx).draw();
+      }
+    });
+    var svg=host.querySelector('svg');
     if(svg){
       subs.forEach(function(su,i){
         var cx=x0+i*wC+wC/2;
