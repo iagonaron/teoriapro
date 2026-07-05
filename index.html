@@ -7312,6 +7312,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
           ymapBot:buildYMapFor(comp[0].botStave, midi('C',2,0)-1, midi('C',5,0)) };
     // conectores de intervalo: línea entre cada nota y la siguiente, con la cifra en medio
     if(opts.showIntervals && svg) drawIntervalConnectors(svg, items);
+    try{ if(window.SERIE_PURE) window.SERIE_PURE.lastGEO=GEO; }catch(e){}   // geometría para reutilizar en la FICHA
   }
   function drawIntervalConnectors(svg, items){
     var SVGNS='http://www.w3.org/2000/svg';
@@ -8746,12 +8747,12 @@ var CATALOGO=[
   { key:'ton_nombre',       label:'Tonalidades · indica tonalidad', estado:'activo', desc:'4 armaduras: escribe la Mayor y su menor relativa' },
   { key:'ton_armadura',     label:'Tonalidades · indica armadura',  estado:'activo', desc:'4 tonalidades: coloca su armadura' },
   { key:'ton_vecinos',      label:'Tonalidades · tonos vecinos',    estado:'activo', desc:'1 tonalidad central: escribe sus 5 tonos vecinos' },
-  { key:'comp_elegir',      label:'Compases · elegir',              estado:'activo', desc:'rodea el compás correcto (3 ritmos)' },
-  { key:'comp_rellenar',    label:'Compases · rellenar',            estado:'activo', desc:'escribe figuras que sumen el compás (mixto/decimal/fraccionario)' },
-  { key:'comp_replicar',    label:'Compases · replicar',            estado:'activo', desc:'dado un compás, escribe sus 3 formas equivalentes' },
-  { key:'seriearmonica',    label:'Serie armónica',       estado:'prox', nota:'fase 2' },
+  { key:'comp_elegir',      label:'Compases PRO · elegir',          estado:'activo', desc:'rodea el compás correcto (3 ritmos)' },
+  { key:'comp_rellenar',    label:'Compases PRO · rellenar',        estado:'activo', desc:'escribe figuras que sumen el compás (mixto/decimal/fraccionario)' },
+  { key:'comp_replicar',    label:'Compases PRO · replicar',        estado:'activo', desc:'dado un compás, escribe sus 3 formas equivalentes' },
+  { key:'seriearmonica',    label:'Serie armónica',       estado:'activo', desc:'construye la serie (8 armónicos) a partir de la fundamental' },
+  { key:'dode_construir',   label:'Dodecafonismo · construye',  estado:'activo', desc:'coloca 12 sonidos distintos (serie dodecafónica)' },
   { key:'transporte',       label:'Transporte',           estado:'prox', nota:'fase 2' },
-  { key:'compasespro',      label:'Compases PRO',         estado:'prox', nota:'fase 3' },
   { key:'modulacion',       label:'Modulación',           estado:'prox', nota:'fase 3' },
   { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'constr' },
   { key:'dodecafonismo',    label:'Dodecafonismo',        estado:'constr' }
@@ -9113,6 +9114,8 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
   if(spec && spec._cel){ return fpPintaCompElegir(host, spec, resuelto, anchoFijo); }
   if(spec && spec._rell){ return fpPintaCompRellenar(host, spec, resuelto, anchoFijo); }
   if(spec && spec._rep){ return fpPintaCompReplicar(host, spec, resuelto, anchoFijo); }
+  if(spec && spec._serie){ return fpPintaSerie(host, spec, resuelto, anchoFijo); }
+  if(spec && spec._dodeA){ return fpPintaDodeA(host, spec, resuelto, anchoFijo); }
   if(spec && spec._ton){ return fpPintaTonalidades(host, spec, resuelto, anchoFijo); }
   if(spec && spec._aco){ return fpPintaAcordes(host, spec, resuelto, anchoFijo); }
   if(spec && spec._iv){ return fpPintaIntervalos(host, spec, resuelto, anchoFijo); }
@@ -9174,7 +9177,7 @@ function fpEnun(e){
   try{
     var M=fpMotorDe(e.spec);
     if(M && e.spec){
-      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep) return M.enunciado(e.spec);
+      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA) return M.enunciado(e.spec);
       if(e.spec.tonica) return M.enunciado(e.spec);
     }
   }catch(err){}
@@ -9194,6 +9197,8 @@ function fpMotorDe(spec){
   if(spec && spec._cel) return window.COMP_ELEGIR_MOTOR;
   if(spec && spec._rell) return window.COMP_RELLENAR_MOTOR;
   if(spec && spec._rep) return window.COMP_REPLICAR_MOTOR;
+  if(spec && spec._serie) return window.SERIE_MOTOR;
+  if(spec && spec._dodeA) return window.DODE_A_MOTOR;
   if(spec && spec._ton) return window.TONALIDADES_MOTOR;
   return window.MODOS_MOTOR;
 }
@@ -9229,6 +9234,8 @@ function fpGenera(key){
   if(key==='comp_elegir')      return window.COMP_ELEGIR_MOTOR?window.COMP_ELEGIR_MOTOR.generar():null;
   if(key==='comp_rellenar')    return window.COMP_RELLENAR_MOTOR?window.COMP_RELLENAR_MOTOR.generar():null;
   if(key==='comp_replicar')    return window.COMP_REPLICAR_MOTOR?window.COMP_REPLICAR_MOTOR.generar():null;
+  if(key==='seriearmonica')    return window.SERIE_MOTOR?window.SERIE_MOTOR.generar():null;
+  if(key==='dode_construir')   return window.DODE_A_MOTOR?window.DODE_A_MOTOR.generar():null;
   return null;
 }
 function fpLabelDe(key){
@@ -9352,6 +9359,8 @@ function fpTituloPDF(e){
   if(e.spec && e.spec._cel){ return fpPdfSafe('Compases. Rodea el compas correcto'); }
   if(e.spec && e.spec._rell){ return fpPdfSafe('Compases. Rellena con figuras que sumen cada compas'); }
   if(e.spec && e.spec._rep){ return fpPdfSafe('Compases. Escribe las 3 formas equivalentes'); }
+  if(e.spec && e.spec._serie){ return fpPdfSafe('Serie armonica. Construye los ocho primeros armonicos desde la nota fundamental'); }
+  if(e.spec && e.spec._dodeA){ return fpPdfSafe('Dodecafonismo. Construye una serie de 12 sonidos distintos'); }
   if(e.spec && e.spec._iv && window.INTERVALOS_MOTOR && window.INTERVALOS_MOTOR.pdfInfo){
     var iv=window.INTERVALOS_MOTOR.pdfInfo(e.spec);
     return fpPdfSafe(iv.modo==='build' ? 'Intervalos. Construye los intervalos indicados' : 'Intervalos. Identifica el numero y la especie');
@@ -9613,7 +9622,7 @@ function pintaAlu(){
   if(bn) bn.addEventListener('click', function(){ ding(false); ALU.i++; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
   if(bf) bf.addEventListener('click', entregarFicha);
 }
-var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', indice:'indiceacustico', tonalidades:'tonalidades', comp_elegir:'compases', comp_rellenar:'compases', comp_replicar:'compases' };
+var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', indice:'indiceacustico', tonalidades:'tonalidades', comp_elegir:'compases', comp_rellenar:'compases', comp_replicar:'compases', seriearmonica:'seriearmonica' };
 function fpModalPracticar(key){
   var ov=document.createElement('div');
   ov.style.cssText='position:fixed;inset:0;background:rgba(6,4,1,.7);z-index:100001;display:flex;align-items:center;justify-content:center;padding:22px';
@@ -10790,6 +10799,308 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     });
     svg.setAttribute('viewBox','0 0 '+W+' '+H);
   }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar compases replicar: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaCompReplicar', e); }
+}
+</script>
+
+<script>
+/* ============================================================
+   FICHAS · SERIE ARMÓNICA — calca el pad (construir sobre sistema doble).
+   Reutiliza SERIE_PURE (serieFromFund, drawGrand, FUNDS, nom, midi, lastGEO).
+   ============================================================ */
+(function(){
+  function SP(){ return window.SERIE_PURE; }
+  function midi(s,o,a){ return SP().midi(s,o,a); }
+  function nom(n){ return SP().nom(n); }
+  function serieOf(g){ return SP().serieFromFund(g.fund.step, g.fund.octave, g.fund.alter); }
+  function generar(){
+    var F=SP().FUNDS[Math.floor(Math.random()*SP().FUNDS.length)];
+    return { _serie:true, fund:{step:F[0],octave:F[1],alter:F[2]||0}, bSeq:[null,null,null,null,null,null,null] };
+  }
+  function enunciado(g){ return 'Serie armónica · Construye los ocho primeros armónicos desde la nota fundamental.'; }
+  function buildItems(g, serie){
+    var items=[{step:serie[0].step,octave:serie[0].octave,alter:serie[0].alter,midi:serie[0].midi,h:1,interval:serie[0].interval,fund:true}];
+    for(var i=0;i<7;i++){ var n=g.bSeq[i];
+      if(!n){ items.push(null); continue; }
+      var it={step:n.step,octave:n.octave,alter:n.alter,midi:midi(n.step,n.octave,n.alter),h:i+2,interval:serie[i+1].interval,_user:true};
+      if(n._mark) it._mark=n._mark; if(!g.__corr && g.__sel===i) it._sel=true; items.push(it);
+    }
+    return items;
+  }
+  function render(g){
+    var host=g.__host; if(!host) return;
+    var serie=serieOf(g);
+    SP().drawGrand(host, buildItems(g, serie), {showNumbers:true, showIntervals:false, width:Math.max(560, host.clientWidth||660)});
+    g.__geo=SP().lastGEO;
+    if(!g.__corr) wireGhost(g);
+    updToolbar(g);
+  }
+  /* ---- geometría / fantasma (portado del pad, con estado en g) ---- */
+  function svgPoint(host,ev){ var svg=host.querySelector('svg'); if(!svg) return null;
+    var cx=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX, cy=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY;
+    try{ var pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y,svg:svg}; }catch(e){ return null; } }
+  function compasEn(g,px){ var geo=g.__geo; if(!geo) return -1; for(var i=0;i<geo.comp.length;i++){ var c=geo.comp[i]; if(px>=c.x0 && px<c.x0+c.wC) return i; } return -1; }
+  function clefEn(g,py){ var geo=g.__geo; var tBot=geo.comp[0].topStave.getYForLine(4), bTop=geo.comp[0].botStave.getYForLine(0); return py<(tBot+bTop)/2?'top':'bot'; }
+  function nearestByY(g,my,which){ var map=(which==='bot')?g.__geo.ymapBot:g.__geo.ymapTop, best=null,bd=1e9; for(var k in map){ var o=map[k],d=Math.abs(o.y-my); if(d<bd){bd=d;best=o;} } return best; }
+  function yRealOf(g,step,octave){ var kt=step+octave; if(g.__geo.ymapTop[kt]) return {y:g.__geo.ymapTop[kt].y}; if(g.__geo.ymapBot[kt]) return {y:g.__geo.ymapBot[kt].y}; return null; }
+  function nextSlot(g){ for(var i=0;i<7;i++){ if(!g.bSeq[i]) return i; } return -1; }
+  function wireGhost(g){ var host=g.__host;
+    host.onmousemove=function(ev){ onHover(g,ev); };
+    host.onmouseleave=function(){ clearGhost(g); };
+    host.onclick=function(ev){ onClickScore(g,ev); };
+    host.ontouchstart=function(ev){ onHover(g,ev); };
+    host.oncontextmenu=function(ev){ ev.preventDefault(); if(g.__corr) return; for(var i=6;i>=0;i--){ if(g.bSeq[i]){ g.bSeq[i]=null; if(g.__sel===i) g.__sel=null; render(g); return; } } };
+  }
+  function onHover(g,ev){ if(g.__corr){ clearGhost(g); return; } var host=g.__host, p=svgPoint(host,ev); if(!p){ clearGhost(g); return; }
+    var ci=compasEn(g,p.x);
+    if(ci>=1 && g.bSeq[ci-1]){ host.style.cursor='pointer'; clearGhost(g); return; }
+    var slot=nextSlot(g); if(slot<0){ host.style.cursor='default'; clearGhost(g); return; }
+    if(ci!==slot+1){ host.style.cursor='default'; clearGhost(g); return; }
+    var which=clefEn(g,p.y), nat=nearestByY(g,p.y,which); if(!nat){ clearGhost(g); return; }
+    host.style.cursor='pointer'; showGhost(g, g.__geo.comp[slot+1].cx, nat, which);
+  }
+  function ghostEl(g){ var el=g.__host.querySelector('.serieF-ghost'); if(!el){ el=document.createElement('div'); el.className='serieF-ghost'; el.style.cssText='position:absolute;pointer-events:none;z-index:6;width:13px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host.appendChild(el); } return el; }
+  function showGhost(g, xc, nat, which){ var host=g.__host, gEl=ghostEl(g), svg=host.querySelector('svg'); if(!svg){ gEl.style.display='none'; return; }
+    try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=nat.y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect();
+      gEl.style.left=(sp.x-hr.left-6)+'px'; gEl.style.top=(sp.y-hr.top-5)+'px'; gEl.style.display='block';
+      drawGhostLedger(g, svg, hr, xc, nat, which); }catch(e){ gEl.style.display='none'; } }
+  function drawGhostLedger(g, svg, hr, xc, nat, which){ var host=g.__host; host.querySelectorAll('.serieF-ledger').forEach(function(el){el.remove();});
+    var map=(which==='bot')?g.__geo.ymapBot:g.__geo.ymapTop, topRef=which==='bot'?map['A3']:map['F5'], botRef=which==='bot'?map['G2']:map['E4']; if(!topRef||!botRef) return;
+    var half=(botRef.y-topRef.y)/8, lines=[], y;
+    y=topRef.y-2*half; while(y>=nat.y-1){ lines.push(y); y-=2*half; }
+    y=botRef.y+2*half; while(y<=nat.y+1){ lines.push(y); y+=2*half; }
+    lines.forEach(function(yL){ try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=yL; var sp=pt.matrixTransform(svg.getScreenCTM());
+      var ln=document.createElement('div'); ln.className='serieF-ledger'; ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:20px;background:#c8b06a;opacity:.7';
+      ln.style.left=(sp.x-hr.left-10)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln); }catch(e){} }); }
+  function clearGhost(g){ var el=g.__host.querySelector('.serieF-ghost'); if(el) el.style.display='none'; g.__host.querySelectorAll('.serieF-ledger').forEach(function(x){x.remove();}); }
+  function onClickScore(g,ev){ if(g.__corr) return; var p=svgPoint(g.__host,ev); if(!p) return; var ci=compasEn(g,p.x);
+    if(ci>=1 && g.bSeq[ci-1]){ g.__sel=(g.__sel===ci-1)?null:ci-1; render(g); return; }
+    var slot=nextSlot(g); if(slot<0) return; if(ci!==slot+1) return;
+    var which=clefEn(g,p.y), nat=nearestByY(g,p.y,which); if(!nat) return;
+    g.bSeq[slot]={step:nat.step,octave:nat.octave,alter:0}; g.__sel=slot; render(g);
+  }
+  /* ---- toolbar de alteraciones ---- */
+  function updToolbar(g){ var tb=g.__tb; if(!tb) return; var active=(!g.__corr && g.__sel!=null && g.bSeq[g.__sel]); var alt=active?g.bSeq[g.__sel].alter:0;
+    tb.style.opacity=active?'1':'.4';
+    tb.querySelectorAll('[data-a]').forEach(function(b){ var a=b.dataset.a, on=(a==='b'&&alt===-1)||(a==='n'&&alt===0)||(a==='#'&&alt===1);
+      b.style.background=(active&&on)?'linear-gradient(135deg,#d4af37,#b8860b)':'rgba(233,201,106,.04)'; b.style.color=(active&&on)?'#1a1407':'#d8caa6'; }); }
+  function toolbarClick(g,a){ if(g.__corr || g.__sel==null || !g.bSeq[g.__sel]) return; var n=g.bSeq[g.__sel];
+    if(a==='b') n.alter=Math.max(-2,n.alter-1); else if(a==='#') n.alter=Math.min(2,n.alter+1); else if(a==='n') n.alter=0; render(g); }
+  function montarEn(host, g){
+    if(!host||!g) return; host.innerHTML=''; g.__corr=false; g.__sel=null;
+    var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
+    var serie=serieOf(g);
+    var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:6px'; cap.innerHTML='Fundamental: <b style="color:#b8860b">'+nom(serie[0])+serie[0].octave+'</b> · pincha en el sistema para colocar los armónicos 2 a 8 (clic derecho o × para borrar)'; wrap.appendChild(cap);
+    var score=document.createElement('div'); score.style.cssText='position:relative;overflow:visible'; wrap.appendChild(score); g.__host=score;
+    var tb=document.createElement('div'); tb.style.cssText='display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 12px;border:1px solid #e7d9a8;border-radius:10px;background:#faf6ea'; wrap.appendChild(tb); g.__tb=tb;
+    tb.appendChild(mkLabel('Alteración de la nota seleccionada:'));
+    ['b','n','#'].forEach(function(a){ var b=document.createElement('button'); b.type='button'; b.dataset.a=a; b.textContent=a==='b'?'♭':a==='n'?'♮':'♯';
+      b.style.cssText='width:38px;height:38px;border:1px solid #cbb98a;border-radius:8px;background:rgba(233,201,106,.04);color:#d8caa6;font-size:16px;cursor:pointer'; b.onclick=function(){ toolbarClick(g,a); }; tb.appendChild(b); });
+    render(g);
+  }
+  function mkLabel(t){ var d=document.createElement('span'); d.style.cssText='font-size:12px;font-weight:800;color:#7a6a3a'; d.textContent=t; return d; }
+  function puntua(g){ try{ var serie=serieOf(g), ok=0; for(var i=0;i<7;i++){ var s=serie[i+1], n=g.bSeq[i]; if(n&&n.step===s.step&&n.octave===s.octave&&n.alter===s.alter) ok++; } return ok/7; }catch(e){ return 0; } }
+  function corregirVisual(host, g){
+    try{
+      if(!g) return 0;
+      if(host){
+        host.innerHTML=''; g.__corr=true; g.__sel=null;
+        var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
+        var serie=serieOf(g), ok=0;
+        for(var i=0;i<7;i++){ var s=serie[i+1], n=g.bSeq[i]; var good=n&&n.step===s.step&&n.octave===s.octave&&n.alter===s.alter; if(good) ok++; if(n) n._mark=good?'ok':'bad'; }
+        var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:6px'; cap.innerHTML='Serie de <b style="color:#b8860b">'+nom(serie[0])+serie[0].octave+'</b>'; wrap.appendChild(cap);
+        var score=document.createElement('div'); score.style.cssText='position:relative'; wrap.appendChild(score); g.__host=score;
+        render(g);
+        // solución en azul para huecos vacíos o erróneos, como texto bajo cada compás
+        var geo=g.__geo, svg=score.querySelector('svg');
+        if(geo && svg){ for(var j=0;j<7;j++){ var sol=serie[j+1], nn=g.bSeq[j]; var bien=nn&&nn.step===sol.step&&nn.octave===sol.octave&&nn.alter===sol.alter; if(bien) continue;
+          var c=geo.comp[j+1]; if(!c) continue; var lbl=document.createElement('div'); lbl.textContent=nom(sol)+sol.octave;
+          lbl.style.cssText='position:absolute;z-index:7;font-size:11px;font-weight:800;color:#2f6df6;transform:translateX(-50%);white-space:nowrap';
+          try{ var pt=svg.createSVGPoint(); pt.x=c.cx; pt.y=geo.botY+96; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=score.getBoundingClientRect();
+            lbl.style.left=(sp.x-hr.left)+'px'; lbl.style.top=(sp.y-hr.top)+'px'; score.appendChild(lbl); }catch(e){} } }
+        var t=document.createElement('div'); t.style.cssText='text-align:center;margin-top:10px;font-size:12.5px;font-weight:800;color:'+(ok===7?'#16a34a':'#8a6d1a'); t.textContent='Armónicos correctos: '+ok+'/7'+(ok<7?' · la solución va en azul':''); wrap.appendChild(t);
+      }
+      return puntua(g);
+    }catch(e){ return puntua(g); }
+  }
+  function pdfInfo(g){ var serie=serieOf(g); return { fund:g.fund, serie:serie.map(function(n){ return {step:n.step,octave:n.octave,alter:n.alter,midi:n.midi,h:n.h,interval:n.interval}; }) }; }
+  window.SERIE_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
+})();
+/* ============================================================
+   DODECAFONISMO · núcleo puro compartido (A construir · B completar · C identificar)
+   ============================================================ */
+(function(){
+  var STEP_SEMI={C:0,D:2,E:4,F:5,G:7,A:9,B:11};
+  var PC_FLAT=[['C',0],['D',-1],['D',0],['E',-1],['E',0],['F',0],['G',-1],['G',0],['A',-1],['A',0],['B',-1],['B',0]];
+  var ES={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+  function pcOf(step,alter){ return ((STEP_SEMI[step]+(alter||0))%12+12)%12; }
+  function noteFromPc(pc, octave){ var s=PC_FLAT[((pc%12)+12)%12]; return {step:s[0],alter:s[1],octave:(octave==null?4:octave)}; }
+  function nomEs(step,alter){ var a=alter===1?'♯':alter===-1?'♭':alter===2?'𝄪':alter===-2?'𝄫':''; return ES[step]+a; }
+  function transpose(pcs,n){ return pcs.map(function(p){return ((p+n)%12+12)%12;}); }
+  function retro(pcs){ return pcs.slice().reverse(); }
+  function invert(pcs){ var a=pcs[0]; return pcs.map(function(p){ return ((2*a-p)%12+12)%12; }); }
+  function variant(p0, kind, n){ if(kind==='P') return transpose(p0,n); if(kind==='R') return retro(transpose(p0,n)); if(kind==='I') return transpose(invert(p0),n); return transpose(p0,n); }
+  function todosDistintos(pcs){ var s={}; for(var i=0;i<pcs.length;i++){ if(s[pcs[i]]) return false; s[pcs[i]]=1; } return true; }
+  function esCromatica(pcs){ if(pcs.length<12) return false; function dir(st){ for(var i=1;i<pcs.length;i++){ if((((pcs[i]-pcs[i-1])%12)+12)%12!==st) return false; } return true; } return dir(1)||dir(11); }
+  function maxRachaConjunta(pcs){ var run=1,best=1; for(var i=1;i<pcs.length;i++){ var d=(((pcs[i]-pcs[i-1])%12)+12)%12; var dd=Math.min(d,12-d); if(dd===1||dd===2){ run++; if(run>best)best=run; } else run=1; } return best; }
+  function valida(pcs){ return { n:pcs.length, distintos:todosDistintos(pcs), completa:pcs.length===12, cromatica:esCromatica(pcs), rachaConj:maxRachaConjunta(pcs), ok:(pcs.length===12 && todosDistintos(pcs) && !esCromatica(pcs) && maxRachaConjunta(pcs)<=3) }; }
+  // genera una P0 válida (12 pc distintos, no cromática, ≤3 conjuntos)
+  function generaP0(){ var pcs; var guard=0; do{ pcs=[0,1,2,3,4,5,6,7,8,9,10,11]; for(var i=pcs.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=pcs[i]; pcs[i]=pcs[j]; pcs[j]=t; } guard++; }while(guard<200 && !valida(pcs).ok); return pcs; }
+  window.DODE_PURE={ pcOf:pcOf, noteFromPc:noteFromPc, nomEs:nomEs, transpose:transpose, retro:retro, invert:invert, variant:variant, todosDistintos:todosDistintos, esCromatica:esCromatica, maxRachaConjunta:maxRachaConjunta, valida:valida, generaP0:generaP0 };
+})();
+function fpPintaSerie(host, spec, resuelto, anchoFijo){
+  try{
+    host.innerHTML='';
+    var info=window.SERIE_MOTOR.pdfInfo(spec); var serie=info.serie;
+    var items;
+    if(resuelto){ items=serie.map(function(n){ return {step:n.step,octave:n.octave,alter:n.alter,midi:n.midi,h:n.h,interval:n.interval,fund:(n.h===1)}; }); }
+    else { items=[{step:serie[0].step,octave:serie[0].octave,alter:serie[0].alter,midi:serie[0].midi,h:1,interval:serie[0].interval,fund:true}]; for(var k=0;k<7;k++) items.push(null); }
+    window.SERIE_PURE.drawGrand(host, items, {showNumbers:true, showIntervals:!!resuelto, width:anchoFijo||940});
+    var svg=host.querySelector('svg');
+    if(svg){ var W=svg.getAttribute('width')||940;
+      // subir el sistema (aprovecha el aire de arriba) para que la nota grave de la clave de fa no se corte
+      var gg=document.createElementNS('http://www.w3.org/2000/svg','g'); gg.setAttribute('transform','translate(0,-16)');
+      while(svg.firstChild){ gg.appendChild(svg.firstChild); } svg.appendChild(gg);
+      svg.setAttribute('viewBox','0 0 '+W+' 252'); svg.setAttribute('height','252'); }
+  }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar serie: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaSerie', e); }
+}
+</script>
+
+<script>
+/* ============================================================
+   FICHAS · DODECAFONISMO A — Construye una serie dodecafónica.
+   Pentagrama único (sol), 12 redondas en un compás; alteraciones con acarreo (♮).
+   ============================================================ */
+(function(){
+  function D(){ return window.DODE_PURE; }
+  var ORD={C:0,D:1,E:2,F:3,G:4,A:5,B:6};
+  var ACCV={'':0,'n':0,'b':-1,'#':1};
+  function generar(){ return { _dodeA:true, notes:[null,null,null,null,null,null,null,null,null,null,null,null] }; }
+  function enunciado(g){ return 'Dodecafonismo · Construye una serie de 12 sonidos (sin repetir).'; }
+  // altura sonante de cada nota teniendo en cuenta el acarreo de alteraciones en el compás
+  function effAlter(notes, i){ var n=notes[i]; if(!n) return 0; if(n.acc!==''&&n.acc!=null) return ACCV[n.acc];
+    for(var j=i-1;j>=0;j--){ var m=notes[j]; if(m&&m.step===n.step&&m.octave===n.octave&&m.acc!==''&&m.acc!=null) return ACCV[m.acc]; } return 0; }
+  function soundingPcs(g){ var out=[]; for(var i=0;i<12;i++){ var n=g.notes[i]; if(!n) continue; out.push(D().pcOf(n.step, effAlter(g.notes,i))); } return out; }
+  function keyOf(n){ return n.step.toLowerCase()+'/'+n.octave; }
+  function repetidos(g){ // índices de notas cuya altura sonante ya salió antes
+    var seen={}, bad={}; for(var i=0;i<12;i++){ var n=g.notes[i]; if(!n) continue; var pc=D().pcOf(n.step, effAlter(g.notes,i)); if(seen[pc]!=null){ bad[i]=1; bad[seen[pc]]=1; } else seen[pc]=i; } return bad; }
+  function renderStaff(g, forCorr){
+    var host=g.__host; if(!host||typeof Vex==='undefined') return;
+    var VF=Vex.Flow, W=Math.max(600, host.clientWidth||760), H=168;
+    host.innerHTML=''; var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+    var x0=8, staveW=W-16, sy=52;
+    var stave=new VF.Stave(x0, sy, staveW); stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    var bad=forCorr?g.__bad:repetidos(g);
+    var tickables=g.notes.map(function(n,i){
+      if(!n) return new VF.GhostNote({duration:'w'});
+      var sn=new VF.StaveNote({keys:[keyOf(n)], duration:'w', clef:'treble'});
+      if(n.acc==='#') sn.addModifier(new VF.Accidental('#'),0);
+      else if(n.acc==='b') sn.addModifier(new VF.Accidental('b'),0);
+      else if(n.acc==='n') sn.addModifier(new VF.Accidental('n'),0);
+      var st=null;
+      if(forCorr){ st = (g.__bad&&g.__bad[i]) ? {fillStyle:'#e0556b',strokeStyle:'#e0556b'} : {fillStyle:'#39c08a',strokeStyle:'#39c08a'}; }
+      else if(!forCorr && bad&&bad[i]){ st={fillStyle:'#e0556b',strokeStyle:'#e0556b'}; }
+      else if(g.__sel===i){ st={fillStyle:'#d4af37',strokeStyle:'#d4af37'}; }
+      else st={fillStyle:'#10131f',strokeStyle:'#10131f'};
+      try{ sn.setStyle(st); }catch(e){}
+      return sn;
+    });
+    var voice=new VF.Voice({num_beats:12,beat_value:4}).setStrict(false); voice.addTickables(tickables);
+    var clefW=stave.getNoteStartX()-x0;
+    try{ new VF.Formatter().joinVoices([voice]).format([voice], staveW-clefW-24); }catch(e){}
+    voice.draw(ctx, stave);
+    // geometría para fantasma
+    var xs=tickables.map(function(t){ try{ return t.getAbsoluteX(); }catch(e){ return null; } });
+    var yLine0=stave.getYForLine(0), half=(stave.getYForLine(4)-stave.getYForLine(0))/8, refDia=5*7+ORD['F'];
+    g.__geo={stave:stave, xs:xs, yLine0:yLine0, half:half, refDia:refDia, sy:sy};
+    if(!forCorr) wireGhost(g);
+  }
+  function yFor(g,step,octave){ var dia=octave*7+ORD[step]; return g.__geo.yLine0+(g.__geo.refDia-dia)*g.__geo.half; }
+  function nearestStepByY(g,my){ var best=null,bd=1e9; for(var o=2;o<=6;o++){ for(var s in ORD){ var y=yFor(g,s,o); var d=Math.abs(y-my); if(d<bd){bd=d;best={step:s,octave:o,y:y};} } } return best; }
+  function slotFromX(g,px){ var xs=g.__geo.xs, best=-1,bd=1e9; for(var i=0;i<12;i++){ if(xs[i]==null) continue; var d=Math.abs(xs[i]-px); if(d<bd){bd=d;best=i;} } return best; }
+  function svgPt(host,ev){ var svg=host.querySelector('svg'); if(!svg) return null; try{ var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y,svg:svg}; }catch(e){ return null; } }
+  function wireGhost(g){ var host=g.__host;
+    host.onmousemove=function(ev){ onHover(g,ev); };
+    host.onmouseleave=function(){ clearGhost(g); };
+    host.onclick=function(ev){ onClick(g,ev); };
+    host.oncontextmenu=function(ev){ ev.preventDefault(); var p=svgPt(host,ev); if(!p) return; var sl=slotFromX(g,p.x); if(sl>=0&&g.notes[sl]){ g.notes[sl]=null; if(g.__sel===sl) g.__sel=null; refresh(g); } };
+  }
+  function onHover(g,ev){ var host=g.__host, p=svgPt(host,ev); if(!p){ clearGhost(g); return; } var sl=slotFromX(g,p.x); if(sl<0){ clearGhost(g); return; }
+    if(g.notes[sl]){ host.style.cursor='pointer'; clearGhost(g); return; } var nat=nearestStepByY(g,p.y); host.style.cursor='pointer'; showGhost(g, g.__geo.xs[sl], nat); }
+  function ghostEl(g){ var e=g.__host.querySelector('.dodeF-ghost'); if(!e){ e=document.createElement('div'); e.className='dodeF-ghost'; e.style.cssText='position:absolute;pointer-events:none;z-index:6;width:14px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host.appendChild(e); } return e; }
+  function showGhost(g,xc,nat){ var host=g.__host, e=ghostEl(g), svg=host.querySelector('svg'); if(!svg){ e.style.display='none'; return; }
+    try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=nat.y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect();
+      e.style.left=(sp.x-hr.left-7)+'px'; e.style.top=(sp.y-hr.top-5)+'px'; e.style.display='block'; ledger(g,svg,hr,xc,nat); }catch(er){ e.style.display='none'; } }
+  function ledger(g,svg,hr,xc,nat){ var host=g.__host; host.querySelectorAll('.dodeF-ledger').forEach(function(x){x.remove();});
+    var yTopLine=g.__geo.yLine0, yBotLine=g.__geo.stave.getYForLine(4), half=g.__geo.half, lines=[],y;
+    y=yTopLine-2*half; while(y>=nat.y-1){ lines.push(y); y-=2*half; } y=yBotLine+2*half; while(y<=nat.y+1){ lines.push(y); y+=2*half; }
+    lines.forEach(function(yL){ try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=yL; var sp=pt.matrixTransform(svg.getScreenCTM());
+      var ln=document.createElement('div'); ln.className='dodeF-ledger'; ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:22px;background:#c8b06a;opacity:.7';
+      ln.style.left=(sp.x-hr.left-11)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln); }catch(e){} }); }
+  function clearGhost(g){ var e=g.__host.querySelector('.dodeF-ghost'); if(e) e.style.display='none'; g.__host.querySelectorAll('.dodeF-ledger').forEach(function(x){x.remove();}); }
+  function onClick(g,ev){ var p=svgPt(g.__host,ev); if(!p) return; var sl=slotFromX(g,p.x); if(sl<0) return;
+    if(g.notes[sl]){ g.__sel=(g.__sel===sl)?null:sl; refresh(g); return; }
+    var nat=nearestStepByY(g,p.y); g.notes[sl]={step:nat.step,octave:nat.octave,acc:''}; g.__sel=sl; refresh(g); }
+  function accToolbar(g){ var tb=g.__tb; if(!tb) return; var active=(g.__sel!=null && g.notes[g.__sel]); tb.style.opacity=active?'1':'.4';
+    var acc=active?g.notes[g.__sel].acc:''; tb.querySelectorAll('[data-a]').forEach(function(b){ var on=(active&&b.dataset.a===acc); b.style.background=on?'linear-gradient(135deg,#d4af37,#b8860b)':'#fff'; b.style.color=on?'#1a1407':'#3a2f12'; }); }
+  function setAcc(g,a){ if(g.__sel==null||!g.notes[g.__sel]) return; var n=g.notes[g.__sel]; n.acc=(n.acc===a)?'':a; refresh(g); }
+  function avisos(g){ var box=g.__avisos; if(!box) return; var pcs=soundingPcs(g), v=D().valida(pcs), msgs=[];
+    var rep=repetidos(g); var nrep=Object.keys(rep).length;
+    if(nrep) msgs.push('<span style="color:#c0392b">⚠ Hay sonidos repetidos (en rojo). Recuerda el acarreo: usa ♮ si hace falta.</span>');
+    if(v.cromatica) msgs.push('<span style="color:#c0392b">⚠ No está permitida la escala cromática.</span>');
+    if(v.rachaConj>3) msgs.push('<span style="color:#c0392b">⚠ No más de 3 notas seguidas por grados conjuntos.</span>');
+    var puestas=pcs.length;
+    box.innerHTML='<b>'+puestas+'/12</b> sonidos'+(msgs.length?' · '+msgs.join(' · '):(puestas===12?' · <span style="color:#16a34a">✓ serie válida</span>':'')); }
+  function refresh(g){ renderStaff(g,false); accToolbar(g); avisos(g); }
+  function montarEn(host, g){
+    if(!host||!g) return; host.innerHTML=''; g.__sel=null;
+    var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
+    var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:6px'; cap.innerHTML='Coloca <b>12 sonidos distintos</b> · pincha en el pentagrama (clic derecho para borrar). No vale escala cromática ni más de 3 notas seguidas por grados conjuntos.'; wrap.appendChild(cap);
+    var score=document.createElement('div'); score.style.cssText='position:relative;overflow:visible'; wrap.appendChild(score); g.__host=score;
+    var tb=document.createElement('div'); tb.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border:1px solid #e7d9a8;border-radius:10px;background:#faf6ea'; wrap.appendChild(tb); g.__tb=tb;
+    var l=document.createElement('span'); l.style.cssText='font-size:12px;font-weight:800;color:#7a6a3a'; l.textContent='Alteración:'; tb.appendChild(l);
+    [['b','♭'],['n','♮'],['#','♯']].forEach(function(pr){ var b=document.createElement('button'); b.type='button'; b.dataset.a=pr[0]; b.textContent=pr[1]; b.style.cssText='width:36px;height:36px;border:1px solid #cbb98a;border-radius:8px;background:#fff;color:#3a2f12;font-size:16px;cursor:pointer'; b.onclick=function(){ setAcc(g,pr[0]); }; tb.appendChild(b); });
+    var av=document.createElement('div'); av.style.cssText='margin-top:8px;font-size:12px;color:#5a5030;line-height:1.5'; wrap.appendChild(av); g.__avisos=av;
+    refresh(g);
+  }
+  function puntua(g){ try{ var pcs=soundingPcs(g); var v=D().valida(pcs); if(v.ok) return 1; // válida completa
+      var distintas=(function(){ var s={},c=0; pcs.forEach(function(p){ if(!s[p]){s[p]=1;c++;} }); return c; })();
+      var base=distintas/12; if(v.cromatica||v.rachaConj>3) base*=0.6; return base; }catch(e){ return 0; } }
+  function corregirVisual(host, g){
+    try{
+      if(!g) return 0;
+      if(host){
+        host.innerHTML='';
+        var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
+        var pcs=soundingPcs(g), v=D().valida(pcs); g.__bad=repetidos(g);
+        var score=document.createElement('div'); score.style.cssText='position:relative'; wrap.appendChild(score); g.__host=score;
+        renderStaff(g,true);
+        var msgs=[]; var nrep=Object.keys(g.__bad).length;
+        if(nrep) msgs.push('sonidos repetidos (rojo)'); if(v.cromatica) msgs.push('escala cromática'); if(v.rachaConj>3) msgs.push('más de 3 grados conjuntos seguidos'); if(pcs.length<12) msgs.push('faltan sonidos ('+pcs.length+'/12)');
+        var t=document.createElement('div'); t.style.cssText='text-align:center;margin-top:10px;font-size:12.5px;font-weight:800;color:'+(v.ok?'#16a34a':'#c0392b');
+        t.textContent=v.ok?'✓ Serie dodecafónica válida (12 sonidos distintos)':('✗ '+(msgs.join(' · ')||'incompleta')); wrap.appendChild(t);
+      }
+      return puntua(g);
+    }catch(e){ return puntua(g); }
+  }
+  function pdfInfo(g){ return { }; }
+  window.DODE_A_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
+})();
+function fpPintaDodeA(host, spec, resuelto, anchoFijo){
+  try{
+    var VF=Vex.Flow; host.innerHTML='';
+    var W=anchoFijo||940, H=150;
+    var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
+    var stave=new VF.Stave(10, 46, W-20); stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
+    if(resuelto){
+      // ejemplo de serie válida (no hay solución única en construcción)
+      var pcs=window.DODE_PURE.generaP0();
+      var notes=pcs.map(function(pc,i){ var nt=window.DODE_PURE.noteFromPc(pc, (pc<5?5:4)); var sn=new VF.StaveNote({keys:[nt.step.toLowerCase()+'/'+nt.octave],duration:'w',clef:'treble'}); if(nt.alter===-1) sn.addModifier(new VF.Accidental('b'),0); try{sn.setStyle({fillStyle:'#c0392b',strokeStyle:'#c0392b'});}catch(e){} return sn; });
+      var voice=new VF.Voice({num_beats:12,beat_value:4}).setStrict(false); voice.addTickables(notes);
+      try{ new VF.Formatter().joinVoices([voice]).format([voice], W-20-(stave.getNoteStartX()-10)-24); }catch(e){}
+      voice.draw(ctx, stave);
+      var svg=host.querySelector('svg'); if(svg){ var t=document.createElementNS('http://www.w3.org/2000/svg','text'); t.setAttribute('x',12); t.setAttribute('y',20); t.setAttribute('font-size','11'); t.setAttribute('font-family','DejaVu Sans, Helvetica, Arial'); t.setAttribute('fill','#8a6d1a'); t.textContent='Ejemplo (la construcción no tiene solución única):'; svg.appendChild(t); }
+    }
+  }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar dodecafonismo A: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaDodeA', e); }
 }
 </script>
 
