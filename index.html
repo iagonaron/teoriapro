@@ -8626,6 +8626,13 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-tipo.rep .fp-add{background:linear-gradient(135deg,#8b9bff,#3a78e0);color:#eaf1ff}
   .fp-tipo.rep:not(.off):hover{box-shadow:0 10px 26px rgba(91,157,255,.26)}
   .fp-tipo.rep.off{background:rgba(91,157,255,.05)}
+  /* tarjetas TIPO TEST (verde esmeralda, dentro de la columna dorada) */
+  .fp-tipo.test{border:1px solid rgba(52,211,153,.42);
+    background:linear-gradient(160deg,rgba(52,211,153,.15),rgba(8,26,20,.66))}
+  .fp-tipo.test small{color:#8fd9bd}
+  .fp-tipo.test .fp-add{background:linear-gradient(135deg,#5eead4,#10b981);color:#06140f}
+  .fp-tipo.test:not(.off):hover{box-shadow:0 10px 26px rgba(52,211,153,.26)}
+  .fp-chip.test{background:rgba(52,211,153,.16);color:#7fe7c4;border:1px solid rgba(52,211,153,.45)}
   .fp-chip{display:inline-block;font-size:9.5px;letter-spacing:.1em;font-weight:800;text-transform:uppercase;
     border-radius:999px;padding:2px 8px;margin-top:6px}
   .fp-chip.prox{background:rgba(212,175,55,.15);color:var(--gold-soft);border:1px solid rgba(212,175,55,.4)}
@@ -8785,6 +8792,25 @@ var CATALOGO=[
   { key:'transporte_escrito', label:'Transporte · escrito', estado:'prox', nota:'fase 2', col:'pro', u:9 },
   { key:'transporte_mental',  label:'Transporte · mental',  estado:'prox', nota:'fase 2', col:'pro', u:9 },
   { key:'transporte_resumen', label:'Transporte · resumen', estado:'prox', nota:'fase 2', col:'pro', u:9 },
+  /* ===== TIPO TEST (verde) · tramos del libro, dentro de su unidad ===== */
+  { key:'test_1_1', tramo:'1.1', label:'Test 1.1 · Fonógrafo',                 estado:'activo', col:'pro', u:1, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_1_2', tramo:'1.2', label:'Test 1.2 · Compases poco habituales',  estado:'activo', col:'pro', u:1, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_2_1', tramo:'2.1', label:'Test 2.1 · Cualidades (duración/intensidad)', estado:'activo', col:'pro', u:2, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_2_2', tramo:'2.2', label:'Test 2.2 · Cualidades (altura/timbre)', estado:'activo', col:'pro', u:2, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_2_3', tramo:'2.3', label:'Test 2.3 · Serie armónica',            estado:'activo', col:'pro', u:2, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_3_1', tramo:'3.1', label:'Test 3.1 · Atonalidad',                estado:'activo', col:'pro', u:3, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_3_2', tramo:'3.2', label:'Test 3.2 · Dodecafonismo y serialismo', estado:'activo', col:'pro', u:3, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_3_3', tramo:'3.3', label:'Test 3.3 · Música estocástica',        estado:'activo', col:'pro', u:3, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_4_1', tramo:'4.1', label:'Test 4.1 · Magnetófono',               estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_4_2', tramo:'4.2', label:'Test 4.2 · Música concreta',           estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_4_3', tramo:'4.3', label:'Test 4.3 · Nuevas grafías',            estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_5_1', tramo:'5.1', label:'Test 5.1 · El Blues',                  estado:'activo', col:'pro', u:5, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_5_2', tramo:'5.2', label:'Test 5.2 · GVE en varios pulsos',      estado:'activo', col:'pro', u:5, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_8_1', tramo:'8.1', label:'Test 8.1 · Modulación (general)',      estado:'activo', col:'pro', u:8, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_8_2', tramo:'8.2', label:'Test 8.2 · Modulación diatónica',      estado:'activo', col:'pro', u:8, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_8_3', tramo:'8.3', label:'Test 8.3 · Otras modulaciones',        estado:'activo', col:'pro', u:8, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_9_1', tramo:'9.1', label:'Test 9.1 · Definición y transporte escrito', estado:'activo', col:'pro', u:9, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_9_2', tramo:'9.2', label:'Test 9.2 · Transporte mental y diferencias', estado:'activo', col:'pro', u:9, test:true, desc:'2 preguntas · 3 opciones' },
   /* ===== REPASO (azul) ===== */
   { key:'escala_mayor',     label:'Escalas · Mayor',      estado:'activo', col:'repaso', desc:'una escala mayor (armadura + alteraciones)' },
   { key:'escala_menor',     label:'Escalas · menor',      estado:'activo', col:'repaso', desc:'una escala menor (natural/armónica/melódica)' },
@@ -8810,8 +8836,9 @@ function status(msg, tipo){
 /* --------- pintado --------- */
 function fpMakeCard(t, azul){
   var b=document.createElement('button'); b.type='button';
-  b.className='fp-tipo'+(azul?' rep':'')+(t.estado==='activo'?'':' off');
-  var chip= t.estado==='prox'   ? '<span class="fp-chip'+(azul?' rep':' prox')+'">· '+t.nota+' ·</span>'
+  b.className='fp-tipo'+(azul?' rep':'')+(t.test?' test':'')+(t.estado==='activo'?'':' off');
+  var chip= t.test              ? '<span class="fp-chip test">◧ TEST</span>'
+          : t.estado==='prox'   ? '<span class="fp-chip'+(azul?' rep':' prox')+'">· '+t.nota+' ·</span>'
           : t.estado==='constr' ? '<span class="fp-chip constr">en construcción</span>' : '';
   b.innerHTML=(t.estado==='activo'?'<span class="fp-add">+</span>':'')+
     t.label+'<small>'+(t.estado==='activo'?(t.desc||'construir el modo indicado'):'todavía no se puede añadir')+'</small>'+chip;
@@ -9174,6 +9201,7 @@ function fpPintaIntervalos(host, spec, resuelto, anchoFijo){
 }
 function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
   // --- despacho por tipo: los ejercicios no-escala pintan aparte ---
+  if(spec && spec._test){ return window.fpPintaTest(host, spec, resuelto, anchoFijo); }
   if(spec && spec._ia){ return fpPintaIndice(host, spec, resuelto, anchoFijo); }
   if(spec && spec._cad){ return fpPintaCadencia(host, spec, resuelto, anchoFijo); }
   if(spec && spec._tonA){ return fpPintaTonNombre(host, spec, resuelto, anchoFijo); }
@@ -9248,7 +9276,7 @@ function fpEnun(e){
   try{
     var M=fpMotorDe(e.spec);
     if(M && e.spec){
-      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA || e.spec._dodeB || e.spec._dodeC || e.spec._mod) return M.enunciado(e.spec);
+      if(e.spec._test || e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA || e.spec._dodeB || e.spec._dodeC || e.spec._mod) return M.enunciado(e.spec);
       if(e.spec.tonica) return M.enunciado(e.spec);
     }
   }catch(err){}
@@ -9258,6 +9286,7 @@ function fpEnun(e){
 /* --------- router de motores por tipo de ejercicio --------- */
 // devuelve el motor (fachada) adecuado según el spec del ejercicio
 function fpMotorDe(spec){
+  if(spec && spec._test) return window.TEST_MOTOR;
   if(spec && spec._aco) return window.ACORDES_MOTOR;
   if(spec && spec._iv)  return window.INTERVALOS_MOTOR;
   if(spec && spec._ia)  return window.INDICE_MOTOR;
@@ -9278,6 +9307,7 @@ function fpMotorDe(spec){
 }
 // mapa key -> cómo generar
 function fpGenera(key){
+  if(key.indexOf('test_')===0){ var ct=CATALOGO.find(function(x){return x.key===key;}); return (window.TEST_MOTOR&&ct)?window.TEST_MOTOR.generar(ct.tramo):null; }
   var M=window.MODOS_MOTOR;
   if(key==='modos')        return M?M.nuevo():null;
   if(key==='escala_mayor') return M?M.nuevoEscala('mayor'):null;
@@ -9425,6 +9455,7 @@ function fpPdfSafe(s){
 }
 // título del ejercicio para el PDF: sin redundancia. "Escalas. La Mayor tipo 1"
 function fpTituloPDF(e){
+  if(e.spec && e.spec._test){ return fpPdfSafe('Test '+e.spec.tramo+'. '+e.spec.titulo); }
   if(e.spec && e.spec._aco && window.ACORDES_MOTOR && window.ACORDES_MOTOR.pdfInfo){
     var ia=window.ACORDES_MOTOR.pdfInfo(e.spec);
     var pre=(e.spec._cat==='pro')?'Acordes PRO. ':'Acordes. ';
@@ -9488,7 +9519,7 @@ async function fpConstruirPDF(esSolucion){
   var topDe=function(p){ return p===1?36:16; };
   var BLOCK_STD=(yBot-topDe(1))/porPagina;           // altura fija por ejercicio
   var imgs=[];
-  for(var i=0;i<n;i++) imgs.push(await fpBloquePng(FP.ejercicios[i].spec, esSolucion));
+  for(var i=0;i<n;i++) imgs.push(FP.ejercicios[i].spec._test ? null : await fpBloquePng(FP.ejercicios[i].spec, esSolucion));
   for(var page=1; page<=nPaginas; page++){
     if(page>1) doc.addPage();
     if(page===1){
@@ -9522,6 +9553,10 @@ async function fpConstruirPDF(esSolucion){
       if(_tit!==fpTituloPDF(e)) _tit=_tit.replace(/[\s(]+$/,'')+'…';
       doc.text(_tit, M+4+numW, by+8);
       var yImg=by+12;   // sin subtítulo/instrucción (Iago: no lo quiere en estos)
+      if(e.spec._test){
+        window.fpTestPDF(doc, e.spec, M+4, by+14, CW-8, blockH-3-(14)-2, esSolucion);
+        continue;
+      }
       if(img){
         var availH=blockH-3-(yImg-by)-2, imgW=CW-12, imgH=imgW*img.h/img.w;
         if(imgH>availH){ imgH=Math.max(8,availH); imgW=imgH*img.w/img.h; }
@@ -11563,6 +11598,266 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     }
   }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar modulación: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaModulacion', e); }
 }
+</script>
+
+<!-- ============ TIPO TEST · preguntas por unidad (basado en los apuntes 2GP) ============ -->
+<script>
+(function(){
+  /* Cada pregunta: {q:'enunciado', op:['CORRECTA','distractor','distractor']}  (op[0] = correcta) */
+  var BANCO = {
+    '1.1': { titulo:'Fonógrafo', preguntas:[
+      { q:'¿Quién presentó el fonógrafo en 1877?', op:['Thomas Edison','Alexander Graham Bell','Nikola Tesla'] },
+      { q:'¿De qué material era el cilindro donde se grababa el sonido en el fonógrafo?', op:['Cera','Vinilo','Cinta magnética'] },
+      { q:'En el fonógrafo, ¿qué función cumple el cono?', op:['Micrófono al grabar y resonador al reproducir','Solo amplificar el sonido','Hacer girar el cilindro'] },
+      { q:'¿Cuál era una limitación clara del fonógrafo?', op:['Los cilindros se desgastaban con cada uso','No podía reproducir lo grabado','Necesitaba electricidad de red'] },
+      { q:'El fonógrafo fue importante porque permitió, por primera vez…', op:['Grabar y reproducir sonido','Amplificar una orquesta','Escribir partituras'] }
+    ]},
+    '1.2': { titulo:'Compases poco habituales', preguntas:[
+      { q:'Los compases mixtos se caracterizan por…', op:['Tener denominadores distintos','Tener el numerador con decimales','Sumar o restar una fracción'] },
+      { q:'¿Qué distingue a un compás decimal?', op:['El numerador tiene decimales','El denominador es impar','Se le añade una fracción'] },
+      { q:'Un compás fraccionario es…', op:['Un compás al que se le suma o se le resta una fracción','Dos compases seguidos','Un compás sin denominador'] },
+      { q:'En un compás fraccionario, la fracción hace referencia a…', op:['La figura del pulso','El número de compases','La clave'] },
+      { q:'Mixtos, decimales y fraccionarios son…', op:['Tres formas de representar lo mismo','Tres compases de distinta duración','Tres tipos de compás dispar'] },
+      { q:'Bartók y Kodály hallaron estos ritmos inusuales investigando…', op:['La música popular de las aldeas (Nacionalismo Musical)','La música de cámara clásica','El jazz estadounidense'] }
+    ]},
+    '2.1': { titulo:'Cualidades del sonido (duración e intensidad)', preguntas:[
+      { q:'El sonido es una vibración que se propaga como…', op:['Ondas mecánicas a través de un medio','Ondas electromagnéticas en el vacío','Partículas de luz'] },
+      { q:'Una reflexión del sonido inferior a 50 ms se percibe como…', op:['Reverb','Eco','Difracción'] },
+      { q:'Una reflexión superior a 50 ms se percibe como…', op:['Eco','Reverb','Refracción'] },
+      { q:'La capacidad del sonido de atravesar los materiales se llama…', op:['Refracción','Reflexión','Difracción'] },
+      { q:'Que el sonido gire esquinas o se cuele por huecos minúsculos es la…', op:['Difracción','Reflexión','Reverberación'] },
+      { q:'La unidad objetiva para medir la intensidad es…', op:['El decibelio (dB)','El hercio (Hz)','El forte'] },
+      { q:'Para que una sala suene seca (rebote mínimo) se usan materiales…', op:['Absorbentes (cortinas, paneles)','Aislantes muy pesados','Metálicos y duros'] }
+    ]},
+    '2.2': { titulo:'Cualidades del sonido (altura y timbre)', preguntas:[
+      { q:'La altura del sonido se mide objetivamente en…', op:['Hercios (Hz)','Decibelios (dB)','Milisegundos'] },
+      { q:'Los hercios indican…', op:['El número de oscilaciones por segundo','La presión sonora','La duración del sonido'] },
+      { q:'La frecuencia de resonancia del La4 (afinación estándar) es…', op:['440 Hz','220 Hz','4000 Hz'] },
+      { q:'El límite inferior de la audición humana está en torno a…', op:['20 Hz','2 Hz','200 Hz'] },
+      { q:'El timbre es la cualidad que permite…', op:['Distinguir un instrumento o voz de otro','Medir el volumen','Saber la duración'] },
+      { q:'El timbre se determina por…', op:['Las intensidades relativas de los armónicos','La frecuencia fundamental sola','El número de decibelios'] },
+      { q:'La misma nota en dos instrumentos distintos: sus armónicos…', op:['Están en los mismos lugares; cambia su proporción de intensidad','Son totalmente distintos','Desaparecen'] },
+      { q:'Un sonido es "puro" (sin armónicos) solo cuando…', op:['Se sintetiza artificialmente','Se toca en un piano','Lo canta una persona'] }
+    ]},
+    '2.3': { titulo:'Serie armónica', preguntas:[
+      { q:'Al tocar una nota, en realidad escuchamos…', op:['La fundamental y sus armónicos','Un único sonido puro','Dos notas exactamente iguales'] },
+      { q:'La serie armónica que estudiamos se acota a los…', op:['8 primeros sonidos','3 primeros sonidos','12 primeros sonidos'] },
+      { q:'El código de la serie se refiere a intervalos…', op:['Siempre ascendentes desde la fundamental','Siempre descendentes','Aleatorios'] },
+      { q:'En la serie de un Mi, las posiciones 1, 2, 4 y 8 son…', op:['La misma nota (mi)','Notas todas distintas','Silencios'] },
+      { q:'Un tambor suena "indeterminado" porque…', op:['Produce tantos armónicos que el cerebro no los ubica','No tiene ningún armónico','Suena demasiado grave'] },
+      { q:'El intervalo entre la fundamental y el 2.º armónico es una…', op:['8ª (octava)','5ª justa','3ª mayor'] }
+    ]},
+    '3.1': { titulo:'Atonalidad', preguntas:[
+      { q:'La atonalidad se define, a grandes rasgos, como música que…', op:['Carece de un centro tonal jerárquico','Tiene dos tonalidades a la vez','No tiene ritmo'] },
+      { q:'La aleatoriedad puede aparecer en dos momentos:', op:['La creación y/o la interpretación','Solo el ensayo','Solo la grabación'] },
+      { q:'Lanzar unos dados asignando un sonido a cada número es aleatoriedad en…', op:['La creación (la interpretación luego es fija)','La interpretación','La afinación'] },
+      { q:'Si el intérprete sigue indicaciones para ir construyendo la obra, la aleatoriedad está en…', op:['La interpretación','La creación','La edición'] },
+      { q:'La "composición libre" atonal consiste en…', op:['Decisiones particulares del compositor, sin azar ni reglas fijas','Seguir estrictamente el dodecafonismo','Usar solo la escala mayor'] }
+    ]},
+    '3.2': { titulo:'Dodecafonismo y serialismo', preguntas:[
+      { q:'El dodecafonismo fue impulsado sobre todo por…', op:['Arnold Schoenberg','Claude Debussy','Iannis Xenakis'] },
+      { q:'La regla básica del dodecafonismo es…', op:['No repetir ningún sonido hasta que suenan los doce','Usar solo notas de la escala mayor','Repetir constantemente la tónica'] },
+      { q:'La serie original se llama…', op:['P0 (Principal cero)','R0','I0'] },
+      { q:'Obtener P5 significa…', op:['Transportar la serie 5 semitonos ascendentes','Tocarla al revés','Invertir sus intervalos'] },
+      { q:'La serie retrógrada (R) consiste en…', op:['Tocar la serie al revés','Subir 5 semitonos','Invertir los intervalos'] },
+      { q:'La inversión (I) consiste en…', op:['Cambiar la dirección de cada intervalo (lo que sube, baja)','Tocar la serie al revés','Repetir la serie igual'] },
+      { q:'Sumando todas las variantes, la serie principal genera un total de…', op:['48 variaciones','12 variaciones','24 variaciones'] },
+      { q:'El serialismo integral se caracteriza por…', op:['Seriar también ritmo, timbre, intensidad, etc.','Seriar solo las alturas','No usar series'] },
+      { q:'Para los dodecafónicos, la octava en la que se coloca cada nota…', op:['Les da igual','Es siempre fija','Debe ser siempre la 4ª'] }
+    ]},
+    '3.3': { titulo:'Música estocástica', preguntas:[
+      { q:'La música estocástica se basa en…', op:['Procesos matemáticos de probabilidad y análisis','La escala mixolidia','La improvisación libre'] },
+      { q:'Un ejemplo de obra estocástica es…', op:['Metástasis, de Iannis Xenakis','Catcerto','Sequenza III'] },
+      { q:'En la música estocástica se parte de datos a los que…', op:['Se les asigna correspondencia con parámetros musicales','Se ignoran por completo','Se cantan directamente'] },
+      { q:'La música estocástica encaja dentro de la música…', op:['Atonal (aleatoria de creación)','Tonal clásica','Popular bailable'] }
+    ]},
+    '4.1': { titulo:'Magnetófono', preguntas:[
+      { q:'El magnetófono graba el sonido mediante…', op:['La magnetización de una cinta','Un cilindro de cera','Un disco de vinilo'] },
+      { q:'El magnetófono nació en Alemania en los años…', op:['30 (y se comercializó en los 50)','70','1900'] },
+      { q:'Las partículas de la cinta de cassette son…', op:['Metálicas con carga magnética','De cera','De plástico puro'] },
+      { q:'La cinta pasa por un cabezal que es…', op:['Un electroimán con una bobina','Una aguja de acero','Un cono resonador'] },
+      { q:'Respecto al fonógrafo, el magnetófono es un sistema de grabación…', op:['Totalmente diferente (magnético)','Idéntico','Basado también en cera'] }
+    ]},
+    '4.2': { titulo:'Música concreta', preguntas:[
+      { q:'La música concreta surge al popularizarse…', op:['El magnetófono','El fonógrafo','El piano'] },
+      { q:'La música concreta consiste en…', op:['Grabar y manipular audios (cortar, pegar, acelerar…)','Componer con la escala mayor','Improvisar jazz'] },
+      { q:'"Cortar y pegar" en la música concreta era…', op:['Literal: cortar y pegar la cinta','Una metáfora digital','Copiar partituras a mano'] },
+      { q:'¿Cuál NO es una manipulación típica de la música concreta?', op:['Armonizar a cuatro voces','Rebobinar la cinta','Acelerar o decelerar'] }
+    ]},
+    '4.3': { titulo:'Nuevas grafías', preguntas:[
+      { q:'Las nuevas grafías (escritura moderna) buscan…', op:['Reducir la escritura a la mínima expresión gráfica','Indicar cada pulso con detalle','Usar más armaduras'] },
+      { q:'En la notación tradicional, la prioridad es…', op:['Agrupar las figuras por pulsos','Ahorrar tinta','Evitar el compás'] },
+      { q:'Otro nombre de las nuevas grafías es…', op:['Escritura moderna (notación minimalista)','Notación gregoriana','Cifrado americano'] },
+      { q:'En las nuevas grafías, el compás indicado…', op:['No es relevante','Es siempre 4/4','Debe ser dispar'] }
+    ]},
+    '5.1': { titulo:'El Blues', preguntas:[
+      { q:'El blues nace de…', op:['Los cantos de trabajo de esclavos africanos en América','La ópera europea','El jazz de vanguardia'] },
+      { q:'La escala característica del blues es el modo…', op:['Mixolidio','Dórico','Frigio'] },
+      { q:'La estructura típica del blues es de…', op:['12 compases (tres frases)','8 compases','16 compases'] },
+      { q:'El estilo "responsorial" del blues consiste en…', op:['Uno canta algo y los demás responden','Cantar todos al unísono','No cantar, solo tocar'] },
+      { q:'El blues recupera de los antiguos el valor de…', op:['La improvisación','La sobreindicación del compositor','La partitura cerrada'] },
+      { q:'El blues es una mezcla de expresividad africana, show estadounidense y técnica…', op:['Europea','Asiática','Medieval'] },
+      { q:'¿Cuál de estos géneros tiene al blues como "abuelo"?', op:['El rock (también pop, soul y hip hop)','El canto gregoriano','El minueto barroco'] }
+    ]},
+    '5.2': { titulo:'GVE en varios pulsos', preguntas:[
+      { q:'El reto rítmico central del 2.º trimestre son…', op:['Los grupos de valoración especial en varios pulsos','Los compases de amalgama','Las claves antiguas'] },
+      { q:'El primer paso del método es…', op:['Establecer un compás modelo','Trazar las líneas de pulso','Colocar las cabezas de nota'] },
+      { q:'Al hacer el borrador se ponen tantos grupos de la valoración especial como…', op:['Pulsos tiene el compás','Notas tiene el grupo','Compases hay en la obra'] },
+      { q:'Una vez razonado un grupo (p. ej. cinquillo en 3 pulsos)…', op:['Basta guardar su estructura y aplicarla después','Hay que rehacerlo cada vez','Se descarta y se usa otro'] }
+    ]},
+    '8.1': { titulo:'Modulación (general)', preguntas:[
+      { q:'Modular consiste en…', op:['Viajar de una tonalidad a otra','Cambiar de compás','Cambiar de instrumento'] },
+      { q:'La tonalidad se definió como…', op:['Un sistema jerárquico de sonidos (reposo, tensión…)','Un conjunto de ritmos','Una escala sin orden'] },
+      { q:'Modular aporta al compositor…', op:['Más recursos y expande el espacio sonoro','Menos variedad','Un tempo fijo'] },
+      { q:'El libro compara modular con…', op:['Un videojuego de mundo abierto (Zelda)','Una carrera de coches','Una partida de ajedrez'] },
+      { q:'Entre las formas de modular mencionadas están…', op:['Diatónica, cromática y enarmónica','Mayor, menor y neutra','Rápida, lenta y media'] }
+    ]},
+    '8.2': { titulo:'Modulación diatónica', preguntas:[
+      { q:'La modulación diatónica utiliza…', op:['Uno o varios acordes comunes a ambas tonalidades','Siempre un acorde disminuido','Notas elegidas al azar'] },
+      { q:'El acorde puente debe…', op:['Ser común (mismas notas y modo) a ambas tonalidades','Ser el más disonante posible','Pertenecer solo a la tonalidad A'] },
+      { q:'Al elegir el acorde común hay que evitar…', op:['Los sonidos que las dos tonalidades no comparten','La tónica','La dominante'] },
+      { q:'Los acordes de dominante se escriben…', op:['Con 7ª (por cuestión estilística)','Sin tercera','Siempre menores'] },
+      { q:'Por definición, un acorde de dominante es…', op:['Mayor, sin importar la armadura','Menor','Disminuido'] },
+      { q:'Para asentar la tonalidad B, en la última casilla se opta siempre por…', op:['La dominante','La subdominante','El VI grado'] },
+      { q:'En el ejemplo Do M → Sol M, la nota a evitar en el acorde común es…', op:['Fa (natural en Do, sostenido en Sol)','Do','Sol'] }
+    ]},
+    '8.3': { titulo:'Otras modulaciones', preguntas:[
+      { q:'La modulación cromática es útil cuando…', op:['Vamos a tonalidades lejanas sin acordes comunes, pero con acordes parecidos','Las dos tonalidades son iguales','No existe dominante'] },
+      { q:'En la modulación cromática, los acordes puente se diferencian solo por…', op:['Algún cromatismo','La octava','El ritmo'] },
+      { q:'La modulación enarmónica se obtiene mediante…', op:['La reinterpretación (enarmonización) de una o varias notas del acorde puente','El cambio de compás','La repetición de la tónica'] },
+      { q:'¿Cuál de estas modulaciones es la menos común?', op:['La enarmónica','La diatónica','La cromática'] }
+    ]},
+    '9.1': { titulo:'Definición y transporte escrito', preguntas:[
+      { q:'Transportar es…', op:['Escribir o interpretar una obra en otra tonalidad','Cambiar el ritmo de la obra','Cambiar el modo (M↔m)'] },
+      { q:'En el transporte, el modo…', op:['No cambia (el transporte es absoluto)','Cambia siempre','Se invierte'] },
+      { q:'El transporte escrito consiste en…', op:['Reescribir la pieza en la nueva tonalidad','Imaginarla mentalmente','Cambiar solo la clave'] },
+      { q:'Una desventaja del transporte escrito es…', op:['Hay que reescribir toda la obra','Que la obra suena distinta','Que cambia el modo'] },
+      { q:'Una ventaja del transporte escrito es…', op:['Una vez hecho, solo tocas, sin pensar más','Es más rápido que el mental','No gasta papel'] }
+    ]},
+    '9.2': { titulo:'Transporte mental y las diferencias', preguntas:[
+      { q:'El transporte mental consiste en…', op:['Aprovechar la partitura con pocas anotaciones y transportar "al vuelo"','Reescribir toda la obra','Cambiar de instrumento'] },
+      { q:'Para el transporte mental cambiamos mentalmente la armadura y…', op:['La clave (para renombrar las notas)','El compás','El tempo'] },
+      { q:'Las "diferencias" son…', op:['Cambios en las alteraciones accidentales al cambiar de tonalidad','Errores de copia','Cambios de compás'] },
+      { q:'¿Por qué existen las diferencias?', op:['Para que el intervalo de transporte sea el correcto','Por estética','Por azar'] },
+      { q:'De Re M (2♯) a Fa M (1♭) hay…', op:['3 diferencias descendentes','2 diferencias ascendentes','Ninguna diferencia'] },
+      { q:'Las diferencias se llaman "descendentes" cuando…', op:['Pasamos de sostenidos a bemoles','Subimos de octava','Aceleramos el tempo'] },
+      { q:'Si una nota afectada tenía un ♯, al aplicar una diferencia descendente le ponemos…', op:['La alteración inmediatamente inferior (♮)','Un doble sostenido','Nada'] }
+    ]}
+  };
+  window.BANCO_TEST = BANCO;
+
+  function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
+
+  function generar(tramo){
+    var T=BANCO[tramo]; if(!T) return null;
+    var idx=shuffle(T.preguntas.map(function(_,i){return i;})).slice(0, Math.min(2, T.preguntas.length));
+    var qs=idx.map(function(i){
+      var p=T.preguntas[i];
+      var order=shuffle([0,1,2]);
+      return { q:p.q, opts:order.map(function(o){ return p.op[o]; }), correcta:order.indexOf(0) };
+    });
+    return { _test:true, tramo:tramo, titulo:T.titulo, qs:qs, resp:[null,null] };
+  }
+  function enunciado(g){ return 'Test '+g.tramo+' · '+g.titulo; }
+  function puntua(g){ var ok=0; g.qs.forEach(function(q,i){ if(g.resp[i]===q.correcta) ok++; }); return g.qs.length?ok/g.qs.length:0; }
+
+  function estiloOpt(estado){
+    if(estado==='sel')  return 'border:1.5px solid #34d399;background:rgba(52,211,153,.18)';
+    if(estado==='ok')   return 'border:1.5px solid #16a34a;background:rgba(22,163,74,.18)';
+    if(estado==='bad')  return 'border:1.5px solid #dc2626;background:rgba(220,38,38,.16)';
+    return 'border:1px solid rgba(52,211,153,.32);background:rgba(255,255,255,.03)';
+  }
+  function badge(txt,col){ return '<span style="flex:none;width:24px;height:24px;border-radius:50%;display:inline-flex;align-items:center;justify-content:center;font-weight:900;font-size:13px;background:'+col+';color:#06140f">'+txt+'</span>'; }
+
+  function montarEn(host, g){
+    host.innerHTML='';
+    var wrap=document.createElement('div'); wrap.style.cssText='display:flex;flex-direction:column;gap:14px';
+    var cap=document.createElement('div'); cap.style.cssText='font-size:13px;color:#bfe6d4;font-weight:600';
+    cap.textContent='Elige la respuesta correcta en cada pregunta (solo una es válida).'; wrap.appendChild(cap);
+    g.qs.forEach(function(q,qi){
+      var card=document.createElement('div'); card.style.cssText='border:1px solid rgba(52,211,153,.4);border-radius:14px;padding:14px 16px;background:linear-gradient(160deg,rgba(52,211,153,.10),rgba(6,20,16,.5))';
+      var qt=document.createElement('div'); qt.style.cssText='font-weight:800;font-size:16px;color:#eafff5;margin-bottom:11px'; qt.textContent=(qi+1)+'. '+q.q; card.appendChild(qt);
+      var box=document.createElement('div'); box.style.cssText='display:flex;flex-direction:column;gap:8px';
+      q.opts.forEach(function(txt,oi){
+        var b=document.createElement('button'); b.type='button';
+        function paint(){ b.style.cssText='text-align:left;border-radius:11px;padding:11px 13px;color:#e7f5ee;font:600 14.5px inherit;cursor:pointer;display:flex;gap:11px;align-items:center;'+estiloOpt(g.resp[qi]===oi?'sel':'x'); b.innerHTML=badge(String.fromCharCode(65+oi),'#34d399')+'<span>'+txt+'</span>'; }
+        paint();
+        b.onclick=function(){ g.resp[qi]=oi; [].forEach.call(box.children,function(c){ c._paint&&c._paint(); }); };
+        b._paint=paint; box.appendChild(b);
+      });
+      card.appendChild(box); wrap.appendChild(card);
+    });
+    host.appendChild(wrap);
+  }
+
+  function corregirVisual(host, g){
+    host.innerHTML='';
+    var wrap=document.createElement('div'); wrap.style.cssText='display:flex;flex-direction:column;gap:14px';
+    var ok=0;
+    g.qs.forEach(function(q,qi){
+      var acierto=(g.resp[qi]===q.correcta); if(acierto) ok++;
+      var card=document.createElement('div'); card.style.cssText='border:1px solid rgba(52,211,153,.4);border-radius:14px;padding:14px 16px;background:linear-gradient(160deg,rgba(52,211,153,.08),rgba(6,20,16,.5))';
+      var qt=document.createElement('div'); qt.style.cssText='font-weight:800;font-size:16px;color:#eafff5;margin-bottom:11px'; qt.textContent=(qi+1)+'. '+q.q; card.appendChild(qt);
+      var box=document.createElement('div'); box.style.cssText='display:flex;flex-direction:column;gap:8px';
+      q.opts.forEach(function(txt,oi){
+        var estado = (oi===q.correcta)?'ok' : (g.resp[qi]===oi?'bad':'x');
+        var row=document.createElement('div'); row.style.cssText='border-radius:11px;padding:11px 13px;color:#e7f5ee;font:600 14.5px inherit;display:flex;gap:11px;align-items:center;'+estiloOpt(estado);
+        var mk = estado==='ok'?badge('✓','#22c55e') : estado==='bad'?badge('✗','#ef4444') : badge(String.fromCharCode(65+oi),'#5f7a70');
+        row.innerHTML=mk+'<span>'+txt+'</span>'; box.appendChild(row);
+      });
+      card.appendChild(box);
+      if(g.resp[qi]==null){ var w=document.createElement('div'); w.style.cssText='font-size:12px;color:#e0b060;margin-top:7px'; w.textContent='(sin responder)'; card.appendChild(w); }
+      wrap.appendChild(card);
+    });
+    var pc=g.qs.length?ok/g.qs.length:0;
+    var res=document.createElement('div'); res.style.cssText='text-align:center;font-weight:900;font-size:15px;color:'+(pc>=0.5?'#22c55e':'#ef4444');
+    res.textContent='Aciertos: '+ok+'/'+g.qs.length+'  ·  '+Math.round(pc*100)+'%'; wrap.appendChild(res);
+    host.appendChild(wrap);
+    return pc;
+  }
+
+  window.TEST_MOTOR = { generar:generar, enunciado:enunciado, montarEn:montarEn, corregirVisual:corregirVisual, puntua:puntua };
+
+  /* --- render para la lista del profesor / PDF-preview (HTML, no VexFlow) --- */
+  window.fpPintaTest = function(host, spec, resuelto, ancho){
+    host.innerHTML='';
+    var wrap=document.createElement('div'); wrap.style.cssText='display:flex;flex-direction:column;gap:10px;padding:4px 2px';
+    (spec.qs||[]).forEach(function(q,qi){
+      var card=document.createElement('div'); card.style.cssText='border:1px solid #bfe6d4;border-radius:10px;padding:9px 11px;background:#f4fbf7';
+      var qt=document.createElement('div'); qt.style.cssText='font-weight:800;font-size:13px;color:#183a2c;margin-bottom:6px'; qt.textContent=(qi+1)+'. '+q.q; card.appendChild(qt);
+      q.opts.forEach(function(txt,oi){
+        var correct=(oi===q.correcta), on=(resuelto&&correct);
+        var row=document.createElement('div'); row.style.cssText='font-size:12.5px;color:'+(on?'#16a34a':'#3a4a44')+';font-weight:'+(on?'800':'600')+';margin:2px 0';
+        row.textContent=(on?'☑':'☐')+' '+String.fromCharCode(97+oi)+') '+txt; card.appendChild(row);
+      });
+      wrap.appendChild(card);
+    });
+    host.appendChild(wrap);
+  };
+
+  /* --- bloque de texto para el PDF (jsPDF), alumno (casillas) / solución (marcada) --- */
+  function S(s){ return String(s==null?'':s)
+      .replace(/♯/g,'#').replace(/♭/g,'b').replace(/♮/g,'(natural)')
+      .replace(/[–—]/g,'-').replace(/…/g,'...').replace(/[“”]/g,'"').replace(/[‘’]/g,"'")
+      .replace(/·/g,'-'); }
+  window.fpTestPDF = function(doc, spec, x, yTop, w, hAvail, esSol){
+    var pad=4, cx=x+pad, cw=w-2*pad, yy=yTop;
+    doc.setFontSize(8.2);
+    (spec.qs||[]).forEach(function(q,qi){
+      doc.setFont('helvetica','bold'); doc.setTextColor(30,30,30);
+      var ql=doc.splitTextToSize((qi+1)+'. '+S(q.q), cw);
+      doc.text(ql, cx, yy); yy += ql.length*3.5 + 1.2;
+      q.opts.forEach(function(txt,oi){
+        var correct=(oi===q.correcta), mark=(esSol&&correct)?'[X] ':'[  ] ';
+        if(esSol&&correct){ doc.setTextColor(22,120,60); doc.setFont('helvetica','bold'); }
+        else { doc.setTextColor(70,70,70); doc.setFont('helvetica','normal'); }
+        var ol=doc.splitTextToSize(mark+String.fromCharCode(97+oi)+') '+S(txt), cw-3);
+        doc.text(ol, cx+2.5, yy); yy += ol.length*3.4 + 0.5;
+      });
+      yy += 1.6;
+    });
+  };
+})();
 </script>
 
 </body>
