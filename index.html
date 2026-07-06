@@ -8896,7 +8896,7 @@ var CATALOGO=[
   { key:'ton_armadura',     label:'Tonalidades · indica armadura',  estado:'activo', col:'repaso', desc:'4 tonalidades: coloca su armadura' },
   { key:'ton_vecinos',      label:'Tonalidades · tonos vecinos',    estado:'activo', col:'repaso', desc:'1 tonalidad central: escribe sus 5 tonos vecinos' },
   { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'activo', col:'repaso', desc:'4 compases: enarmonías de nota, intervalo (parcial/total) y tonalidad' },
-  { key:'ex_afro',          label:'Géneros afrolatinos',    estado:'activo', col:'pro', u:7, desc:'9 casillas en una fila (un género en cada una)' },
+  { key:'ex_afro',          label:'Géneros afrolatinos',    estado:'activo', col:'pro', u:7, negro:true, desc:'9 casillas en una fila (un género en cada una)' },
   { key:'ex_desarrollar',   label:'Pregunta a desarrollar', estado:'activo', col:'teorica', examen:true, desc:'texto libre · el alumno responde en la hoja auxiliar' },
   { key:'ex_breves',        label:'Preguntas breves',       estado:'activo', col:'teorica', examen:true, desc:'de 2 a 4 preguntas cortas' },
   { key:'ex_eleccion',      label:'Pregunta de elección',   estado:'activo', col:'teorica', examen:true, desc:'de 2 a 3 opciones; elige y desarrolla' }
@@ -8912,7 +8912,7 @@ function status(msg, tipo){
 /* --------- pintado --------- */
 function fpMakeCard(t, azul){
   var b=document.createElement('button'); b.type='button';
-  b.className='fp-tipo'+(azul?' rep':'')+(t.examen?' examen':'')+(t.test?' test':'')+(t.estado==='activo'?'':' off');
+  b.className='fp-tipo'+(azul?' rep':'')+(t.examen?' examen':'')+((t.test||t.negro)?' test':'')+(t.estado==='activo'?'':' off');
   var chip= t.test              ? '<span class="fp-chip test">◧ TEST</span>'
           : t.estado==='prox'   ? '<span class="fp-chip'+(azul?' rep':' prox')+'">· '+t.nota+' ·</span>'
           : t.estado==='constr' ? '<span class="fp-chip constr">en construcción</span>' : '';
@@ -9561,7 +9561,7 @@ function fpTituloPDF(e){
   if(e.spec && e.spec._tres){ return fpPdfSafe('Transporte resumen. Indica diferencias y notas afectadas'); }
   if(e.spec && e.spec._blues){ return fpPdfSafe('Blues. Reconstruye la estructura (cifrado americano)'); }
   if(e.spec && e.spec._enarm){ return fpPdfSafe('Enarmonias'); }
-  if(e.spec && e.spec._examen){ return fpPdfSafe(e.label||'Pregunta de examen'); }
+  if(e.spec && e.spec._examen){ return fpPdfSafe(((e.spec.ex==='breves'||e.spec.ex==='eleccion')&&e.spec.titulo)?e.spec.titulo:(e.label||'Pregunta de examen')); }
   if(e.spec && e.spec._aco && window.ACORDES_MOTOR && window.ACORDES_MOTOR.pdfInfo){
     var ia=window.ACORDES_MOTOR.pdfInfo(e.spec);
     var pre=(e.spec._cat==='pro')?'Acordes PRO. ':'Acordes. ';
@@ -9630,9 +9630,9 @@ async function fpConstruirPDF(esSolucion){
     if(page>1) doc.addPage();
     if(page===1){
       doc.setFont('helvetica','bold'); doc.setFontSize(14); doc.setTextColor(26,19,5);
-      doc.text('FICHA Nº '+N+' · TEORÍA'+(esSolucion?' — SOLUCIÓN':''), M, 16);
+      doc.text((FP._tituloDoc||('FICHA Nº '+N+' · TEORÍA'))+(esSolucion?' — SOLUCIÓN':''), M, 16);
       doc.setFont('helvetica','normal'); doc.setFontSize(8.5); doc.setTextColor(140,120,70);
-      doc.text('TEORÍA at home PRO · 2º Grado Profesional', W-M, 16, {align:'right'});
+      doc.text('CMUS A Coruña · 2º Grado Profesional', W-M, 16, {align:'right'});
       doc.setDrawColor(212,175,55); doc.setLineWidth(0.6); doc.line(M,19,W-M,19);
       if(esSolucion){
         doc.setTextColor(192,57,43); doc.setFontSize(9.5);
@@ -9658,6 +9658,14 @@ async function fpConstruirPDF(esSolucion){
       while(_tit.length>4 && doc.getTextWidth(_tit)>_maxW){ _tit=_tit.slice(0,-1); }
       if(_tit!==fpTituloPDF(e)) _tit=_tit.replace(/[\s(]+$/,'')+'…';
       doc.text(_tit, M+4+numW, by+8);
+      if(e.spec && e.spec._examen && (e.spec.ex==='breves'||e.spec.ex==='eleccion') && e.spec.sub){
+        var _tw=doc.getTextWidth(_tit), _sx=M+4+numW+_tw+5;
+        doc.setFont('helvetica','italic'); doc.setFontSize(8.3); doc.setTextColor(120,120,120);
+        var _sub=e.spec.sub, _smax=(W-M)-_sx;
+        while(_sub.length>4 && doc.getTextWidth(_sub)>_smax){ _sub=_sub.slice(0,-1); }
+        if(_sub!==e.spec.sub) _sub=_sub.replace(/\s+$/,'')+'…';
+        doc.text(_sub, _sx, by+8);
+      }
       var yImg=by+12;   // sin subtítulo/instrucción (Iago: no lo quiere en estos)
       if(e.spec._test){
         window.fpTestPDF(doc, e.spec, M+4, by+14, CW-8, blockH-3-(14)-2, esSolucion);
@@ -9684,29 +9692,62 @@ async function fpConstruirPDF(esSolucion){
   }
   return doc;
 }
+function fpDialogoTitulo(){
+  var evals=['Evaluación inicial','Primer trimestre','Segundo trimestre','Tercer trimestre','Evaluación extraordinaria'];
+  var old=document.getElementById('fpTitDlg'); if(old) old.remove();
+  var num0=(FP.numero!=null?FP.numero:'');
+  var ov=document.createElement('div'); ov.id='fpTitDlg';
+  ov.style.cssText='position:fixed;inset:0;z-index:140;display:flex;align-items:center;justify-content:center;background:rgba(0,0,0,.62);padding:20px';
+  ov.innerHTML='<div style="background:#160f04;border:1px solid rgba(212,175,55,.4);border-radius:16px;max-width:460px;width:100%;padding:24px;color:#f0ead8;box-shadow:0 24px 70px rgba(0,0,0,.6)">'+
+    '<h3 style="margin:0 0 4px;color:#e9c96a;font-size:19px">Título de la ficha</h3>'+
+    '<p style="margin:0 0 18px;color:#c9b978;font-size:13px">Elige cómo se titula la exportación (aparece en el PDF y en el nombre del ZIP).</p>'+
+    '<div style="display:flex;flex-direction:column;gap:14px">'+
+      '<label style="display:flex;align-items:center;gap:10px;font-size:14.5px"><input type="radio" name="fpmodo" value="ficha" checked> Ficha nº <input id="fpDlgNum" type="number" min="1" value="'+num0+'" style="width:74px;background:rgba(0,0,0,.35);border:1px solid rgba(212,175,55,.35);border-radius:8px;padding:7px 9px;color:#fff;font-size:14px"></label>'+
+      '<label style="display:flex;align-items:center;gap:10px;font-size:14.5px"><input type="radio" name="fpmodo" value="examen"> Examen</label>'+
+      '<select id="fpDlgEval" disabled style="width:100%;box-sizing:border-box;background:rgba(0,0,0,.35);border:1px solid rgba(212,175,55,.35);border-radius:10px;padding:10px 12px;color:#fff;font-size:14px;opacity:.5">'+evals.map(function(e){return '<option>'+e+'</option>';}).join('')+'</select>'+
+    '</div>'+
+    '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px">'+
+      '<button id="fpDlgCancel" style="border:1px solid rgba(212,175,55,.4);background:transparent;color:#e9c96a;font-weight:700;padding:10px 16px;border-radius:10px;cursor:pointer">Cancelar</button>'+
+      '<button id="fpDlgGen" style="border:0;background:linear-gradient(135deg,#e9c96a,#b8860b);color:#1a1305;font-weight:800;padding:10px 20px;border-radius:10px;cursor:pointer">Generar ZIP</button>'+
+    '</div>'+
+  '</div>';
+  document.body.appendChild(ov);
+  var sel=document.getElementById('fpDlgEval');
+  ov.querySelectorAll('[name=fpmodo]').forEach(function(r){ r.onchange=function(){ var ex=(ov.querySelector('[name=fpmodo]:checked').value==='examen'); sel.disabled=!ex; sel.style.opacity=ex?'1':'.5'; }; });
+  ov.addEventListener('click', function(e){ if(e.target===ov) ov.remove(); });
+  document.getElementById('fpDlgCancel').onclick=function(){ ov.remove(); };
+  document.getElementById('fpDlgGen').onclick=function(){
+    var modo=ov.querySelector('[name=fpmodo]:checked').value, titulo, base;
+    if(modo==='examen'){ var ev=sel.value; titulo='EXAMEN · '+ev.toUpperCase(); base='Examen_'+ev.replace(/\s+/g,'_'); }
+    else { var num=(document.getElementById('fpDlgNum').value||'').trim()||'—'; titulo='FICHA Nº '+num+' · TEORÍA'; base='Ficha_'+num; }
+    ov.remove(); FP._exportCfg={titulo:titulo, base:base}; fpGenerarPDF();
+  };
+}
 async function fpGenerarPDF(){
   if(!FP.ejercicios.length){ status('Añade al menos un ejercicio para generar el PDF.', 'err'); return; }
   if(!(window.jspdf && window.jspdf.jsPDF)){ status('No se pudo cargar el generador de PDF (jsPDF).', 'err'); return; }
+  if(!FP._exportCfg){ fpDialogoTitulo(); return; }
+  var _cfg=FP._exportCfg; FP._exportCfg=null; FP._tituloDoc=_cfg.titulo;
   var bp=el('fpPdf'); if(bp) bp.disabled=true;
   status('Generando el ZIP (alumno + solución)…', 'info');
   try{
-    var N=(FP.numero!=null?FP.numero:'X');
+    var N=(FP.numero!=null?FP.numero:'X'); var _base=_cfg.base||('Ficha_'+N);
     var dA=await fpConstruirPDF(false);
     var dS=await fpConstruirPDF(true);
     if(window.JSZip){
       var zip=new JSZip();
-      zip.file('(alumno) Ficha_'+N+'.pdf',   dA.output('blob'));
-      zip.file('(solucion) Ficha_'+N+'.pdf', dS.output('blob'));
+      zip.file('(alumno) '+_base+'.pdf',   dA.output('blob'));
+      zip.file('(solucion) '+_base+'.pdf', dS.output('blob'));
       var blob=await zip.generateAsync({type:'blob'});
       var a=document.createElement('a');
-      a.href=URL.createObjectURL(blob); a.download='Ficha_'+N+'.zip';
+      a.href=URL.createObjectURL(blob); a.download=_base+'.zip';
       document.body.appendChild(a); a.click();
       setTimeout(function(){ URL.revokeObjectURL(a.href); a.remove(); }, 1000);
-      status('✓ ZIP generado: Ficha_'+N+'.zip (alumno + solución).', 'ok');
+      status('✓ ZIP generado: '+_base+'.zip (alumno + solución).', 'ok');
     } else {
       // sin JSZip: caemos a dos descargas separadas
-      dA.save('(alumno) Ficha_'+N+'.pdf');
-      dS.save('(solucion) Ficha_'+N+'.pdf');
+      dA.save('(alumno) '+_base+'.pdf');
+      dS.save('(solucion) '+_base+'.pdf');
       status('✓ PDFs generados (no se pudo empaquetar en ZIP): descargados por separado.', 'ok');
     }
   }catch(e){
@@ -13938,9 +13979,9 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   var SUB_ELE='Elige una de estas opciones y desarrolla en la hoja auxiliar.';
   function generarEx(key){
     if(key==='ex_desarrollar') return {_examen:true, ex:'desarrollar', titulo:'Desarrolla el siguiente tema:', sub:SUB_DES};
-    if(key==='ex_breves')      return {_examen:true, ex:'breves', titulo:'Preguntas breves', n:3, qs:['','',''], sub:SUB_BRE};
+    if(key==='ex_breves')      return {_examen:true, ex:'breves', titulo:'Preguntas breves', n:4, qs:['','','',''], sub:SUB_BRE};
     if(key==='ex_eleccion')    return {_examen:true, ex:'eleccion', titulo:'Pregunta de elección', sub:SUB_ELE, n:3, ops:['','','']};
-    if(key==='ex_afro')        return {_examen:true, ex:'afro', titulo:'Géneros afrolatinos'};
+    if(key==='ex_afro')        return {_examen:true, ex:'afro', titulo:'Géneros afrolatinos', sub:'Escribe los géneros en el orden en el que los escuchas.'};
     return null;
   }
   window.generarEx=generarEx;
@@ -13959,10 +14000,10 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       wrap.appendChild(inp('Título / enunciado de la pregunta', g.titulo, function(v){ g.titulo=v; }, 'Escribe la pregunta a desarrollar'));
       wrap.appendChild(inp('Subtítulo (instrucción)', g.sub, function(v){ g.sub=v; }));
     } else if(g.ex==='breves'){
+      g.n=4; while(g.qs.length<4) g.qs.push(''); g.qs.length=4;   // siempre 4 preguntas
       wrap.appendChild(inp('Título', g.titulo, function(v){ g.titulo=v; }));
-      wrap.appendChild(counter('Nº de preguntas (2–4)', 2, 4, g.n, function(k){ g.n=k; while(g.qs.length<k) g.qs.push(''); g.qs.length=k; editor(host,g); }));
-      for(var i=0;i<g.n;i++){ (function(i){ wrap.appendChild(inp('Pregunta '+(i+1), g.qs[i], function(v){ g.qs[i]=v; }, 'Enunciado de la pregunta '+(i+1))); })(i); }
-      wrap.appendChild(inp('Subtítulo (instrucción)', g.sub, function(v){ g.sub=v; }));
+      for(var i=0;i<4;i++){ (function(i){ wrap.appendChild(inp('Pregunta '+(i+1), g.qs[i], function(v){ g.qs[i]=v; }, 'Enunciado de la pregunta '+(i+1))); })(i); }
+      wrap.appendChild(inp('Subtítulo (instrucción · aparece junto al título)', g.sub, function(v){ g.sub=v; }));
     } else if(g.ex==='eleccion'){
       wrap.appendChild(inp('Título', g.titulo, function(v){ g.titulo=v; }));
       wrap.appendChild(inp('Subtítulo (instrucción)', g.sub, function(v){ g.sub=v; }));
@@ -13970,7 +14011,8 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       for(var j=0;j<g.n;j++){ (function(j){ wrap.appendChild(inp('Opción '+String.fromCharCode(97+j)+')', g.ops[j], function(v){ g.ops[j]=v; }, 'Texto de la opción '+String.fromCharCode(97+j))); })(j); }
     } else if(g.ex==='afro'){
       wrap.appendChild(inp('Título', g.titulo, function(v){ g.titulo=v; }));
-      var h=document.createElement('div'); h.className='ex-hint'; h.textContent='9 casillas en una fila; el alumno escribe un género en cada una.'; wrap.appendChild(h);
+      wrap.appendChild(inp('Subtítulo (instrucción)', g.sub, function(v){ g.sub=v; }));
+      var h=document.createElement('div'); h.className='ex-hint'; h.textContent='9 casillas en una fila; el alumno escribe un género (una palabra) en cada una.'; wrap.appendChild(h);
       var prev=document.createElement('div'); prev.className='ex-afro-prev'; for(var a=0;a<9;a++){ var c=document.createElement('div'); c.className='ex-afro-cell'; c.textContent=(a+1); prev.appendChild(c); } wrap.appendChild(prev);
     }
     host.appendChild(wrap);
@@ -13987,25 +14029,32 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 
   /* ---------- PDF ---------- */
   window.fpExamenPDF=function(doc, g, x, y, w, hAvail, esSol){
-    var yy=y, esAfro=(g.ex==='afro');
-    doc.setFont('helvetica','bold'); doc.setFontSize(12.5);
-    if(esAfro) doc.setTextColor(26,26,26); else doc.setTextColor(199,53,120);
-    var tl=doc.splitTextToSize(g.titulo||'', w); doc.text(tl, x, yy+4.5); yy+=tl.length*5.6+2;
+    var yy=y;
+    // título en el cuerpo SOLO en desarrollar (la pregunta) y afro; en negro (no rosa).
+    // en breves/elección el encabezado del bloque ya lo rotula -> no se repite.
+    if(g.ex==='desarrollar' || g.ex==='afro'){
+      doc.setFont('helvetica','bold'); doc.setFontSize(12.5); doc.setTextColor(26,26,26);
+      var tl=doc.splitTextToSize(g.titulo||'', w); doc.text(tl, x, yy+4.5); yy+=tl.length*5.6+2;
+    }
     function subline(s){ if(!s) return; doc.setFont('helvetica','italic'); doc.setFontSize(9.5); doc.setTextColor(95,95,95); var sl=doc.splitTextToSize(s, w); doc.text(sl, x, yy+3.5); yy+=sl.length*4.2+3; }
     if(g.ex==='desarrollar'){ subline(g.sub); }
-    else if(g.ex==='breves'){ subline(g.sub);
-      doc.setFont('helvetica','normal'); doc.setTextColor(26,26,26); doc.setFontSize(11);
-      var per=Math.max(9,(hAvail-(yy-y))/g.n);
-      for(var i=0;i<g.n;i++){ var qy=yy+i*per; var qt=doc.splitTextToSize((i+1)+'. '+(g.qs[i]||''), w); doc.text(qt, x, qy+4); doc.setDrawColor(195,195,195); doc.setLineWidth(0.2); doc.line(x, qy+per-3, x+w, qy+per-3); }
+    else if(g.ex==='breves'){   // subtítulo va junto al título (encabezado del bloque); aquí solo las 4 preguntas, sin líneas
+      doc.setFont('helvetica','normal'); doc.setTextColor(26,26,26); doc.setFontSize(11.5);
+      var per=(hAvail-(yy-y))/g.n;
+      for(var i=0;i<g.n;i++){ var qy=yy+i*per; var qt=doc.splitTextToSize((i+1)+'. '+(g.qs[i]||''), w); doc.text(qt, x, qy+5); }
     }
-    else if(g.ex==='eleccion'){ subline(g.sub);
-      doc.setFont('helvetica','normal'); doc.setTextColor(26,26,26); doc.setFontSize(11);
-      for(var j=0;j<g.n;j++){ var oy=yy+j*8; var ot=doc.splitTextToSize(String.fromCharCode(97+j)+')  '+(g.ops[j]||''), w-4); doc.text(ot, x+2, oy+4.5); }
+    else if(g.ex==='eleccion'){   // subtítulo va junto al título; aquí solo las opciones
+      doc.setFont('helvetica','normal'); doc.setTextColor(26,26,26); doc.setFontSize(11.5);
+      for(var j=0;j<g.n;j++){ var oy=yy+j*9; var ot=doc.splitTextToSize(String.fromCharCode(97+j)+')  '+(g.ops[j]||''), w-4); doc.text(ot, x+2, oy+5); }
     }
-    else if(esAfro){
-      doc.setFont('helvetica','normal');
-      var n=9, gap=1.6, cw=(w-gap*(n-1))/n, ch=Math.min(18, Math.max(10, hAvail-(yy-y)-2));
-      for(var k=0;k<n;k++){ var cx=x+k*(cw+gap); doc.setDrawColor(120,120,120); doc.setLineWidth(0.3); doc.setFillColor(255,255,255); doc.rect(cx, yy, cw, ch, 'D'); doc.setFontSize(7); doc.setTextColor(155,155,155); doc.text(String(k+1), cx+1.5, yy+4); }
+    else if(g.ex==='afro'){ subline(g.sub);
+      var n=9, gap=1.6, cw=(w-gap*(n-1))/n, numH=5, ch=Math.min(30, Math.max(16, hAvail-(yy-y)-2));
+      for(var k=0;k<n;k++){ var cx=x+k*(cw+gap);
+        doc.setDrawColor(120,120,120); doc.setLineWidth(0.3); doc.setFillColor(255,255,255); doc.rect(cx, yy, cw, ch, 'D');
+        doc.setFillColor(237,237,237); doc.rect(cx, yy, cw, numH, 'F');   // franja fina superior
+        doc.setDrawColor(120,120,120); doc.line(cx, yy+numH, cx+cw, yy+numH);
+        doc.setFontSize(7.5); doc.setTextColor(110,110,110); doc.text(String(k+1), cx+cw/2, yy+3.7, {align:'center'});
+      }
     }
   };
 })();
