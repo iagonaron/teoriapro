@@ -8841,7 +8841,7 @@ var UNIDADES=[
   { n:4,  t:'' },
   { n:5,  t:'Acordes PRO · Blues' },
   { n:6,  t:'' },
-  { n:7,  t:'' },
+  { n:7,  t:'Géneros afrolatinos' },
   { n:8,  t:'Modulación' },
   { n:9,  t:'Transporte' },
   { n:10, t:'' }
@@ -8895,7 +8895,11 @@ var CATALOGO=[
   { key:'ton_nombre',       label:'Tonalidades · indica tonalidad', estado:'activo', col:'repaso', desc:'4 armaduras: escribe la Mayor y su menor relativa' },
   { key:'ton_armadura',     label:'Tonalidades · indica armadura',  estado:'activo', col:'repaso', desc:'4 tonalidades: coloca su armadura' },
   { key:'ton_vecinos',      label:'Tonalidades · tonos vecinos',    estado:'activo', col:'repaso', desc:'1 tonalidad central: escribe sus 5 tonos vecinos' },
-  { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'activo', col:'repaso', desc:'4 compases: enarmonías de nota, intervalo (parcial/total) y tonalidad' }
+  { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'activo', col:'repaso', desc:'4 compases: enarmonías de nota, intervalo (parcial/total) y tonalidad' },
+  { key:'ex_afro',          label:'Géneros afrolatinos',    estado:'activo', col:'pro', u:7, desc:'9 casillas en una fila (un género en cada una)' },
+  { key:'ex_desarrollar',   label:'Pregunta a desarrollar', estado:'activo', col:'teorica', examen:true, desc:'texto libre · el alumno responde en la hoja auxiliar' },
+  { key:'ex_breves',        label:'Preguntas breves',       estado:'activo', col:'teorica', examen:true, desc:'de 2 a 4 preguntas cortas' },
+  { key:'ex_eleccion',      label:'Pregunta de elección',   estado:'activo', col:'teorica', examen:true, desc:'de 2 a 3 opciones; elige y desarrolla' }
 ];
 var FP={ numero:null, token:null, ejercicios:[], MAX:10, enviado:false };
 
@@ -8908,7 +8912,7 @@ function status(msg, tipo){
 /* --------- pintado --------- */
 function fpMakeCard(t, azul){
   var b=document.createElement('button'); b.type='button';
-  b.className='fp-tipo'+(azul?' rep':'')+(t.test?' test':'')+(t.estado==='activo'?'':' off');
+  b.className='fp-tipo'+(azul?' rep':'')+(t.examen?' examen':'')+(t.test?' test':'')+(t.estado==='activo'?'':' off');
   var chip= t.test              ? '<span class="fp-chip test">◧ TEST</span>'
           : t.estado==='prox'   ? '<span class="fp-chip'+(azul?' rep':' prox')+'">· '+t.nota+' ·</span>'
           : t.estado==='constr' ? '<span class="fp-chip constr">en construcción</span>' : '';
@@ -8948,6 +8952,9 @@ function pintaCat(){
   var gR=document.createElement('div'); gR.className='fp-rep-grid';
   CATALOGO.filter(function(t){ return t.col==='repaso'; }).forEach(function(t){ gR.appendChild(fpMakeCard(t,true)); });
   colR.appendChild(gR);
+  var _teo=CATALOGO.filter(function(t){ return t.col==='teorica'; });
+  if(_teo.length){ var hE=document.createElement('div'); hE.className='fp-col-head rosa'; hE.style.marginTop='16px'; hE.textContent='Preguntas teóricas'; colR.appendChild(hE);
+    var gE=document.createElement('div'); gE.className='fp-rep-grid'; _teo.forEach(function(t){ gE.appendChild(fpMakeCard(t,false)); }); colR.appendChild(gE); }
 
   host.appendChild(colP); host.appendChild(colR);
 }
@@ -9281,6 +9288,7 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
   if(spec && spec._tres){ return window.fpPintaTransporteResumen(host, spec, resuelto, anchoFijo); }
   if(spec && spec._blues){ return window.fpPintaBlues(host, spec, resuelto, anchoFijo); }
   if(spec && spec._enarm){ return window.fpPintaEnarm(host, spec, resuelto, anchoFijo); }
+  if(spec && spec._examen){ return window.fpExamenEditor(host, spec); }
   if(spec && spec._ia){ return fpPintaIndice(host, spec, resuelto, anchoFijo); }
   if(spec && spec._cad){ return fpPintaCadencia(host, spec, resuelto, anchoFijo); }
   if(spec && spec._tonA){ return fpPintaTonNombre(host, spec, resuelto, anchoFijo); }
@@ -9355,7 +9363,7 @@ function fpEnun(e){
   try{
     var M=fpMotorDe(e.spec);
     if(M && e.spec){
-      if(e.spec._test || e.spec._tresc || e.spec._trment || e.spec._tres || e.spec._blues || e.spec._enarm || e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA || e.spec._dodeB || e.spec._dodeC || e.spec._mod) return M.enunciado(e.spec);
+      if(e.spec._test || e.spec._tresc || e.spec._trment || e.spec._tres || e.spec._blues || e.spec._enarm || e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA || e.spec._dodeB || e.spec._dodeC || e.spec._mod || e.spec._examen) return M.enunciado(e.spec);
       if(e.spec.tonica) return M.enunciado(e.spec);
     }
   }catch(err){}
@@ -9371,6 +9379,7 @@ function fpMotorDe(spec){
   if(spec && spec._tres) return window.TR_RESUMEN_MOTOR;
   if(spec && spec._blues) return window.BLUES_MOTOR;
   if(spec && spec._enarm) return window.ENARM_MOTOR;
+  if(spec && spec._examen) return window.EXAMEN_MOTOR;
   if(spec && spec._aco) return window.ACORDES_MOTOR;
   if(spec && spec._iv)  return window.INTERVALOS_MOTOR;
   if(spec && spec._ia)  return window.INDICE_MOTOR;
@@ -9432,6 +9441,7 @@ function fpGenera(key){
   if(key==='transporte_resumen'){ return window.TR_RESUMEN_MOTOR?window.TR_RESUMEN_MOTOR.generar():null; }
   if(key==='blues'){ return window.BLUES_MOTOR?window.BLUES_MOTOR.generar():null; }
   if(key==='enarmoniapro'){ return window.ENARM_MOTOR?window.ENARM_MOTOR.generar():null; }
+  if(key && key.indexOf('ex_')===0){ return window.generarEx?window.generarEx(key):null; }
   return null;
 }
 function fpLabelDe(key){
@@ -9449,6 +9459,7 @@ function anadir(key){
 }
 function regenerar(i){
   var e=FP.ejercicios[i]; if(!e) return;
+  if(e.spec && e.spec._examen) return;
   var firma=function(sp){ return sp ? ((sp._mode||sp.tipo||'')+'·'+((sp.tonica&&sp.tonica.nom)||'')) : ''; };
   var prev=firma(e.spec), it=null, n=0;
   do{ it=fpGenera(e.key); n++; }while(it && firma(it)===prev && n<30);
@@ -9550,6 +9561,7 @@ function fpTituloPDF(e){
   if(e.spec && e.spec._tres){ return fpPdfSafe('Transporte resumen. Indica diferencias y notas afectadas'); }
   if(e.spec && e.spec._blues){ return fpPdfSafe('Blues. Reconstruye la estructura (cifrado americano)'); }
   if(e.spec && e.spec._enarm){ return fpPdfSafe('Enarmonias'); }
+  if(e.spec && e.spec._examen){ return fpPdfSafe(e.label||'Pregunta de examen'); }
   if(e.spec && e.spec._aco && window.ACORDES_MOTOR && window.ACORDES_MOTOR.pdfInfo){
     var ia=window.ACORDES_MOTOR.pdfInfo(e.spec);
     var pre=(e.spec._cat==='pro')?'Acordes PRO. ':'Acordes. ';
@@ -9613,7 +9625,7 @@ async function fpConstruirPDF(esSolucion){
   var topDe=function(p){ return p===1?36:16; };
   var BLOCK_STD=(yBot-topDe(1))/porPagina;           // altura fija por ejercicio
   var imgs=[];
-  for(var i=0;i<n;i++){ var _s2=FP.ejercicios[i].spec; imgs.push((_s2._test||_s2._tres||_s2._blues) ? null : await fpBloquePng(_s2, esSolucion)); }
+  for(var i=0;i<n;i++){ var _s2=FP.ejercicios[i].spec; imgs.push((_s2._test||_s2._tres||_s2._blues||_s2._examen) ? null : await fpBloquePng(_s2, esSolucion)); }
   for(var page=1; page<=nPaginas; page++){
     if(page>1) doc.addPage();
     if(page===1){
@@ -9657,6 +9669,10 @@ async function fpConstruirPDF(esSolucion){
       }
       if(e.spec._blues){
         window.fpBluesPDF(doc, e.spec, M+8, by+15, CW-16, blockH-3-15-3, esSolucion);
+        continue;
+      }
+      if(e.spec._examen){
+        window.fpExamenPDF(doc, e.spec, M+6, by+13, CW-12, blockH-3-13-3, esSolucion);
         continue;
       }
       if(img){
@@ -13914,6 +13930,87 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 })();
 </script>
 
+<script>
+/* ===== PREGUNTAS DE EXAMEN · afrolatinos (U7) + teóricas (desarrollar/breves/elección) ===== */
+(function(){
+  var SUB_DES='Puedes utilizar la página auxiliar para desarrollar tu respuesta con todo el espacio que necesites.';
+  var SUB_BRE='Puedes utilizar la página auxiliar para desarrollar tus respuestas.';
+  var SUB_ELE='Elige una de estas opciones y desarrolla en la hoja auxiliar.';
+  function generarEx(key){
+    if(key==='ex_desarrollar') return {_examen:true, ex:'desarrollar', titulo:'Desarrolla el siguiente tema:', sub:SUB_DES};
+    if(key==='ex_breves')      return {_examen:true, ex:'breves', titulo:'Preguntas breves', n:3, qs:['','',''], sub:SUB_BRE};
+    if(key==='ex_eleccion')    return {_examen:true, ex:'eleccion', titulo:'Pregunta de elección', sub:SUB_ELE, n:3, ops:['','','']};
+    if(key==='ex_afro')        return {_examen:true, ex:'afro', titulo:'Géneros afrolatinos'};
+    return null;
+  }
+  window.generarEx=generarEx;
+  function enun(g){ return (g&&g.titulo)||'Pregunta de examen'; }
+
+  /* ---------- editor (generador de fichas · profesor) ---------- */
+  function editor(host, g){
+    host.innerHTML='';
+    var wrap=document.createElement('div'); wrap.className='ex-editor';
+    function fld(lbl){ var b=document.createElement('div'); b.className='ex-fld'; var l=document.createElement('label'); l.textContent=lbl; b.appendChild(l); return b; }
+    function inp(lbl, val, set, ph){ var b=fld(lbl); var t=document.createElement('input'); t.type='text'; t.value=val||''; if(ph)t.placeholder=ph; t.oninput=function(){ set(t.value); }; b.appendChild(t); return b; }
+    function counter(lbl, min, max, val, set){ var b=fld(lbl); var row=document.createElement('div'); row.className='ex-count';
+      for(var k=min;k<=max;k++){ (function(k){ var bb=document.createElement('button'); bb.type='button'; bb.textContent=k; bb.className='ex-cbtn'+(val===k?' on':''); bb.onclick=function(){ set(k); }; row.appendChild(bb); })(k); }
+      b.appendChild(row); return b; }
+    if(g.ex==='desarrollar'){
+      wrap.appendChild(inp('Título / enunciado de la pregunta', g.titulo, function(v){ g.titulo=v; }, 'Escribe la pregunta a desarrollar'));
+      wrap.appendChild(inp('Subtítulo (instrucción)', g.sub, function(v){ g.sub=v; }));
+    } else if(g.ex==='breves'){
+      wrap.appendChild(inp('Título', g.titulo, function(v){ g.titulo=v; }));
+      wrap.appendChild(counter('Nº de preguntas (2–4)', 2, 4, g.n, function(k){ g.n=k; while(g.qs.length<k) g.qs.push(''); g.qs.length=k; editor(host,g); }));
+      for(var i=0;i<g.n;i++){ (function(i){ wrap.appendChild(inp('Pregunta '+(i+1), g.qs[i], function(v){ g.qs[i]=v; }, 'Enunciado de la pregunta '+(i+1))); })(i); }
+      wrap.appendChild(inp('Subtítulo (instrucción)', g.sub, function(v){ g.sub=v; }));
+    } else if(g.ex==='eleccion'){
+      wrap.appendChild(inp('Título', g.titulo, function(v){ g.titulo=v; }));
+      wrap.appendChild(inp('Subtítulo (instrucción)', g.sub, function(v){ g.sub=v; }));
+      wrap.appendChild(counter('Nº de opciones (2–3)', 2, 3, g.n, function(k){ g.n=k; while(g.ops.length<k) g.ops.push(''); g.ops.length=k; editor(host,g); }));
+      for(var j=0;j<g.n;j++){ (function(j){ wrap.appendChild(inp('Opción '+String.fromCharCode(97+j)+')', g.ops[j], function(v){ g.ops[j]=v; }, 'Texto de la opción '+String.fromCharCode(97+j))); })(j); }
+    } else if(g.ex==='afro'){
+      wrap.appendChild(inp('Título', g.titulo, function(v){ g.titulo=v; }));
+      var h=document.createElement('div'); h.className='ex-hint'; h.textContent='9 casillas en una fila; el alumno escribe un género en cada una.'; wrap.appendChild(h);
+      var prev=document.createElement('div'); prev.className='ex-afro-prev'; for(var a=0;a<9;a++){ var c=document.createElement('div'); c.className='ex-afro-cell'; c.textContent=(a+1); prev.appendChild(c); } wrap.appendChild(prev);
+    }
+    host.appendChild(wrap);
+  }
+  window.fpExamenEditor=editor;
+
+  /* vista alumno (solo lectura del enunciado) */
+  function montar(host, g){
+    editor(host, g);
+    host.querySelectorAll('input').forEach(function(t){ t.readOnly=true; t.style.opacity='.9'; t.style.cursor='default'; });
+    host.querySelectorAll('.ex-cbtn').forEach(function(b){ b.disabled=true; b.style.opacity='.6'; });
+  }
+  window.EXAMEN_MOTOR={ generar:function(){return null;}, enunciado:enun, montarEn:montar, puntua:function(){return 0;}, corregirVisual:function(host,g){ montar(host,g); return 0; } };
+
+  /* ---------- PDF ---------- */
+  window.fpExamenPDF=function(doc, g, x, y, w, hAvail, esSol){
+    var yy=y, esAfro=(g.ex==='afro');
+    doc.setFont('helvetica','bold'); doc.setFontSize(12.5);
+    if(esAfro) doc.setTextColor(26,26,26); else doc.setTextColor(199,53,120);
+    var tl=doc.splitTextToSize(g.titulo||'', w); doc.text(tl, x, yy+4.5); yy+=tl.length*5.6+2;
+    function subline(s){ if(!s) return; doc.setFont('helvetica','italic'); doc.setFontSize(9.5); doc.setTextColor(95,95,95); var sl=doc.splitTextToSize(s, w); doc.text(sl, x, yy+3.5); yy+=sl.length*4.2+3; }
+    if(g.ex==='desarrollar'){ subline(g.sub); }
+    else if(g.ex==='breves'){ subline(g.sub);
+      doc.setFont('helvetica','normal'); doc.setTextColor(26,26,26); doc.setFontSize(11);
+      var per=Math.max(9,(hAvail-(yy-y))/g.n);
+      for(var i=0;i<g.n;i++){ var qy=yy+i*per; var qt=doc.splitTextToSize((i+1)+'. '+(g.qs[i]||''), w); doc.text(qt, x, qy+4); doc.setDrawColor(195,195,195); doc.setLineWidth(0.2); doc.line(x, qy+per-3, x+w, qy+per-3); }
+    }
+    else if(g.ex==='eleccion'){ subline(g.sub);
+      doc.setFont('helvetica','normal'); doc.setTextColor(26,26,26); doc.setFontSize(11);
+      for(var j=0;j<g.n;j++){ var oy=yy+j*8; var ot=doc.splitTextToSize(String.fromCharCode(97+j)+')  '+(g.ops[j]||''), w-4); doc.text(ot, x+2, oy+4.5); }
+    }
+    else if(esAfro){
+      doc.setFont('helvetica','normal');
+      var n=9, gap=1.6, cw=(w-gap*(n-1))/n, ch=Math.min(18, Math.max(10, hAvail-(yy-y)-2));
+      for(var k=0;k<n;k++){ var cx=x+k*(cw+gap); doc.setDrawColor(120,120,120); doc.setLineWidth(0.3); doc.setFillColor(255,255,255); doc.rect(cx, yy, cw, ch, 'D'); doc.setFontSize(7); doc.setTextColor(155,155,155); doc.text(String(k+1), cx+1.5, yy+4); }
+    }
+  };
+})();
+</script>
+
 <style>
 .trr-wrap{max-width:960px;margin:0 auto}
 .trr-pide{font-size:14px;color:#c9b978;margin-bottom:10px}
@@ -13981,6 +14078,24 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 .ena-ton-seg{display:flex;flex-direction:column;align-items:center;gap:5px;border:1px solid rgba(212,175,55,.18);border-radius:9px;padding:6px 6px;background:rgba(0,0,0,.18)}
 .ena-tbtn{width:31px;height:31px;display:flex;align-items:center;justify-content:center;padding:0;font-size:14px;font-weight:800;border:1px solid rgba(212,175,55,.4);background:rgba(0,0,0,.3);color:#f0ead8;border-radius:8px;cursor:pointer}
 .ena-tbtn.on{background:rgba(212,175,55,.22);border-color:#e9c96a;color:#fff}
+</style>
+<style>
+.fp-tipo.examen{border-color:rgba(224,97,155,.6)!important}
+.fp-tipo.examen .fp-add{color:#ff9ecb}
+.fp-tipo.examen:hover{border-color:#ff9ecb}
+.fp-col-head.rosa{color:#ff9ecb;border-color:rgba(224,97,155,.5)}
+.ex-editor{display:flex;flex-direction:column;gap:9px;width:100%}
+.ex-fld{display:flex;flex-direction:column;gap:4px}
+.ex-fld label{font-size:11px;font-weight:800;letter-spacing:.02em;color:#c73578;text-transform:uppercase}
+.ex-fld input{border:1px solid rgba(199,53,120,.4);border-radius:8px;padding:8px 10px;font-size:14px;color:#2a2030;background:#fff;font-family:inherit}
+.ex-fld input::placeholder{color:#b79aa8}
+.ex-fld input:focus{outline:none;border-color:#e0619b;box-shadow:0 0 0 2px rgba(224,97,155,.18)}
+.ex-count{display:flex;gap:6px}
+.ex-cbtn{width:38px;height:34px;border:1px solid rgba(199,53,120,.45);background:#fff;color:#c73578;border-radius:8px;font-weight:800;font-size:15px;cursor:pointer}
+.ex-cbtn.on{background:linear-gradient(135deg,#e0619b,#c73578);color:#fff;border-color:transparent}
+.ex-hint{font-size:12px;color:#8a5a72}
+.ex-afro-prev{display:flex;gap:5px;flex-wrap:wrap}
+.ex-afro-cell{flex:1;min-width:46px;height:42px;border:1px solid rgba(199,53,120,.4);border-radius:7px;padding:3px 5px;font-size:10px;color:#b06a8c;background:#fff}
 </style>
 </body>
 </html>
