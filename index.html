@@ -8597,8 +8597,21 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     background:rgba(255,80,80,.08);color:#ffc9c9;font-size:13.5px;font-weight:600}
   .fp-sec{margin-top:26px}
   .fp-sec h3{font-size:13px;letter-spacing:.18em;text-transform:uppercase;color:var(--gold-soft);font-weight:800;margin:0 0 10px}
-  .fp-cat{display:grid;grid-template-columns:repeat(auto-fill,minmax(190px,1fr));gap:10px}
-  .fp-tipo{position:relative;text-align:left;border-radius:14px;padding:13px 14px;cursor:pointer;
+  .fp-cat{display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
+  @media(min-width:920px){ .fp-cat{grid-template-columns:1.65fr 1fr} }
+  .fp-col-pro,.fp-col-rep{display:flex;flex-direction:column;gap:13px;min-width:0}
+  .fp-col-head{font-size:11.5px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;
+    padding:9px 13px;border-radius:11px}
+  .fp-col-head.oro{color:#1a1305;background:linear-gradient(120deg,#e9c96a,#d4af37 55%,#b8860b);box-shadow:0 6px 18px rgba(212,175,55,.22)}
+  .fp-col-head.azul{color:#eaf1ff;background:linear-gradient(120deg,#5b9dff,#3a78e0);box-shadow:0 6px 18px rgba(58,120,224,.28)}
+  .fp-uni{border:1px solid rgba(212,175,55,.22);border-radius:14px;padding:9px 11px 11px;background:rgba(212,175,55,.035)}
+  .fp-uni.vacia{opacity:.5;border-style:dashed}
+  .fp-uni-h{display:flex;align-items:baseline;gap:9px;flex-wrap:wrap;margin:1px 2px 8px}
+  .fp-uni-n{font-size:11.5px;letter-spacing:.14em;font-weight:900;color:var(--gold-soft)}
+  .fp-uni-t{font-size:11px;color:var(--muted2);font-weight:700}
+  .fp-uni-empty{font-size:11px;color:var(--muted2);font-style:italic;padding:0 2px 2px}
+  .fp-uni-grid,.fp-rep-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(148px,1fr));gap:9px}
+  .fp-tipo{position:relative;text-align:left;border-radius:14px;padding:13px 40px 13px 14px;cursor:pointer;
     border:1px solid rgba(212,175,55,.4);background:linear-gradient(160deg,rgba(212,175,55,.14),rgba(20,14,4,.6));
     color:var(--ink);font:800 15px/1.25 inherit;transition:transform .12s ease, box-shadow .12s ease}
   .fp-tipo small{display:block;font-weight:600;font-size:11px;color:var(--muted2);margin-top:3px}
@@ -8606,9 +8619,17 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     align-items:center;justify-content:center;background:linear-gradient(135deg,#e9c96a,#b8860b);color:#1a1305;font-weight:900}
   .fp-tipo:not(.off):hover{transform:translateY(-2px);box-shadow:0 10px 26px rgba(212,175,55,.22)}
   .fp-tipo.off{cursor:default;opacity:.5;border-style:dashed;background:rgba(255,255,255,.03)}
+  /* tarjetas de repaso (azul marino, estética LMEAV at home) */
+  .fp-tipo.rep{border:1px solid rgba(91,157,255,.4);
+    background:linear-gradient(160deg,rgba(91,157,255,.16),rgba(6,12,32,.7))}
+  .fp-tipo.rep small{color:#9fb4e0}
+  .fp-tipo.rep .fp-add{background:linear-gradient(135deg,#8b9bff,#3a78e0);color:#eaf1ff}
+  .fp-tipo.rep:not(.off):hover{box-shadow:0 10px 26px rgba(91,157,255,.26)}
+  .fp-tipo.rep.off{background:rgba(91,157,255,.05)}
   .fp-chip{display:inline-block;font-size:9.5px;letter-spacing:.1em;font-weight:800;text-transform:uppercase;
     border-radius:999px;padding:2px 8px;margin-top:6px}
   .fp-chip.prox{background:rgba(212,175,55,.15);color:var(--gold-soft);border:1px solid rgba(212,175,55,.4)}
+  .fp-chip.rep{background:rgba(91,157,255,.16);color:#bcd3ff;border:1px solid rgba(91,157,255,.42)}
   .fp-chip.constr{background:rgba(255,255,255,.06);color:#c9b88a;border:1px dashed rgba(255,255,255,.28)}
   .fp-lista{display:flex;flex-direction:column;gap:9px}
   .fp-ej{display:flex;align-items:center;gap:12px;border:1px solid rgba(212,175,55,.35);border-radius:13px;
@@ -8731,33 +8752,52 @@ function fpUuid(){
 function clon(o){ return JSON.parse(JSON.stringify(o)); }
 
 /* --------- catálogo (C1: solo Modos añadible) --------- */
+/* col:'pro'  -> columna dorada (Grado Profesional), agrupada por unidad didáctica (u:0..10)
+   col:'repaso'-> columna azul (ejercicios de repaso), orden libre                       */
+var UNIDADES=[
+  { n:0,  t:'Modos · Índice acústico' },
+  { n:1,  t:'Compases PRO' },
+  { n:2,  t:'Serie armónica' },
+  { n:3,  t:'Dodecafonismo' },
+  { n:4,  t:'' },
+  { n:5,  t:'Acordes PRO · Blues' },
+  { n:6,  t:'' },
+  { n:7,  t:'' },
+  { n:8,  t:'Modulación' },
+  { n:9,  t:'Transporte' },
+  { n:10, t:'' }
+];
 var CATALOGO=[
-  { key:'modos',            label:'Modos',                estado:'activo' },
-  { key:'escala_mayor',     label:'Escalas · Mayor',      estado:'activo', desc:'una escala mayor (armadura + alteraciones)' },
-  { key:'escala_menor',     label:'Escalas · menor',      estado:'activo', desc:'una escala menor (natural/armónica/melódica)' },
-  { key:'escala_otras',     label:'Escalas · otras',      estado:'activo', desc:'pentatónica, hexátona o cromática' },
-  { key:'intervalos_id',    label:'Intervalos · identificar', estado:'activo', desc:'di el número y la especie del intervalo' },
-  { key:'intervalos_build', label:'Intervalos · construir',   estado:'activo', desc:'coloca la 2ª nota del intervalo dado' },
-  { key:'acordes_id',       label:'Acordes · identificar',    estado:'activo', desc:'clasifica el tipo (PM/Pm/Aum/Dis) · 4 compases' },
-  { key:'acordes_build',    label:'Acordes · construir',      estado:'activo', desc:'coloca 3ª y 5ª de la tríada · 4 compases' },
-  { key:'acordespro_id',    label:'Acordes PRO · identificar',estado:'activo', desc:'clasifica el tipo (con 7ª, sus4, ∅…) · 4 compases' },
-  { key:'acordespro_build', label:'Acordes PRO · construir',  estado:'activo', desc:'construye acordes con 7ª, sus4, etc.' },
-  { key:'indice',           label:'Índice acústico',          estado:'activo', desc:'nombre y octava de 4 notas (claves de sol y fa)' },
-  { key:'cadencias',        label:'Cadencias',                estado:'activo', desc:'identifica el tipo de cadencia (4 voces)' },
-  { key:'ton_nombre',       label:'Tonalidades · indica tonalidad', estado:'activo', desc:'4 armaduras: escribe la Mayor y su menor relativa' },
-  { key:'ton_armadura',     label:'Tonalidades · indica armadura',  estado:'activo', desc:'4 tonalidades: coloca su armadura' },
-  { key:'ton_vecinos',      label:'Tonalidades · tonos vecinos',    estado:'activo', desc:'1 tonalidad central: escribe sus 5 tonos vecinos' },
-  { key:'comp_elegir',      label:'Compases PRO · elegir',          estado:'activo', desc:'rodea el compás correcto (3 ritmos)' },
-  { key:'comp_rellenar',    label:'Compases PRO · rellenar',        estado:'activo', desc:'escribe figuras que sumen el compás (mixto/decimal/fraccionario)' },
-  { key:'comp_replicar',    label:'Compases PRO · replicar',        estado:'activo', desc:'dado un compás, escribe sus 3 formas equivalentes' },
-  { key:'seriearmonica',    label:'Serie armónica',       estado:'activo', desc:'construye la serie (8 armónicos) a partir de la fundamental' },
-  { key:'dode_construir',   label:'Dodecafonismo · construye',  estado:'activo', desc:'coloca 12 sonidos distintos (serie dodecafónica)' },
-  { key:'dode_completa',    label:'Dodecafonismo · completa',   estado:'activo', desc:'P0 + una variante (R/I): completa las notas que faltan' },
-  { key:'dode_identifica',  label:'Dodecafonismo · identifica', estado:'activo', desc:'P0 + variante: di qué variante es (P/R/I + número)' },
-  { key:'transporte',       label:'Transporte',           estado:'prox', nota:'fase 2' },
-  { key:'modulacion',       label:'Modulación',           estado:'prox', nota:'fase 3' },
-  { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'constr' },
-  { key:'dodecafonismo',    label:'Dodecafonismo',        estado:'constr' }
+  /* ===== GRADO PROFESIONAL (dorado) ===== */
+  { key:'modos',            label:'Modos',                estado:'activo', col:'pro', u:0 },
+  { key:'indice',           label:'Índice acústico',      estado:'activo', col:'pro', u:0, desc:'nombre y octava de 4 notas (claves de sol y fa)' },
+  { key:'comp_elegir',      label:'Compases PRO · elegir',   estado:'activo', col:'pro', u:1, desc:'rodea el compás correcto (3 ritmos)' },
+  { key:'comp_rellenar',    label:'Compases PRO · rellenar', estado:'activo', col:'pro', u:1, desc:'escribe figuras que sumen el compás (mixto/decimal/fraccionario)' },
+  { key:'comp_replicar',    label:'Compases PRO · replicar', estado:'activo', col:'pro', u:1, desc:'dado un compás, escribe sus 3 formas equivalentes' },
+  { key:'seriearmonica',    label:'Serie armónica',       estado:'activo', col:'pro', u:2, desc:'construye la serie (8 armónicos) a partir de la fundamental' },
+  { key:'dode_construir',   label:'Dodecafonismo · construye',  estado:'activo', col:'pro', u:3, desc:'coloca 12 sonidos distintos (serie dodecafónica)' },
+  { key:'dode_completa',    label:'Dodecafonismo · completa',   estado:'activo', col:'pro', u:3, desc:'P0 + una variante (R/I): completa las notas que faltan' },
+  { key:'dode_identifica',  label:'Dodecafonismo · identifica', estado:'activo', col:'pro', u:3, desc:'P0 + variante: di qué variante es (P/R/I + número)' },
+  { key:'acordespro_id',    label:'Acordes PRO · identificar',estado:'activo', col:'pro', u:5, desc:'clasifica el tipo (con 7ª, sus4, ∅…) · 4 compases' },
+  { key:'acordespro_build', label:'Acordes PRO · construir',  estado:'activo', col:'pro', u:5, desc:'construye acordes con 7ª, sus4, etc.' },
+  { key:'blues',            label:'Blues',                estado:'constr', col:'pro', u:5 },
+  { key:'modulacion',       label:'Modulación',           estado:'activo', col:'pro', u:8, desc:'completa la cadena de acordes (7/8 casillas) con el puente' },
+  { key:'transporte_escrito', label:'Transporte · escrito', estado:'prox', nota:'fase 2', col:'pro', u:9 },
+  { key:'transporte_mental',  label:'Transporte · mental',  estado:'prox', nota:'fase 2', col:'pro', u:9 },
+  { key:'transporte_resumen', label:'Transporte · resumen', estado:'prox', nota:'fase 2', col:'pro', u:9 },
+  /* ===== REPASO (azul) ===== */
+  { key:'escala_mayor',     label:'Escalas · Mayor',      estado:'activo', col:'repaso', desc:'una escala mayor (armadura + alteraciones)' },
+  { key:'escala_menor',     label:'Escalas · menor',      estado:'activo', col:'repaso', desc:'una escala menor (natural/armónica/melódica)' },
+  { key:'escala_otras',     label:'Escalas · otras',      estado:'activo', col:'repaso', desc:'pentatónica, hexátona o cromática' },
+  { key:'intervalos_id',    label:'Intervalos · identificar', estado:'activo', col:'repaso', desc:'di el número y la especie del intervalo' },
+  { key:'intervalos_build', label:'Intervalos · construir',   estado:'activo', col:'repaso', desc:'coloca la 2ª nota del intervalo dado' },
+  { key:'acordes_id',       label:'Acordes · identificar',    estado:'activo', col:'repaso', desc:'clasifica el tipo (PM/Pm/Aum/Dis) · 4 compases' },
+  { key:'acordes_build',    label:'Acordes · construir',      estado:'activo', col:'repaso', desc:'coloca 3ª y 5ª de la tríada · 4 compases' },
+  { key:'cadencias',        label:'Cadencias',                estado:'activo', col:'repaso', desc:'identifica el tipo de cadencia (4 voces)' },
+  { key:'ton_nombre',       label:'Tonalidades · indica tonalidad', estado:'activo', col:'repaso', desc:'4 armaduras: escribe la Mayor y su menor relativa' },
+  { key:'ton_armadura',     label:'Tonalidades · indica armadura',  estado:'activo', col:'repaso', desc:'4 tonalidades: coloca su armadura' },
+  { key:'ton_vecinos',      label:'Tonalidades · tonos vecinos',    estado:'activo', col:'repaso', desc:'1 tonalidad central: escribe sus 5 tonos vecinos' },
+  { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'constr', col:'repaso' }
 ];
 var FP={ numero:null, token:null, ejercicios:[], MAX:10, enviado:false };
 
@@ -8768,23 +8808,49 @@ function status(msg, tipo){
 }
 
 /* --------- pintado --------- */
+function fpMakeCard(t, azul){
+  var b=document.createElement('button'); b.type='button';
+  b.className='fp-tipo'+(azul?' rep':'')+(t.estado==='activo'?'':' off');
+  var chip= t.estado==='prox'   ? '<span class="fp-chip'+(azul?' rep':' prox')+'">· '+t.nota+' ·</span>'
+          : t.estado==='constr' ? '<span class="fp-chip constr">en construcción</span>' : '';
+  b.innerHTML=(t.estado==='activo'?'<span class="fp-add">+</span>':'')+
+    t.label+'<small>'+(t.estado==='activo'?(t.desc||'construir el modo indicado'):'todavía no se puede añadir')+'</small>'+chip;
+  b.addEventListener('click', function(){
+    if(t.estado==='activo'){ anadir(t.key); return; }
+    status(t.estado==='constr'
+      ? '🔧 «'+t.label+'» está en construcción: todavía no se puede añadir a fichas.'
+      : '⏳ «'+t.label+'» se incorpora en la '+t.nota+' del generador.', 'info');
+  });
+  return b;
+}
 function pintaCat(){
   var host=el('fpCat'); host.innerHTML='';
-  CATALOGO.forEach(function(t){
-    var b=document.createElement('button'); b.type='button';
-    b.className='fp-tipo'+(t.estado==='activo'?'':' off');
-    var chip= t.estado==='prox'   ? '<span class="fp-chip prox">· '+t.nota+' ·</span>'
-            : t.estado==='constr' ? '<span class="fp-chip constr">en construcción</span>' : '';
-    b.innerHTML=(t.estado==='activo'?'<span class="fp-add">+</span>':'')+
-      t.label+'<small>'+(t.estado==='activo'?(t.desc||'construir el modo indicado'):'todavía no se puede añadir')+'</small>'+chip;
-    b.addEventListener('click', function(){
-      if(t.estado==='activo'){ anadir(t.key); return; }
-      status(t.estado==='constr'
-        ? '🔧 «'+t.label+'» está en construcción: todavía no se puede añadir a fichas.'
-        : '⏳ «'+t.label+'» se incorpora en la '+t.nota+' del generador.', 'info');
-    });
-    host.appendChild(b);
+  /* ---- columna dorada: Grado Profesional, por unidades ---- */
+  var colP=document.createElement('div'); colP.className='fp-col-pro';
+  var hP=document.createElement('div'); hP.className='fp-col-head oro'; hP.textContent='Grado Profesional · por unidades'; colP.appendChild(hP);
+  UNIDADES.forEach(function(U){
+    var items=CATALOGO.filter(function(t){ return t.col==='pro' && t.u===U.n; });
+    var uni=document.createElement('div'); uni.className='fp-uni'+(items.length?'':' vacia');
+    var uh=document.createElement('div'); uh.className='fp-uni-h';
+    uh.innerHTML='<span class="fp-uni-n">UNIDAD '+U.n+'</span>'+(U.t?'<span class="fp-uni-t">'+U.t+'</span>':'');
+    uni.appendChild(uh);
+    if(items.length){
+      var g=document.createElement('div'); g.className='fp-uni-grid';
+      items.forEach(function(t){ g.appendChild(fpMakeCard(t,false)); });
+      uni.appendChild(g);
+    } else {
+      var e=document.createElement('div'); e.className='fp-uni-empty'; e.textContent='— próximamente —'; uni.appendChild(e);
+    }
+    colP.appendChild(uni);
   });
+  /* ---- columna azul: repaso (orden libre) ---- */
+  var colR=document.createElement('div'); colR.className='fp-col-rep';
+  var hR=document.createElement('div'); hR.className='fp-col-head azul'; hR.textContent='Ejercicios de repaso'; colR.appendChild(hR);
+  var gR=document.createElement('div'); gR.className='fp-rep-grid';
+  CATALOGO.filter(function(t){ return t.col==='repaso'; }).forEach(function(t){ gR.appendChild(fpMakeCard(t,true)); });
+  colR.appendChild(gR);
+
+  host.appendChild(colP); host.appendChild(colR);
 }
 function pintaLista(){
   var host=el('fpLista'); host.innerHTML='';
@@ -9120,6 +9186,7 @@ function fpPintaEjercicio(host, spec, resuelto, anchoFijo){
   if(spec && spec._dodeA){ return fpPintaDodeA(host, spec, resuelto, anchoFijo); }
   if(spec && spec._dodeB){ return fpPintaDodeB(host, spec, resuelto, anchoFijo); }
   if(spec && spec._dodeC){ return fpPintaDodeC(host, spec, resuelto, anchoFijo); }
+  if(spec && spec._mod){ return fpPintaModulacion(host, spec, resuelto, anchoFijo); }
   if(spec && spec._ton){ return fpPintaTonalidades(host, spec, resuelto, anchoFijo); }
   if(spec && spec._aco){ return fpPintaAcordes(host, spec, resuelto, anchoFijo); }
   if(spec && spec._iv){ return fpPintaIntervalos(host, spec, resuelto, anchoFijo); }
@@ -9181,7 +9248,7 @@ function fpEnun(e){
   try{
     var M=fpMotorDe(e.spec);
     if(M && e.spec){
-      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA || e.spec._dodeB || e.spec._dodeC) return M.enunciado(e.spec);
+      if(e.spec._aco || e.spec._iv || e.spec._ia || e.spec._cad || e.spec._ton || e.spec._tonA || e.spec._tonB || e.spec._tonC || e.spec._cel || e.spec._rell || e.spec._rep || e.spec._serie || e.spec._dodeA || e.spec._dodeB || e.spec._dodeC || e.spec._mod) return M.enunciado(e.spec);
       if(e.spec.tonica) return M.enunciado(e.spec);
     }
   }catch(err){}
@@ -9205,6 +9272,7 @@ function fpMotorDe(spec){
   if(spec && spec._dodeA) return window.DODE_A_MOTOR;
   if(spec && spec._dodeB) return window.DODE_B_MOTOR;
   if(spec && spec._dodeC) return window.DODE_C_MOTOR;
+  if(spec && spec._mod) return window.MODULACION_MOTOR;
   if(spec && spec._ton) return window.TONALIDADES_MOTOR;
   return window.MODOS_MOTOR;
 }
@@ -9244,6 +9312,7 @@ function fpGenera(key){
   if(key==='dode_construir')   return window.DODE_A_MOTOR?window.DODE_A_MOTOR.generar():null;
   if(key==='dode_completa')    return window.DODE_B_MOTOR?window.DODE_B_MOTOR.generar():null;
   if(key==='dode_identifica')  return window.DODE_C_MOTOR?window.DODE_C_MOTOR.generar():null;
+  if(key==='modulacion')       return window.MODULACION_MOTOR?window.MODULACION_MOTOR.generar():null;
   return null;
 }
 function fpLabelDe(key){
@@ -9371,6 +9440,7 @@ function fpTituloPDF(e){
   if(e.spec && e.spec._dodeA){ return fpPdfSafe('Dodecafonismo. Construye una serie de 12 sonidos distintos'); }
   if(e.spec && e.spec._dodeB){ return fpPdfSafe('Dodecafonismo. Completa la serie variante'); }
   if(e.spec && e.spec._dodeC){ return fpPdfSafe('Dodecafonismo. Identifica la variante (P/R/I y numero)'); }
+  if(e.spec && e.spec._mod){ return fpPdfSafe('Modulacion. '+window.MOD_PURE.keyLabel(e.spec.EX.keyA)+' a '+window.MOD_PURE.keyLabel(e.spec.EX.keyB)); }
   if(e.spec && e.spec._iv && window.INTERVALOS_MOTOR && window.INTERVALOS_MOTOR.pdfInfo){
     var iv=window.INTERVALOS_MOTOR.pdfInfo(e.spec);
     return fpPdfSafe(iv.modo==='build' ? 'Intervalos. Construye los intervalos indicados' : 'Intervalos. Identifica el numero y la especie');
@@ -11321,6 +11391,177 @@ function fpPintaDodeC(host, spec, resuelto, anchoFijo){
       T(4,44,'P0','#b8860b'); T(4,148,'?','#b8860b');
       T(34,222, resuelto?('Respuesta: '+info.kind+info.n):'La 2ª serie es la variante:  letra ____   número ____', resuelto?'#c0392b':'#3a2f12', 13); }
   }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar dodecafonismo C: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaDodeC', e); }
+}
+</script>
+
+<script>
+/* ============================================================
+   MODULACIÓN · núcleo puro (portado de banco_modulacion.html) — 7/8 casillas.
+   ============================================================ */
+(function(){
+  var LETTERS=['C','D','E','F','G','A','B'], LETTER_PC={C:0,D:2,E:4,F:5,G:7,A:9,B:11}, NOMBRE={C:'Do',D:'Re',E:'Mi',F:'Fa',G:'Sol',A:'La',B:'Si'};
+  var SHARP_ORDER=['F','C','G','D','A','E','B'], FLAT_ORDER=['B','E','A','D','G','C','F'];
+  var MAJORS=[{name:'C',sig:0},{name:'G',sig:1},{name:'D',sig:2},{name:'A',sig:3},{name:'E',sig:4},{name:'F',sig:-1},{name:'Bb',sig:-2},{name:'Eb',sig:-3},{name:'Ab',sig:-4}];
+  var MINORS=[{name:'A',sig:0},{name:'E',sig:1},{name:'B',sig:2},{name:'F#',sig:3},{name:'C#',sig:4},{name:'D',sig:-1},{name:'G',sig:-2},{name:'C',sig:-3},{name:'F',sig:-4}];
+  var ALL_KEYS=MAJORS.map(function(k){return {name:k.name,mode:'major',sig:k.sig};}).concat(MINORS.map(function(k){return {name:k.name,mode:'minor',sig:k.sig};}));
+  function accMapFromSig(sig){ var m={C:0,D:0,E:0,F:0,G:0,A:0,B:0}; if(sig>0) for(var i=0;i<sig;i++) m[SHARP_ORDER[i]]=1; else if(sig<0) for(var j=0;j<(-sig);j++) m[FLAT_ORDER[j]]=-1; return m; }
+  function parseKeyName(nm){ var letter=nm[0], alter=0; if(nm.indexOf('#')>=0) alter=1; else if(nm.indexOf('b')>=0&&nm.length>1) alter=-1; return {letter:letter,alter:alter}; }
+  function accGlyph(a){ return a===1?'♯':a===-1?'♭':a===2?'×':a===-2?'♭♭':''; }
+  function keyLabel(k){ var p=parseKeyName(k.name); return NOMBRE[p.letter]+accGlyph(p.alter)+(k.mode==='major'?' Mayor':' menor'); }
+  function sigLabel(sig){ if(sig===0) return 'sin alteraciones'; var n=Math.abs(sig); return n+(sig>0?(n===1?' sostenido':' sostenidos'):(n===1?' bemol':' bemoles')); }
+  function diatonicTriads(key, natural){
+    var map=accMapFromSig(key.sig), tonic=parseKeyName(key.name), tonicIdx=LETTERS.indexOf(tonic.letter), grados=[];
+    for(var g=0;g<7;g++){ var li=(tonicIdx+g)%7, letter=LETTERS[li]; grados.push({letter:letter,alter:map[letter]}); }
+    var pcOf=function(letter,alter){ return ((LETTER_PC[letter]+alter)%12+12)%12; };
+    var isMinor=key.mode==='minor', seventhLetter=grados[6].letter;
+    var raise=function(letter,alter){ return (!natural && isMinor && letter===seventhLetter)? alter+1 : alter; };
+    var out=[];
+    for(var g2=0;g2<7;g2++){ var r=grados[g2], t=grados[(g2+2)%7], f=grados[(g2+4)%7];
+      var rA=raise(r.letter,r.alter), tA=raise(t.letter,t.alter), fA=raise(f.letter,f.alter);
+      var rp=pcOf(r.letter,rA), tp=pcOf(t.letter,tA), fp=pcOf(f.letter,fA);
+      var i3=((tp-rp)%12+12)%12, i5=((fp-rp)%12+12)%12, modo;
+      if(i3===4&&i5===7) modo='M'; else if(i3===3&&i5===7) modo='m'; else if(i3===3&&i5===6) modo='dim'; else if(i3===4&&i5===8) modo='aug'; else modo='?';
+      out.push({grado:g2, root:{letter:r.letter,alter:rA}, modo:modo, rootPc:rp, notesPc:[rp,tp,fp]}); }
+    return out;
+  }
+  function romano(grado,modo){ var base=['I','II','III','IV','V','VI','VII'][grado]; if(modo==='M') return base; if(modo==='m') return base.toLowerCase(); if(modo==='dim') return base.toLowerCase()+'°'; if(modo==='aug') return base+'+'; return base; }
+  function nombreAcorde(root,modo,seventh){ var base=NOMBRE[root.letter]+accGlyph(root.alter); if(seventh && modo==='M') return base+'7'; var suf=modo==='M'?'M':modo==='m'?'m':modo==='dim'?'°':modo==='aug'?'+':''; return base+suf+(seventh?'7':''); }
+  function cifrado(root,modo,seventh){ var base=root.letter+accGlyph(root.alter); if(seventh && modo==='M') return base+'7'; var suf=modo==='M'?'':modo==='m'?'−':modo==='dim'?'°':modo==='aug'?'+':''; if(seventh) suf+='7'; return base+suf; }
+  function acordesComunes(keyA,keyB){ var ta=diatonicTriads(keyA,true), tb=diatonicTriads(keyB,true), out=[];
+    ta.forEach(function(a){ tb.forEach(function(b){ var sa=a.notesPc.slice().sort(function(x,y){return x-y;}).join(','), sb=b.notesPc.slice().sort(function(x,y){return x-y;}).join(',');
+      if(sa===sb && a.modo===b.modo && a.modo!=='dim'){ out.push({root:a.root,modo:a.modo,gradoA:a.grado,gradoB:b.grado, nombre:nombreAcorde(a.root,a.modo), cif:cifrado(a.root,a.modo,false), romA:romano(a.grado,a.modo), romB:romano(b.grado,b.modo), notesPc:a.notesPc.slice()}); } }); });
+    return out; }
+  function notasAEvitar(keyA,keyB){ var ma=accMapFromSig(keyA.sig), mb=accMapFromSig(keyB.sig), out=[]; LETTERS.forEach(function(L){ if(ma[L]!==mb[L]) out.push({letter:L,a:ma[L],b:mb[L]}); }); return out; }
+  function clone(o){ return o?JSON.parse(JSON.stringify(o)):null; }
+  function acordesIguales(x,y){ return x&&y&&x.root.letter===y.root.letter&&(x.root.alter||0)===(y.root.alter||0)&&x.modo===y.modo&&!!x.seventh===!!y.seventh; }
+  function generarEjercicio(forceOcho){
+    var cand=[];
+    ALL_KEYS.forEach(function(A){ ALL_KEYS.forEach(function(B){ if(A.name===B.name&&A.mode===B.mode) return; if(A.sig===B.sig) return; var delta=Math.abs(A.sig-B.sig); if(delta<1||delta>2) return; if(Math.abs(A.sig)>4||Math.abs(B.sig)>4) return; var comunes=acordesComunes(A,B); if(comunes.length>0) cand.push({A:A,B:B,comunes:comunes}); }); });
+    var el=cand[Math.floor(Math.random()*cand.length)], A=el.A, B=el.B;
+    var ta=diatonicTriads(A,true), tb=diatonicTriads(B,true);
+    function acorde(tri,seventh,forceMajor){ return {root:tri.root, modo:forceMajor?'M':tri.modo, seventh:!!seventh, grado:tri.grado}; }
+    var IA=acorde(ta[0],false,false), IVA=acorde(ta[3],false,false), V7A=acorde(ta[4],true,true), IA2=acorde(ta[0],false,false), IVB=acorde(tb[3],false,false), V7B=acorde(tb[4],true,true), IB=acorde(tb[0],false,false);
+    var conOcho=(forceOcho!=null)?!!forceOcho:(Math.random()<0.5);
+    var sol=[]; sol[0]={fixed:true,acc:[IA]}; sol[1]={fixed:false,acc:[IVA]}; sol[2]={fixed:false,acc:[V7A]}; sol[3]={fixed:false,acc:[IA2]};
+    sol[4]={fixed:false,magic:true,acc:el.comunes.map(function(c){ return {root:c.root,modo:c.modo,seventh:false,grado:c.gradoA,_bridge:c}; })};
+    if(conOcho){ sol[5]={fixed:false,acc:[IVB]}; sol[6]={fixed:false,acc:[V7B]}; sol[7]={fixed:true,acc:[IB]}; }
+    else { sol[5]={fixed:false,acc:[V7B]}; sol[6]={fixed:true,acc:[IB]}; }
+    return { keyA:A, keyB:B, triadsA:ta, triadsB:tb, comunes:el.comunes, evitar:notasAEvitar(A,B), sol:sol, N:sol.length, conOcho:conOcho, fixedFill:sol.map(function(s){ return s.fixed?s.acc[0]:null; }) };
+  }
+  window.MOD_PURE={ ALL_KEYS:ALL_KEYS, keyLabel:keyLabel, sigLabel:sigLabel, diatonicTriads:diatonicTriads, romano:romano, nombreAcorde:nombreAcorde, cifrado:cifrado, acordesComunes:acordesComunes, notasAEvitar:notasAEvitar, generarEjercicio:generarEjercicio, clone:clone, acordesIguales:acordesIguales, NOMBRE:NOMBRE, accGlyph:accGlyph, LETTERS:LETTERS };
+})();
+</script>
+
+<script>
+/* ============================================================
+   FICHAS · MODULACIÓN — casillas + editor de acorde (calca el banco) + corrección + PDF.
+   ============================================================ */
+(function(){
+  function M(){ return window.MOD_PURE; }
+  function generar(){ var EX=M().generarEjercicio(); var us=new Array(EX.N).fill(null); us[0]=M().clone(EX.sol[0].acc[0]); us[EX.N-1]=M().clone(EX.sol[EX.N-1].acc[0]); return { _mod:true, EX:EX, userSlots:us }; }
+  function enunciado(g){ return 'Modulación · Completa de '+M().keyLabel(g.EX.keyA)+' a '+M().keyLabel(g.EX.keyB)+'.'; }
+  function edComplete(ed){ return ed.letter!=null && ed.modo!=null; }
+  function verdict(g,i){ var def=g.EX.sol[i]; if(def.fixed) return true; var u=g.userSlots[i]; if(!u) return false; for(var k=0;k<def.acc.length;k++){ var a=def.acc[k]; if(M().acordesIguales(u,{root:a.root,modo:a.modo,seventh:!!a.seventh})) return true; } return false; }
+  function magicIdx(g){ for(var i=0;i<g.EX.N;i++){ if(g.EX.sol[i].magic) return i; } return -1; }
+  function penSlot(g,i){ var def=g.EX.sol[i], exp=def.acc[0], u=g.userSlots[i]; if(verdict(g,i)) return 0;
+    if(exp.seventh && u && u.root.letter===exp.root.letter && (u.root.alter||0)===(exp.root.alter||0) && u.modo===exp.modo && !u.seventh) return 0.25;   // solo le falta la 7ª de dominante
+    return 0.5; }
+  function puntua(g){ try{ var mi=magicIdx(g); if(mi>=0 && !verdict(g,mi)) return 0;   // puente mal → 0
+    var sc=1; for(var j=0;j<g.EX.N;j++){ var def=g.EX.sol[j]; if(def.fixed||def.magic) continue; sc-=penSlot(g,j); } return Math.max(0, Math.round(sc*100)/100); }catch(e){ return 0; } }
+  function slotCard(g, i, opts){ opts=opts||{}; var def=g.EX.sol[i], u=g.userSlots[i];
+    var cell=document.createElement(opts.corr?'div':'button'); if(!opts.corr) cell.type='button';
+    var base='position:relative;border-radius:12px;min-height:78px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:8px 4px;background:#fff;border:1.5px solid #cbb98a;cursor:'+(opts.corr||def.fixed?'default':'pointer');
+    if(def.magic) base+=';border-color:#3a6fd8;box-shadow:0 0 0 2px rgba(58,111,216,.25)';
+    if(def.fixed) base+=';background:linear-gradient(180deg,#f6efdc,#efe4c6)';
+    cell.style.cssText=base;
+    var num=document.createElement('div'); num.style.cssText='position:absolute;top:5px;left:7px;font-size:10px;font-weight:800;color:#9a8a5a'; num.textContent=(i+1)+(def.magic?' puente':''); if(def.magic) num.style.color='#3a6fd8'; cell.appendChild(num);
+    if(opts.corr){
+      var good=verdict(g,i);
+      if(u){ var cf=document.createElement('div'); cf.style.cssText='font-size:11px;font-weight:700;color:'+(good?'#16a34a':'#c0392b'); cf.textContent=M().cifrado(u.root,u.modo,u.seventh); cell.appendChild(cf);
+        var nm=document.createElement('div'); nm.style.cssText='font-size:16px;font-weight:900;color:'+(good?'#16a34a':'#c0392b'); nm.textContent=M().nombreAcorde(u.root,u.modo,u.seventh); cell.appendChild(nm); }
+      else { cell.appendChild(txt('(vacío)','#c0392b',14)); }
+      if(!good && !def.fixed){ var sol=def.magic? def.acc.map(function(a){return M().nombreAcorde(a.root,a.modo,false);}).join(' / ') : M().nombreAcorde(def.acc[0].root,def.acc[0].modo,def.acc[0].seventh);
+        cell.appendChild(txt(sol,'#2f6df6',11)); }
+    } else {
+      if(u){ cell.appendChild(txt(M().cifrado(u.root,u.modo,u.seventh),'#8a7a45',11)); cell.appendChild(txt(M().nombreAcorde(u.root,u.modo,u.seventh),'#2b2b2b',17)); }
+      else { cell.appendChild(txt(def.magic?'✦ elegir':'elegir','#b3a06a',14)); }
+      if(g.__sel===i) cell.style.boxShadow='0 0 0 2px rgba(184,134,11,.5)';
+      if(!def.fixed) cell.onclick=function(){ selectSlot(g,i); };
+    }
+    return cell;
+  }
+  function txt(t,color,size){ var d=document.createElement('div'); d.style.cssText='font-size:'+size+'px;font-weight:800;color:'+color+';text-align:center;line-height:1.15'; d.textContent=t; return d; }
+  function renderSlots(g){ var host=g.__slots; host.innerHTML=''; host.style.cssText='display:grid;grid-template-columns:repeat('+g.EX.N+',1fr);gap:8px'; for(var i=0;i<g.EX.N;i++) host.appendChild(slotCard(g,i,{})); }
+  function selectSlot(g,i){ if(g.EX.sol[i].fixed) return; if(g.__sel!=null && g.__sel!==i && edComplete(g.__ed)) commit(g,g.__sel); g.__sel=(g.__sel===i)?null:i;
+    if(g.__sel==null){ g.__ed=blankEd(); g.__editor.style.display='none'; renderSlots(g); return; }
+    var u=g.userSlots[i]; g.__ed = u? {letter:u.root.letter,alter:u.root.alter||0,modo:u.modo,seventh:!!u.seventh} : blankEd();
+    renderSlots(g); renderEditor(g,i); }
+  function blankEd(){ return {letter:null,alter:null,modo:null,seventh:false}; }
+  function commit(g,i){ var e=g.__ed; if(edComplete(e)) g.userSlots[i]={root:{letter:e.letter,alter:e.alter==null?0:e.alter}, modo:e.modo, seventh:e.seventh}; }
+  function pill(txt2,on,onclick){ var b=document.createElement('button'); b.type='button'; b.textContent=txt2; b.style.cssText='padding:6px 11px;border:1px solid '+(on?'#b8860b':'#cbb98a')+';border-radius:8px;background:'+(on?'linear-gradient(135deg,#e9c96a,#b8860b)':'#fff')+';color:'+(on?'#1a1305':'#3a2f12')+';font-weight:800;font-size:13px;cursor:pointer'; b.onclick=onclick; return b; }
+  function renderEditor(g,i){ var ed=g.__editor; ed.style.display='block'; ed.innerHTML='';
+    var magic=g.EX.sol[i].magic;
+    var head=document.createElement('div'); head.style.cssText='font-size:12px;font-weight:800;margin-bottom:8px;color:#3a2f12'; head.innerHTML='<b>Casilla '+(i+1)+'</b> · '+(magic?'<span style="color:#b8860b">acorde puente: elige un acorde común a ambas tonalidades ✦</span>':'elige nota, alteración y tipo'); ed.appendChild(head);
+    var row=document.createElement('div'); row.style.cssText='display:flex;gap:16px;flex-wrap:wrap;align-items:flex-start'; ed.appendChild(row);
+    function grp(labelt){ var d=document.createElement('div'); var l=document.createElement('div'); l.style.cssText='font-size:10px;font-weight:800;text-transform:uppercase;color:#8a7a45;margin-bottom:5px'; l.textContent=labelt; d.appendChild(l); var b=document.createElement('div'); b.style.cssText='display:flex;flex-wrap:wrap;gap:5px'; d.appendChild(b); d.__b=b; return d; }
+    var gN=grp('Nota'); M().LETTERS.forEach(function(L){ gN.__b.appendChild(pill(M().NOMBRE[L], g.__ed.letter===L, function(){ g.__ed.letter=L; live(g,i); })); }); row.appendChild(gN);
+    var gA=grp('Alteración'); [['♭♭',-2],['♭',-1],['♮',0],['♯',1],['×',2]].forEach(function(p){ gA.__b.appendChild(pill(p[0], g.__ed.alter===p[1], function(){ g.__ed.alter=p[1]; live(g,i); })); }); row.appendChild(gA);
+    var gM=grp('Tipo'); [['Mayor','M'],['menor','m'],['dism.','dim']].forEach(function(p){ gM.__b.appendChild(pill(p[0], g.__ed.modo===p[1], function(){ g.__ed.modo=p[1]; if(p[1]!=='M') g.__ed.seventh=false; live(g,i); })); });
+    var s7=pill('7ª (dom.)', g.__ed.seventh, function(){ g.__ed.seventh=!g.__ed.seventh; if(g.__ed.seventh) g.__ed.modo='M'; live(g,i); }); s7.style.marginLeft='6px'; gM.__b.appendChild(s7); row.appendChild(gM);
+    var act=document.createElement('div'); act.style.cssText='display:flex;gap:8px;margin-top:10px';
+    var done=pill('Hecho', false, function(){ if(edComplete(g.__ed)) commit(g,i); g.__sel=null; ed.style.display='none'; renderSlots(g); }); done.style.background='linear-gradient(120deg,#e9c96a,#b8860b)'; done.style.color='#1a1305';
+    var clr=pill('Vaciar', false, function(){ g.userSlots[i]=null; g.__sel=null; ed.style.display='none'; renderSlots(g); });
+    act.appendChild(done); act.appendChild(clr); ed.appendChild(act);
+  }
+  function live(g,i){ commit(g,i); renderSlots(g); renderEditor(g,i); }
+  function montarEn(host, g){
+    if(!host||!g) return; host.innerHTML='';
+    var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
+    var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:8px'; cap.innerHTML='Completa la modulación de <b>'+M().keyLabel(g.EX.keyA)+'</b> a <b>'+M().keyLabel(g.EX.keyB)+'</b>. Se dan la 1ª y la última; la <b style="color:#3a6fd8">casilla 5 es el puente</b>. Pulsa una casilla para elegir su acorde.<br><span style="font-weight:600;color:#8a7a45">Recuerda: los acordes de dominante los escribimos con 7ª (por estilo).</span>'; wrap.appendChild(cap);
+    var slots=document.createElement('div'); wrap.appendChild(slots); g.__slots=slots;
+    var keys=document.createElement('div'); keys.style.cssText='display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-weight:800;color:#3a6fd8'; keys.innerHTML='<span>'+M().keyLabel(g.EX.keyA)+'</span><span>'+M().keyLabel(g.EX.keyB)+'</span>'; wrap.appendChild(keys);
+    var ed=document.createElement('div'); ed.style.cssText='display:none;margin-top:10px;padding:12px;border:1px solid #cbb374;border-radius:12px;background:linear-gradient(180deg,#f6ecd0,#efe1b8)'; wrap.appendChild(ed); g.__editor=ed;
+    g.__sel=null; g.__ed=blankEd(); renderSlots(g);
+  }
+  function corregirVisual(host, g){
+    try{ if(!g) return 0;
+      if(host){ host.innerHTML='';
+        var wrap=document.createElement('div'); wrap.style.cssText='background:#fff;border:1px solid #e7d9a8;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
+        wrap.appendChild(txtL('Modulación de '+M().keyLabel(g.EX.keyA)+' a '+M().keyLabel(g.EX.keyB)));
+        var slots=document.createElement('div'); slots.style.cssText='display:grid;grid-template-columns:repeat('+g.EX.N+',1fr);gap:8px;margin-top:6px'; for(var i=0;i<g.EX.N;i++) slots.appendChild(slotCard(g,i,{corr:true})); wrap.appendChild(slots);
+        var mi=magicIdx(g), pc=puntua(g), det=[];
+        if(mi>=0 && !verdict(g,mi)){ det.push('El acorde <b>puente</b> es incorrecto → 0 puntos'); }
+        else { var n7=0, no=0; for(var j=0;j<g.EX.N;j++){ var d2=g.EX.sol[j]; if(d2.fixed||d2.magic) continue; var pn=penSlot(g,j); if(pn===0.25) n7++; else if(pn===0.5) no++; }
+          if(n7) det.push(n7+' dominante(s) sin 7ª: −'+(25*n7)+'%');
+          if(no) det.push(no+' acorde(s) incorrecto(s) (nota/tipo/alteración): −'+(50*no)+'%');
+          if(!n7&&!no) det.push('✓ Todo correcto'); }
+        var box=document.createElement('div'); box.style.cssText='margin-top:10px;font-size:12px;line-height:1.6;color:#5a5030;text-align:center'; box.innerHTML=det.join('<br>')+'<div style="margin-top:5px;font-weight:900;color:'+(pc>=0.5?'#16a34a':'#c0392b')+'">Puntuación: '+Math.round(pc*100)+'%</div>'; wrap.appendChild(box);
+      }
+      return puntua(g);
+    }catch(e){ return puntua(g); }
+  }
+  function txtL(t){ var d=document.createElement('div'); d.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12'; d.textContent=t; return d; }
+  function txtC(t,ok){ var d=document.createElement('div'); d.style.cssText='text-align:center;margin-top:10px;font-size:12.5px;font-weight:800;color:'+(ok?'#16a34a':'#8a6d1a'); d.textContent=t; return d; }
+  function pdfInfo(g){ return { EX:g.EX }; }
+  window.MODULACION_MOTOR={ generar:generar, enunciado:enunciado, montarEn:montarEn, puntua:puntua, corregirVisual:corregirVisual, pdfInfo:pdfInfo };
+})();
+function fpPintaModulacion(host, spec, resuelto, anchoFijo){
+  try{
+    host.innerHTML=''; var M=window.MOD_PURE, EX=spec.EX, N=EX.N;
+    var W=anchoFijo||940, H=150, ns='http://www.w3.org/2000/svg';
+    var svg=document.createElementNS(ns,'svg'); svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox','0 0 '+W+' '+H); host.appendChild(svg);
+    function T(x,y,s,fill,sz,anchor,weight){ var t=document.createElementNS(ns,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anchor||'middle');t.setAttribute('font-size',sz||13);t.setAttribute('font-weight',weight||'bold');t.setAttribute('font-family','DejaVu Sans, Helvetica, Arial');t.setAttribute('fill',fill);t.textContent=s;svg.appendChild(t); }
+    var padX=12, gap=10, bw=(W-2*padX-(N-1)*gap)/N, bh=74, y=34;
+    for(var i=0;i<N;i++){ var def=EX.sol[i], x=padX+i*(bw+gap), magic=def.magic;
+      var rc=document.createElementNS(ns,'rect'); rc.setAttribute('x',x);rc.setAttribute('y',y);rc.setAttribute('width',bw);rc.setAttribute('height',bh);rc.setAttribute('rx',10);
+      rc.setAttribute('fill', def.fixed?'#f6efdc':'#fff'); rc.setAttribute('stroke', magic?'#3a6fd8':'#cbb98a'); rc.setAttribute('stroke-width', magic?'2':'1'); svg.appendChild(rc);
+      T(x+8, y+14, (i+1)+(magic?' puente':''), magic?'#3a6fd8':'#9a8a5a', 10, 'start');
+      var show = def.fixed || resuelto;
+      if(show){ if(magic && resuelto){ var opts=def.acc.map(function(a){ return M.nombreAcorde(a.root,a.modo,false); }); var nn=opts.length, sz=nn<=2?14:11;
+          opts.forEach(function(o,k){ T(x+bw/2, y+21+(bh-24)*(k+0.5)/nn+2, o, '#c0392b', sz); }); }
+        else { var a=def.acc[0]; T(x+bw/2, y+10, M.cifrado(a.root,a.modo,a.seventh), def.fixed?'#8a7a45':'#c0392b', 11); T(x+bw/2, y+bh/2+8, M.nombreAcorde(a.root,a.modo,a.seventh), def.fixed?'#2b2b2b':'#c0392b', 17); } }
+    }
+  }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar modulación: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaModulacion', e); }
 }
 </script>
 
