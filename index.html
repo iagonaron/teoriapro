@@ -716,6 +716,27 @@
   .gn-undo{border:1px solid rgba(212,175,55,.45);background:transparent;color:#e9c96a;border-radius:10px;padding:6px 12px;font-size:12.5px;font-weight:700;cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent}
   .gn-undo:disabled{opacity:.35;cursor:default}
   .gn-undo--light{color:#8a6d1a;border-color:#cbb98a}
+  /* SEL-UNICA 10-jul-2026 · botones ♭/♯ de la FICHA de índice acústico.
+     Antes usaban .ia-acc, cuyo CSS sólo existe bajo #view-indice (otro motor),
+     así que salían diminutos y sin estado marcado. Aquí van grandes, táctiles
+     y con estado .on claramente visible (dorado relleno). Fondo claro porque
+     la ficha se monta sobre panel claro. */
+  .ia-fp-accrow{display:flex;flex-direction:column;gap:8px}
+  .ia-fp-acc{
+    width:42px;height:42px;display:flex;align-items:center;justify-content:center;
+    font-size:24px;line-height:1;font-weight:800;font-family:inherit;
+    border:1.5px solid #cbb98a;border-radius:11px;background:#fff;color:#5a4a1c;
+    cursor:pointer;touch-action:manipulation;-webkit-tap-highlight-color:transparent;
+    transition:background .12s,border-color .12s,color .12s,box-shadow .12s,transform .08s;
+    box-shadow:0 1px 2px rgba(0,0,0,.08);
+  }
+  .ia-fp-acc:hover{border-color:#b8860b;background:#fbf6e6}
+  .ia-fp-acc:active{transform:scale(.94)}
+  .ia-fp-acc.on{
+    background:linear-gradient(135deg,#e9c96a,#d4af37);border-color:#b8860b;color:#241a07;
+    box-shadow:0 2px 8px rgba(184,134,11,.45),inset 0 1px 0 rgba(255,255,255,.5);font-weight:900;
+  }
+  @media(max-width:640px){ .ia-fp-acc{width:46px;height:46px;font-size:26px} }
 </style>
 </head>
 <body>
@@ -1961,6 +1982,8 @@ function renderBUILDScore(){
       else if(e._selVar!=null && e.userSeq[e._selVar] &&
               n.step===e.userSeq[e._selVar].step && n.octave===e.userSeq[e._selVar].octave && !e._corregido)
         sn.setKeyStyle(idx,{fillStyle:'#d4af37',strokeStyle:'#d4af37'});
+      else if(!e._corregido && n!==e.fund && e.userSeq.some(u=>u===n))   /* SEL-UNICA 10-jul-2026 · nota del alumno no seleccionada: gris neutro */
+        sn.setKeyStyle(idx,{fillStyle:'#8a8674',strokeStyle:'#8a8674'});
     });
     try{
       const voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
@@ -2099,16 +2122,17 @@ function buildPersistDelX(){
   if(card && card.classList.contains('locked')) return;
   dataBUILD.forEach((e,i)=>{
     if(e._corregido) return;
+    /* SEL-UNICA 10-jul-2026 · × SOLO en la nota seleccionada */
+    if(e._selVar==null || !e.userSeq[e._selVar]) return;
     const x=(buildVarGeom[i]&&buildVarGeom[i].baseX!=null)?buildVarGeom[i].baseX:null; if(x==null) return;
-    e.userSeq.forEach((nb,k)=>{
-      const y=buildYReal(i,nb.step,nb.octave); if(y==null) return;
-      GN_UNIF.delXAt(host,svg,'gn-build',x,y,16,()=>{
-        const idx=e.userSeq.indexOf(nb); if(idx<0) return;
-        buildUndoPush({t:'del',i:i,idx:idx,nota:nb});
-        e.userSeq.splice(idx,1);
-        if(e._selVar===idx) e._selVar=null; else if(e._selVar!=null&&e._selVar>idx) e._selVar--;
-        renderBUILD();
-      });
+    const nb=e.userSeq[e._selVar];
+    const y=buildYReal(i,nb.step,nb.octave); if(y==null) return;
+    GN_UNIF.delXAt(host,svg,'gn-build',x,y,16,()=>{
+      const idx=e.userSeq.indexOf(nb); if(idx<0) return;
+      buildUndoPush({t:'del',i:i,idx:idx,nota:nb});
+      e.userSeq.splice(idx,1);
+      if(e._selVar===idx) e._selVar=null; else if(e._selVar!=null&&e._selVar>idx) e._selVar--;
+      renderBUILD();
     });
   });
 }
@@ -2144,16 +2168,20 @@ function showBUILDGhost(i,nat){
   }catch(err){ g.style.display='none'; }
 }
 function clearBUILDGhost(){ const g=document.getElementById('buildghost'); if(g) g.style.display='none'; }
+/* SEL-UNICA 10-jul-2026 · selección ÚNICA en toda la tarjeta (4 compases):
+   al seleccionar en el compás iSel, deselecciona los demás → una sola × y una
+   sola nota dorada en pantalla. */
+function buildDeselOtros(iSel){ dataBUILD.forEach((e,k)=>{ if(k!==iSel && e._selVar!=null) e._selVar=null; }); }
 function onBUILDClick(ev){
   const i=buildCompasEn(ev); if(i==null) return;
   const e=dataBUILD[i]; if(e._corregido) return;
   let p; try{ p=buildPointIn(ev); }catch(err){ return; }
   for(let k=0;k<e.userSeq.length;k++){
     const y=buildYReal(i,e.userSeq[k].step,e.userSeq[k].octave);
-    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=(e._selVar===k)?null:k; renderBUILD(); return; }
+    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=k; buildDeselOtros(i); renderBUILD(); return; }   /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
   }
-  if(e.userSeq.length>=e.objetivo.length) return;
-  const nat=buildNearestByY(i,p.y); if(!nat) return;
+  if(e.userSeq.length>=e.objetivo.length){ if(e._selVar!=null){ e._selVar=null; renderBUILD(); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
+  const nat=buildNearestByY(i,p.y); if(!nat){ if(e._selVar!=null){ e._selVar=null; renderBUILD(); } return; }   /* SEL-UNICA 10-jul-2026 */
   let nb={step:nat.step,octave:nat.octave,alter:0};
   for(let k=e.userSeq.length-1;k>=0;k--){ const pv=e.userSeq[k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } }
   const pend=buildPendingAlt[i];
@@ -2161,6 +2189,7 @@ function onBUILDClick(ev){
   e.userSeq.push(nb); buildPendingAlt[i]=0;
   buildUndoPush({t:'add',i:i,nota:nb});           /* GN-UNIF 8-jul-2026 */
   e._selVar=e.userSeq.length-1;
+  buildDeselOtros(i);   /* SEL-UNICA 10-jul-2026 · una sola nota seleccionada en la tarjeta */
   renderBUILD();
 }
 
@@ -2607,20 +2636,20 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
     GN_UNIF.clearDelX(sc,'gn-acofp');
     if(g.modo!=='build'||g.__reviewMode) return;
     var svg=sc.querySelector('svg'); if(!svg) return;
-    g.subs.forEach(function(sub, m){
-      if(sub._corrView||sub._solVisible) return;
-      var xInt=g.__meas&&g.__meas[m]?(g.__meas[m].noteX||(g.__meas[m].x+30)):null; if(xInt==null) return;
-      (sub.userSeq||[]).forEach(function(nb){
-        var y=yRealG(g, nb.step, nb.octave); if(y==null) return;
-        GN_UNIF.delXAt(sc,svg,'gn-acofp',xInt,y,14,function(){
-          var idx=sub.userSeq.indexOf(nb); if(idx<0) return;
-          gnUndoPushG(g,{t:'del',m:m,idx:idx,nota:nb});
-          sub.userSeq.splice(idx,1);
-          if(sub._selVar===idx) sub._selVar=null; else if(sub._selVar!=null&&sub._selVar>idx) sub._selVar--;
-          if(g._selM===m&&sub._selVar==null) g._selM=null;
-          pintarScoreG(g, sc);
-        });
-      });
+    /* SEL-UNICA 10-jul-2026 · × SOLO en la nota seleccionada del compás seleccionado */
+    if(g._selM==null) return;
+    var m=g._selM, sub=g.subs[m];
+    if(!sub||sub._corrView||sub._solVisible||sub._selVar==null||!sub.userSeq[sub._selVar]) return;
+    var xInt=g.__meas&&g.__meas[m]?(g.__meas[m].noteX||(g.__meas[m].x+30)):null; if(xInt==null) return;
+    var nb=sub.userSeq[sub._selVar];
+    var y=yRealG(g, nb.step, nb.octave); if(y==null) return;
+    GN_UNIF.delXAt(sc,svg,'gn-acofp',xInt,y,14,function(){
+      var idx=sub.userSeq.indexOf(nb); if(idx<0) return;
+      gnUndoPushG(g,{t:'del',m:m,idx:idx,nota:nb});
+      sub.userSeq.splice(idx,1);
+      if(sub._selVar===idx) sub._selVar=null; else if(sub._selVar!=null&&sub._selVar>idx) sub._selVar--;
+      if(g._selM===m&&sub._selVar==null) g._selM=null;
+      pintarScoreG(g, sc);
     });
   }
   /* GN-UNIF 8-jul-2026 · pila de deshacer del grupo (colocaciones y borrados) */
@@ -2633,8 +2662,8 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
   function gnUndoG(g){
     var a=(g.__gnUndo||[]).pop(); gnUndoUpdG(g); if(!a) return;
     var sub=g.subs[a.m]; if(!sub||sub._corrView||g.__reviewMode) return;
-    if(a.t==='add'){ var idx=sub.userSeq.indexOf(a.nota); if(idx>=0) sub.userSeq.splice(idx,1); sub._selVar=null; }
-    else { sub.userSeq.splice(Math.min(a.idx,sub.userSeq.length),0,a.nota); sub._selVar=null; }
+    if(a.t==='add'){ var idx=sub.userSeq.indexOf(a.nota); if(idx>=0) sub.userSeq.splice(idx,1); sub._selVar=null; if(g._selM===a.m) g._selM=null; }
+    else { var ins=Math.min(a.idx,sub.userSeq.length); sub.userSeq.splice(ins,0,a.nota); sub._selVar=ins; g._selM=a.m; }   /* SEL-UNICA 10-jul-2026 · nota recuperada queda seleccionada */
     if(g.__sc) pintarScoreG(g, g.__sc);
     gnUndoUpdG(g);
   }
@@ -2665,9 +2694,11 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
       else if(n._corr==='faltaba') sn.setKeyStyle(idx,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
       else if(n._corr==='err') sn.setKeyStyle(idx,{fillStyle:'#d11d1d',strokeStyle:'#d11d1d'});
       else if(n._blue) sn.setKeyStyle(idx,{fillStyle:'#2f6df6',strokeStyle:'#2f6df6'});
-      else if(sub.modo==='build' && sub._selVar!=null && sub.userSeq[sub._selVar] &&
+      else if(sub.modo==='build' && g._selM===m && sub._selVar!=null && sub.userSeq[sub._selVar] &&
               n.step===sub.userSeq[sub._selVar].step && n.octave===sub.userSeq[sub._selVar].octave && !sub._solVisible && !sub._corrView)
         sn.setKeyStyle(idx,{fillStyle:'#e9c96a',strokeStyle:'#e9c96a'});
+      else if(sub.modo==='build' && !sub._solVisible && !sub._corrView && sub.userSeq && sub.userSeq.some(function(u){return u===n;}))   /* SEL-UNICA 10-jul-2026 · nota del alumno no seleccionada: gris neutro */
+        sn.setKeyStyle(idx,{fillStyle:'#8a8674',strokeStyle:'#8a8674'});
     });
     try{
       var voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); voice.addTickables([sn]);
@@ -2729,13 +2760,14 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
     var nat=nearestYG(g, p.y); if(!nat){ clearGhost(sc); return; }
     showGhostG(g, sc, m, nat);
   }
+  function deselG(g, sc){ if(g._selM!=null){ var sp=g.subs[g._selM]; if(sp) sp._selVar=null; g._selM=null; pintarScoreG(g, sc); } }   /* SEL-UNICA 10-jul-2026 */
   function onClickG(g, sc, ev){
     var p=svgP(sc, ev); if(!p) return;
     var m=measFromX(g, p.x), sub=g.subs[m];
-    var nat=nearestYG(g, p.y); if(!nat) return;                    // posición diatónica más cercana
+    var nat=nearestYG(g, p.y); if(!nat){ deselG(g, sc); return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
     // ¿ya hay una nota del usuario EXACTAMENTE en esa posición? -> seleccionarla (para alterarla)
     for(var k=0;k<sub.userSeq.length;k++){ if(sub.userSeq[k].step===nat.step && sub.userSeq[k].octave===nat.octave){ g._selM=m; sub._selVar=k; pintarScoreG(g, sc); return; } }
-    if(sub.userSeq.length>=sub.objetivo.length) return;
+    if(sub.userSeq.length>=sub.objetivo.length){ deselG(g, sc); return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
     var nb={step:nat.step, octave:nat.octave, alter:0};            // si no, coloca ahí (permite 2ª sobre otra nota)
     if(g.__pendAlt===1||g.__pendAlt===-1||g.__pendAlt===2||g.__pendAlt===-2){ nb.alter=g.__pendAlt; }
     sub.userSeq.push(nb); g.__pendAlt=0; g._selM=m; sub._selVar=sub.userSeq.length-1;
@@ -3148,6 +3180,8 @@ function renderACOScore(){
       else if(e.modo==='build' && e._selVar!=null && e.userSeq[e._selVar] &&
               n.step===e.userSeq[e._selVar].step && n.octave===e.userSeq[e._selVar].octave && !e._solVisible)
         sn.setKeyStyle(idx,{fillStyle:'#e9c96a',strokeStyle:'#e9c96a'});
+      else if(e.modo==='build' && !e._solVisible && e.userSeq.some(u=>u===n))   /* SEL-UNICA 10-jul-2026 · nota del alumno no seleccionada: gris neutro */
+        sn.setKeyStyle(idx,{fillStyle:'#8a8674',strokeStyle:'#8a8674'});
     });
     try{
       const voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
@@ -3355,16 +3389,17 @@ function acoPersistDelX(){
   if(card && card.classList.contains('locked')) return;
   dataACO.forEach((e,i)=>{
     if(e.modo!=='build'||e._corregido||e._solVisible) return;
+    /* SEL-UNICA 10-jul-2026 · × SOLO en la nota seleccionada */
+    if(e._selVar==null || !e.userSeq[e._selVar]) return;
     const x=(acoVarGeom[i]&&acoVarGeom[i].baseX!=null)?acoVarGeom[i].baseX:null; if(x==null) return;
-    e.userSeq.forEach((nb)=>{
-      const y=acoYReal(i,nb.step,nb.octave); if(y==null) return;
-      GN_UNIF.delXAt(host,svg,'gn-acobas',x,y,16,()=>{
-        const idx=e.userSeq.indexOf(nb); if(idx<0) return;
-        acoUndoPush({t:'del',i:i,idx:idx,nota:nb});
-        e.userSeq.splice(idx,1);
-        if(e._selVar===idx) e._selVar=null; else if(e._selVar!=null&&e._selVar>idx) e._selVar--;
-        renderACO();
-      });
+    const nb=e.userSeq[e._selVar];
+    const y=acoYReal(i,nb.step,nb.octave); if(y==null) return;
+    GN_UNIF.delXAt(host,svg,'gn-acobas',x,y,16,()=>{
+      const idx=e.userSeq.indexOf(nb); if(idx<0) return;
+      acoUndoPush({t:'del',i:i,idx:idx,nota:nb});
+      e.userSeq.splice(idx,1);
+      if(e._selVar===idx) e._selVar=null; else if(e._selVar!=null&&e._selVar>idx) e._selVar--;
+      renderACO();
     });
   });
 }
@@ -3401,6 +3436,9 @@ function showACOGhost(i,nat){
   }catch(err){ g.style.display='none'; }
 }
 function clearACOGhost(){ const g=document.getElementById('acobasghost'); if(g) g.style.display='none'; }
+/* SEL-UNICA 10-jul-2026 · selección ÚNICA en toda la tarjeta ACO (2 compases build):
+   al seleccionar en el compás iSel, deselecciona el otro → una sola × y una sola dorada. */
+function acoDeselOtros(iSel){ dataACO.forEach((e,k)=>{ if(k!==iSel && e._selVar!=null) e._selVar=null; }); }
 function onACOClick(ev){
   const i=acoCompasEn(ev); if(i==null) return;
   const e=dataACO[i]; if(e.modo!=='build') return;
@@ -3408,11 +3446,11 @@ function onACOClick(ev){
   // ¿clic sobre una nota colocada? -> seleccionarla
   for(let k=0;k<e.userSeq.length;k++){
     const y=acoYReal(i,e.userSeq[k].step,e.userSeq[k].octave);
-    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=(e._selVar===k)?null:k; renderACO();
-      return; }   /* GN-UNIF 8-jul-2026 · la selección ya no muestra × flotante (hay × fijas) */
+    if(y!=null && Math.abs(y-p.y)<8){ e._selVar=k; acoDeselOtros(i); renderACO();
+      return; }   /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
   }
-  if(e.userSeq.length>=e.objetivo.length) return;
-  const nat=acoNearestByY(i,p.y); if(!nat) return;
+  if(e.userSeq.length>=e.objetivo.length){ if(e._selVar!=null){ e._selVar=null; renderACO(); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
+  const nat=acoNearestByY(i,p.y); if(!nat){ if(e._selVar!=null){ e._selVar=null; renderACO(); } return; }   /* SEL-UNICA 10-jul-2026 */
   let nb={step:nat.step,octave:nat.octave,alter:0};
   for(let k=e.userSeq.length-1;k>=0;k--){ const pv=e.userSeq[k]; if(pv.step===nb.step&&pv.octave===nb.octave){ nb.alter=pv.alter; nb._inherited=true; break; } }
   const pend=acoPendingAlt[i];
@@ -3420,6 +3458,7 @@ function onACOClick(ev){
   e.userSeq.push(nb); acoPendingAlt[i]=0;
   acoUndoPush({t:'add',i:i,nota:nb});             /* GN-UNIF 8-jul-2026 */
   e._selVar=e.userSeq.length-1;
+  acoDeselOtros(i);   /* SEL-UNICA 10-jul-2026 · una sola nota seleccionada en la tarjeta */
   renderACO();
 }
 
@@ -4583,7 +4622,8 @@ function dibujarCompases(hostId, items, opts){
         const sn2=new VF.StaveNote({keys:[notaToKey(it.n2)],duration:"w",clef:"treble"});
         if(it.n2.alter) sn2.addModifier(new VF.Accidental(accStr(it.n2.alter)),0);
         if(opts.modoB && it._okGreen) sn2.setKeyStyle(0,{fillStyle:'#2faa6a',strokeStyle:'#2faa6a'});
-        else if(opts.modoB && !it._solB) sn2.setKeyStyle(0,{fillStyle:'#e9c96a',strokeStyle:'#e9c96a'});
+        /* SEL-UNICA 10-jul-2026 · en tarjeta B: editable -> dorado solo la seleccionada, gris el resto; corregido -> dorado (deja mandar la corrección) */
+        else if(opts.modoB && !it._solB) sn2.setKeyStyle(0, (opts.locked||opts.selIdx===i)?{fillStyle:'#e9c96a',strokeStyle:'#e9c96a'}:{fillStyle:'#8a8674',strokeStyle:'#8a8674'});
         if(it._solB) sn2.setKeyStyle(0,{fillStyle:'#5b9dff',strokeStyle:'#5b9dff'});
         notas.push(sn2);
       }
@@ -4715,19 +4755,21 @@ function corregirA(){
 
 /* ========== TARJETA B: clic en pentagrama ========== */
 let dataB=[], respB=[], bMeta=null;
+let bSel=null;   /* SEL-UNICA 10-jul-2026 · índice del compás con la nota seleccionada (0 o 1 nota × por tarjeta) */
 function nuevoB(){
   unlockCard('cardB');
   bUndo=[];                                       /* GN-UNIF 8-jul-2026 · pila deshacer vacía */
   dataB=elegirIntervalos(4).map(it=>({...it,tipo:'mel', _n2cat:it.n2}));
   dataB.forEach(it=>{ it.n2=null; });
   respB=dataB.map(()=>null);
-  bMeta=dibujarCompases('scoreB',dataB,{modoB:true});
+  bSel=null;   /* SEL-UNICA 10-jul-2026 */
+  bMeta=dibujarCompases('scoreB',dataB,{modoB:true, selIdx:bSel});
   setupBoardB();
   renderAnswersB();
 }
 function redrawB(){
   if(!dataB.length){ nuevoB(); return; }
-  bMeta=dibujarCompases('scoreB', dataB.map(it=> it.n2? {...it}:{...it,n2:null}), {modoB:true});
+  bMeta=dibujarCompases('scoreB', dataB.map(it=> it.n2? {...it}:{...it,n2:null}), {modoB:true, selIdx:bSel});   /* SEL-UNICA 10-jul-2026 */
   setupBoardB();
 }
 function setupBoardB(){
@@ -4759,15 +4801,16 @@ function bPersistDelX(){
   const svg=host.querySelector('svg'); if(!svg||!bMeta||!bMeta.ymap) return;
   const card=document.getElementById('cardB');
   if(card && card.classList.contains('locked')) return;
-  respB.forEach((r,i)=>{
-    if(!r||!dataB[i]||dataB[i]._solB) return;
-    const x=bMeta.noteX[i]; if(x==null) return;
-    const o=bMeta.ymap[r.step+r.octave]; if(!o) return;
-    GN_UNIF.delXAt(host,svg,'gn-ivb',x,o.y,16,()=>{
-      bUndoPush({i:i, prev:{...r}});
-      respB[i]=null; dataB[i].n2=null; dataB[i]._userPlaced=false;
-      redrawB(); renderAnswersB();
-    });
+  /* SEL-UNICA 10-jul-2026 · × SOLO en la nota del compás seleccionado */
+  if(bSel==null){ return; }
+  const i=bSel, r=respB[i];
+  if(!r||!dataB[i]||dataB[i]._solB){ return; }
+  const x=bMeta.noteX[i]; if(x==null) return;
+  const o=bMeta.ymap[r.step+r.octave]; if(!o) return;
+  GN_UNIF.delXAt(host,svg,'gn-ivb',x,o.y,16,()=>{
+    bUndoPush({i:i, prev:{...r}});
+    respB[i]=null; dataB[i].n2=null; dataB[i]._userPlaced=false; bSel=null;
+    redrawB(); renderAnswersB();
   });
 }
 /* GN-UNIF 8-jul-2026 · pila de deshacer (slots: colocar machaca; deshacer restaura el valor anterior) */
@@ -4784,6 +4827,7 @@ function gnUndoIVB(){
   respB[a.i]=a.prev?{...a.prev}:null;
   dataB[a.i].n2=a.prev?{...a.prev}:null;
   dataB[a.i]._userPlaced=!!a.prev;
+  bSel=a.prev?a.i:null;   /* SEL-UNICA 10-jul-2026 · la nota recuperada queda seleccionada */
   redrawB(); renderAnswersB(); bUndoBtnUpd();
 }
 window.gnUndoIVB=gnUndoIVB;
@@ -4833,16 +4877,24 @@ function onBoardClickB(e){
   bMeta.noteX.forEach((nx,i)=>{ if(nx==null)return; const d=Math.abs(nx-vx); if(d<bd){bd=d;ci=i;} });
   const near=nearestMidiByY(vy);
   if(!near) return;
+  /* SEL-UNICA 10-jul-2026 · ¿clic sobre la nota ya colocada en este compás? -> seleccionarla, sin recolocar */
+  const rExist=respB[ci];
+  if(rExist && rExist.step===near.step && rExist.octave===near.octave){
+    if(bSel!==ci){ bSel=ci; redrawB(); renderAnswersB(); }
+    return;
+  }
   const nat=midiToNatural(midiNota(near.step,near.octave,0));
   bUndoPush({i:ci, prev: respB[ci]?{...respB[ci]}:null});   /* GN-UNIF 8-jul-2026 · colocar machaca el slot: guardamos lo anterior */
   respB[ci]={step:near.step,octave:near.octave,alter:0};
   dataB[ci].n2={...respB[ci]}; dataB[ci]._userPlaced=true; dataB[ci]._solB=false;
+  bSel=ci;   /* SEL-UNICA 10-jul-2026 · colocar auto-selecciona */
   redrawB(); renderAnswersB();
 }
 function setAltB(i,alter){
   const r=respB[i]; if(!r) return;
   respB[i]={step:r.step,octave:r.octave,alter};
   dataB[i].n2={...respB[i]}; dataB[i]._userPlaced=true;
+  bSel=i;   /* SEL-UNICA 10-jul-2026 · alterar selecciona ese compás */
   redrawB(); renderAnswersB();
 }
 function renderAnswersB(){
@@ -4871,6 +4923,7 @@ function renderAnswersB(){
 }
 function corregirB(){
   lockCard('cardB');
+  bSel=null;   /* SEL-UNICA 10-jul-2026 · sin selección tras corregir */
   dataB.forEach((it,i)=>{
     const cell=document.getElementById('ansB'+i);
     const want=it._n2cat; const got=respB[i];
@@ -4880,7 +4933,7 @@ function corregirB(){
     if(!ok){ dataB[i].n2={...want}; dataB[i]._solB=true; dataB[i]._okGreen=false; }
     else { dataB[i]._okGreen=true; dataB[i]._solB=false; }
   });
-  bMeta=dibujarCompases('scoreB', dataB.map(it=> it.n2? {...it}:{...it,n2:null}), {modoB:true});
+  bMeta=dibujarCompases('scoreB', dataB.map(it=> it.n2? {...it}:{...it,n2:null}), {modoB:true, locked:true});   /* SEL-UNICA 10-jul-2026 */
   setupBoardB();
 }
 
@@ -4920,7 +4973,7 @@ window.nuevoIVTODO=nuevoIVTODO;
 
   /* ---------- montaje interactivo (4 compases) ---------- */
   function itemsFor(g){ return g.subs.map(function(s){ return (g.modo==='build') ? Object.assign({}, s, {n2:s.n2||null}) : s; }); }
-  function renderScoreG(g){ g.__meta=dibujarCompases(g.__scId, itemsFor(g), (g.modo==='build')?{modoB:true}:{}); }
+  function renderScoreG(g){ g.__meta=dibujarCompases(g.__scId, itemsFor(g), (g.modo==='build')?{modoB:true, selIdx:g.__selIV, locked:!!g.__gnLocked}:{}); }   /* SEL-UNICA 10-jul-2026 · dorado solo la seleccionada */
   function montarEn(host, g){
     g=asG(g); if(!host||!g) return;
     host.innerHTML=''; var sid='ivg_'+(++_seq);
@@ -4984,15 +5037,16 @@ window.nuevoIVTODO=nuevoIVTODO;
     GN_UNIF.clearDelX(sc,'gn-ivfp');
     if(g.__gnLocked) return;
     var svg=sc.querySelector('svg'); var meta=g.__meta; if(!svg||!meta||!meta.ymap) return;
-    g.subs.forEach(function(sub,ci){
-      if(!sub.resp||sub._solB) return;
-      var x=meta.noteX&&meta.noteX[ci]; if(x==null) return;
-      var o=meta.ymap[sub.resp.step+sub.resp.octave]; if(!o) return;
-      GN_UNIF.delXAt(sc,svg,'gn-ivfp',x,o.y,16,function(){
-        gnPushIV(g,{ci:ci, prev:Object.assign({},sub.resp)});
-        sub.resp=null; sub.n2=null; sub._userPlaced=false;
-        remonta(g);
-      });
+    /* SEL-UNICA 10-jul-2026 · × SOLO en la nota del compás seleccionado */
+    if(g.__selIV==null) return;
+    var ci=g.__selIV, sub=g.subs[ci];
+    if(!sub||!sub.resp||sub._solB) return;
+    var x=meta.noteX&&meta.noteX[ci]; if(x==null) return;
+    var o=meta.ymap[sub.resp.step+sub.resp.octave]; if(!o) return;
+    GN_UNIF.delXAt(sc,svg,'gn-ivfp',x,o.y,16,function(){
+      gnPushIV(g,{ci:ci, prev:Object.assign({},sub.resp)});
+      sub.resp=null; sub.n2=null; sub._userPlaced=false; g.__selIV=null;
+      remonta(g);
     });
   }
   function gnPushIV(g,a){ (g.__gnUndo||(g.__gnUndo=[])).push(a); gnUndoUpdIV(g); }
@@ -5004,12 +5058,14 @@ window.nuevoIVTODO=nuevoIVTODO;
     sub.resp=a.prev?Object.assign({},a.prev):null;
     sub.n2=a.prev?Object.assign({},a.prev):null;
     sub._userPlaced=!!a.prev;
+    g.__selIV=a.prev?a.ci:null;   /* SEL-UNICA 10-jul-2026 · la nota recuperada queda seleccionada */
     remonta(g); gnUndoUpdIV(g);
   }
   function setAltG(g, mi, alter){
     var sub=g.subs[mi]; if(!sub.resp) return;
     sub.resp={step:sub.resp.step, octave:sub.resp.octave, alter:alter};
     sub.n2={...sub.resp}; sub._userPlaced=true;
+    g.__selIV=mi;   /* SEL-UNICA 10-jul-2026 · alterar selecciona ese compás */
     remonta(g);
   }
   function remonta(g){
@@ -5041,8 +5097,13 @@ window.nuevoIVTODO=nuevoIVTODO;
     var p=svgPt(sc, ev); if(!p) return;
     var near=nearestByY(meta, p.vy); if(!near) return;
     var ci=compasDe(meta, p.vx); var sub=g.subs[ci];
+    /* SEL-UNICA 10-jul-2026 · ¿clic sobre la nota ya colocada en este compás? -> seleccionarla, sin recolocar */
+    if(sub.resp && sub.resp.step===near.step && sub.resp.octave===near.octave){
+      if(g.__selIV!==ci){ g.__selIV=ci; remonta(g); } return;
+    }
     gnPushIV(g,{ci:ci, prev: sub.resp?Object.assign({},sub.resp):null});   /* GN-UNIF 8-jul-2026 */
     sub.resp={step:near.step, octave:near.octave, alter:0}; sub.n2={...sub.resp}; sub._userPlaced=true;
+    g.__selIV=ci;   /* SEL-UNICA 10-jul-2026 · colocar auto-selecciona */
     remonta(g);
   }
   function clearGhost(sc){ var svg=sc&&sc.querySelector('svg'); if(svg){ svg.querySelectorAll('.ivghost').forEach(function(e){e.remove();}); } }
@@ -5070,7 +5131,7 @@ window.nuevoIVTODO=nuevoIVTODO;
       // resumen: host vacío -> montar de cero (solo lectura)
       if(host && (!g.__sc || !host.contains(g.__sc))){ montarEn(host, g); }
       if(g.modo==='build'){
-        g.__gnLocked=true;                        /* GN-UNIF 8-jul-2026 · sin × ni deshacer tras corregir */
+        g.__gnLocked=true; g.__selIV=null;        /* GN-UNIF 8-jul-2026 · sin × ni deshacer tras corregir */  /* SEL-UNICA 10-jul-2026 · sin selección */
         var anyErr=false;
         g.subs.forEach(function(sub){ if(puntuaUno(sub)!==1){ sub.n2=Object.assign({}, sub._n2cat); sub._solB=true; sub._userPlaced=false; anyErr=true; } });
         remonta(g);
@@ -5201,8 +5262,13 @@ window.nuevoIVTODO=nuevoIVTODO;
       cell.style.cssText='display:flex;flex-direction:column;align-items:center;gap:6px;border:1px solid #e6ddc9;border-radius:12px;padding:10px 6px;background:rgba(233,201,106,.05)';
       var ruedas=document.createElement('div'); ruedas.style.cssText='display:flex;gap:8px;align-items:flex-start';
       var wN=document.createElement('div'); wN.className='wheel'; wN.style.cssText='height:96px;width:56px';
-      var accRow=document.createElement('div'); accRow.style.cssText='display:flex;flex-direction:column;gap:4px';
-      accRow.innerHTML='<button class="ia-acc" data-a="b">\u266d</button><button class="ia-acc" data-a="#">\u266f</button>';
+      /* SEL-UNICA 10-jul-2026 \u00b7 alteraciones de la ficha de \u00edndice ac\u00fastico:
+         antes usaban .ia-acc SIN CSS propio (el CSS .ia-acc vive bajo
+         #view-indice, otro motor) \u2192 sal\u00edan min\u00fasculos y sin estado visible.
+         Ahora clase propia .ia-fp-acc (grande, con estado .on dorado) y
+         centrada respecto a las ruedas. */
+      var accRow=document.createElement('div'); accRow.className='ia-fp-accrow'; accRow.style.cssText='display:flex;flex-direction:column;gap:8px;align-self:center';
+      accRow.innerHTML='<button type="button" class="ia-fp-acc" data-a="b" aria-label="Bemol">\u266d</button><button type="button" class="ia-fp-acc" data-a="#" aria-label="Sostenido">\u266f</button>';
       var wO=document.createElement('div'); wO.className='wheel'; wO.style.cssText='height:96px;width:46px';
       ruedas.appendChild(wN); ruedas.appendChild(accRow); ruedas.appendChild(wO);
       cell.appendChild(ruedas);
@@ -5218,10 +5284,18 @@ window.nuevoIVTODO=nuevoIVTODO;
         var octItems=octInv.concat(["\u2014"]);
         window.makeWheel(wO, octItems, octItems.length-1, function(ix){ it.sel[i].oct=(ix<octInv.length)?parseInt(octInv[ix],10):null; });
       }
-      accRow.querySelectorAll('.ia-acc').forEach(function(b){ b.addEventListener('click',function(){
-        it.sel[i].alter=(it.sel[i].alter===b.dataset.a)?'':b.dataset.a;
-        accRow.querySelectorAll('.ia-acc').forEach(function(x){ x.classList.toggle('on', x.dataset.a===it.sel[i].alter && it.sel[i].alter!==''); });
-      }); });
+      /* SEL-UNICA 10-jul-2026 · toggle de alteración con feedback de estado (.on)
+         y guarda anti doble-disparo touch+click. Un toque marca/desmarca. */
+      accRow.querySelectorAll('.ia-fp-acc').forEach(function(b){
+        var toggle=function(ev){
+          if(ev){ if(ev.cancelable) ev.preventDefault(); ev.stopPropagation(); }
+          if(b._iaT && ev && ev.type==='click') return;   // ignora el click sintético tras el touch
+          it.sel[i].alter=(it.sel[i].alter===b.dataset.a)?'':b.dataset.a;
+          accRow.querySelectorAll('.ia-fp-acc').forEach(function(x){ x.classList.toggle('on', x.dataset.a===it.sel[i].alter && it.sel[i].alter!==''); });
+        };
+        b.addEventListener('click',toggle);
+        b.addEventListener('touchend',function(ev){ b._iaT=true; toggle(ev); setTimeout(function(){ b._iaT=false; },450); },{passive:false});
+      });
     })(i); }
   }
 
@@ -5833,6 +5907,7 @@ function renderESCStaveOne(i){
              sn.addModifier(new VF.Parenthesis(VF.Modifier.Position.RIGHT),0); }catch(err){}
       } else if(e._okGreen){ sn.setStyle({fillStyle:"#2faa6a",strokeStyle:"#2faa6a"}); }
       else if(k===e._selVar) sn.setStyle({fillStyle:"#e9c96a",strokeStyle:"#e9c96a"});
+      else if(!e._solVisible) sn.setStyle({fillStyle:"#8a8674",strokeStyle:"#8a8674"});   /* SEL-UNICA 10-jul-2026 · nota del alumno no seleccionada: gris neutro */
       return sn;
     });
     const fillCount=Math.max(0, e.nNotas-realCount);
@@ -5961,7 +6036,7 @@ function corregirESCVar(e,i,cell){
   const ok = notasOk && armOk;
   cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
   // guardar estado para dibujar la solución en azul en el pentagrama si hay fallo
-  e._corregido=true; e._solVisible = !ok; e._okGreen = ok;
+  e._corregido=true; e._solVisible = !ok; e._okGreen = ok; e._selVar=null;   /* SEL-UNICA 10-jul-2026 · sin selección tras corregir */
   renderESCStaveOne(i);
   // texto: solo "Solución" en azul (las notas/armadura van dibujadas en el pentagrama)
   if(ok){ tag.style.color='var(--green)'; tag.textContent='✓'; }
@@ -6053,16 +6128,17 @@ function escPersistDelX(i){
   if(e._solVisible||e._okGreen) return;
   const svg=host.querySelector('svg'); const g=escVarGeom[i];
   if(!svg||!g||!g.noteXs) return;
-  e.userSeq.forEach((nb,k)=>{
-    if(nb._opt) return;
-    const x=g.noteXs[k], y=g.noteYs?g.noteYs[k]:null; if(x==null||y==null) return;
-    GN_UNIF.delXAt(host,svg,'gn-esc',x,y,15,()=>{
-      const idx=e.userSeq.indexOf(nb); if(idx<0) return;
-      escUndoPush(i,{t:'del',idx:idx,nota:nb});
-      e.userSeq.splice(idx,1);
-      if(e._selVar===idx) e._selVar=null; else if(e._selVar!=null && e._selVar>idx) e._selVar--;
-      renderESCi(i);
-    });
+  /* SEL-UNICA 10-jul-2026 · × SOLO en la nota seleccionada */
+  if(e._selVar==null) return;
+  const k=e._selVar, nb=e.userSeq[k];
+  if(!nb||nb._opt) return;
+  const x=g.noteXs[k], y=g.noteYs?g.noteYs[k]:null; if(x==null||y==null) return;
+  GN_UNIF.delXAt(host,svg,'gn-esc',x,y,15,()=>{
+    const idx=e.userSeq.indexOf(nb); if(idx<0) return;
+    escUndoPush(i,{t:'del',idx:idx,nota:nb});
+    e.userSeq.splice(idx,1);
+    if(e._selVar===idx) e._selVar=null; else if(e._selVar!=null && e._selVar>idx) e._selVar--;
+    renderESCi(i);
   });
 }
 /* GN-UNIF 8-jul-2026 · pila de deshacer por escala (colocaciones y borrados) */
@@ -6079,7 +6155,7 @@ function gnUndoESC(i){
   const card=document.getElementById(i===3?'cardMODO':('cardESC'+i));
   if(card && card.classList.contains('locked')) return;
   if(a.t==='add'){ const idx=e.userSeq.indexOf(a.nota); if(idx>=0) e.userSeq.splice(idx,1); e._selVar=null; }
-  else { e.userSeq.splice(Math.min(a.idx,e.userSeq.length),0,a.nota); e._selVar=null; }
+  else { const ins=Math.min(a.idx,e.userSeq.length); e.userSeq.splice(ins,0,a.nota); e._selVar=ins; }   /* SEL-UNICA 10-jul-2026 · nota recuperada queda seleccionada */
   renderESCi(i); escUndoBtnUpd(i);
 }
 window.gnUndoESC=gnUndoESC;
@@ -6172,14 +6248,14 @@ function onEscClick(i,ev){
       if(dx<16 && dy<11){ const d=dx+dy; if(d<bd){bd=d;hit=k;} }
     });
     if(hit>=0){
-      e._selVar=(e._selVar===hit)?null:hit;  // toggle selección
+      e._selVar=hit;  /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
       renderESCi(i);
       return;
     }
   }
   // (no estaba sobre una nota) -> colocar una nueva nota directamente
   if(e.userSeq.length>=e.nNotas){ if(e._selVar!=null){ e._selVar=null; renderESCi(i); } return; }
-  const nat=escNearestByY(i,p.y); if(nat==null){ return; }
+  const nat=escNearestByY(i,p.y); if(nat==null){ if(e._selVar!=null){ e._selVar=null; renderESCi(i); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
   let nb={step:nat.step,octave:nat.octave,alter:0};
   // HERENCIA DE ARMADURA (Iago 4-jul): si la escala tiene armadura y esta nota
   // está afectada por ella, asumir la alteración de la armadura.
@@ -7561,7 +7637,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
         else if(it._mark==='bad'){ style={fillStyle:'#e0556b',strokeStyle:'#e0556b'}; }
         else if(it._mark==='sol'){ style={fillStyle:'#5b9dff',strokeStyle:'#5b9dff'}; }
         else if(it._sel){ style={fillStyle:'#d4af37',strokeStyle:'#d4af37'}; }   /* solo la seleccionada en dorado */
-        else { style={fillStyle:'#10131f',strokeStyle:'#10131f'}; }            /* fundamental y resto en negro */
+        else if(it._user){ style={fillStyle:'#8a8674',strokeStyle:'#8a8674'}; }   /* SEL-UNICA 10-jul-2026 · nota del alumno no seleccionada: gris neutro */
+        else { style={fillStyle:'#10131f',strokeStyle:'#10131f'}; }            /* fundamental en negro */
         if(style){ try{ sn.setStyle(style); }catch(e){} }
         var v=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false); v.addTickable(sn);
         try{ new VF.Formatter().joinVoices([v]).format([v], wC-22); v.draw(ctx,stave); }catch(e){}
@@ -7755,12 +7832,12 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     var p=svgPoint(host,ev); if(!p) return;
     var ci=compasEn(p.x);
     // ¿clic sobre una nota ya escrita? -> seleccionarla
-    if(ci>=1 && bSeq[ci-1]){ selB=(selB===ci-1)?null:ci-1; renderScoreB(); return; }
+    if(ci>=1 && bSeq[ci-1]){ selB=ci-1; renderScoreB(); return; }   /* SEL-UNICA 10-jul-2026 · tocar armónico colocado lo selecciona */
     // colocar en el próximo hueco libre
-    var slot=nextSlot(); if(slot<0) return;
-    if(ci!==slot+1) return;
+    var slot=nextSlot(); if(slot<0){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
+    if(ci!==slot+1){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 */
     var which=clefEn(p.y);
-    var nat=nearestByY(p.y, which); if(!nat) return;
+    var nat=nearestByY(p.y, which); if(!nat){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 */
     // alteración heredada: si una aparición anterior de la misma letra/octava llevaba alteración, partir de natural igualmente (el alumno la ajusta)
     bSeq[slot]={step:nat.step,octave:nat.octave,alter:0};
     serieUndoPush({slot:slot, prev:null});        /* GN-UNIF 8-jul-2026 */
@@ -7790,7 +7867,9 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     GN_UNIF.clearDelX(host,'gn-serie');
     if(corregido||!GEO) return;
     var svg=host.querySelector('svg'); if(!svg) return;
-    for(var i=0;i<7;i++){ (function(i){
+    /* SEL-UNICA 10-jul-2026 · × SOLO en el armónico seleccionado */
+    if(selB==null || !bSeq[selB]) return;
+    (function(i){
       var n=bSeq[i]; if(!n) return;
       var c=GEO.comp[i+1]; if(!c) return;
       var yr=yRealOf(n.step,n.octave); if(!yr) return;
@@ -7800,7 +7879,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
         bSeq[i]=null; if(selB===i) selB=null;
         renderScoreB();
       });
-    })(i); }
+    })(selB);
   }
   /* GN-UNIF 8-jul-2026 · pila de deshacer de la serie (colocaciones y borrados) */
   var serieUndo=[];
@@ -7810,7 +7889,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     if(corregido) return;
     var a=serieUndo.pop(); serieUndoBtnUpd(); if(!a) return;
     bSeq[a.slot]=a.prev||null;   // deshacer colocación => vacía; deshacer borrado => recupera la nota
-    selB=null;
+    selB=a.prev?a.slot:null;   /* SEL-UNICA 10-jul-2026 · el armónico recuperado queda seleccionado */
     renderScoreB();
   }
   window.gnUndoSB=gnUndoSB;
@@ -11374,7 +11453,9 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     GN_UNIF.clearDelX(host,'gn-serieF');
     if(g.__corr||!g.__geo) return;
     var svg=host.querySelector('svg'); if(!svg) return;
-    for(var i=0;i<7;i++){ (function(i){
+    /* SEL-UNICA 10-jul-2026 · × SOLO en el armónico seleccionado */
+    if(g.__sel==null || !g.bSeq[g.__sel]) return;
+    (function(i){
       var n=g.bSeq[i]; if(!n) return;
       var c=g.__geo.comp[i+1]; if(!c) return;
       var yr=yRealOf(g,n.step,n.octave); if(!yr) return;
@@ -11384,14 +11465,14 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
         g.bSeq[i]=null; if(g.__sel===i) g.__sel=null;
         render(g);
       });
-    })(i); }
+    })(g.__sel);
   }
   function gnPushSF(g,a){ (g.__gnUndo||(g.__gnUndo=[])).push(a); gnUndoUpdSF(g); }
   function gnUndoUpdSF(g){ var b=g.__gnUndoBtn; if(!b) return; b.disabled=!(g.__gnUndo&&g.__gnUndo.length)||!!g.__corr; }
   function gnUndoSF(g){
     if(g.__corr) return;
     var a=(g.__gnUndo||[]).pop(); gnUndoUpdSF(g); if(!a) return;
-    g.bSeq[a.slot]=a.prev||null; g.__sel=null;
+    g.bSeq[a.slot]=a.prev||null; g.__sel=a.prev?a.slot:null;   /* SEL-UNICA 10-jul-2026 · el armónico recuperado queda seleccionado */
     render(g);
   }
   /* ---- geometría / fantasma (portado del pad, con estado en g) ---- */
@@ -11445,9 +11526,10 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
       ln.style.left=(sp.x-hr.left-10)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln); }catch(e){} }); }
   function clearGhost(g){ var el=g.__host.querySelector('.serieF-ghost'); if(el) el.style.display='none'; g.__host.querySelectorAll('.serieF-ledger').forEach(function(x){x.remove();}); }
   function onClickScore(g,ev){ if(g.__corr) return; var p=svgPoint(g.__host,ev); if(!p) return; var ci=compasEn(g,p.x);
-    if(ci>=1 && g.bSeq[ci-1]){ g.__sel=(g.__sel===ci-1)?null:ci-1; render(g); return; }
-    var slot=nextSlot(g); if(slot<0) return; if(ci!==slot+1) return;
-    var which=clefEn(g,p.y), nat=nearestByY(g,p.y,which); if(!nat) return;
+    if(ci>=1 && g.bSeq[ci-1]){ g.__sel=ci-1; render(g); return; }   /* SEL-UNICA 10-jul-2026 · tocar armónico colocado lo selecciona */
+    var slot=nextSlot(g); if(slot<0){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
+    if(ci!==slot+1){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 */
+    var which=clefEn(g,p.y), nat=nearestByY(g,p.y,which); if(!nat){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 */
     g.bSeq[slot]={step:nat.step,octave:nat.octave,alter:0}; gnPushSF(g,{slot:slot, prev:null}); g.__sel=slot; render(g);   /* GN-UNIF 8-jul-2026 */
   }
   /* ---- toolbar de alteraciones ---- */
@@ -11589,7 +11671,7 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
       var st=null;
       if(forCorr){ st = (g.__bad&&g.__bad[i]) ? {fillStyle:'#e0556b',strokeStyle:'#e0556b'} : {fillStyle:'#39c08a',strokeStyle:'#39c08a'}; }
       else if(g.__sel===i){ st={fillStyle:'#d4af37',strokeStyle:'#d4af37'}; }   // sin pistas de repetidos hasta corregir
-      else st={fillStyle:'#10131f',strokeStyle:'#10131f'};
+      else st={fillStyle:'#8a8674',strokeStyle:'#8a8674'};   /* SEL-UNICA 10-jul-2026 · nota del alumno no seleccionada: gris neutro */
       try{ sn.setStyle(st); }catch(e){}
       return sn;
     });
@@ -11608,7 +11690,9 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     var host=g.__host; if(!host||!window.GN_UNIF) return;
     GN_UNIF.clearDelX(host,'gn-dodeA');
     var svg=host.querySelector('svg'); if(!svg||!g.__geo) return;
-    for(var i=0;i<12;i++){ (function(slot){
+    /* SEL-UNICA 10-jul-2026 · × SOLO en la nota seleccionada */
+    if(g.__sel==null || !g.notes[g.__sel]) return;
+    (function(slot){
       var n=g.notes[slot]; if(!n) return;
       var x=g.__geo.xs[slot]; if(x==null) return;
       var y=yFor(g,n.step,n.octave);
@@ -11618,14 +11702,14 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
         g.notes[slot]=null; if(g.__sel===slot) g.__sel=null;
         refresh(g);
       });
-    })(i); }
+    })(g.__sel);
   }
   function gnPushDA(g,a){ (g.__gnUndo||(g.__gnUndo=[])).push(a); gnUndoUpdDA(g); }
   function gnUndoUpdDA(g){ var b=g.__gnUndoBtn; if(!b) return; b.disabled=!(g.__gnUndo&&g.__gnUndo.length); }
   function gnUndoDA(g){
     var a=(g.__gnUndo||[]).pop(); gnUndoUpdDA(g); if(!a) return;
     g.notes[a.slot]=(a.t==='del')?a.nota:null;   // deshacer colocación => vacía; deshacer borrado => recupera
-    g.__sel=null; refresh(g);
+    g.__sel=(a.t==='del')?a.slot:null; refresh(g);   /* SEL-UNICA 10-jul-2026 · la nota recuperada queda seleccionada */
   }
   function yFor(g,step,octave){ var dia=octave*7+ORD[step]; return g.__geo.yLine0+(g.__geo.refDia-dia)*g.__geo.half; }
   function nearestStepByY(g,my){ var best=null,bd=1e9; for(var o=2;o<=6;o++){ for(var s in ORD){ var y=yFor(g,s,o); var d=Math.abs(y-my); if(d<bd){bd=d;best={step:s,octave:o,y:y};} } } return best; }
@@ -11667,8 +11751,8 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
   function showDelX(g, slot){}
   function hideDelX(g){ var el=g.__host.querySelector('.dodeF-delx'); if(el) el.style.display='none'; }
   function delXUnlessSel(g){}
-  function onClick(g,ev){ var p=svgPt(g.__host,ev); if(!p) return; var sl=slotFromX(g,p.x); if(sl<0) return;
-    if(g.notes[sl]){ g.__sel=(g.__sel===sl)?null:sl; refresh(g); return; }
+  function onClick(g,ev){ var p=svgPt(g.__host,ev); if(!p){ return; } var sl=slotFromX(g,p.x); if(sl<0){ if(g.__sel!=null){ g.__sel=null; refresh(g); } return; }
+    if(g.notes[sl]){ g.__sel=sl; refresh(g); return; }   /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
     var nat=nearestStepByY(g,p.y); g.notes[sl]={step:nat.step,octave:nat.octave,acc:''}; gnPushDA(g,{t:'add',slot:sl}); g.__sel=sl; refresh(g); }   /* GN-UNIF 8-jul-2026 */
   function accToolbar(g){ var tb=g.__tb; if(!tb) return; var active=(g.__sel!=null && g.notes[g.__sel]); tb.style.opacity=active?'1':'.4';
     var acc=active?g.notes[g.__sel].acc:''; tb.querySelectorAll('[data-a]').forEach(function(b){ var on=(active&&b.dataset.a===acc); b.style.background=on?'linear-gradient(135deg,#d4af37,#b8860b)':'#fff'; b.style.color=on?'#1a1407':'#3a2f12'; }); }
@@ -11749,7 +11833,9 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
     var x0=8, staveW=W-16, sy=12; var stave=new VF.Stave(x0,sy,staveW,{space_above_staff_ln:1.5,space_below_staff_ln:0}); stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
     var ticks=notes.map(function(n,i){ if(!n) return new VF.GhostNote({duration:'w'}); var sn=new VF.StaveNote({keys:[keyOf(n)],duration:'w',clef:'treble'});
       if(n.acc==='#') sn.addModifier(new VF.Accidental('#'),0); else if(n.acc==='b') sn.addModifier(new VF.Accidental('b'),0); else if(n.acc==='n') sn.addModifier(new VF.Accidental('n'),0);
-      var st=null; if(opts.marks&&opts.marks[i]) st={fillStyle:opts.marks[i],strokeStyle:opts.marks[i]}; else if(opts.sel===i) st={fillStyle:'#d4af37',strokeStyle:'#d4af37'}; else st={fillStyle:'#10131f',strokeStyle:'#10131f'};
+      /* SEL-UNICA 10-jul-2026 · nota del alumno (hueco editable) no seleccionada -> gris neutro; las pre-dadas siguen en negro */
+      var esUser=(opts.missing && opts.missing.indexOf(i)>=0);
+      var st=null; if(opts.marks&&opts.marks[i]) st={fillStyle:opts.marks[i],strokeStyle:opts.marks[i]}; else if(opts.sel===i) st={fillStyle:'#d4af37',strokeStyle:'#d4af37'}; else if(esUser) st={fillStyle:'#8a8674',strokeStyle:'#8a8674'}; else st={fillStyle:'#10131f',strokeStyle:'#10131f'};
       try{ sn.setStyle(st); }catch(e){} return sn; });
     var voice=new VF.Voice({num_beats:12,beat_value:4}).setStrict(false); voice.addTickables(ticks);
     var clefW=stave.getNoteStartX()-x0; try{ new VF.Formatter().joinVoices([voice]).format([voice], staveW-clefW-24); }catch(e){}
@@ -11762,7 +11848,7 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
   function slotFromX(geo,px){ var best=-1,bd=1e9; for(var i=0;i<12;i++){ if(geo.xs[i]==null) continue; var d=Math.abs(geo.xs[i]-px); if(d<bd){bd=d;best=i;} } return best; }
   function svgPt(host,ev){ var svg=host.querySelector('svg'); if(!svg) return null; try{ var pt=svg.createSVGPoint(); pt.x=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; pt.y=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y}; }catch(e){ return null; } }
   function editable(g,slot){ return g.missing.indexOf(slot)>=0; }
-  function render2(g){ var geo=drawRow(g.__host2, g.shown, {sel:g.__corr?null:g.__sel}); g.__geo2=geo; if(!g.__corr){ wire2(g); gnDelXsDB(g); gnUndoUpdDB(g); } }   /* GN-UNIF 8-jul-2026 */
+  function render2(g){ var geo=drawRow(g.__host2, g.shown, {sel:g.__corr?null:g.__sel, missing:g.__corr?null:g.missing}); g.__geo2=geo; if(!g.__corr){ wire2(g); gnDelXsDB(g); gnUndoUpdDB(g); } }   /* GN-UNIF 8-jul-2026 */  /* SEL-UNICA 10-jul-2026 · pasa missing para el gris neutro */
   function wire2(g){ var host=g.__host2;
     host.onmousemove=function(ev){ if(host._touchHandled) return; hover2(g,ev); }; host.onmouseleave=function(){ clearG(g); };
     host.onclick=function(ev){ if(host._touchHandled) return; click2(g,ev); };
@@ -11783,23 +11869,25 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
   }
   function hover2(g,ev){ var host=g.__host2, p=svgPt(host,ev); if(!p){ clearG(g); return; } var sl=slotFromX(g.__geo2,p.x); if(sl<0||!editable(g,sl)){ clearG(g); host.style.cursor='default'; return; }
     if(g.shown[sl]){ host.style.cursor='pointer'; clearG(g); return; } var nat=nearestStep(g.__geo2,p.y); host.style.cursor='pointer'; showGhost(g,g.__geo2.xs[sl],nat); }   /* GN-UNIF 8-jul-2026 · borrado solo vía × fija */
-  function click2(g,ev){ var p=svgPt(g.__host2,ev); if(!p) return; var sl=slotFromX(g.__geo2,p.x); if(sl<0||!editable(g,sl)) return;
-    if(g.shown[sl]){ g.__sel=(g.__sel===sl)?null:sl; refresh(g); return; } var nat=nearestStep(g.__geo2,p.y); g.shown[sl]={step:nat.step,octave:nat.octave,acc:''}; gnPushDB(g,{t:'add',slot:sl}); g.__sel=sl; refresh(g); }   /* GN-UNIF 8-jul-2026 */
+  function click2(g,ev){ var p=svgPt(g.__host2,ev); if(!p) return; var sl=slotFromX(g.__geo2,p.x); if(sl<0||!editable(g,sl)){ if(g.__sel!=null){ g.__sel=null; refresh(g); } return; }   /* SEL-UNICA 10-jul-2026 · vacío/no editable deselecciona */
+    if(g.shown[sl]){ g.__sel=sl; refresh(g); return; }   /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
+    var nat=nearestStep(g.__geo2,p.y); g.shown[sl]={step:nat.step,octave:nat.octave,acc:''}; gnPushDB(g,{t:'add',slot:sl}); g.__sel=sl; refresh(g); }   /* GN-UNIF 8-jul-2026 */
   /* GN-UNIF 8-jul-2026 · × fija junto a cada nota colocada (solo huecos editables) + pila de deshacer */
   function gnDelXsDB(g){
     var host=g.__host2; if(!host||!window.GN_UNIF) return;
     GN_UNIF.clearDelX(host,'gn-dodeB');
     var svg=host.querySelector('svg'); if(!svg||!g.__geo2) return;
-    g.missing.forEach(function(slot){
-      var n=g.shown[slot]; if(!n) return;
-      var x=g.__geo2.xs[slot]; if(x==null) return;
-      var y=yFor(g.__geo2,n.step,n.octave);
-      GN_UNIF.delXAt(host,svg,'gn-dodeB',x,y,14,function(){
-        if(!g.shown[slot]) return;
-        gnPushDB(g,{t:'del',slot:slot,nota:g.shown[slot]});
-        g.shown[slot]=null; if(g.__sel===slot) g.__sel=null;
-        refresh(g);
-      });
+    /* SEL-UNICA 10-jul-2026 · × SOLO en la nota seleccionada (si es hueco editable) */
+    var slot=g.__sel;
+    if(slot==null || g.missing.indexOf(slot)<0 || !g.shown[slot]) return;
+    var n=g.shown[slot];
+    var x=g.__geo2.xs[slot]; if(x==null) return;
+    var y=yFor(g.__geo2,n.step,n.octave);
+    GN_UNIF.delXAt(host,svg,'gn-dodeB',x,y,14,function(){
+      if(!g.shown[slot]) return;
+      gnPushDB(g,{t:'del',slot:slot,nota:g.shown[slot]});
+      g.shown[slot]=null; if(g.__sel===slot) g.__sel=null;
+      refresh(g);
     });
   }
   function gnPushDB(g,a){ (g.__gnUndo||(g.__gnUndo=[])).push(a); gnUndoUpdDB(g); }
@@ -11808,7 +11896,7 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
     if(g.__corr) return;
     var a=(g.__gnUndo||[]).pop(); gnUndoUpdDB(g); if(!a) return;
     g.shown[a.slot]=(a.t==='del')?a.nota:null;
-    g.__sel=null; refresh(g);
+    g.__sel=(a.t==='del')?a.slot:null; refresh(g);   /* SEL-UNICA 10-jul-2026 · la nota recuperada queda seleccionada */
   }
   function ghostEl(g){ var e=g.__host2.querySelector('.dodeB-ghost'); if(!e){ e=document.createElement('div'); e.className='dodeB-ghost'; e.style.cssText='position:absolute;pointer-events:none;z-index:6;width:14px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host2.appendChild(e); } return e; }
   function showGhost(g,xc,nat){ var host=g.__host2, e=ghostEl(g), svg=host.querySelector('svg'); if(!svg){e.style.display='none';return;} try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=nat.y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect(); e.style.left=(sp.x-hr.left-7)+'px'; e.style.top=(sp.y-hr.top-5)+'px'; e.style.display='block'; ledger(g,svg,hr,xc,nat); }catch(er){ e.style.display='none'; } }
@@ -12901,11 +12989,13 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   function isDotted(d){ return d==='qd'; }
 
   var geo=null;   // geometría del pentagrama del alumno para mapear clic->altura
+  var selTE=null;   /* SEL-UNICA 10-jul-2026 · gi de la nota seleccionada (para pintar × solo en ella) */
 
   // dibuja el pentagrama del alumno (clave de sol, mismos compases/ritmo que el ejemplo,
   // notas que el alumno haya colocado; el resto como huecos)
   function dibujarAlumno(host, opts){
     opts=opts||{};
+    selTE = opts.corr ? null : (opts.selIdx!=null ? opts.selIdx : null);   /* SEL-UNICA 10-jul-2026 · sincroniza selección para la × */
     var ex=T.getEX(); if(!ex||!host) return;
     host.innerHTML='';
     var comps=ex.compases;
@@ -12946,6 +13036,8 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
             sn.setStyle(okAltura? {fillStyle:'#16a34a',strokeStyle:'#16a34a'} : {fillStyle:'#d11d1d',strokeStyle:'#d11d1d'});
           } else if(gi===opts.selIdx){
             sn.setStyle({fillStyle:'#d4af37',strokeStyle:'#d4af37'});
+          } else {
+            sn.setStyle({fillStyle:'#8a8674',strokeStyle:'#8a8674'});   /* SEL-UNICA 10-jul-2026 · nota del alumno no seleccionada: gris neutro */
           }
         } else {
           // hueco: silencio TRANSPARENTE (mantiene la posición pero no se ve)
@@ -13045,6 +13137,8 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       if(!step) return;
       var ex=T.getEX();
       var yaEstaba = !!ex.aluNotas[best.gi];
+      /* SEL-UNICA 10-jul-2026 · si el clic cae sobre la nota YA colocada (mismo hueco y misma altura) -> solo seleccionar, sin recolocar */
+      if(yaEstaba){ var pv=ex.aluNotas[best.gi]; if(pv.step===step.step && pv.octave===step.octave){ if(window.TR_ESC_onPlace) window.TR_ESC_onPlace(best.gi); return; } }
       /* GN-UNIF 8-jul-2026 · pila de deshacer: guardamos el valor anterior del hueco (puede machacarse) */
       if(!ex._gnUndo) ex._gnUndo=[];
       ex._gnUndo.push({gi:best.gi, prev: yaEstaba?Object.assign({},ex.aluNotas[best.gi]):null});
@@ -13077,8 +13171,11 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     GN_UNIF.clearDelX(host,'gn-tresc');
     var svg=host.querySelector('svg'); if(!svg||!geo) return;
     var ex=T.getEX(); if(!ex) return;
+    /* SEL-UNICA 10-jul-2026 · × SOLO en la nota seleccionada */
+    if(selTE==null || !ex.aluNotas[selTE]) return;
     geo.comps.forEach(function(cg){
       cg.notes.forEach(function(nt){
+        if(nt.gi!==selTE) return;
         var alu=ex.aluNotas[nt.gi]; if(!alu) return;
         var y=yParaNota(cg.stave,{step:alu.step,octave:alu.octave}); if(y==null) return;
         GN_UNIF.delXAt(host,svg,'gn-tresc',nt.x,y,14,function(){
@@ -13710,13 +13807,14 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     ['teAccB','teAccN','teAccS'].forEach(function(id){ var bb=document.getElementById(id); bb.onclick=function(){ if(selIdx==null)return; var alu=g.aluNotas[selIdx]; if(!alu)return; var a=bb.dataset.a; alu.alter=a==='b'?-1:a==='#'?1:0; redraw(); }; });
     /* GN-UNIF 8-jul-2026 · deshacer con pila {gi, valorAnterior}: recupera también notas machacadas o borradas con la × */
     document.getElementById('teDeshacer').onclick=function(){
+      var recuperada=null;   /* SEL-UNICA 10-jul-2026 · gi de la nota recuperada, para dejarla seleccionada */
       if(g._gnUndo && g._gnUndo.length){
         var a=g._gnUndo.pop();
-        if(a.del){ g.aluNotas[a.gi]=a.prev; if(!g._orden) g._orden=[]; g._orden.push(a.gi); }        // deshacer un borrado => recupera la nota
-        else { g.aluNotas[a.gi]=a.prev||null; if(!a.prev && g._orden){ var oi=g._orden.lastIndexOf(a.gi); if(oi>=0) g._orden.splice(oi,1); } }
+        if(a.del){ g.aluNotas[a.gi]=a.prev; if(!g._orden) g._orden=[]; g._orden.push(a.gi); recuperada=a.gi; }        // deshacer un borrado => recupera la nota
+        else { g.aluNotas[a.gi]=a.prev||null; if(!a.prev && g._orden){ var oi=g._orden.lastIndexOf(a.gi); if(oi>=0) g._orden.splice(oi,1); } if(a.prev) recuperada=a.gi; }
       } else if(g._orden && g._orden.length){ var u=g._orden.pop(); g.aluNotas[u]=null; }            // compatibilidad con fichas antiguas
       else { gnUndoUpdTE(); return; }
-      selIdx=null; redraw(); gnUndoUpdTE(); document.getElementById('teResult').textContent='';
+      selIdx=recuperada; redraw(); gnUndoUpdTE(); document.getElementById('teResult').textContent='';   /* SEL-UNICA 10-jul-2026 */
     };
     gnUndoUpdTE();
     document.getElementById('teCorregir').onclick=function(){
@@ -14205,8 +14303,8 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   function measuresOf(ii){ if(ii===0) return [{it:0,role:'nota',clef:true}]; return [{it:ii,role:'given',clef:true},{it:ii,role:'answer',clef:false}]; }
 
   function mkNote(n,col){ var sn=new VF.StaveNote({keys:[notaToKey(n)],duration:'w',clef:'treble'}); if(n.alter) sn.addModifier(new VF.Accidental(accStr(n.alter)),0); if(col) sn.setKeyStyle(0,{fillStyle:col,strokeStyle:col}); return sn; }
-  function mkChord(arr,col){ var s=arr.slice().sort(function(a,b){return midi(a.step,a.octave,a.alter)-midi(b.step,b.octave,b.alter);}); var sn=new VF.StaveNote({keys:s.map(notaToKey),duration:'w',clef:'treble'}); s.forEach(function(n,idx){ if(n.alter) sn.addModifier(new VF.Accidental(accStr(n.alter)),idx); if(col) sn.setKeyStyle(idx,{fillStyle:col,strokeStyle:col}); }); return sn; }
-  function colUser(g,ii,s,res){ var u=g.items[ii].user[s]; if(u&&u._green) return '#22c98a'; if(u&&u._red) return '#e11d1d'; if(res) return '#e11d1d'; if(g._sel&&g._sel.it===ii&&g._sel.k===s) return '#d4af37'; return '#1a1a1a'; }
+  function mkChord(arr,col,colOf){ var s=arr.slice().sort(function(a,b){return midi(a.step,a.octave,a.alter)-midi(b.step,b.octave,b.alter);}); var sn=new VF.StaveNote({keys:s.map(notaToKey),duration:'w',clef:'treble'}); s.forEach(function(n,idx){ if(n.alter) sn.addModifier(new VF.Accidental(accStr(n.alter)),idx); /* SEL-UNICA 10-jul-2026 · color por nota (para dorar solo la seleccionada) */ var c=colOf?colOf(n,idx):col; if(c) sn.setKeyStyle(idx,{fillStyle:c,strokeStyle:c}); }); return sn; }
+  function colUser(g,ii,s,res){ var u=g.items[ii].user[s]; if(u&&u._green) return '#22c98a'; if(u&&u._red) return '#e11d1d'; if(res) return '#e11d1d'; if(g._sel&&g._sel.it===ii&&g._sel.k===s) return '#d4af37'; return '#8a8674'; }   /* SEL-UNICA 10-jul-2026 · nota del alumno no seleccionada: gris neutro */
   function colChord(g,ii,res){ var it=g.items[ii]; if(it._green) return '#22c98a'; if(it._red||res) return '#e11d1d'; return '#1a1a1a'; }
   function mwOf(m){ return m.role==='nota'?188:(m.clef?88:78); }
   function buildYmap(meta,mi,st){ try{ var yTop=st.getYForLine(0),yBot=st.getYForLine(4),half=(yBot-yTop)/8,refDiat=STEPS.indexOf('F')+5*7,map={}; for(var oc=3;oc<=6;oc++){ for(var si=0;si<7;si++){ var stp=STEPS[si]; var diat=si+oc*7; var m2=midi(stp,oc,0); if(m2<52||m2>84) continue; map[stp+oc]={step:stp,octave:oc,y:yTop+(refDiat-diat)*half}; } } meta.ymap[mi]=map; }catch(e){} }
@@ -14224,7 +14322,11 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       var it=g.items[m.it], tick=[];
       if(m.role==='nota'){ tick.push(mkNote(it.dada[0],'#000')); for(var s=0;s<it.need;s++){ var u=it.user[s]; tick.push(u?mkNote(u,colUser(g,m.it,s,res)):new VF.GhostNote({duration:'w'})); } }
       else if(m.role==='given'){ tick.push(mkChord(it.dada,'#000')); }
-      else { if(it.user.length) tick.push(mkChord(it.user,colChord(g,m.it,res))); else tick.push(new VF.GhostNote({duration:'w'})); }
+      else { if(it.user.length){
+          /* SEL-UNICA 10-jul-2026 · editable -> dorado solo la nota seleccionada, gris el resto; corregido -> color de corrección */
+          if(res || it._green || it._red){ tick.push(mkChord(it.user,colChord(g,m.it,res))); }
+          else { tick.push(mkChord(it.user,null,function(n){ var selN=(g._sel&&g._sel.it===m.it)?it.user[g._sel.k]:null; return (selN&&n===selN)?'#d4af37':'#8a8674'; })); }
+        } else tick.push(new VF.GhostNote({duration:'w'})); }
       var nx=[]; try{ var v=new VF.Voice({num_beats:4*tick.length,beat_value:4}).setStrict(false); v.addTickables(tick);
         new VF.Formatter().joinVoices([v]).format([v], w-(m.clef?34:10)); v.draw(ctx,st);
         tick.forEach(function(t,ti){ try{ nx[ti]=t.getAbsoluteX(); }catch(_){ nx[ti]=x+w*(ti+0.55)/tick.length; } });
@@ -14251,9 +14353,9 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     function gnUndo(){
       var a=gnPila.pop(); gnUpd(); if(!a) return;
       var it=g.items[a.ii];
-      if(a.t==='add'){ var idx=it.user.indexOf(a.nota); if(idx>=0) it.user.splice(idx,1); }
-      else { it.user.splice(Math.min(a.idx,it.user.length),0,a.nota); }
-      g._sel=null; redrawAll(false);
+      if(a.t==='add'){ var idx=it.user.indexOf(a.nota); if(idx>=0) it.user.splice(idx,1); g._sel=null; }
+      else { var ins=Math.min(a.idx,it.user.length); it.user.splice(ins,0,a.nota); g._sel={it:a.ii,k:ins}; }   /* SEL-UNICA 10-jul-2026 · la nota recuperada queda seleccionada */
+      redrawAll(false);
     }
     var bar=document.createElement('div'); bar.style.cssText='display:flex;gap:14px;align-items:center;margin-top:14px';
     if(window.GN_UNIF){ gnBtn=GN_UNIF.undoBtn(bar, gnUndo, !g._pad); }   /* GN-UNIF 8-jul-2026 · dorado en pad (fondo oscuro), variante clara en ficha */
@@ -14265,6 +14367,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     host.appendChild(wrap);
     var dels={};
     function redrawAll(res){ [0,1,2].forEach(function(ii){ var b=blocks[ii]; renderInto(b.sd,g,measuresOf(ii),!!res); wireBlock(b,ii); gnDelXsENA(b,ii,!!res); }); gnUpd(); }   /* GN-UNIF 8-jul-2026 */
+    function deselENA(){ if(g._sel!=null){ g._sel=null; redrawAll(false); } }   /* SEL-UNICA 10-jul-2026 · clic en vacío deselecciona */
     var blocks={};
     [0,1,2].forEach(function(ii){
       var it=g.items[ii]; var block=document.createElement('div'); block.className='ena-ex';
@@ -14313,9 +14416,9 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     row.appendChild(tb);
     function wireBlock(b,ii){ var svg=b.sd.querySelector('svg'); if(!svg) return; svg.style.cursor='crosshair'; var meta=b.sd._m;
       function hoverEv(ev){ var p=svgPt(svg,ev); var mi=measureEn(meta,p.x); ghost(b,ii,mi, mi!=null?nearestY(meta,mi,p.y):null); }
-      function clickEv(ev){ var p=svgPt(svg,ev); var mi=measureEn(meta,p.x); if(mi==null) return; var m=meta.ml[mi]; if(m.role==='given') return; var it=g.items[ii]; var nat=nearestY(meta,mi,p.y); if(!nat) return;
-        for(var k=0;k<it.user.length;k++){ if(it.user[k]&&it.user[k].step===nat.step&&it.user[k].octave===nat.octave){ g._sel={it:ii,k:k,mi:mi}; redrawAll(false); return; } }
-        if(it.user.length>=it.need) return; var nb={step:nat.step,octave:nat.octave,alter:0}; it.user.push(nb); gnPush({t:'add',ii:ii,nota:nb}); g._sel={it:ii,k:it.user.length-1,mi:mi}; redrawAll(false);
+      function clickEv(ev){ var p=svgPt(svg,ev); var mi=measureEn(meta,p.x); if(mi==null){ deselENA(); return; } var m=meta.ml[mi]; if(m.role==='given'){ deselENA(); return; } var it=g.items[ii]; var nat=nearestY(meta,mi,p.y); if(!nat){ deselENA(); return; }
+        for(var k=0;k<it.user.length;k++){ if(it.user[k]&&it.user[k].step===nat.step&&it.user[k].octave===nat.octave){ g._sel={it:ii,k:k,mi:mi}; redrawAll(false); return; } }   /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
+        if(it.user.length>=it.need){ deselENA(); return; } var nb={step:nat.step,octave:nat.octave,alter:0}; it.user.push(nb); gnPush({t:'add',ii:ii,nota:nb}); g._sel={it:ii,k:it.user.length-1,mi:mi}; redrawAll(false);   /* SEL-UNICA 10-jul-2026 · colocar auto-selecciona */
       }
       svg.onmousemove=function(ev){ if(svg._touchHandled) return; hoverEv(ev); };
       svg.onmouseleave=function(){ clr(svg); };
@@ -14353,22 +14456,22 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       if(res) return;   // sin × tras corregir
       var meta=b.sd._m, svg=b.sd.querySelector('svg'); if(!meta||!svg) return;
       var it=g.items[ii];
-      it.user.forEach(function(u,k){
-        if(!u) return;
-        var mi=(measuresOf(ii).length===1)?0:1;                       // notas del alumno: compás único (nota) o compás de respuesta
-        var map=meta.ymap[mi]; if(!map) return;
-        var yo=map[u.step+u.octave]; if(!yo) return;
-        var idx=(meta.ml[mi].role==='nota')?(1+k):0;
-        var nx=(meta.noteX[mi]&&meta.noteX[mi][idx]) || (meta.x[mi]+meta.w[mi]*0.6);
-        GN_UNIF.delXAt(b.sd,svg,'gn-ena',nx,yo.y,13,function(){
-          var idx2=it.user.indexOf(u); if(idx2<0) return;
-          gnPush({t:'del',ii:ii,idx:idx2,nota:u});
-          it.user.splice(idx2,1); g._sel=null;
-          redrawAll(false);
-        });
+      /* SEL-UNICA 10-jul-2026 · × SOLO en la nota seleccionada de este ejercicio */
+      if(!g._sel || g._sel.it!==ii) return;
+      var k=g._sel.k, u=it.user[k]; if(!u) return;
+      var mi=(measuresOf(ii).length===1)?0:1;                       // notas del alumno: compás único (nota) o compás de respuesta
+      var map=meta.ymap[mi]; if(!map) return;
+      var yo=map[u.step+u.octave]; if(!yo) return;
+      var idx=(meta.ml[mi].role==='nota')?(1+k):0;
+      var nx=(meta.noteX[mi]&&meta.noteX[mi][idx]) || (meta.x[mi]+meta.w[mi]*0.6);
+      GN_UNIF.delXAt(b.sd,svg,'gn-ena',nx,yo.y,13,function(){
+        var idx2=it.user.indexOf(u); if(idx2<0) return;
+        gnPush({t:'del',ii:ii,idx:idx2,nota:u});
+        it.user.splice(idx2,1); g._sel=null;
+        redrawAll(false);
       });
     }
-    if(corr){ corr.onclick=function(){ corregir(g); [0,1,2].forEach(function(ii){ renderInto(blocks[ii].sd,g,measuresOf(ii),true); GN_UNIF&&GN_UNIF.clearDelX(blocks[ii].sd,'gn-ena'); }); gnPila.length=0; gnUpd(); var e=evalua(g); showFb(fb,g,e); }; }   /* GN-UNIF 8-jul-2026 */
+    if(corr){ corr.onclick=function(){ corregir(g); g._sel=null; [0,1,2].forEach(function(ii){ renderInto(blocks[ii].sd,g,measuresOf(ii),true); GN_UNIF&&GN_UNIF.clearDelX(blocks[ii].sd,'gn-ena'); }); gnPila.length=0; gnUpd(); var e=evalua(g); showFb(fb,g,e); }; }   /* GN-UNIF 8-jul-2026 */  /* SEL-UNICA 10-jul-2026 · sin selección tras corregir */
     redrawAll(false);
   }
 
