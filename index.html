@@ -54,6 +54,7 @@
     host.addEventListener('touchstart',function(ev){
       if(ev.touches && ev.touches.length>=2){ host._gnMulti=true; clear(); return; }  /* R4 · 2 dedos: sin ghost, deja pasar el pinch */
       host._gnMulti=false;
+      host._gnLastNat=null;  /* R5 10-jul-2026 · primer punto del gesto: sin histéresis (tap exacto) */
       if(hover && ev.touches && ev.touches[0]) hover(ev.touches[0]);
     },{passive:true});
     host.addEventListener('touchmove',function(ev){
@@ -70,6 +71,30 @@
       ev.preventDefault();
     },{passive:false});
   }
+  /* R5 10-jul-2026 · HISTÉRESIS común del arrastre vertical (reduce sensibilidad).
+     ymap: objeto {clave:{step,octave,y,...}} de notas (5px/paso típico). my: Y del dedo.
+     curKey: clave (step+octave) que la ghost muestra AHORA, o null. FACTOR: cuánto cuesta
+     saltar de nota (0.75 recomendado; 0.5 = comportamiento antiguo sin zona muerta).
+     Elige la entrada más cercana a my; pero si curKey sigue en el mapa y el candidato más
+     cercano NO es curKey, solo cambia si la mejora de distancia supera half*(2*FACTOR-1);
+     si no, CONSERVA curKey. Con curKey==null NO hay histéresis (tap directo / primer punto
+     del gesto = exacto). 'half' se deriva del propio ymap (menor separación entre alturas). */
+  function gnHysteresis(ymap, my, curKey, FACTOR){
+    if(!ymap) return null;
+    var best=null, bestKey=null, bd=1e9, curEntry=null, curD=1e9, ys=[];
+    for(var k in ymap){ var o=ymap[k]; if(!o||o.y==null) continue; ys.push(o.y);
+      var d=Math.abs(o.y-my); if(d<bd){ bd=d; best=o; bestKey=k; }
+      if(curKey!=null && k===curKey){ curEntry=o; curD=d; } }
+    if(best==null) return null;
+    if(curKey==null || curEntry==null || bestKey===curKey) return best;
+    var half=1e9; ys.sort(function(a,b){return a-b;});
+    for(var i=1;i<ys.length;i++){ var gap=ys[i]-ys[i-1]; if(gap>0.5 && gap<half) half=gap; }
+    if(half>=1e9) half=5;
+    var FAC=(FACTOR==null)?0.75:FACTOR;
+    if((curD-bd) < half*(2*FAC-1)) return curEntry;   /* dentro de la zona muerta: conserva actual */
+    return best;
+  }
+  window.gnHysteresis = gnHysteresis;   /* R5 10-jul-2026 */
   window.GN_UNIF={ mkDelX:mkDelX, delXAt:delXAt, clearDelX:clearDelX, undoBtn:undoBtn, wireGhostTouch:wireGhostTouch };  /* R4 10-jul-2026 · +wireGhostTouch */
 })();
 </script>
@@ -2110,9 +2135,12 @@ function buildPointIn(ev){
 }
 function buildNearestByY(i,my){
   const map=buildYMaps[i]; if(!map) return null;
-  let best=null,bd=1e9;
-  for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} }
-  return best;
+  /* R5 10-jul-2026 · histéresis de arrastre (host scoreBUILD por índice i) */
+  var host=document.getElementById('scoreBUILD');
+  var curKey=(host&&host._gnLastNat!=null&&host._gnLastI===i)?host._gnLastNat:null;
+  var o=window.gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+  if(host){ host._gnLastNat=o.step+o.octave; host._gnLastI=i; }
+  return {step:o.step, octave:o.octave};
 }
 function buildYReal(i,step,octave){ const map=buildYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onBUILDHover(ev){
@@ -2184,7 +2212,8 @@ function showBUILDGhost(i,nat){
     g.style.left=(sp.x-hr.left-6)+'px'; g.style.top=(sp.y-hr.top-5)+'px'; g.style.display='block';
   }catch(err){ g.style.display='none'; }
 }
-function clearBUILDGhost(){ const g=document.getElementById('buildghost'); if(g) g.style.display='none'; }
+function clearBUILDGhost(){ const g=document.getElementById('buildghost'); if(g) g.style.display='none';
+  const host=document.getElementById('scoreBUILD'); if(host) host._gnLastNat=null; /* R5 10-jul-2026 */ }
 /* SEL-UNICA 10-jul-2026 · selección ÚNICA en toda la tarjeta (4 compases):
    al seleccionar en el compás iSel, deselecciona los demás → una sola × y una
    sola nota dorada en pantalla. */
@@ -2410,13 +2439,17 @@ function nuevoTODO(){ nuevoID(); nuevoBUILD(); }
       it.__ymap=map;
     }catch(e){}
   }
-  function nearestY(it, my){ var map=it.__ymap; if(!map) return null; var best=null,bd=1e9; for(var k in map){ var o=map[k]; var d=Math.abs(o.y-my); if(d<bd){bd=d;best=o;} } return best; }
+  function nearestY(it, sc, my){ var map=it.__ymap; if(!map) return null;
+    /* R5 10-jul-2026 · histéresis de arrastre (nota actual guardada en el host sc) */
+    var curKey=(sc&&sc._gnLastNat!=null)?sc._gnLastNat:null;
+    var o=window.gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+    if(sc) sc._gnLastNat=o.step+o.octave; return o; }
   function yRealFp(it, step, octave){ var o=it.__ymap && it.__ymap[step+octave]; return o?o.y:null; }
 
   function wireBuild(it, sc){
     if(sc._acoWired) return; sc._acoWired=true; sc.style.position='relative'; sc._touchHandled=false;
     sc.addEventListener('mousemove', function(ev){ onHover(it, sc, ev); });
-    sc.addEventListener('mouseleave', function(){ clearGhost(sc); });
+    sc.addEventListener('mouseleave', function(){ sc._gnLastNat=null; clearGhost(sc); });   /* R5 10-jul-2026 · fin de hover: reinicia histéresis */
     sc.addEventListener('click', function(ev){ if(sc._touchHandled){ sc._touchHandled=false; return; } onClick(it, sc, ev); });
     GN_UNIF.wireGhostTouch(sc,{ hover:function(t){ onHover(it, sc, t); }, click:function(t){ onClick(it, sc, t); }, clear:function(){ clearGhost(sc); } });  /* R4 10-jul-2026 · guarda de dos dedos */
     sc.addEventListener('contextmenu', function(ev){ ev.preventDefault(); if(it.userSeq.length){ it.userSeq.pop(); it._selVar=null; pintarScore(it, sc); } });
@@ -2425,7 +2458,7 @@ function nuevoTODO(){ nuevoID(); nuevoBUILD(); }
   function onHover(it, sc, ev){
     var p=svgP(sc, ev); if(!p){ clearGhost(sc); return; }
     if(it.userSeq.length>=it.objetivo.length){ clearGhost(sc); return; }
-    var nat=nearestY(it, p.y); if(!nat){ clearGhost(sc); return; }
+    var nat=nearestY(it, sc, p.y); if(!nat){ clearGhost(sc); return; }   /* R5 10-jul-2026 */
     showGhost(it, sc, nat);
   }
   function onClick(it, sc, ev){
@@ -2433,7 +2466,7 @@ function nuevoTODO(){ nuevoID(); nuevoBUILD(); }
     // ¿sobre una nota ya puesta? -> seleccionarla
     for(var k=0;k<it.userSeq.length;k++){ var y=yRealFp(it, it.userSeq[k].step, it.userSeq[k].octave); if(y!=null && Math.abs(y-p.y)<8){ it._selVar=k; pintarScore(it, sc); return; } }
     if(it.userSeq.length>=it.objetivo.length) return;
-    var nat=nearestY(it, p.y); if(!nat) return;
+    var nat=nearestY(it, sc, p.y); if(!nat) return;   /* R5 10-jul-2026 */
     var nb={step:nat.step, octave:nat.octave, alter:0};
     if(it.__pendAlt===1||it.__pendAlt===-1||it.__pendAlt===2||it.__pendAlt===-2){ nb.alter=it.__pendAlt; }
     it.userSeq.push(nb); it.__pendAlt=0;
@@ -2729,7 +2762,11 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
       g.__ymap=map;
     }catch(e){}
   }
-  function nearestYG(g, my){ var map=g.__ymap; if(!map) return null; var best=null,bd=1e9; for(var k in map){ var o=map[k]; var d=Math.abs(o.y-my); if(d<bd){bd=d;best=o;} } return best; }
+  function nearestYG(g, sc, my){ var map=g.__ymap; if(!map) return null;
+    /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el host sc) */
+    var curKey=(sc&&sc._gnLastNat!=null)?sc._gnLastNat:null;
+    var o=window.gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+    if(sc) sc._gnLastNat=o.step+o.octave; return o; }
   function yRealG(g, step, octave){ var o=g.__ymap && g.__ymap[step+octave]; return o?o.y:null; }
   function measFromX(g, x){
     for(var i=0;i<4;i++){ var m=g.__meas[i]; if(x>=m.x && x<m.x+m.w) return i; }
@@ -2760,7 +2797,7 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
   function wireBuildG(g, sc){
     if(sc._acoWired) return; sc._acoWired=true; sc.style.position='relative'; sc._touchHandled=false;
     sc.addEventListener('mousemove', function(ev){ onHoverG(g, sc, ev); });
-    sc.addEventListener('mouseleave', function(){ clearGhost(sc); });
+    sc.addEventListener('mouseleave', function(){ sc._gnLastNat=null; clearGhost(sc); });   /* R5 10-jul-2026 · fin de hover: reinicia histéresis */
     sc.addEventListener('click', function(ev){ if(sc._touchHandled){ sc._touchHandled=false; return; } onClickG(g, sc, ev); });
     GN_UNIF.wireGhostTouch(sc,{ hover:function(t){ onHoverG(g, sc, t); }, click:function(t){ onClickG(g, sc, t); }, clear:function(){ clearGhost(sc); } });  /* R4 10-jul-2026 · guarda de dos dedos */
     sc.addEventListener('contextmenu', function(ev){ ev.preventDefault(); var p=svgP(sc,ev); if(!p) return; var m=measFromX(g,p.x); var sub=g.subs[m]; if(sub.userSeq.length){ var nb=sub.userSeq.pop(); gnUndoPushG(g,{t:'del',m:m,idx:sub.userSeq.length,nota:nb}); sub._selVar=null; if(g._selM===m) g._selM=null; pintarScoreG(g, sc); } });   /* GN-UNIF 8-jul-2026 */
@@ -2769,14 +2806,14 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
     var p=svgP(sc, ev); if(!p){ clearGhost(sc); return; }
     var m=measFromX(g, p.x), sub=g.subs[m];
     if(sub.userSeq.length>=sub.objetivo.length){ clearGhost(sc); return; }
-    var nat=nearestYG(g, p.y); if(!nat){ clearGhost(sc); return; }
+    var nat=nearestYG(g, sc, p.y); if(!nat){ clearGhost(sc); return; }   /* R5 10-jul-2026 */
     showGhostG(g, sc, m, nat);
   }
   function deselG(g, sc){ if(g._selM!=null){ var sp=g.subs[g._selM]; if(sp) sp._selVar=null; g._selM=null; pintarScoreG(g, sc); } }   /* SEL-UNICA 10-jul-2026 */
   function onClickG(g, sc, ev){
     var p=svgP(sc, ev); if(!p) return;
     var m=measFromX(g, p.x), sub=g.subs[m];
-    var nat=nearestYG(g, p.y); if(!nat){ deselG(g, sc); return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
+    var nat=nearestYG(g, sc, p.y); if(!nat){ deselG(g, sc); return; }   /* R5 10-jul-2026 · SEL-UNICA · vacío deselecciona */
     // ¿ya hay una nota del usuario EXACTAMENTE en esa posición? -> seleccionarla (para alterarla)
     for(var k=0;k<sub.userSeq.length;k++){ if(sub.userSeq[k].step===nat.step && sub.userSeq[k].octave===nat.octave){ g._selM=m; sub._selVar=k; pintarScoreG(g, sc); return; } }
     if(sub.userSeq.length>=sub.objetivo.length){ deselG(g, sc); return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
@@ -3361,9 +3398,12 @@ function acoPointIn(ev){
 }
 function acoNearestByY(i,my){
   const map=acoYMaps[i]; if(!map) return null;
-  let best=null,bd=1e9;
-  for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} }
-  return best;
+  /* R5 10-jul-2026 · histéresis de arrastre (host scoreACOBAS por índice i) */
+  var host=document.getElementById('scoreACOBAS');
+  var curKey=(host&&host._gnLastNat!=null&&host._gnLastI===i)?host._gnLastNat:null;
+  var o=window.gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+  if(host){ host._gnLastNat=o.step+o.octave; host._gnLastI=i; }
+  return {step:o.step, octave:o.octave};
 }
 function acoYReal(i,step,octave){ const map=acoYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onACOHover(ev){
@@ -3437,7 +3477,8 @@ function showACOGhost(i,nat){
     g.style.left=(sp.x-hr.left-6)+'px'; g.style.top=(sp.y-hr.top-5)+'px'; g.style.display='block';
   }catch(err){ g.style.display='none'; }
 }
-function clearACOGhost(){ const g=document.getElementById('acobasghost'); if(g) g.style.display='none'; }
+function clearACOGhost(){ const g=document.getElementById('acobasghost'); if(g) g.style.display='none';
+  const host=document.getElementById('scoreACOBAS'); if(host) host._gnLastNat=null; /* R5 10-jul-2026 */ }
 /* SEL-UNICA 10-jul-2026 · selección ÚNICA en toda la tarjeta ACO (2 compases build):
    al seleccionar en el compás iSel, deselecciona el otro → una sola × y una sola dorada. */
 function acoDeselOtros(iSel){ dataACO.forEach((e,k)=>{ if(k!==iSel && e._selVar!=null) e._selVar=null; }); }
@@ -4825,7 +4866,8 @@ function gnUndoIVB(){
   redrawB(); renderAnswersB(); bUndoBtnUpd();
 }
 window.gnUndoIVB=gnUndoIVB;
-function clearBGhost(){ const g=document.getElementById('bghostPRO'); if(g) g.style.display='none'; }
+function clearBGhost(){ const g=document.getElementById('bghostPRO'); if(g) g.style.display='none';
+  const host=document.getElementById('scoreB'); if(host) host._gnLastNat=null; /* R5 10-jul-2026 */ }
 function svgPointB(e){
   const host=document.getElementById('scoreB');
   const svg=host.querySelector('svg'); if(!svg||!bMeta) return null;
@@ -4853,9 +4895,12 @@ function onBoardHoverB(e){
 }
 function nearestMidiByY(my){
   if(!bMeta||!bMeta.ymap) return null;
-  let best=null,bd=1e9;
-  for(const k in bMeta.ymap){ const e=bMeta.ymap[k]; const d=Math.abs(e.y-my); if(d<bd){bd=d;best=e;} }
-  return best;
+  /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el host scoreB) */
+  var host=document.getElementById('scoreB');
+  var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
+  var e=window.gnHysteresis(bMeta.ymap, my, curKey, 0.75); if(!e) return null;
+  if(host) host._gnLastNat=e.step+e.octave;
+  return e;
 }
 function onBoardClickB(e){
   const host=document.getElementById('scoreB');
@@ -5070,24 +5115,28 @@ window.nuevoIVTODO=nuevoIVTODO;
   function wireBuildG(g, sc){
     if(sc._ivWired) return; sc._ivWired=true; sc.style.position='relative'; sc._touchHandled=false;
     sc.addEventListener('mousemove', function(e){ onHoverG(g, sc, e); });
-    sc.addEventListener('mouseleave', function(){ clearGhost(sc); });
+    sc.addEventListener('mouseleave', function(){ sc._gnLastNat=null; clearGhost(sc); });   /* R5 10-jul-2026 · fin de hover: reinicia histéresis */
     sc.addEventListener('click', function(e){ if(sc._touchHandled){ sc._touchHandled=false; return; } onClickG(g, sc, e); });
     GN_UNIF.wireGhostTouch(sc,{ hover:function(t){ onHoverG(g, sc, t); }, click:function(t){ onClickG(g, sc, t); }, clear:function(){ clearGhost(sc); } });  /* R4 10-jul-2026 · guarda de dos dedos */
   }
   function svgPt(sc, ev){ var svg=sc.querySelector('svg'); if(!svg) return null; var rect=svg.getBoundingClientRect(); var vb=svg.viewBox&&svg.viewBox.baseVal; if(!vb) return null; var sx=vb.width/rect.width, sy=vb.height/rect.height; return {svg:svg, rect:rect, vx:(ev.clientX-rect.left)*sx, vy:(ev.clientY-rect.top)*sy+vb.y}; }
-  function nearestByY(meta, my){ if(!meta||!meta.ymap) return null; var best=null,bd=1e9; for(var k in meta.ymap){ var e=meta.ymap[k]; var d=Math.abs(e.y-my); if(d<bd){bd=d;best=e;} } return best; }
+  function nearestByY(meta, sc, my){ if(!meta||!meta.ymap) return null;
+    /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el host sc) */
+    var curKey=(sc&&sc._gnLastNat!=null)?sc._gnLastNat:null;
+    var e=window.gnHysteresis(meta.ymap, my, curKey, 0.75); if(!e) return null;
+    if(sc) sc._gnLastNat=e.step+e.octave; return e; }
   function compasDe(meta, vx){ var ci=0,bd=1e9; (meta.noteX||[]).forEach(function(nx,i){ if(nx==null)return; var d=Math.abs(nx-vx); if(d<bd){bd=d;ci=i;} }); return ci; }
   function onHoverG(g, sc, ev){
     var meta=g.__meta; if(!meta||!meta.ymap){ clearGhost(sc); return; }
     var p=svgPt(sc, ev); if(!p){ clearGhost(sc); return; }
-    var near=nearestByY(meta, p.vy); if(!near){ clearGhost(sc); return; }
+    var near=nearestByY(meta, sc, p.vy); if(!near){ clearGhost(sc); return; }   /* R5 10-jul-2026 */
     var ci=compasDe(meta, p.vx); var xG=(meta.noteX&&meta.noteX[ci]!=null)?meta.noteX[ci]:60;
     ghostSVG(sc, meta, xG, near.y);
   }
   function onClickG(g, sc, ev){
     var meta=g.__meta; if(!meta||!meta.ymap) return;
     var p=svgPt(sc, ev); if(!p) return;
-    var near=nearestByY(meta, p.vy); if(!near) return;
+    var near=nearestByY(meta, sc, p.vy); if(!near) return;   /* R5 10-jul-2026 */
     var ci=compasDe(meta, p.vx); var sub=g.subs[ci];
     /* SEL-UNICA 10-jul-2026 · ¿clic sobre la nota ya colocada en este compás? -> seleccionarla, sin recolocar */
     if(sub.resp && sub.resp.step===near.step && sub.resp.octave===near.octave){
@@ -6059,9 +6108,12 @@ function escWireVarOne(i){
 }
 function escNearestByY(i,my){
   const map=escYMaps[i]; if(!map) return null;
-  let best=null,bd=1e9;
-  for(const k in map){ const o=map[k]; const d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} }
-  return best;
+  /* R5 10-jul-2026 · histéresis de arrastre por tarjeta (host scoreESCi) */
+  var host=document.getElementById('scoreESC'+i);
+  var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
+  var o=window.gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+  if(host) host._gnLastNat=o.step+o.octave;
+  return {step:o.step, octave:o.octave};
 }
 function escYReal(i,step,octave){ const map=escYMaps[i]; const o=map&&map[step+octave]; return o?o.y:null; }
 function onEscHover(i,ev){
@@ -6164,7 +6216,7 @@ function setEscHoverNote(i,k){
   ansBtns.forEach(b=>b.classList.toggle('acc-tintin', k!=null));
 }
 function clearEscGhost(i){ const g=document.getElementById('escghost'+i); if(g) g.style.display='none';
-  const host=document.getElementById('scoreESC'+i); if(host) host.querySelectorAll('.escghost-ledger').forEach(el=>el.remove()); }
+  const host=document.getElementById('scoreESC'+i); if(host){ host.querySelectorAll('.escghost-ledger').forEach(el=>el.remove()); host._gnLastNat=null; /* R5 10-jul-2026 */ } }
 function escGhostX(i){
   // X de previsualización: poco después de la última nota escrita
   const g=escVarGeom[i];
@@ -7717,9 +7769,12 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   }
   function nearestByY(my, which){
     var map=(which==='bot')?GEO.ymapBot:GEO.ymapTop;
-    var best=null,bd=1e9;
-    for(var k in map){ var o=map[k]; var d=Math.abs(o.y-my); if(d<bd){bd=d;best=o;} }
-    return best;
+    /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el host scoreSB) */
+    var host=document.getElementById('scoreSB');
+    var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
+    var o=window.gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+    if(host) host._gnLastNat=o.step+o.octave;
+    return o;
   }
   function yRealOf(step,octave){
     var kt=step+octave;
@@ -7799,7 +7854,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     });
   }
   function clearGhost(){ var g=document.getElementById('serieghost'); if(g) g.style.display='none';
-    var host=document.getElementById('scoreSB'); if(host) host.querySelectorAll('.serie-ledger').forEach(function(el){el.remove();}); }
+    var host=document.getElementById('scoreSB'); if(host){ host.querySelectorAll('.serie-ledger').forEach(function(el){el.remove();}); host._gnLastNat=null; /* R5 10-jul-2026 */ } }
 
   function onClickScore(host,ev){
     if(corregido) return;
@@ -11455,7 +11510,11 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     try{ var pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y,svg:svg}; }catch(e){ return null; } }
   function compasEn(g,px){ var geo=g.__geo; if(!geo) return -1; for(var i=0;i<geo.comp.length;i++){ var c=geo.comp[i]; if(px>=c.x0 && px<c.x0+c.wC) return i; } return -1; }
   function clefEn(g,py){ var geo=g.__geo; var tBot=geo.comp[0].topStave.getYForLine(4), bTop=geo.comp[0].botStave.getYForLine(0); return py<(tBot+bTop)/2?'top':'bot'; }
-  function nearestByY(g,my,which){ var map=(which==='bot')?g.__geo.ymapBot:g.__geo.ymapTop, best=null,bd=1e9; for(var k in map){ var o=map[k],d=Math.abs(o.y-my); if(d<bd){bd=d;best=o;} } return best; }
+  function nearestByY(g,my,which){ var map=(which==='bot')?g.__geo.ymapBot:g.__geo.ymapTop;
+    /* R5 10-jul-2026 · histéresis de arrastre (nota actual en g.__host) */
+    var host=g.__host, curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
+    var o=window.gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+    if(host) host._gnLastNat=o.step+o.octave; return o; }
   function yRealOf(g,step,octave){ var kt=step+octave; if(g.__geo.ymapTop[kt]) return {y:g.__geo.ymapTop[kt].y}; if(g.__geo.ymapBot[kt]) return {y:g.__geo.ymapBot[kt].y}; return null; }
   function nextSlot(g){ for(var i=0;i<7;i++){ if(!g.bSeq[i]) return i; } return -1; }
   function wireGhost(g){ var host=g.__host;
@@ -11489,7 +11548,7 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     lines.forEach(function(yL){ try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=yL; var sp=pt.matrixTransform(svg.getScreenCTM());
       var ln=document.createElement('div'); ln.className='serieF-ledger'; ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:20px;background:#c8b06a;opacity:.7';
       ln.style.left=(sp.x-hr.left-10)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln); }catch(e){} }); }
-  function clearGhost(g){ var el=g.__host.querySelector('.serieF-ghost'); if(el) el.style.display='none'; g.__host.querySelectorAll('.serieF-ledger').forEach(function(x){x.remove();}); }
+  function clearGhost(g){ var el=g.__host.querySelector('.serieF-ghost'); if(el) el.style.display='none'; g.__host.querySelectorAll('.serieF-ledger').forEach(function(x){x.remove();}); if(g.__host) g.__host._gnLastNat=null; /* R5 10-jul-2026 */ }
   function onClickScore(g,ev){ if(g.__corr) return; var p=svgPoint(g.__host,ev); if(!p) return; var ci=compasEn(g,p.x);
     if(ci>=1 && g.bSeq[ci-1]){ g.__sel=ci-1; render(g); return; }   /* SEL-UNICA 10-jul-2026 · tocar armónico colocado lo selecciona */
     var slot=nextSlot(g); if(slot<0){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
@@ -11677,7 +11736,12 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     g.__sel=(a.t==='del')?a.slot:null; refresh(g);   /* SEL-UNICA 10-jul-2026 · la nota recuperada queda seleccionada */
   }
   function yFor(g,step,octave){ var dia=octave*7+ORD[step]; return g.__geo.yLine0+(g.__geo.refDia-dia)*g.__geo.half; }
-  function nearestStepByY(g,my){ var best=null,bd=1e9; for(var o=2;o<=6;o++){ for(var s in ORD){ var y=yFor(g,s,o); var d=Math.abs(y-my); if(d<bd){bd=d;best={step:s,octave:o,y:y};} } } return best; }
+  function nearestStepByY(g,my){
+    /* R5 10-jul-2026 · histéresis de arrastre; se construye un ymap con los candidatos */
+    var map={}; for(var o=2;o<=6;o++){ for(var s in ORD){ map[s+o]={step:s,octave:o,y:yFor(g,s,o)}; } }
+    var host=g.__host, curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
+    var best=window.gnHysteresis(map, my, curKey, 0.75); if(!best) return null;
+    if(host) host._gnLastNat=best.step+best.octave; return best; }
   function slotFromX(g,px){ var xs=g.__geo.xs, best=-1,bd=1e9; for(var i=0;i<12;i++){ if(xs[i]==null) continue; var d=Math.abs(xs[i]-px); if(d<bd){bd=d;best=i;} } return best; }
   function svgPt(host,ev){ var svg=host.querySelector('svg'); if(!svg) return null; try{ var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y,svg:svg}; }catch(e){ return null; } }
   function wireGhost(g){ var host=g.__host;
@@ -11692,7 +11756,7 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     host.oncontextmenu=function(ev){ ev.preventDefault(); var p=svgPt(host,ev); if(!p) return; var sl=slotFromX(g,p.x); if(sl>=0&&g.notes[sl]){ gnPushDA(g,{t:'del',slot:sl,nota:g.notes[sl]}); g.notes[sl]=null; if(g.__sel===sl) g.__sel=null; refresh(g); } };   /* GN-UNIF 8-jul-2026 */
   }
   function onHover(g,ev){ var host=g.__host, p=svgPt(host,ev); if(!p){ clearGhost(g); return; } var sl=slotFromX(g,p.x); if(sl<0){ clearGhost(g); return; }
-    if(g.notes[sl]){ host.style.cursor='pointer'; clearGhost(g); return; } var nat=nearestStepByY(g,p.y); host.style.cursor='pointer'; showGhost(g, g.__geo.xs[sl], nat); }   /* GN-UNIF 8-jul-2026 · borrado solo vía × fija */
+    if(g.notes[sl]){ host.style.cursor='pointer'; clearGhost(g); return; } var nat=nearestStepByY(g,p.y); if(!nat){ clearGhost(g); return; } host.style.cursor='pointer'; showGhost(g, g.__geo.xs[sl], nat); }   /* R5 10-jul-2026 · guarda nat null · GN-UNIF borrado solo vía × fija */
   function ghostEl(g){ var e=g.__host.querySelector('.dodeF-ghost'); if(!e){ e=document.createElement('div'); e.className='dodeF-ghost'; e.style.cssText='position:absolute;pointer-events:none;z-index:6;width:14px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host.appendChild(e); } return e; }
   function showGhost(g,xc,nat){ var host=g.__host, e=ghostEl(g), svg=host.querySelector('svg'); if(!svg){ e.style.display='none'; return; }
     try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=nat.y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect();
@@ -11703,7 +11767,7 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     lines.forEach(function(yL){ try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=yL; var sp=pt.matrixTransform(svg.getScreenCTM());
       var ln=document.createElement('div'); ln.className='dodeF-ledger'; ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:22px;background:#c8b06a;opacity:.7';
       ln.style.left=(sp.x-hr.left-11)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln); }catch(e){} }); }
-  function clearGhost(g){ var e=g.__host.querySelector('.dodeF-ghost'); if(e) e.style.display='none'; g.__host.querySelectorAll('.dodeF-ledger').forEach(function(x){x.remove();}); }
+  function clearGhost(g){ var e=g.__host.querySelector('.dodeF-ghost'); if(e) e.style.display='none'; g.__host.querySelectorAll('.dodeF-ledger').forEach(function(x){x.remove();}); if(g.__host) g.__host._gnLastNat=null; /* R5 10-jul-2026 */ }
   /* GN-UNIF 8-jul-2026 · × flotante por hover/selección SUSTITUIDA por × fijas (gnDelXsDA). Funciones inertes. */
   function showDelX(g, slot){}
   function hideDelX(g){ var el=g.__host.querySelector('.dodeF-delx'); if(el) el.style.display='none'; }
@@ -11713,7 +11777,7 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     /* R3 10-jul-2026 · CAMBIO D · en TABLET solo se avanza al SIGUIENTE hueco libre (no se salta por X).
        En ratón se conserva la colocación por X. Las notas ya puestas siguen re-tocables para corregir. */
     if(g.__host&&g.__host._touchHandled){ var nx=-1; for(var _i=0;_i<12;_i++){ if(!g.notes[_i]){ nx=_i; break; } } if(nx>=0 && sl!==nx) sl=nx; }
-    var nat=nearestStepByY(g,p.y); g.notes[sl]={step:nat.step,octave:nat.octave,acc:''}; gnPushDA(g,{t:'add',slot:sl}); g.__sel=sl; refresh(g); }   /* GN-UNIF 8-jul-2026 */
+    var nat=nearestStepByY(g,p.y); if(!nat) return; g.notes[sl]={step:nat.step,octave:nat.octave,acc:''}; gnPushDA(g,{t:'add',slot:sl}); g.__sel=sl; refresh(g); }   /* R5 10-jul-2026 · guarda nat null · GN-UNIF */
   function accToolbar(g){ var tb=g.__tb; if(!tb) return; var active=(g.__sel!=null && g.notes[g.__sel]); tb.style.opacity=active?'1':'.4';
     var acc=active?g.notes[g.__sel].acc:''; tb.querySelectorAll('[data-a]').forEach(function(b){ var on=(active&&b.dataset.a===acc); b.style.background=on?'linear-gradient(135deg,#d4af37,#b8860b)':'#fff'; b.style.color=on?'#1a1407':'#3a2f12'; }); }
   function setAcc(g,a){ if(g.__sel==null||!g.notes[g.__sel]) return; var n=g.notes[g.__sel]; n.acc=(n.acc===a)?'':a; refresh(g); }
@@ -11805,7 +11869,12 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
     return { stave:stave, xs:xs, yLine0:stave.getYForLine(0), yBot:stave.getYForLine(4), half:(stave.getYForLine(4)-stave.getYForLine(0))/8, refDia:5*7+ORD['F'] };
   }
   function yFor(geo,step,octave){ return geo.yLine0+(geo.refDia-(octave*7+ORD[step]))*geo.half; }
-  function nearestStep(geo,my){ var best=null,bd=1e9; for(var o=2;o<=6;o++){ for(var s in ORD){ var y=yFor(geo,s,o); var d=Math.abs(y-my); if(d<bd){bd=d;best={step:s,octave:o,y:y};} } } return best; }
+  function nearestStep(geo,my,host){
+    /* R5 10-jul-2026 · histéresis de arrastre (nota actual en host g.__host2) */
+    var map={}; for(var o=2;o<=6;o++){ for(var s in ORD){ map[s+o]={step:s,octave:o,y:yFor(geo,s,o)}; } }
+    var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
+    var best=window.gnHysteresis(map, my, curKey, 0.75); if(!best) return null;
+    if(host) host._gnLastNat=best.step+best.octave; return best; }
   function slotFromX(geo,px){ var best=-1,bd=1e9; for(var i=0;i<12;i++){ if(geo.xs[i]==null) continue; var d=Math.abs(geo.xs[i]-px); if(d<bd){bd=d;best=i;} } return best; }
   function svgPt(host,ev){ var svg=host.querySelector('svg'); if(!svg) return null; try{ var pt=svg.createSVGPoint(); pt.x=(ev.touches&&ev.touches[0])?ev.touches[0].clientX:ev.clientX; pt.y=(ev.touches&&ev.touches[0])?ev.touches[0].clientY:ev.clientY; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y}; }catch(e){ return null; } }
   function editable(g,slot){ return g.missing.indexOf(slot)>=0; }
@@ -11821,13 +11890,13 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
     host.oncontextmenu=function(ev){ ev.preventDefault(); var p=svgPt(host,ev); if(!p) return; var sl=slotFromX(g.__geo2,p.x); if(sl>=0&&editable(g,sl)&&g.shown[sl]){ gnPushDB(g,{t:'del',slot:sl,nota:g.shown[sl]}); g.shown[sl]=null; if(g.__sel===sl)g.__sel=null; refresh(g); } };   /* GN-UNIF 8-jul-2026 */
   }
   function hover2(g,ev){ var host=g.__host2, p=svgPt(host,ev); if(!p){ clearG(g); return; } var sl=slotFromX(g.__geo2,p.x); if(sl<0||!editable(g,sl)){ clearG(g); host.style.cursor='default'; return; }
-    if(g.shown[sl]){ host.style.cursor='pointer'; clearG(g); return; } var nat=nearestStep(g.__geo2,p.y); host.style.cursor='pointer'; showGhost(g,g.__geo2.xs[sl],nat); }   /* GN-UNIF 8-jul-2026 · borrado solo vía × fija */
+    if(g.shown[sl]){ host.style.cursor='pointer'; clearG(g); return; } var nat=nearestStep(g.__geo2,p.y,host); if(!nat){ clearG(g); return; } host.style.cursor='pointer'; showGhost(g,g.__geo2.xs[sl],nat); }   /* R5 10-jul-2026 · guarda nat null · GN-UNIF */
   function click2(g,ev){ var p=svgPt(g.__host2,ev); if(!p) return; var sl=slotFromX(g.__geo2,p.x); if(sl<0||!editable(g,sl)){ if(g.__sel!=null){ g.__sel=null; refresh(g); } return; }   /* SEL-UNICA 10-jul-2026 · vacío/no editable deselecciona */
     if(g.shown[sl]){ g.__sel=sl; refresh(g); return; }   /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
     /* R3 10-jul-2026 · CAMBIO D · en TABLET solo se rellena el SIGUIENTE hueco editable (missing) libre,
        en orden; no se salta por X. En ratón se conserva la colocación por X. */
     if(g.__host2&&g.__host2._touchHandled){ var ms=(g.missing||[]).slice().sort(function(a,b){return a-b;}); var nx=-1; for(var _m=0;_m<ms.length;_m++){ if(!g.shown[ms[_m]]){ nx=ms[_m]; break; } } if(nx>=0 && sl!==nx) sl=nx; }
-    var nat=nearestStep(g.__geo2,p.y); g.shown[sl]={step:nat.step,octave:nat.octave,acc:''}; gnPushDB(g,{t:'add',slot:sl}); g.__sel=sl; refresh(g); }   /* GN-UNIF 8-jul-2026 */
+    var nat=nearestStep(g.__geo2,p.y,g.__host2); if(!nat) return; g.shown[sl]={step:nat.step,octave:nat.octave,acc:''}; gnPushDB(g,{t:'add',slot:sl}); g.__sel=sl; refresh(g); }   /* R5 10-jul-2026 · guarda nat null · GN-UNIF */
   /* GN-UNIF 8-jul-2026 · × fija junto a cada nota colocada (solo huecos editables) + pila de deshacer */
   function gnDelXsDB(g){
     var host=g.__host2; if(!host||!window.GN_UNIF) return;
@@ -11857,7 +11926,7 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
   function ghostEl(g){ var e=g.__host2.querySelector('.dodeB-ghost'); if(!e){ e=document.createElement('div'); e.className='dodeB-ghost'; e.style.cssText='position:absolute;pointer-events:none;z-index:6;width:14px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host2.appendChild(e); } return e; }
   function showGhost(g,xc,nat){ var host=g.__host2, e=ghostEl(g), svg=host.querySelector('svg'); if(!svg){e.style.display='none';return;} try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=nat.y; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=host.getBoundingClientRect(); e.style.left=(sp.x-hr.left-7)+'px'; e.style.top=(sp.y-hr.top-5)+'px'; e.style.display='block'; ledger(g,svg,hr,xc,nat); }catch(er){ e.style.display='none'; } }
   function ledger(g,svg,hr,xc,nat){ var host=g.__host2; host.querySelectorAll('.dodeB-ledger').forEach(function(x){x.remove();}); var geo=g.__geo2, half=geo.half, lines=[],y; y=geo.yLine0-2*half; while(y>=nat.y-1){ lines.push(y); y-=2*half; } y=geo.yBot+2*half; while(y<=nat.y+1){ lines.push(y); y+=2*half; } lines.forEach(function(yL){ try{ var pt=svg.createSVGPoint(); pt.x=xc; pt.y=yL; var sp=pt.matrixTransform(svg.getScreenCTM()); var ln=document.createElement('div'); ln.className='dodeB-ledger'; ln.style.cssText='position:absolute;pointer-events:none;z-index:5;height:1.5px;width:22px;background:#c8b06a;opacity:.7'; ln.style.left=(sp.x-hr.left-11)+'px'; ln.style.top=(sp.y-hr.top-1)+'px'; host.appendChild(ln); }catch(e){} }); }
-  function clearG(g){ var e=g.__host2.querySelector('.dodeB-ghost'); if(e) e.style.display='none'; g.__host2.querySelectorAll('.dodeB-ledger').forEach(function(x){x.remove();}); }
+  function clearG(g){ var e=g.__host2.querySelector('.dodeB-ghost'); if(e) e.style.display='none'; g.__host2.querySelectorAll('.dodeB-ledger').forEach(function(x){x.remove();}); if(g.__host2) g.__host2._gnLastNat=null; /* R5 10-jul-2026 */ }
   /* GN-UNIF 8-jul-2026 · × flotante por hover/selección SUSTITUIDA por × fijas (gnDelXsDB). Funciones inertes. */
   function showDelX(g,slot){}
   function hideDelX(g){ var el=g.__host2.querySelector('.dodeB-delx'); if(el) el.style.display='none'; }
@@ -14298,7 +14367,12 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   }
 
   function svgPt(svg,ev){ try{ var pt=svg.createSVGPoint(); pt.x=ev.clientX; pt.y=ev.clientY; return pt.matrixTransform(svg.getScreenCTM().inverse()); }catch(e){ var r=svg.getBoundingClientRect(); return {x:ev.clientX-r.left,y:ev.clientY-r.top}; } }
-  function nearestY(meta,mi,my){ var map=meta.ymap[mi]; if(!map) return null; var best=null,bd=1e9; for(var k in map){ var o=map[k]; var d=Math.abs(o.y-my); if(d<bd){bd=d;best={step:o.step,octave:o.octave};} } return best; }
+  function nearestY(meta,mi,my,svg){ var map=meta.ymap[mi]; if(!map) return null;
+    /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el svg; se reinicia al cambiar de compás) */
+    var curKey=(svg&&svg._gnLastNat!=null&&svg._gnLastMi===mi)?svg._gnLastNat:null;
+    var o=window.gnHysteresis(map, my, curKey, 0.75); if(!o) return null;
+    if(svg){ svg._gnLastNat=o.step+o.octave; svg._gnLastMi=mi; }
+    return {step:o.step, octave:o.octave}; }
   function measureEn(meta,px){ for(var i=0;i<meta.x.length;i++){ if(px>=meta.x[i] && px<meta.x[i]+meta.w[i]) return i; } return null; }
 
   function montar(host, g){
@@ -14376,13 +14450,13 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     })();
     row.appendChild(tb);
     function wireBlock(b,ii){ var svg=b.sd.querySelector('svg'); if(!svg) return; svg.style.cursor='crosshair'; var meta=b.sd._m;
-      function hoverEv(ev){ var p=svgPt(svg,ev); var mi=measureEn(meta,p.x); ghost(b,ii,mi, mi!=null?nearestY(meta,mi,p.y):null); }
-      function clickEv(ev){ var p=svgPt(svg,ev); var mi=measureEn(meta,p.x); if(mi==null){ deselENA(); return; } var m=meta.ml[mi]; if(m.role==='given'){ deselENA(); return; } var it=g.items[ii]; var nat=nearestY(meta,mi,p.y); if(!nat){ deselENA(); return; }
+      function hoverEv(ev){ var p=svgPt(svg,ev); var mi=measureEn(meta,p.x); ghost(b,ii,mi, mi!=null?nearestY(meta,mi,p.y,svg):null); }   /* R5 10-jul-2026 */
+      function clickEv(ev){ var p=svgPt(svg,ev); var mi=measureEn(meta,p.x); if(mi==null){ deselENA(); return; } var m=meta.ml[mi]; if(m.role==='given'){ deselENA(); return; } var it=g.items[ii]; var nat=nearestY(meta,mi,p.y,svg); if(!nat){ deselENA(); return; }   /* R5 10-jul-2026 */
         for(var k=0;k<it.user.length;k++){ if(it.user[k]&&it.user[k].step===nat.step&&it.user[k].octave===nat.octave){ g._sel={it:ii,k:k,mi:mi}; redrawAll(false); return; } }   /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
         if(it.user.length>=it.need){ deselENA(); return; } var nb={step:nat.step,octave:nat.octave,alter:0}; it.user.push(nb); gnPush({t:'add',ii:ii,nota:nb}); g._sel={it:ii,k:it.user.length-1,mi:mi}; redrawAll(false);   /* SEL-UNICA 10-jul-2026 · colocar auto-selecciona */
       }
       svg.onmousemove=function(ev){ if(svg._touchHandled) return; hoverEv(ev); };
-      svg.onmouseleave=function(){ clr(svg); };
+      svg.onmouseleave=function(){ svg._gnLastNat=null; clr(svg); };   /* R5 10-jul-2026 · fin de hover: reinicia histéresis */
       svg.onclick=function(ev){ if(svg._touchHandled) return; clickEv(ev); };
       /* GN-UNIF 8-jul-2026 · táctil: pulsar→arrastrar→soltar (o un toque = una nota) + guarda anti-click sintético */
       var tc=function(ev){ var t=(ev.touches&&ev.touches[0])||(ev.changedTouches&&ev.changedTouches[0]); return t?{clientX:t.clientX,clientY:t.clientY}:null; };
