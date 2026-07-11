@@ -1434,17 +1434,15 @@
     </div>
 
     <!-- ---------- PESTAÑA ESCRITA ---------- -->
+    <!-- R6 10-jul-2026 · portada del transporte ESCRITO (motor de fichas reutilizado en el portal) -->
     <div class="tr-panel" id="trPanel-escrita" style="display:none">
-      <div class="ex-card" style="text-align:center;padding:48px 24px">
-        <p style="font-size:16px;color:var(--muted)">El transporte escrito está en construcción.</p>
-      </div>
+      <div id="trHostEscrito"><div class="ex-card" style="text-align:center;padding:48px 24px"><p style="font-size:16px;color:var(--muted)">Cargando…</p></div></div>
     </div>
 
     <!-- ---------- PESTAÑA MENTAL ---------- -->
+    <!-- R6 10-jul-2026 · portada del transporte MENTAL (motor de fichas reutilizado en el portal) -->
     <div class="tr-panel" id="trPanel-mental" style="display:none">
-      <div class="ex-card" style="text-align:center;padding:48px 24px">
-        <p style="font-size:16px;color:var(--muted)">El transporte mental está en construcción.</p>
-      </div>
+      <div id="trHostMental"><div class="ex-card" style="text-align:center;padding:48px 24px"><p style="font-size:16px;color:var(--muted)">Cargando…</p></div></div>
     </div>
   </div>
 
@@ -7416,21 +7414,50 @@ function trInit(){
   if(!window._trWired){ window._trWired=true; wireTabs(); }
   if(!EJ) trNuevo();
 }
+/* R6 10-jul-2026 · pestaña activa del transporte del portal (resumen | escrita | mental) */
+let trTabActual='sintesis';
+/* R6 10-jul-2026 · genera y monta el ejercicio ESCRITO en su pestaña del portal
+   (reutiliza el motor de fichas window.TR_ESC_MOTOR; el panel ya trae ✓ Corregir y ↶ Deshacer). */
+function trMontarEscrito(){
+  const host=document.getElementById('trHostEscrito'); if(!host) return;
+  if(!window.TR_ESC_MOTOR){ host.innerHTML='<div class="ex-card" style="text-align:center;padding:48px 24px"><p style="font-size:16px;color:var(--muted)">(motor de transporte no disponible)</p></div>'; return; }
+  const g=window.TR_ESC_MOTOR.generar();
+  window.TR_ESC_MOTOR.montarEn(host, g);
+}
+/* R6 10-jul-2026 · idem para el MENTAL (window.TR_MENTAL_MOTOR). */
+function trMontarMental(){
+  const host=document.getElementById('trHostMental'); if(!host) return;
+  if(!window.TR_MENTAL_MOTOR){ host.innerHTML='<div class="ex-card" style="text-align:center;padding:48px 24px"><p style="font-size:16px;color:var(--muted)">(motor de transporte no disponible)</p></div>'; return; }
+  const g=window.TR_MENTAL_MOTOR.generar();
+  window.TR_MENTAL_MOTOR.montarEn(host, g);
+}
 function wireTabs(){
   document.querySelectorAll('#trTabs .tr-tab').forEach(b=>{
     b.addEventListener('click',()=>{
       const tab=b.dataset.tab;
+      trTabActual=tab;   /* R6 10-jul-2026 */
       document.querySelectorAll('#trTabs .tr-tab').forEach(x=>x.classList.toggle('active',x===b));
       ['sintesis','escrita','mental'].forEach(t=>{
         const p=document.getElementById('trPanel-'+t); if(p) p.style.display=(t===tab)?'block':'none';
       });
-      // el botón "Nuevo" sólo actúa en Resumen por ahora
-      document.getElementById('trNuevoBtn').style.visibility=(tab==='sintesis')?'visible':'hidden';
+      /* R6 10-jul-2026 · el dado ("Nuevo") actúa en las TRES pestañas; el "Ejemplo
+         resuelto" solo tiene sentido en Resumen (escrito/mental no llevan ejemplo). */
+      document.getElementById('trNuevoBtn').style.visibility='visible';
+      const bej=document.querySelector('#view-transporte .btn-ejemplo'); if(bej) bej.style.visibility=(tab==='sintesis')?'visible':'hidden';
+      /* R6 10-jul-2026 · montaje perezoso: la primera vez que se entra en escrito/mental,
+         se genera su ejercicio. Después se conserva hasta pulsar el dado. */
+      if(tab==='escrita' && !host_trEscMontado){ host_trEscMontado=true; trMontarEscrito(); }
+      if(tab==='mental'  && !host_trMenMontado){ host_trMenMontado=true; trMontarMental(); }
     });
   });
 }
+let host_trEscMontado=false, host_trMenMontado=false;   /* R6 10-jul-2026 */
 
 function trNuevo(){
+  /* R6 10-jul-2026 · el dado genera un ejercicio nuevo en la PESTAÑA ACTIVA.
+     En escrito/mental se remonta su motor de fichas; en resumen, el flujo de siempre. */
+  if(trTabActual==='escrita'){ host_trEscMontado=true; trMontarEscrito(); return; }
+  if(trTabActual==='mental'){ host_trMenMontado=true; trMontarMental(); return; }
   EJ=genEjercicio(); locked=false;
   sel={ armA:0, notaB:null, altB:0, modoB:null, armB:0, dif:0, dir:null, notas:{} };
   document.getElementById('trFeedback').innerHTML='';
