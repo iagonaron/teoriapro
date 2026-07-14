@@ -10762,6 +10762,19 @@ window.abrirGenerador=function(){ try{ abrirPanel(null,null); }catch(e){} };
 var ALU=null;   // { cuenta, ficha, numero, items:[{n,key,label,enun,item}], i, entregada }
 
 function progClaveLS(cuenta, ficha){ return 'suite_ficha_prog_'+cuenta+'_'+ficha; }
+/* WAVE15 · instantánea COMPLETA del ejercicio (para la revisión del profesor):
+   quita funciones, nodos DOM y claves __privadas; deja todos los datos. */
+function fpSanitEstado(o){
+  try{
+    return JSON.parse(JSON.stringify(o, function(k,v){
+      if(typeof k==='string' && k.indexOf('__')===0) return undefined;
+      if(typeof v==='function') return undefined;
+      if(v && typeof v==='object' && v.nodeType!=null) return undefined;
+      if(typeof Element!=='undefined' && v instanceof Element) return undefined;
+      return v;
+    }));
+  }catch(e){ return null; }
+}
 function respuestaDe(it){
   // instantánea plana de lo que el alumno lleva puesto (rehidratable)
   try{ return { userArm:(it.item.userArm!=null?it.item.userArm:null),
@@ -11080,7 +11093,7 @@ function entregarFicha(){
   if(!_idx.length) _idx=ALU.items.map(function(_,k){ return k; });
   var suma=_idx.reduce(function(a,k){ return a+pcts[k]; },0);
   var nota=Math.round((suma*10/_idx.length)*10)/10;
-  ALU.entregada=true;
+  ALU.entregada=true; ALU.__notaFinal=nota; ALU.__pcts=pcts;   /* WAVE13: para el buzón de incidencias */
   window.scrollTo({top:0, behavior:'smooth'});
   var _so2=el('fpSimOv'); if(_so2){ try{ _so2.scrollTo({top:0, behavior:'smooth'}); }catch(e){ _so2.scrollTop=0; } }
   fpPantallaCorrigiendo(N, function(){
@@ -11099,7 +11112,9 @@ function fpEnviarNota(nota, pcts){
     nota:nota, escala:10,
     ejercicios:ALU.items.map(function(it,k){
       return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(pcts[k]*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined };
-    })
+    }),
+    respuestas:ALU.items.map(respuestaDe),
+    estado:ALU.items.map(function(it){ return fpSanitEstado(it.item); })   /* WAVE15: lo que el alumno ingresó, rastreable */
   };
   var sb=fpSb();
   var pinta=function(msg,tipo){ var s2=el('aluEnvEstado'); if(s2){ s2.textContent=msg; s2.className='fp-status '+(tipo||''); } };
@@ -11158,7 +11173,18 @@ function pintaResultado(nota, pcts){
       '</div>'+
       '<div class="fp-status" id="aluEnvEstado" style="margin:14px auto 0;max-width:560px"></div>'+
     '</div>'+
-    '<div style="margin-top:8px">'+filas+'</div>';
+    '<div style="margin-top:8px">'+filas+'</div>'+
+    (ALU.simulado?'':(
+    '<details id="aluFbBox" style="margin:26px auto 8px;max-width:680px;background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.3);border-radius:14px;padding:12px 16px">'+
+      '<summary style="cursor:pointer;font-weight:800;color:#e9c96a;font-size:14px;list-style-position:inside">💬 ¿Crees que algún ejercicio está mal corregido o tuviste algún problema con la ficha?</summary>'+
+      '<div style="color:var(--muted);font-size:12.5px;margin-top:8px">Deja aquí tu comentario y me encargo de solucionarlo. ¡Gracias por la comprensión!</div>'+
+      '<div id="aluFbList"></div>'+
+      '<div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">'+
+        '<button class="fp-mini" id="aluFbMas" type="button" style="padding:8px 13px;font-size:12.5px">＋ Añadir otro ejercicio</button>'+
+        '<button class="fp-mini" id="aluFbSend" type="button" style="padding:9px 16px;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;font-weight:800">Enviar comentario</button>'+
+        '<span id="aluFbSt" style="font-size:12.5px;font-weight:700"></span>'+
+      '</div>'+
+    '</details>'));
   // re-render coloreado de cada ejercicio (verde/rojo/azul) — calco del GE
   requestAnimationFrame(function(){
     c.querySelectorAll('.fp-corr-host').forEach(function(h){
@@ -11175,6 +11201,93 @@ function pintaResultado(nota, pcts){
   c.querySelectorAll('[data-prac]').forEach(function(b){
     b.addEventListener('click', function(){ fpModalPracticar(b.getAttribute('data-prac')); });
   });
+  /* WAVE14 · buzón de incidencias v2: plegado, varios ejercicios, abajo del todo */
+  var fbB=el('aluFbSend');
+  if(fbB && !fbB._fp){ fbB._fp=true;
+    var fbRow=function(){
+      var d=document.createElement('div'); d.className='aluFbItem';
+      d.style.cssText='margin-top:10px;padding-top:10px;border-top:1px dashed rgba(212,175,55,.22)';
+      d.innerHTML=
+        '<label style="font-size:12px;color:var(--muted)">Ejercicio nº <input class="fbN" type="number" min="1" style="width:60px;background:rgba(0,0,0,.3);border:1px solid #6b551d;border-radius:6px;color:#f0e6c8;padding:5px 7px"> <span style="opacity:.7">(opcional)</span></label>'+
+        '<textarea class="fbT" placeholder="Cuéntame qué pasó…" style="width:100%;min-height:60px;margin-top:6px;background:rgba(0,0,0,.3);border:1px solid #6b551d;border-radius:8px;color:#f0e6c8;padding:8px;font:13px/1.45 inherit;box-sizing:border-box"></textarea>';
+      el('aluFbList').appendChild(d);
+    };
+    fbRow();
+    var fbMas=el('aluFbMas'); if(fbMas) fbMas.addEventListener('click', fbRow);
+    fbB.addEventListener('click', function(){
+      var st=el('aluFbSt');
+      var items=[]; el('aluFbList').querySelectorAll('.aluFbItem').forEach(function(d){
+        var t=(d.querySelector('.fbT').value||'').trim(); if(!t) return;
+        var n=parseInt(d.querySelector('.fbN').value,10);
+        items.push({ n:(isFinite(n)?n:null), texto:t });
+      });
+      if(!items.length){ if(st){ st.textContent='Escribe al menos un comentario.'; st.style.color='#ffb4b4'; } return; }
+      var sb=fpSb(); if(!sb || !ALU || ALU.simulado){ if(st){ st.textContent='(solo disponible en la ficha real)'; st.style.color='#ffb4b4'; } return; }
+      if(st){ st.textContent='Enviando…'; st.style.color='#c9b978'; }
+      var pay={ nota:ALU.__notaFinal, escala:10,
+        ejercicios:ALU.items.map(function(it,k){ return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(((ALU.__pcts&&ALU.__pcts[k])||0)*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined }; }),
+        respuestas:ALU.items.map(respuestaDe),
+        estado:ALU.items.map(function(it){ return fpSanitEstado(it.item); }),
+        feedback:{ items:items, texto:items.map(function(i2){ return (i2.n!=null?('Ej. '+i2.n+': '):'')+i2.texto; }).join('\n'), fecha:new Date().toISOString() } };
+      sb.rpc('suite_ficha_entregar', { p_cuenta_id:ALU.cuenta, p_ficha_id:ALU.ficha, p_nota:ALU.__notaFinal, p_payload:pay })
+        .then(function(r){ if(r&&r.error) throw r.error; var d=r&&r.data; if(d&&d.ok===false) throw new Error(d.error||'error');
+          if(st){ st.textContent='✓ Comentario enviado a Iago. ¡Gracias!'; st.style.color='#22c98a'; } fbB.disabled=true; })
+        .catch(function(e){ if(st){ st.textContent='No se pudo enviar ('+((e&&e.message)||e)+'). Inténtalo otra vez.'; st.style.color='#ffb4b4'; } });
+    });
+  }
+}
+
+/* --------- WAVE15 · REVISIÓN DEL PROFESOR: ?revision=<ficha>:<cuenta>&s=<secreto> --------- */
+async function fpModoRevision(rev, sec){
+  var portal=el('view-portal'); if(portal) portal.style.display='none';
+  var v=el('view-fichapro'); v.style.display='block';
+  var wrap=v.querySelector('.fp-wrap');
+  wrap.innerHTML='<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700">Cargando revisión…</div>';
+  try{
+    var partes=String(rev).split(':'); var fichaId=partes[0], cuenta=partes[1];
+    if(!fichaId||!cuenta) throw new Error('enlace_invalido');
+    var intentos=0; while(!(window.supabase&&window.supabase.createClient)&&intentos<60){ await new Promise(function(r2){setTimeout(r2,100);}); intentos++; }
+    var sb=fpSb(); if(!sb) throw new Error('sin_supabase');
+    var r=await sb.rpc('suite_ficha_revision',{ p_secreto:sec, p_ficha_id:fichaId, p_cuenta_id:cuenta });
+    if(r&&r.error) throw r.error;
+    var d=r&&r.data; if(!d||d.ok!==true) throw new Error((d&&d.error)||'no_disponible');
+    var pl=d.payload||{};
+    var pack=fpExtraerPaquete({ ejercicios_json:d.ejercicios_json });
+    if(!pack||!pack.ejercicios.length) throw new Error('ficha_vacia');
+    ALU={ simulado:true, revision:true, cuenta:null, ficha:null,
+          numero:(d.numero!=null?d.numero:'—'),
+          anulados:(pl.anulados||[]).map(Number),
+          entregada:true, i:0,
+          items:pack.ejercicios.map(function(e,k){
+            var est=(Array.isArray(pl.estado)&&pl.estado[k])?clon(pl.estado[k]):null;   /* lo que ingresó el alumno */
+            var item=est||clon((e.motor&&e.motor._spec)||{});
+            return { n:e.n, key:e.key, label:e.label||'Ejercicio', enun:e.enun||'', item:item };
+          }) };
+    if(!Array.isArray(pl.estado) && Array.isArray(pl.respuestas)){
+      pl.respuestas.forEach(function(rr,k){ if(ALU.items[k]) aplicaRespuesta(ALU.items[k], rr); });
+    }
+    var pcts=ALU.items.map(function(it,k){
+      var pj=(pl.ejercicios&&pl.ejercicios[k])?pl.ejercicios[k].pct:null;
+      if(pj!=null && isFinite(+pj)){ var v2=+pj; return v2>1.0001? v2/100 : v2; }
+      try{ return fpMotorDe(it.item).puntua(it.item); }catch(e){ return 0; }
+    });
+    var nota=(d.nota!=null && isFinite(+d.nota)) ? Math.round((+d.nota)*10)/10
+             : Math.round((pcts.reduce(function(a,b){return a+b;},0)*10/Math.max(1,pcts.length))*10)/10;
+    wrap.innerHTML=aluHtmlBase();
+    pintaResultado(nota, pcts);
+    try{ fpRevelarNota(nota); }catch(e){}
+    /* banner del profesor + los comentarios del alumno, arriba del todo */
+    var c=el('aluCuerpo');
+    var fbi=null;
+    if(pl.feedback){ fbi=(pl.feedback.items&&pl.feedback.items.length)?pl.feedback.items:(pl.feedback.texto?[{n:pl.feedback.n,texto:pl.feedback.texto}]:null); }
+    var ban=document.createElement('div');
+    ban.style.cssText='margin:0 0 16px;background:rgba(255,184,77,.12);border:1px solid rgba(255,184,77,.55);border-radius:12px;padding:12px 16px;color:#ffd9a0;font-size:13px;line-height:1.55';
+    ban.innerHTML='<b>🔍 REVISIÓN DEL PROFESOR</b> · Ficha '+(d.numero!=null?d.numero:'—')+' · nota registrada: <b>'+String(nota).replace('.',',')+'</b> · abajo, la ficha EXACTA que vio el alumno (sus respuestas en verde/rojo, la solución en azul)'+
+      (fbi?('<div style="margin-top:8px;border-top:1px dashed rgba(255,184,77,.4);padding-top:8px">'+fbi.map(function(x){ return '💬 '+(x.n!=null?('<b>Ej. '+x.n+':</b> '):'')+String(x.texto||'').replace(/</g,'&lt;'); }).join('<br>')+'</div>'):'');
+    if(c) c.insertBefore(ban, c.firstChild);
+  }catch(e){
+    wrap.innerHTML='<div style="margin:20vh auto;max-width:560px;text-align:center;color:var(--muted);font-size:15px">No se pudo cargar la revisión: <b>'+(((e&&e.message)||e)+'').replace(/</g,'&lt;')+'</b><br><br>¿Ejecutaste la v4 de anulaciones_supabase.sql (función suite_ficha_revision)?</div>';
+  }
 }
 
 /* --------- arranque alumno --------- */
@@ -11264,6 +11377,7 @@ document.addEventListener('DOMContentLoaded', function(){
   var qs=new URLSearchParams(location.search);
   if(qs.get('panel')==='profesor'){ abrirPanel(qs.get('ficha'), qs.get('envio')); return; }
   if(qs.get('fichaId')){ arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
+  if(qs.get('revision') && qs.get('s')){ fpModoRevision(qs.get('revision'), qs.get('s')); return; }   /* WAVE15 */
   var prac=qs.get('practice');
   if(prac){
     var vista=FP_PRACTICE_VIEW[prac]||prac;
