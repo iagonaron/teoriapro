@@ -9444,6 +9444,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     background:linear-gradient(165deg,rgba(212,175,55,.1),rgba(16,11,3,.6));
     box-shadow:0 18px 50px rgba(0,0,0,.35)}
   .fp-alu-card #aluHost .score, .fp-alu-card #aluHost svg{min-height:150px}
+  /* los ICONOS (botones de paleta, ruedas…) no son partitura: sin alto mínimo */
+  .fp-alu-card #aluHost button svg, .fp-alu-card #aluHost .wheel svg{min-height:0;height:auto}
   /* fondo blanco de pentagrama para el sistema de fichas (el PRO no tenía .penta) */
   svg.penta{background:#f3f5ff;border-radius:12px;display:block;width:100%;height:auto}
   #aluHost .gr-score, .fp-corr-host, .fp-corr-host svg{background:#f3f5ff;border-radius:12px}
@@ -9519,6 +9521,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     <div class="fp-pie">
       <button class="fp-enviar" id="fpEnviar" type="button">📨 Preparar envío a alumnos</button>
       <button class="fp-mini" id="fpPdf" type="button" style="padding:13px 18px;font-size:14.5px">🖨 Generar PDF (ZIP: alumno + solución)</button>
+      <button class="fp-mini" id="fpSimular" type="button" style="padding:13px 18px;font-size:14.5px">▶ Previsualizar como alumno</button>
       <span class="fp-valor" id="fpValor"></span>
     </div>
     <div class="fp-status" id="fpStatus"></div>
@@ -10668,8 +10671,35 @@ function aplicaRespuesta(it, r){
     }
   }catch(e){}
 }
+/* ===== SIMULACIÓN "como alumno" (panel del profesor): el flujo REAL del alumno en un
+   overlay, sin Supabase ni progreso. El panel queda intacto debajo. ===== */
+function fpSimularAlumno(){
+  if(!FP.ejercicios.length){ var st=el('fpStatus'); if(st){ st.textContent='ⓘ Añade al menos un ejercicio del catálogo para previsualizar.'; st.className='fp-status info'; } return; }
+  var v=el('view-fichapro');
+  var old=el('fpSimOv'); if(old) old.remove();
+  var ov=document.createElement('div'); ov.id='fpSimOv';
+  ov.style.cssText='position:fixed;inset:0;z-index:100000;overflow:auto;background:radial-gradient(1200px 700px at 70% -10%, #241a08, #100b03 55%, #0a0702)';
+  var bar=document.createElement('div');
+  bar.style.cssText='position:sticky;top:0;z-index:6;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:10px 18px;background:linear-gradient(180deg,rgba(10,7,2,.95),rgba(10,7,2,.78) 70%,transparent);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px)';
+  bar.innerHTML='<span style="font-size:11px;letter-spacing:.16em;text-transform:uppercase;font-weight:900;color:#1a1305;background:linear-gradient(135deg,#e9c96a,#b8860b);padding:6px 12px;border-radius:99px">Simulación · vista del alumno</span>';
+  var out=document.createElement('button'); out.type='button'; out.textContent='✕ Salir de la simulación';
+  out.style.cssText='border:1px solid rgba(212,175,55,.5);background:rgba(212,175,55,.1);color:#f3e4b0;border-radius:10px;padding:9px 14px;font-weight:800;font-size:13px;cursor:pointer';
+  out.onclick=function(){ try{ ov.remove(); }catch(e){} ALU=null; };
+  bar.appendChild(out); ov.appendChild(bar);
+  var wrap=document.createElement('div'); wrap.className='fp-wrap'; wrap.style.cssText='max-width:1040px;margin:0 auto;padding:4px 20px 90px';
+  ov.appendChild(wrap);
+  v.appendChild(ov);
+  ALU={ simulado:true, cuenta:null, ficha:null,
+        numero:(FP.numero!=null?FP.numero:'\u2014'),
+        entregada:false, i:0, __wrapSim:wrap,
+        items:FP.ejercicios.map(function(e,k){
+          return { n:k+1, key:e.key, label:e.label||'Ejercicio', enun:fpEnun(e), item:clon(e.spec) };
+        }) };
+  pintaAlu();
+  ov.scrollTop=0;
+}
 function progGuardar(){
-  if(!ALU || ALU.entregada) return;
+  if(!ALU || ALU.entregada || ALU.simulado) return;   /* la simulación no guarda progreso */
   var respuestas=ALU.items.map(respuestaDe);
   var hechos=ALU.items.filter(function(it){
     var r=respuestaDe(it);
@@ -10772,6 +10802,7 @@ function fpConfeti(){
 /* pantalla "Corrigiendo tu ficha…" (sensación de cómputo) antes de la nota */
 function fpPantallaCorrigiendo(N, cb){
   var c=el('aluCuerpo'); if(!c){ cb(); return; }
+  var fill=el('aluProgFill'); if(fill) fill.style.width='100%';
   var chips=''; for(var i2=0;i2<N;i2++) chips+='<span class="fp-chip">'+(i2+1)+'</span>';
   c.innerHTML='<div class="fp-alu-card fp-sim-enter" style="max-width:640px;margin:26px auto 0;text-align:center;padding:34px 22px">'+
       '<div class="fp-corr-ring"></div>'+
@@ -10811,7 +10842,7 @@ function aluHtmlBase(){
 }
 function pintaAlu(){
   var v=el('view-fichapro');
-  var wrap=v.querySelector('.fp-wrap');
+  var wrap=(ALU&&ALU.__wrapSim)?ALU.__wrapSim:v.querySelector('.fp-wrap');
   if(!wrap.querySelector('#aluCuerpo')) wrap.innerHTML=aluHtmlBase();
   var N=ALU.items.length, i=ALU.i;
   var fill=el('aluProgFill');
@@ -10846,6 +10877,7 @@ function pintaAlu(){
       if(t && t.closest && t.closest('button, .acc-btn, .ac-invbtn, .tr-nota') && !t.closest('#aluNext,#aluFin,#aluPrev')){ window.SFX.tap(); } }catch(e){} }, true);
   }
   ALU.__dir=null;
+  var _so=el('fpSimOv'); if(_so) _so.scrollTop=0;   /* en simulación, el scroll es del overlay */
 }
 var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', indice:'indiceacustico', tonalidades:'tonalidades', comp_elegir:'compases', comp_rellenar:'compases', comp_replicar:'compases', seriearmonica:'seriearmonica' };
 function fpModalPracticar(key){
@@ -10883,6 +10915,7 @@ function entregarFicha(){
   var nota=Math.round((suma*10/N)*10)/10;
   ALU.entregada=true;
   window.scrollTo({top:0, behavior:'smooth'});
+  var _so2=el('fpSimOv'); if(_so2){ try{ _so2.scrollTo({top:0, behavior:'smooth'}); }catch(e){ _so2.scrollTop=0; } }
   fpPantallaCorrigiendo(N, function(){
     pintaResultado(nota, pcts);
     fpRevelarNota(nota);
@@ -10890,6 +10923,11 @@ function entregarFicha(){
   });
 }
 function fpEnviarNota(nota, pcts){
+  if(ALU && ALU.simulado){
+    var _s3=el('aluEnvEstado');
+    if(_s3){ _s3.textContent='\u24d8 Simulaci\u00f3n: la nota NO se env\u00eda (solo pruebas del profesor).'; _s3.className='fp-status info'; }
+    return;
+  }
   var payload={
     nota:nota, escala:10,
     ejercicios:ALU.items.map(function(it,k){
@@ -11074,6 +11112,7 @@ try{
   var engancha=function(){
     var b2=el('fpEnviar'); if(b2 && !b2._fp){ b2._fp=true; b2.addEventListener('click', enviar); }
     var bp=el('fpPdf');    if(bp && !bp._fp){ bp._fp=true; bp.addEventListener('click', fpGenerarPDF); }
+    var bs=el('fpSimular'); if(bs && !bs._fp){ bs._fp=true; bs.addEventListener('click', fpSimularAlumno); }
   };
   if(b) engancha();
   document.addEventListener('DOMContentLoaded', engancha);
