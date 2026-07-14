@@ -11894,19 +11894,19 @@ function fpPintaCompElegir(host, spec, resuelto, anchoFijo){
     var padTop=0, rowH=68, SA=1.5, MID=SA*10+20;   // filas separadas: las claves de sol no se tocan
     var H=padTop+(subs.length-1)*rowH+(SA*10+40)+30;
     var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
-    var staffX=4, staffW=Math.round(W*0.56), optX0=staffX+staffW+20;
-    var optW=(W-optX0-8-2*10)/3, boxH=40;
+    var staffX=4, staffW=Math.round(W*0.65), optX0=staffX+staffW+14;   /* WAVE8: música 65% */
+    var optW=(W-optX0-6-2*8)/3, boxH=40;
     subs.forEach(function(sub,i){ var staffY=padTop+i*rowH; window.CMP_PURE.drawRhythmCtx(ctx, sub.bars, staffX, staffY, staffW, {finalDouble:true, spaceAbove:SA, clef:true}); });
     var svg=host.querySelector('svg'); if(!svg) return;
     subs.forEach(function(sub,i){
       var cy=padTop+i*rowH+MID;   // centro de opciones = línea central del pentagrama
       sub.options.forEach(function(o,j){
-        var x=optX0+j*(optW+10), y=cy-boxH/2;
+        var x=optX0+j*(optW+8), y=cy-boxH/2;
         var esOk=(resuelto && o.ok);
         var rect=document.createElementNS(svgns,'rect'); rect.setAttribute('x',x); rect.setAttribute('y',y); rect.setAttribute('width',optW); rect.setAttribute('height',boxH); rect.setAttribute('rx',9);
         rect.setAttribute('fill','#ffffff'); rect.setAttribute('stroke','#c9b98a'); rect.setAttribute('stroke-width','1.2'); svg.appendChild(rect);
         /* casilla cuadrada a la izquierda: el alumno MARCA (no rodea); en solución se marca con X roja */
-        var cbs=13, cbx=x+7, cby=cy-cbs/2;
+        var cbs=12, cbx=x+6, cby=cy-cbs/2;
         var cb=document.createElementNS(svgns,'rect'); cb.setAttribute('x',cbx); cb.setAttribute('y',cby); cb.setAttribute('width',cbs); cb.setAttribute('height',cbs);
         cb.setAttribute('fill','#fff'); cb.setAttribute('stroke','#8a8a8a'); cb.setAttribute('stroke-width','1.1'); svg.appendChild(cb);
         if(esOk){
@@ -11915,7 +11915,7 @@ function fpPintaCompElegir(host, spec, resuelto, anchoFijo){
             ln.setAttribute('stroke','#e11d1d'); ln.setAttribute('stroke-width','2'); svg.appendChild(ln); });
         }
         var cw=window.CMP_PURE.compasWidth(o.form, o.spec);
-        var zx=x+cbs+10;   // zona del compás: a la derecha de la casilla
+        var zx=x+cbs+8;   // zona del compás: a la derecha de la casilla
         window.CMP_PURE.drawCompas(svg, zx+((x+optW)-zx)/2-cw/2, cy, o.form, o.spec, esOk?'#e11d1d':'#2b2b2b');
       });
     });
