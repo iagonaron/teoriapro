@@ -4990,6 +4990,7 @@ function dibujarCompases(hostId, items, opts){
           map[st+oct]={step:st,octave:oct,y};
         }
         opts._ymap=map;
+        opts._yTopLine=yTop; opts._yBotLine=yBot; opts._lineGap=(yBot-yTop)/4;   /* WAVE17: para las líneas adicionales del ghost */
       }
     }catch(e){}
   }
@@ -5003,7 +5004,7 @@ function dibujarCompases(hostId, items, opts){
       opts._viewTop=top;
     }
   }catch(e){}
-  return {noteX, W, H, ymap:opts._ymap||null, viewTop:opts._viewTop||0};
+  return {noteX, W, H, ymap:opts._ymap||null, viewTop:opts._viewTop||0, yTopLine:(opts._yTopLine!=null?opts._yTopLine:null), yBotLine:(opts._yBotLine!=null?opts._yBotLine:null), lineGap:opts._lineGap||null};
 }
 
 /* ===== RUEDA iOS (makeWheel) ===== */
@@ -5162,7 +5163,8 @@ function gnUndoIVB(){
 }
 window.gnUndoIVB=gnUndoIVB;
 function clearBGhost(){ const g=document.getElementById('bghostPRO'); if(g) g.style.display='none';
-  const host=document.getElementById('scoreB'); if(host) host._gnLastNat=null; /* R5 10-jul-2026 */ }
+  const host=document.getElementById('scoreB'); if(host){ host._gnLastNat=null; /* R5 10-jul-2026 */
+    const svg=host.querySelector('svg'); if(svg) svg.querySelectorAll('.ivbledB').forEach(e=>e.remove()); } }   /* WAVE17 */
 function svgPointB(e){
   const host=document.getElementById('scoreB');
   const svg=host.querySelector('svg'); if(!svg||!bMeta) return null;
@@ -5186,6 +5188,14 @@ function onBoardHoverB(e){
     const pt=p.svg.createSVGPoint(); pt.x=xGhost; pt.y=yGhost;
     const sp=pt.matrixTransform(p.svg.getScreenCTM());
     g.style.left=(sp.x-p.rect.left-6)+'px'; g.style.top=(sp.y-p.rect.top-5)+'px'; g.style.display='block';
+    /* WAVE17 · líneas adicionales del ghost (fuera del pentagrama) */
+    p.svg.querySelectorAll('.ivbledB').forEach(e2=>e2.remove());
+    const yT=bMeta.yTopLine, yB=bMeta.yBotLine, lg2=bMeta.lineGap;
+    if(yT!=null && lg2){ const led=[];
+      if(yGhost<yT-0.5){ for(let yl=yT-lg2;yl>=yGhost-0.5;yl-=lg2) led.push(yl); }
+      else if(yGhost>yB+0.5){ for(let yl2=yB+lg2;yl2<=yGhost+0.5;yl2+=lg2) led.push(yl2); }
+      led.forEach(yl=>{ const ln=document.createElementNS('http://www.w3.org/2000/svg','line'); ln.setAttribute('class','ivbledB'); ln.setAttribute('x1',xGhost-11); ln.setAttribute('x2',xGhost+11); ln.setAttribute('y1',yl); ln.setAttribute('y2',yl); ln.setAttribute('stroke','#caa93f'); ln.setAttribute('stroke-width','1.4'); p.svg.appendChild(ln); });
+    }
   }catch(err){ g.style.display='none'; }
 }
 function nearestMidiByY(my){
@@ -9611,16 +9621,6 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
       <span class="fp-valor" id="fpValor"></span>
     </div>
     <div class="fp-status" id="fpStatus"></div>
-    <details id="fpAnulaBox" style="margin-top:14px;border:1px dashed rgba(212,175,55,.35);border-radius:12px;padding:10px 14px;color:var(--muted)">
-      <summary style="cursor:pointer;font-weight:800;color:#c9b978">🛟 Recalculadora de notas · anular un ejercicio de una ficha ya entregada</summary>
-      <div style="font-size:12.5px;margin-top:8px;line-height:1.55">Si detectas un ejercicio con errores después de que los alumnos entreguen: pega debajo los <b>payload</b> de las entregas (la columna <code>payload</code> de Supabase; uno por línea o un array JSON completo), di qué ejercicio(s) anulas y te devuelvo la nota recalculada de cada alumno — la media se hace SOLO con los ejercicios restantes.</div>
-      <textarea id="fpAnulaIn" style="width:100%;min-height:110px;margin-top:8px;background:rgba(0,0,0,.3);border:1px solid #6b551d;border-radius:8px;color:#f0e6c8;padding:8px;font:12px/1.4 monospace" placeholder='{"nota":6.4,"escala":10,"ejercicios":[{"n":1,"key":"…","pct":0.5},…]}'></textarea>
-      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
-        <label style="font-size:12.5px;font-weight:700">Anular ejercicio(s) nº <input id="fpAnulaN" style="width:90px;background:rgba(0,0,0,.3);border:1px solid #6b551d;border-radius:6px;color:#f0e6c8;padding:5px 7px" placeholder="3 o 3,7"></label>
-        <button class="fp-mini" id="fpAnulaGo" type="button" style="padding:8px 14px">Recalcular</button>
-      </div>
-      <div id="fpAnulaOut" style="margin-top:10px;font:12.5px/1.65 monospace;white-space:pre-wrap;color:#e9d9a8"></div>
-    </details>
     <div id="fpExitoHueco"></div>
   </div>
   <div id="fpPrev">
@@ -11404,25 +11404,6 @@ try{
     var b2=el('fpEnviar'); if(b2 && !b2._fp){ b2._fp=true; b2.addEventListener('click', enviar); }
     var bp=el('fpPdf');    if(bp && !bp._fp){ bp._fp=true; bp.addEventListener('click', fpGenerarPDF); }
     var bs=el('fpSimular'); if(bs && !bs._fp){ bs._fp=true; bs.addEventListener('click', fpSimularAlumno); }
-    var ba=el('fpAnulaGo'); if(ba && !ba._fp){ ba._fp=true; ba.addEventListener('click', function(){
-      var out=el('fpAnulaOut'); var raw=(el('fpAnulaIn').value||'').trim();
-      var ns=String(el('fpAnulaN').value||'').split(/[\s,;]+/).map(function(x){ return parseInt(x,10); }).filter(function(x){ return x>0; });
-      if(!raw){ out.textContent='Pega al menos un payload.'; return; }
-      if(!ns.length){ out.textContent='Indica el nº de ejercicio a anular (el que aparece en la ficha).'; return; }
-      var rows;
-      try{ var j=JSON.parse(raw); rows=Array.isArray(j)?j:[j]; }
-      catch(e){ rows=raw.split(/\n+/).map(function(l){ l=l.trim().replace(/,$/,''); if(!l) return null; try{ return JSON.parse(l); }catch(e2){ return {__err:true}; } }).filter(Boolean); }
-      var lines=rows.map(function(p,i){
-        if(!p || p.__err || !p.ejercicios || !p.ejercicios.length) return 'fila '+(i+1)+': ⚠ no es un payload válido';
-        var resto=p.ejercicios.filter(function(e2){ return ns.indexOf(e2.n)<0; });
-        if(!resto.length) return 'fila '+(i+1)+': ⚠ no quedan ejercicios que contar';
-        var esCien=resto.some(function(e2){ return (+e2.pct||0)>1.0001; });   /* pct 0–100 (elemental) o 0–1 (pro) */
-        var media=resto.reduce(function(a,e2){ var v=(+e2.pct||0); return a+(esCien?v/100:v); },0)/resto.length;
-        var nueva=Math.round(media*100)/10;
-        return 'fila '+(i+1)+': '+(p.nota!=null?('nota '+String(p.nota).replace('.',',')+' → '):'')+'NUEVA NOTA '+String(nueva).replace('.',',')+'   ('+resto.length+' ejercicios contados)';
-      });
-      out.textContent='Anulado(s): ejercicio '+ns.join(', ')+'\n'+lines.join('\n');
-    }); }
     var bl=el('fpLimpiar'); if(bl && !bl._fp){ bl._fp=true; bl.addEventListener('click', function(){
       if(!FP.ejercicios.length){ status('ⓘ La ficha ya está vacía.','info'); return; }
       FP.ejercicios=[]; pintaLista(); status('✓ Ficha vaciada: puedes componer una nueva.','ok');
