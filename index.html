@@ -7,6 +7,20 @@
 <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/soundfont-player@0.12.0/dist/soundfont-player.min.js"></script>
 <script>
+/* WAVE12 · dispositivo táctil: consejos adaptados y sin zoom por doble toque */
+window.ES_TACTIL=(function(){ try{ return matchMedia('(pointer: coarse)').matches; }catch(e){ return ('ontouchstart' in window); } })();
+window.TXT_TIP=function(raton,tactil){ return window.ES_TACTIL?tactil:raton; };
+document.addEventListener('DOMContentLoaded', function(){
+  try{
+    var st=document.createElement('style');
+    st.textContent='html,body{touch-action:manipulation} button,.wheel,svg,.acc-btn{touch-action:manipulation}';
+    document.head.appendChild(st);
+    if(window.ES_TACTIL){
+      /* pistas estáticas: fuera lo de «clic derecho» en tablet */
+      document.querySelectorAll('p.hint').forEach(function(p){ p.innerHTML=p.innerHTML.replace(/\s*\(o clic derecho\)/g,'').replace(/\s*o clic derecho/g,''); });
+    }
+  }catch(e){}
+});
 /* GN-UNIF 8-jul-2026 · utilidades compartidas de interacción táctil:
    × fija de borrado junto a cada nota colocada + botón "↶ Deshacer".
    Las usan todos los motores con colocación por ghost note. */
@@ -1948,7 +1962,7 @@ function wheelTick(){
     o.frequency.exponentialRampToValueAtTime(180,t+0.05);
     lp.type='lowpass'; lp.frequency.setValueAtTime(1200,t);
     g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(0.05,t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.026,t+0.006);   /* WAVE12: tick más suave */
     g.gain.exponentialRampToValueAtTime(0.0001,t+0.07);
     o.connect(lp).connect(g).connect(ctx.destination); o.start(t); o.stop(t+0.09);
   }catch(e){}
@@ -3277,7 +3291,7 @@ function wheelTick(){
     o.frequency.exponentialRampToValueAtTime(180,t+0.05);
     lp.type='lowpass'; lp.frequency.setValueAtTime(1200,t);
     g.gain.setValueAtTime(0.0001,t);
-    g.gain.exponentialRampToValueAtTime(0.05,t+0.006);
+    g.gain.exponentialRampToValueAtTime(0.026,t+0.006);   /* WAVE12: tick más suave */
     g.gain.exponentialRampToValueAtTime(0.0001,t+0.07);
     o.connect(lp).connect(g).connect(ctx.destination); o.start(t); o.stop(t+0.09);
   }catch(e){}
@@ -10967,8 +10981,8 @@ function pintaAlu(){
     '<div class="fp-alu-card '+(ALU.__dir==='prev'?'fp-slide-in-l':(ALU.__dir==='next'?'fp-slide-in':'fp-sim-enter'))+'"><div id="aluHost"></div></div>'+
     '<div style="text-align:center;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">'+
       (fpTienePad(it.key)
-        ? '<span style="font-size:13.5px;color:#e9c96a;font-weight:800">Ey, soy Iago:</span><button class="fp-practica" id="aluPractica" type="button">practica esto, anda ↗</button>'
-        : '<span style="font-size:13.5px;color:#e9c96a;font-weight:800">Ey, soy Iago: <b>revisa los apuntes</b> 📖</span>')+
+        ? '<button class="fp-practica" id="aluPractica" type="button">No lo sé hacer: necesito practicar esto ↗</button>'
+        : '<span style="font-size:13px;color:#c9b978;font-weight:700">¿Dudas? Revisa los apuntes 📖</span>')+
     '</div>'+
     '<div class="fp-alu-nav">'+
       (i>0?'<button class="fp-mini" id="aluPrev" type="button">‹ Anterior</button>':'<span></span>')+
@@ -11046,16 +11060,13 @@ function fpModalPracticar(key){
     '</div>'+
     '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px">'+
       '<button id="fpMpCancel" type="button" style="border:0;background:rgba(255,255,255,.08);color:#fbf7ec;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer">Ahora no</button>'+
-      '<button id="fpMpOk" type="button" style="border:0;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer">Abrir y practicar ↗</button>'+
+      '<a id="fpMpOk" href="'+(location.origin+location.pathname+'?practice='+encodeURIComponent(key))+'" target="_blank" rel="noopener" style="display:inline-block;text-decoration:none;border:0;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer">Abrir y practicar ↗</a>'+
     '</div>';
   ov.appendChild(card); document.body.appendChild(ov);
   var cerrar=function(){ try{ document.body.removeChild(ov); }catch(e){} };
   card.querySelector('#fpMpCancel').onclick=cerrar;
   ov.addEventListener('click', function(e){ if(e.target===ov) cerrar(); });
-  card.querySelector('#fpMpOk').onclick=function(){
-    try{ var base=location.origin+location.pathname; window.open(base+'?practice='+encodeURIComponent(key), '_blank'); }catch(e){}
-    cerrar();
-  };
+  card.querySelector('#fpMpOk').addEventListener('click', function(){ setTimeout(cerrar, 60); });   /* WAVE12: el <a> navega solo (tablet-safe); aquí solo cerramos */
 }
 function entregarFicha(){
   if(!ALU || ALU.entregada) return;
@@ -11063,8 +11074,12 @@ function entregarFicha(){
   var pcts=ALU.items.map(function(it){
     try{ return fpMotorDe(it.item).puntua(it.item); }catch(e){ return 0; }
   });
-  var suma=pcts.reduce(function(a,b){return a+b;},0);
-  var nota=Math.round((suma*10/N)*10)/10;
+  /* WAVE12 · ANULADOS: si el Diario anuló ejercicios, NO cuentan en la media */
+  var _anul=(ALU.anulados||[]);
+  var _idx=ALU.items.map(function(it,k){ return {n:(it.n!=null?+it.n:k+1), k:k}; }).filter(function(o){ return _anul.indexOf(o.n)<0; }).map(function(o){ return o.k; });
+  if(!_idx.length) _idx=ALU.items.map(function(_,k){ return k; });
+  var suma=_idx.reduce(function(a,k){ return a+pcts[k]; },0);
+  var nota=Math.round((suma*10/_idx.length)*10)/10;
   ALU.entregada=true;
   window.scrollTo({top:0, behavior:'smooth'});
   var _so2=el('fpSimOv'); if(_so2){ try{ _so2.scrollTo({top:0, behavior:'smooth'}); }catch(e){ _so2.scrollTop=0; } }
@@ -11083,7 +11098,7 @@ function fpEnviarNota(nota, pcts){
   var payload={
     nota:nota, escala:10,
     ejercicios:ALU.items.map(function(it,k){
-      return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(pcts[k]*100)/100 };
+      return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(pcts[k]*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined };
     })
   };
   var sb=fpSb();
@@ -11114,6 +11129,8 @@ function pintaResultado(nota, pcts){
   var aprob=nota>=5;
   var filas=ALU.items.map(function(it,k){
     var pct=Math.round(pcts[k]*100), ok=pct>=50;
+    var anulado=((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0);
+    if(anulado) ok=true;   /* sin enlace de practicar en anulados */
     var practicar = ok ? '' : (fpTienePad(it.key)
       ? '<div style="margin-top:10px;display:flex;align-items:center;gap:9px;flex-wrap:wrap">'+
           '<span style="font-size:13px;color:#e9c96a;font-weight:700">Ey, soy Iago:</span>'+
@@ -11123,7 +11140,7 @@ function pintaResultado(nota, pcts){
     return '<div style="border-top:1px solid rgba(212,175,55,.18);padding:16px 0">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
           '<div style="font-size:14px;color:#fbf7ec;font-weight:800">'+(k+1)+'. '+it.enun+'</div>'+
-          '<span style="flex:none;background:'+(ok?'rgba(52,211,153,.18)':'rgba(255,92,92,.16)')+';color:'+(ok?'#8be3ae':'#ffb4b4')+';font-weight:900;font-size:13px;padding:5px 11px;border-radius:99px">'+pct+'%</span>'+
+          (anulado?'<span style="flex:none;background:rgba(255,255,255,.10);color:#d8caa6;font-weight:900;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta</span>':'<span style="flex:none;background:'+(ok?'rgba(52,211,153,.18)':'rgba(255,92,92,.16)')+';color:'+(ok?'#8be3ae':'#ffb4b4')+';font-weight:900;font-size:13px;padding:5px 11px;border-radius:99px">'+pct+'%</span>')+
         '</div>'+
         '<div class="fp-corr-host" data-k="'+k+'"></div>'+
         practicar+
@@ -11182,6 +11199,7 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
     if(!pack || !pack.ejercicios.length) throw new Error('ficha_vacia');
     ALU={ cuenta:cuenta, ficha:fichaId,
           numero:(pack.numero!=null?pack.numero:(nFallback||null)),
+          anulados:(pack.anulados||[]).map(Number),   /* WAVE12 */
           entregada:false, i:0,
           items:pack.ejercicios.map(function(e){
             var item=clon((e.motor&&e.motor._spec)||{});
@@ -11219,7 +11237,7 @@ function fpExtraerPaquete(data){
   for(var k=0;k<cand.length;k++){
     var c=cand[k];
     if(c && Array.isArray(c.ejercicios) && c.ejercicios.length){
-      return { ejercicios:c.ejercicios, numero:(c.numero!=null?c.numero:(data.numero!=null?data.numero:null)) };
+      return { ejercicios:c.ejercicios, numero:(c.numero!=null?c.numero:(data.numero!=null?data.numero:null)), anulados:(c.anulados||data.anulados||[]) };   /* WAVE12: anulaciones del Diario */
     }
   }
   if(Array.isArray(data.ejercicios) && data.ejercicios.length){
@@ -12429,7 +12447,17 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     try{ var pt=svg.createSVGPoint(); pt.x=cx; pt.y=cy; var p=pt.matrixTransform(svg.getScreenCTM().inverse()); return {x:p.x,y:p.y,svg:svg}; }catch(e){ return null; } }
   function compasEn(g,px){ var geo=g.__geo; if(!geo) return -1; for(var i=0;i<geo.comp.length;i++){ var c=geo.comp[i]; if(px>=c.x0 && px<c.x0+c.wC) return i; } return -1; }
   function clefEn(g,py){ var geo=g.__geo; var tBot=geo.comp[0].topStave.getYForLine(4), bTop=geo.comp[0].botStave.getYForLine(0); return py<(tBot+bTop)/2?'top':'bot'; }
-  function nearestByY(g,my,which){ var map=(which==='bot')?g.__geo.ymapBot:g.__geo.ymapTop;
+  /* WAVE12: mapa CONTINUO fa+sol — deslizas de una clave a otra sin salto.
+     Las alturas presentes en ambos mapas (zona entre pentagramas) se promedian. */
+  function ymapAll(g){
+    var geo=g.__geo; if(!geo) return {};
+    if(geo._all) return geo._all;
+    var m={}, k, t=geo.ymapTop||{}, b=geo.ymapBot||{};
+    for(k in b) m[k]={step:b[k].step,octave:b[k].octave,y:b[k].y};
+    for(k in t){ if(m[k]) m[k]={step:t[k].step,octave:t[k].octave,y:(t[k].y+m[k].y)/2}; else m[k]={step:t[k].step,octave:t[k].octave,y:t[k].y}; }
+    geo._all=m; return m;
+  }
+  function nearestByY(g,my,which){ var map=ymapAll(g);
     /* R5 10-jul-2026 · histéresis de arrastre (nota actual en g.__host) */
     var host=g.__host, curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
     var o=window.gnPick(map, my, curKey, 0.90); if(!o) return null;
@@ -12451,7 +12479,8 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     if(ci>=1 && g.bSeq[ci-1]){ host.style.cursor='pointer'; clearGhost(g); return; }
     var slot=nextSlot(g); if(slot<0){ host.style.cursor='default'; clearGhost(g); return; }
     if(ci!==slot+1){ host.style.cursor='default'; clearGhost(g); return; }
-    var which=clefEn(g,p.y), nat=nearestByY(g,p.y,which); if(!nat){ clearGhost(g); return; }
+    var nat=nearestByY(g,p.y,null); if(!nat){ clearGhost(g); return; }
+    var which=clefEn(g,nat.y);   /* WAVE12: la clave se decide por la ALTURA elegida (solo para las líneas adicionales) */
     host.style.cursor='pointer'; showGhost(g, g.__geo.comp[slot+1].cx, nat, which);
   }
   function ghostEl(g){ var el=g.__host.querySelector('.serieF-ghost'); if(!el){ el=document.createElement('div'); el.className='serieF-ghost'; el.style.cssText='position:absolute;pointer-events:none;z-index:6;width:13px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host.appendChild(el); } return el; }
@@ -12472,7 +12501,7 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     if(ci>=1 && g.bSeq[ci-1]){ g.__sel=ci-1; render(g); return; }   /* SEL-UNICA 10-jul-2026 · tocar armónico colocado lo selecciona */
     var slot=nextSlot(g); if(slot<0){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
     if(ci!==slot+1){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 */
-    var which=clefEn(g,p.y), nat=nearestByY(g,p.y,which); if(!nat){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 */
+    var nat=nearestByY(g,p.y,null); if(!nat){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* WAVE12: mapa continuo */
     g.bSeq[slot]={step:nat.step,octave:nat.octave,alter:0}; gnPushSF(g,{slot:slot, prev:null}); g.__sel=slot; render(g);   /* GN-UNIF 8-jul-2026 */
   }
   /* ---- toolbar de alteraciones ---- */
@@ -12486,7 +12515,7 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     if(!host||!g) return; host.innerHTML=''; g.__corr=false; g.__sel=null;
     var wrap=document.createElement('div'); wrap.style.cssText='background:#f3f5ff;border:1px solid #dfe3f4;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
     var serie=serieOf(g);
-    var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:6px'; cap.innerHTML='Fundamental: <b style="color:#b8860b">'+nom(serie[0])+serie[0].octave+'</b> · pincha en el sistema para colocar los armónicos 2 a 8 (clic derecho o × para borrar)'; wrap.appendChild(cap);
+    var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:6px'; cap.innerHTML='Fundamental: <b style="color:#b8860b">'+nom(serie[0])+serie[0].octave+'</b> · '+window.TXT_TIP('pincha en el sistema para colocar los armónicos 2 a 8 (clic derecho o × para borrar)','toca el sistema para colocar los armónicos 2 a 8 · desliza para afinar la altura (borra con la ×)'); wrap.appendChild(cap);
     var score=document.createElement('div'); score.style.cssText='position:relative;overflow:visible'; wrap.appendChild(score); g.__host=score;
     var tb=document.createElement('div'); tb.style.cssText='display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 12px;border:1px solid #e7d9a8;border-radius:10px;background:#faf6ea'; wrap.appendChild(tb); g.__tb=tb;
     tb.appendChild(mkLabel('Alteración de la nota seleccionada:'));
@@ -12806,9 +12835,8 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
     if(g.shown[sl]){ host.style.cursor='pointer'; clearG(g); return; } var nat=nearestStep(g.__geo2,p.y,host); if(!nat){ clearG(g); return; } host.style.cursor='pointer'; showGhost(g,g.__geo2.xs[sl],nat); }   /* R5 10-jul-2026 · guarda nat null · GN-UNIF */
   function click2(g,ev){ var p=svgPt(g.__host2,ev); if(!p) return; var sl=slotFromX(g.__geo2,p.x); if(sl<0||!editable(g,sl)){ if(g.__sel!=null){ g.__sel=null; refresh(g); } return; }   /* SEL-UNICA 10-jul-2026 · vacío/no editable deselecciona */
     if(g.shown[sl]){ g.__sel=sl; refresh(g); return; }   /* SEL-UNICA 10-jul-2026 · tocar nota colocada la selecciona */
-    /* R3 10-jul-2026 · CAMBIO D · en TABLET solo se rellena el SIGUIENTE hueco editable (missing) libre,
-       en orden; no se salta por X. En ratón se conserva la colocación por X. */
-    if(g.__host2&&g.__host2._touchHandled){ var ms=(g.missing||[]).slice().sort(function(a,b){return a-b;}); var nx=-1; for(var _m=0;_m<ms.length;_m++){ if(!g.shown[ms[_m]]){ nx=ms[_m]; break; } } if(nx>=0 && sl!==nx) sl=nx; }
+    /* WAVE12 (pedido Iago) · el alumno rellena EL HUECO QUE QUIERA (también en tablet):
+       se respeta el hueco tocado; si prefiere empezar por el último, puede. */
     var nat=nearestStep(g.__geo2,p.y,g.__host2); if(!nat) return; g.shown[sl]={step:nat.step,octave:nat.octave,acc:''}; gnPushDB(g,{t:'add',slot:sl}); g.__sel=sl; refresh(g); }   /* R5 10-jul-2026 · guarda nat null · GN-UNIF */
   /* GN-UNIF 8-jul-2026 · × fija junto a cada nota colocada (solo huecos editables) + pila de deshacer */
   function gnDelXsDB(g){
@@ -14718,7 +14746,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   '    <div class="score" id="teEjemplo" style="background:#f3f5ff;border-radius:12px;padding:8px;min-height:120px;overflow:hidden"></div>'+
   '  </div>'+
   '  <div class="ex-card">'+
-  '    <div style="font-size:12px;font-weight:700;color:#8a7a4a;margin-bottom:6px">Tu transporte (mueve el ratón sobre el pentagrama para ver la altura; pica para colocar la nota; el ritmo se coloca solo)</div>'+
+  '    <div style="font-size:12px;font-weight:700;color:#8a7a4a;margin-bottom:6px">Tu transporte ('+window.TXT_TIP('mueve el ratón sobre el pentagrama para ver la altura; pica para colocar la nota','desliza el dedo sobre el pentagrama y suelta para colocar la nota')+'; el ritmo se coloca solo)</div>'+
   '    <div class="score" id="teAlumno" style="background:#f3f5ff;border-radius:12px;padding:8px;min-height:130px;overflow:hidden"></div>'+
   '    <div style="display:flex;gap:14px;flex-wrap:wrap;align-items:flex-start;margin-top:14px">'+
   '      <div style="display:flex;flex-direction:column;align-items:center;gap:5px"><div style="font-size:11px;font-weight:700;color:#8a7a4a">Nueva tonalidad</div>'+
