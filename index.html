@@ -213,7 +213,7 @@
   /* sello PRO dorado dentro del pad */
   .mode-card h2 .pro-seal{font-size:.62em;font-weight:900;letter-spacing:.1em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:3px 8px;border-radius:6px;vertical-align:middle;margin-left:7px;text-transform:uppercase}
   /* pads de repaso: distintivo dorado */
-  .mode-card.repaso{background:linear-gradient(180deg,#1c1a15,#111014);border-color:#2e2b24}
+  .mode-card.repaso{background:linear-gradient(180deg,#1c1a15,#111014);border-color:rgba(212,175,55,.26)}   /* WAVE9: contorno sutil */
   .mode-card.repaso h2{color:var(--ink);font-weight:700}
   .mode-card.repaso .repaso-tag{
     position:absolute;top:11px;left:14px;font-size:9px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;
@@ -869,7 +869,7 @@
 
       <button class="mode-card repaso" data-path="escalas"><span class="repaso-tag">repaso</span><h2>Escalas</h2><span class="card-sub">menores · mayores · otras</span></button>
       <button class="mode-card repaso" data-path="tonalidades"><span class="repaso-tag">repaso</span><h2>Tonalidades</h2><span class="card-sub">tonalidad · armadura · vecinos</span></button>
-      <button class="mode-card repaso" data-path="enarmoniapro"><span class="repaso-tag">repaso</span><h2>Enarmonía</h2><span class="card-sub">nota · parcial · total · tonalidad</span></button>
+      <button class="mode-card repaso" data-path="enarmoniapro"><span class="repaso-tag">repaso</span><h2>Enarmonías</h2><span class="card-sub">nota · parcial · total · tonalidad</span></button>
     </div>
 
     <div class="eva-foot"><button class="maint-link" id="genLink">Generador de fichas</button> <span style="opacity:.35;margin:0 4px">·</span> <button class="maint-link" id="maintLink">Mantenimiento</button></div>
@@ -1636,7 +1636,7 @@
       var bar=document.createElement('div'); bar.style.cssText='display:flex;align-items:center;gap:12px;margin-bottom:4px';
       var back=document.createElement('button'); back.textContent='← Volver'; back.style.cssText='border:1px solid rgba(212,175,55,.4);background:rgba(233,201,106,.06);color:#e9c96a;font-weight:800;padding:8px 13px;border-radius:9px;cursor:pointer';
       back.onclick=function(){ v.style.display='none'; document.getElementById('view-portal').style.display='block'; window.scrollTo(0,0); };
-      var h=document.createElement('h2'); h.textContent='Enarmonía PRO'; h.style.cssText='color:#e9c96a;margin:0;font-size:22px;letter-spacing:.02em';
+      var h=document.createElement('h2'); h.textContent='Enarmonías'; h.style.cssText='color:#e9c96a;margin:0;font-size:22px;letter-spacing:.02em';
       var right=document.createElement('div'); right.style.cssText='margin-left:auto;display:flex;gap:10px;align-items:center';
       var ej=document.createElement('button'); ej.className='iconbtn btn-ejemplo'; ej.title='Ver ejemplos explicados';
       ej.innerHTML='<svg viewBox="0 0 24 24"><path d="M9 18h6M10 21h4M12 3a6 6 0 0 0-4 10.5c.6.6 1 1.2 1 2V16h6v-.5c0-.8.4-1.4 1-2A6 6 0 0 0 12 3z" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> Ejemplo';
@@ -5459,10 +5459,13 @@ window.nuevoIVTODO=nuevoIVTODO;
       if(g.modo==='build'){
         g.__gnLocked=true; g.__selIV=null;        /* GN-UNIF 8-jul-2026 · sin × ni deshacer tras corregir */  /* SEL-UNICA 10-jul-2026 · sin selección */
         var anyErr=false;
-        g.subs.forEach(function(sub){ if(puntuaUno(sub)!==1){ sub.n2=Object.assign({}, sub._n2cat); sub._solB=true; sub._userPlaced=false; anyErr=true; } });
+        g.subs.forEach(function(sub){ if(puntuaUno(sub)!==1){ sub.n2=Object.assign({}, sub._n2cat); sub._solB=true; sub._userPlaced=false; anyErr=true; } else { sub._okGreen=true; } });   /* WAVE9: tus aciertos en VERDE sobre el pentagrama */
         remonta(g);
-        if(g.__tag){ if(!anyErr){ g.__tag.style.color='#22c98a'; g.__tag.textContent='✓ Correcto'; } else { g.__tag.innerHTML='<span style="color:#22c98a">acierto</span> · <span style="color:#2f6df6">la 2ª correcta en azul</span>'; }
-          g.subs.forEach(function(sub){ if(sub.__cur){ var ok=puntuaUno(sub); sub.__cur.style.color=ok?'#22c98a':'#ffb4b4'; } }); }
+        if(g.__tag){ if(!anyErr){ g.__tag.style.color='#22c98a'; g.__tag.textContent='✓ Correcto'; } else { g.__tag.innerHTML='<span style="color:#22c98a">acierto</span> · <span style="color:#ff5c5c">lo que pusiste</span> · <span style="color:#2f6df6">la 2ª correcta en azul</span>'; }
+          g.subs.forEach(function(sub){ if(sub.__cur){ var ok=puntuaUno(sub);
+            if(ok){ sub.__cur.textContent='✓ '+(sub.resp?noteName(sub.resp):''); sub.__cur.style.color='#22c98a'; }
+            else { sub.__cur.textContent='Pusiste: '+(sub.resp?noteName(sub.resp):'(nada)'); sub.__cur.style.color='#ff5c5c'; sub.__cur.style.fontWeight='800'; }   /* WAVE9: claro y en rojo */
+          } }); }
       } else {
         var ok=0; g.subs.forEach(function(sub){ var good=puntuaUno(sub)===1; if(good) ok++; if(sub.__stag){ sub.__stag.style.color=good?'#22c98a':'#2f6df6'; sub.__stag.textContent=good?'✓':(nombreIV(sub)); } });
         if(g.__tag){ g.__tag.style.color= ok===4?'#22c98a':'#e9d9a8'; g.__tag.textContent='Aciertos: '+ok+'/4'; }
@@ -9594,6 +9597,16 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
       <span class="fp-valor" id="fpValor"></span>
     </div>
     <div class="fp-status" id="fpStatus"></div>
+    <details id="fpAnulaBox" style="margin-top:14px;border:1px dashed rgba(212,175,55,.35);border-radius:12px;padding:10px 14px;color:var(--muted)">
+      <summary style="cursor:pointer;font-weight:800;color:#c9b978">🛟 Recalculadora de notas · anular un ejercicio de una ficha ya entregada</summary>
+      <div style="font-size:12.5px;margin-top:8px;line-height:1.55">Si detectas un ejercicio con errores después de que los alumnos entreguen: pega debajo los <b>payload</b> de las entregas (la columna <code>payload</code> de Supabase; uno por línea o un array JSON completo), di qué ejercicio(s) anulas y te devuelvo la nota recalculada de cada alumno — la media se hace SOLO con los ejercicios restantes.</div>
+      <textarea id="fpAnulaIn" style="width:100%;min-height:110px;margin-top:8px;background:rgba(0,0,0,.3);border:1px solid #6b551d;border-radius:8px;color:#f0e6c8;padding:8px;font:12px/1.4 monospace" placeholder='{"nota":6.4,"escala":10,"ejercicios":[{"n":1,"key":"…","pct":0.5},…]}'></textarea>
+      <div style="display:flex;gap:10px;align-items:center;margin-top:8px;flex-wrap:wrap">
+        <label style="font-size:12.5px;font-weight:700">Anular ejercicio(s) nº <input id="fpAnulaN" style="width:90px;background:rgba(0,0,0,.3);border:1px solid #6b551d;border-radius:6px;color:#f0e6c8;padding:5px 7px" placeholder="3 o 3,7"></label>
+        <button class="fp-mini" id="fpAnulaGo" type="button" style="padding:8px 14px">Recalcular</button>
+      </div>
+      <div id="fpAnulaOut" style="margin-top:10px;font:12.5px/1.65 monospace;white-space:pre-wrap;color:#e9d9a8"></div>
+    </details>
     <div id="fpExitoHueco"></div>
   </div>
   <div id="fpPrev">
@@ -9695,7 +9708,7 @@ var CATALOGO=[
   { key:'inversion_int_compuestos', label:'Inversión · intervalos compuestos', estado:'activo', col:'repaso', desc:'truco AIA + analiza el intervalo final' },
   { key:'inversion_aco_identifica', label:'Inversión · acordes (identifica)',  estado:'activo', col:'repaso', desc:'tipo de acorde y su inversión' },
   { key:'inversion_aco_construir',  label:'Inversión · acordes (construye)',   estado:'activo', col:'repaso', desc:'construye el acorde en el estado pedido' },
-  { key:'enarmoniapro',     label:'Enarmonía PRO',        estado:'activo', col:'repaso', desc:'4 compases: enarmonías de nota, intervalo (parcial/total) y tonalidad' },
+  { key:'enarmoniapro',     label:'Enarmonías',           estado:'activo', col:'repaso', desc:'4 compases: enarmonías de nota, intervalo (parcial/total) y tonalidad' },
   { key:'ex_afro',          label:'Géneros afrolatinos',    estado:'activo', col:'pro', u:7, negro:true, desc:'9 casillas en una fila (un género en cada una)' },
   { key:'ex_desarrollar',   label:'Pregunta a desarrollar', estado:'activo', col:'teorica', examen:true, desc:'texto libre · el alumno responde en la hoja auxiliar' },
   { key:'ex_breves',        label:'Preguntas breves',       estado:'activo', col:'teorica', examen:true, desc:'de 2 a 4 preguntas cortas' },
@@ -9713,7 +9726,7 @@ function status(msg, tipo){
 function fpMakeCard(t, azul){
   var b=document.createElement('button'); b.type='button';
   b.className='fp-tipo'+(azul?' rep':'')+(t.examen?' examen':'')+((t.test||t.negro)?' test':'')+(t.estado==='activo'?'':' off');
-  var chip= t.test              ? '<span class="fp-chip test">◧ TEST</span>'
+  var chip= t.test              ? ''   /* WAVE9: el título ya dice Test — sin sello abajo */
           : t.estado==='prox'   ? '<span class="fp-chip'+(azul?' rep':' prox')+'">· '+t.nota+' ·</span>'
           : t.estado==='constr' ? '<span class="fp-chip constr">en construcción</span>' : '';
   b.innerHTML=(t.estado==='activo'?'<span class="fp-add">+</span>':'')+
@@ -10921,7 +10934,7 @@ function fpIntroFicha(){
     '<div class="fp-intro-card fp-sim-enter">'+
       '<div class="fp-intro-eyebrow">Ficha '+(ALU.numero!=null?('nº '+ALU.numero):'')+' · Grado Profesional</div>'+
       '<div class="fp-intro-title">'+ALU.items.length+' ejercicio'+(ALU.items.length===1?'':'s')+' te esperan</div>'+
-      '<div class="fp-intro-sub">Tu progreso se guarda en cada paso y puedes volver atrás cuando quieras. La corrección llega al final, con tu nota.</div>'+
+      '<div class="fp-intro-sub">Tu progreso se guarda en cada paso y puedes volver atrás cuando quieras. Puedes dejar la ficha a medias y retomarla en otro momento. La corrección llega al final, con tu nota.</div>'+
       '<div class="fp-intro-chips">'+chips+'</div>'+
       '<button id="fpIntroGo" class="fp-intro-go" type="button">▶ Empezar</button>'+
     '</div>';
@@ -11259,6 +11272,25 @@ try{
     var b2=el('fpEnviar'); if(b2 && !b2._fp){ b2._fp=true; b2.addEventListener('click', enviar); }
     var bp=el('fpPdf');    if(bp && !bp._fp){ bp._fp=true; bp.addEventListener('click', fpGenerarPDF); }
     var bs=el('fpSimular'); if(bs && !bs._fp){ bs._fp=true; bs.addEventListener('click', fpSimularAlumno); }
+    var ba=el('fpAnulaGo'); if(ba && !ba._fp){ ba._fp=true; ba.addEventListener('click', function(){
+      var out=el('fpAnulaOut'); var raw=(el('fpAnulaIn').value||'').trim();
+      var ns=String(el('fpAnulaN').value||'').split(/[\s,;]+/).map(function(x){ return parseInt(x,10); }).filter(function(x){ return x>0; });
+      if(!raw){ out.textContent='Pega al menos un payload.'; return; }
+      if(!ns.length){ out.textContent='Indica el nº de ejercicio a anular (el que aparece en la ficha).'; return; }
+      var rows;
+      try{ var j=JSON.parse(raw); rows=Array.isArray(j)?j:[j]; }
+      catch(e){ rows=raw.split(/\n+/).map(function(l){ l=l.trim().replace(/,$/,''); if(!l) return null; try{ return JSON.parse(l); }catch(e2){ return {__err:true}; } }).filter(Boolean); }
+      var lines=rows.map(function(p,i){
+        if(!p || p.__err || !p.ejercicios || !p.ejercicios.length) return 'fila '+(i+1)+': ⚠ no es un payload válido';
+        var resto=p.ejercicios.filter(function(e2){ return ns.indexOf(e2.n)<0; });
+        if(!resto.length) return 'fila '+(i+1)+': ⚠ no quedan ejercicios que contar';
+        var esCien=resto.some(function(e2){ return (+e2.pct||0)>1.0001; });   /* pct 0–100 (elemental) o 0–1 (pro) */
+        var media=resto.reduce(function(a,e2){ var v=(+e2.pct||0); return a+(esCien?v/100:v); },0)/resto.length;
+        var nueva=Math.round(media*100)/10;
+        return 'fila '+(i+1)+': '+(p.nota!=null?('nota '+String(p.nota).replace('.',',')+' → '):'')+'NUEVA NOTA '+String(nueva).replace('.',',')+'   ('+resto.length+' ejercicios contados)';
+      });
+      out.textContent='Anulado(s): ejercicio '+ns.join(', ')+'\n'+lines.join('\n');
+    }); }
     var bl=el('fpLimpiar'); if(bl && !bl._fp){ bl._fp=true; bl.addEventListener('click', function(){
       if(!FP.ejercicios.length){ status('ⓘ La ficha ya está vacía.','info'); return; }
       FP.ejercicios=[]; pintaLista(); status('✓ Ficha vaciada: puedes componer una nueva.','ok');
@@ -11472,7 +11504,7 @@ console.info('[teoriapro] FICHAS PRO r16 · vista Acordes basico (motor foto: 1 
   var NOTAS_ES=["Do","Re","Mi","Fa","Sol","La","Si"];
   function P(){ return window.TON_PURE; }
   function nb(nom){ return window.TON_nomBonito? window.TON_nomBonito(nom) : nom; }
-  function nomDe(sel){ if(!sel.nota) return null; return sel.nota+(sel.alt||'')+sel.modo; }
+  function nomDe(sel){ if(!sel.nota) return null; return sel.nota+(sel.alt||'')+(sel.modoSel||sel.modo); }   /* WAVE9: cuenta el modo que PULSA el alumno */
   function generar(){
     var c=P().sorteaTon(true);
     var vec=P().vecinos(c);   // objetos {nom,nota,alt,modo}
@@ -11498,16 +11530,29 @@ console.info('[teoriapro] FICHAS PRO r16 · vista Acordes basico (motor foto: 1 
       return gbox;
     }
     var box=document.createElement('div'); box.style.cssText='border:1px solid #6b551d;border-radius:12px;padding:8px 6px;min-height:108px;display:flex;flex-direction:column;align-items:center;gap:5px;background:rgba(255,255,255,.02)';
-    var suf=document.createElement('div'); suf.style.cssText='font-size:10px;font-weight:800;color:#8a7a45'; suf.textContent=cell.modo==='M'?'Mayor':'menor'; box.appendChild(suf);
+    var suf=document.createElement('div'); suf.style.cssText='font-size:10px;font-weight:800;color:#8a7a45'; suf.textContent=cell.modo==='M'?'fila de Mayores':'fila de menores'; box.appendChild(suf);
     var wNota=document.createElement('div'); wNota.className='wheel'; wNota.style.cssText='height:96px;width:52px'; box.appendChild(wNota);   /* 3 filas: la elegida SIEMPRE en el centro */
     var accRow=document.createElement('div'); accRow.style.cssText='display:flex;gap:3px'; accRow.innerHTML='<button class="acc-btn" data-a="b">♭</button><button class="acc-btn" data-a="#">♯</button>'; box.appendChild(accRow);
-    var stag=document.createElement('div'); stag.className='sol'; stag.style.cssText='min-height:14px;font-size:11px;text-align:center;color:#c9b978'; box.appendChild(stag); cell.__stag=stag;
+    /* WAVE9: modo M/m explícito — el alumno ve y elige lo que está escribiendo */
+    if(cell.modoSel==null) cell.modoSel=cell.modo;
+    var modeRow=document.createElement('div'); modeRow.style.cssText='display:flex;gap:3px';
+    modeRow.innerHTML='<button class="acc-btn" data-m="M" style="min-width:26px;font-size:13px">M</button><button class="acc-btn" data-m="m" style="min-width:26px;font-size:13px">m</button>';
+    box.appendChild(modeRow);
+    var stag=document.createElement('div'); stag.className='sol'; stag.style.cssText='min-height:14px;font-size:11px;font-weight:800;text-align:center;color:#c9b978'; box.appendChild(stag); cell.__stag=stag;
     var REV=NOTAS_ES.slice().reverse(); var GUION=NOTAS_ES.length;
     var items=REV.concat(['—']);
+    function resumen(){
+      var acc=cell.alt==='#'?'♯':cell.alt==='b'?'♭':'';
+      stag.textContent = cell.nota ? (cell.nota+acc+' '+((cell.modoSel||cell.modo)==='M'?'Mayor':'menor')) : '—';
+      stag.style.color = cell.nota ? '#e6c04a' : '#c9b978';
+      modeRow.querySelectorAll('.acc-btn').forEach(function(x){ x.classList.toggle('on', x.dataset.m===(cell.modoSel||cell.modo)); });
+    }
     var _st=(cell.nota&&REV.indexOf(cell.nota)>=0)?REV.indexOf(cell.nota):GUION;   /* restaura lo guardado */
-    var api=makeWheel(wNota, items, _st, function(idx){ cell.nota=(idx===GUION)?null:REV[idx]; cell.alt=''; repaint(api,cell,accRow,REV,GUION); });
+    var api=makeWheel(wNota, items, _st, function(idx){ cell.nota=(idx===GUION)?null:REV[idx]; cell.alt=''; repaint(api,cell,accRow,REV,GUION); resumen(); });
     if(cell.nota) repaint(api,cell,accRow,REV,GUION);
-    accRow.querySelectorAll('.acc-btn').forEach(function(b){ b.addEventListener('click', function(){ if(!cell.nota) return; cell.alt=(cell.alt===b.dataset.a)?'':b.dataset.a; repaint(api,cell,accRow,REV,GUION); }); });
+    accRow.querySelectorAll('.acc-btn').forEach(function(b){ b.addEventListener('click', function(){ if(!cell.nota) return; cell.alt=(cell.alt===b.dataset.a)?'':b.dataset.a; repaint(api,cell,accRow,REV,GUION); resumen(); }); });
+    modeRow.querySelectorAll('.acc-btn').forEach(function(b){ b.addEventListener('click', function(){ cell.modoSel=b.dataset.m; resumen(); }); });
+    resumen();
     return box;
   }
   function montarEn(host, g){
@@ -15030,37 +15075,41 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   function montarResumen(host, g){
     host.innerHTML=TABLE_HTML; if(!g.sel) g.sel={armA:0,notaB:null,altB:0,modoB:null,armB:0,dif:0,dir:null,notas:{}};
     var s=g.sel;
-    document.getElementById('trrTonA').textContent=nombreTon(g.letterA,g.altA,g.mode);
-    document.getElementById('trrPide').textContent=transpTxt(g);
+    var $r=function(id){ return host.querySelector('#'+id); };   /* WAVE10: IDs SOLO dentro del host */
+    if(!g._pad){ var _c=$r('trrCorregir'); if(_c) _c.style.display='none'; }   /* en ficha NO hay Corregir */
+    $r('trrTonA').textContent=nombreTon(g.letterA,g.altA,g.mode);
+    $r('trrPide').textContent=transpTxt(g);
     var armItems=buildArmItems();
-    window.makeWheel(document.getElementById('trrWArmA'), armItems, 7, function(ix){ s.armA=7-ix; });
-    window.makeWheel(document.getElementById('trrWArmB'), armItems, 7, function(ix){ s.armB=7-ix; });
+    window.makeWheel($r('trrWArmA'), armItems, 7-(s.armA||0), function(ix){ s.armA=7-ix; });   /* WAVE10: restaura lo guardado */
+    window.makeWheel($r('trrWArmB'), armItems, 7-(s.armB||0), function(ix){ s.armB=7-ix; });
     var GUION=NOTAS_REV.length;
-    window.makeWheel(document.getElementById('trrWNotaB'), NOTAS_REV.concat(['—']), GUION, function(ix){ s.notaB=(ix===GUION)?null:NOTAS_REV[ix]; if(s.notaB==null){ s.altB=0; paintBacc(); } });
+    var _stN=(s.notaB&&NOTAS_REV.indexOf(s.notaB)>=0)?NOTAS_REV.indexOf(s.notaB):GUION;
+    window.makeWheel($r('trrWNotaB'), NOTAS_REV.concat(['—']), _stN, function(ix){ s.notaB=(ix===GUION)?null:NOTAS_REV[ix]; if(s.notaB==null){ s.altB=0; paintBacc(); } });
     var difItems=buildDifItems();
-    window.makeWheel(document.getElementById('trrWDif'), difItems, difItems.length-1, function(ix){ s.dif=7-ix; });
-    function paintBacc(){ document.getElementById('trrBb').classList.toggle('on',s.altB===-1); document.getElementById('trrBs').classList.toggle('on',s.altB===1); }
-    function paintModo(){ document.getElementById('trrMM').classList.toggle('on',s.modoB==='M'); document.getElementById('trrMm').classList.toggle('on',s.modoB==='m'); }
-    function paintDir(){ document.getElementById('trrDa').classList.toggle('on',s.dir==='asc'); document.getElementById('trrDd').classList.toggle('on',s.dir==='desc'); }
-    document.getElementById('trrBb').onclick=function(){ if(s.notaB==null)return; s.altB=(s.altB===-1)?0:-1; paintBacc(); };
-    document.getElementById('trrBs').onclick=function(){ if(s.notaB==null)return; s.altB=(s.altB===1)?0:1; paintBacc(); };
-    document.getElementById('trrMM').onclick=function(){ s.modoB=(s.modoB==='M')?null:'M'; paintModo(); };
-    document.getElementById('trrMm').onclick=function(){ s.modoB=(s.modoB==='m')?null:'m'; paintModo(); };
-    document.getElementById('trrDa').onclick=function(){ s.dir=(s.dir==='asc')?null:'asc'; paintDir(); };
-    document.getElementById('trrDd').onclick=function(){ s.dir=(s.dir==='desc')?null:'desc'; paintDir(); };
-    var nh=document.getElementById('trrNotas'); nh.innerHTML='';
-    NOTAS.forEach(function(n){ var b=document.createElement('button'); b.className='trr-nota'; b.textContent=n; b.dataset.n=n; b.onclick=function(){ s.notas[n]=!s.notas[n]; b.classList.toggle('on',!!s.notas[n]); }; nh.appendChild(b); });
+    window.makeWheel($r('trrWDif'), difItems, 7-(s.dif||0), function(ix){ s.dif=7-ix; });
+    function paintBacc(){ $r('trrBb').classList.toggle('on',s.altB===-1); $r('trrBs').classList.toggle('on',s.altB===1); }
+    function paintModo(){ $r('trrMM').classList.toggle('on',s.modoB==='M'); $r('trrMm').classList.toggle('on',s.modoB==='m'); }
+    function paintDir(){ $r('trrDa').classList.toggle('on',s.dir==='asc'); $r('trrDd').classList.toggle('on',s.dir==='desc'); }
+    $r('trrBb').onclick=function(){ if(s.notaB==null)return; s.altB=(s.altB===-1)?0:-1; paintBacc(); };
+    $r('trrBs').onclick=function(){ if(s.notaB==null)return; s.altB=(s.altB===1)?0:1; paintBacc(); };
+    $r('trrMM').onclick=function(){ s.modoB=(s.modoB==='M')?null:'M'; paintModo(); };
+    $r('trrMm').onclick=function(){ s.modoB=(s.modoB==='m')?null:'m'; paintModo(); };
+    $r('trrDa').onclick=function(){ s.dir=(s.dir==='asc')?null:'asc'; paintDir(); };
+    $r('trrDd').onclick=function(){ s.dir=(s.dir==='desc')?null:'desc'; paintDir(); };
+    var nh=$r('trrNotas'); nh.innerHTML='';
+    NOTAS.forEach(function(n){ var b=document.createElement('button'); b.className='trr-nota'; b.textContent=n; b.dataset.n=n; if(s.notas[n]) b.classList.add('on');   /* WAVE10: restaura marcadas */
+      b.onclick=function(){ s.notas[n]=!s.notas[n]; b.classList.toggle('on',!!s.notas[n]); }; nh.appendChild(b); });
     paintBacc(); paintModo(); paintDir();
-    document.getElementById('trrCorregir').onclick=function(){
-      var r=score(g), fb=document.getElementById('trrFb');
-      // marcar notas
-      document.querySelectorAll('#trrNotas .trr-nota').forEach(function(b){ var n=b.dataset.n, esSol=g.notas.indexOf(n)>=0, marc=!!s.notas[n]; b.classList.remove('n-ok','n-sol','n-bad'); if(r.okNotas){ if(marc) b.classList.add('n-ok'); } else { if(esSol) b.classList.add('n-sol'); if(marc&&!esSol) b.classList.add('n-bad'); } });
+    $r('trrCorregir').onclick=function(){
+      var r=score(g), fb=$r('trrFb');
+      // marcar notas (SOLO las de este host)
+      host.querySelectorAll('#trrNotas .trr-nota').forEach(function(b){ var n=b.dataset.n, esSol=g.notas.indexOf(n)>=0, marc=!!s.notas[n]; b.classList.remove('n-ok','n-sol','n-bad'); if(r.okNotas){ if(marc) b.classList.add('n-ok'); } else { if(esSol) b.classList.add('n-sol'); if(marc&&!esSol) b.classList.add('n-bad'); } });
       var det=[]; det.push((r.okArmA?'✓':'✗')+' Armadura A'); det.push((r.okTonB?'✓':'✗')+' Tonalidad B'); det.push((r.okArmB?'✓':'✗')+' Armadura B'); det.push((r.okDif?'✓':'✗')+' Diferencias'); det.push((r.okNotas?'✓':'✗')+' Notas');
       fb.innerHTML='<span style="color:'+(r.val>=0.6?'#22c98a':'#e11d1d')+'">'+det.join(' &nbsp; ')+' &nbsp;·&nbsp; '+Math.round(r.val*100)+'%</span>'+
         (r.val<1?'<div style="font-size:12px;color:#8a7a45;margin-top:4px">Solución: Arm A '+armStr(g.fA)+' · Ton B '+nombreTon(g.letterB,g.altB,g.mode)+' · Arm B '+armStr(g.fB)+' · '+difTxt(g.diff,g.asc)+' · '+g.notas.join(', ')+'</div>':'');
     };
   }
-  function corregirVisual(host, g){ montarResumen(host,g); var b=document.getElementById('trrCorregir'); if(b) b.click(); return score(g).val; }
+  function corregirVisual(host, g){ montarResumen(host,g); var b=host.querySelector('#trrCorregir'); if(b) b.click(); return score(g).val; }
 
   window.TR_RESUMEN_MOTOR={ generar:genEjercicio, enunciado:function(g){ return 'Transporte resumen · '+nombreTon(g.letterA,g.altA,g.mode)+' · '+transpTxt(g); }, montarEn:montarResumen, corregirVisual:corregirVisual, puntua:function(g){ return score(g).val; } };
 
@@ -16577,7 +16626,8 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       g.items.forEach(function(it){ if(it._solEl){ var ok=it._okTipo&&it._okInv; it._solEl.innerHTML='<span style="color:'+(ok?'#22c98a':COL_BLUE)+'">'+(ok?'✓ '+nombreAcorde(it)+' · '+INV_LAB[it.inv]:'Solución: '+nombreAcorde(it)+' · '+INV_LAB[it.inv])+'</span>'; } });
       redraw(true); return e; }, undo:doUndo, onUndo:function(cb){ undoCb=cb; if(undoCb) undoCb(undoStack.length>0); } };
   }
-  function evaluaIdentificar(g){ var vals=[]; g.items.forEach(function(it){ it._okTipo=(it.sel.tipo===it.tipo); it._okInv=(it.sel.inv===it.inv); it._okNotas=it._okTipo&&it._okInv; vals.push({tipo:it._okTipo?1:0, inv:it._okInv?1:0}); });
+  function evaluaIdentificar(g){ var vals=[]; g.items.forEach(function(it){ var sel=it.sel||{};   /* WAVE10: sin abrir el ejercicio no hay sel */
+      it._okTipo=(sel.tipo===it.tipo); it._okInv=(sel.inv===it.inv); it._okNotas=it._okTipo&&it._okInv; vals.push({tipo:it._okTipo?1:0, inv:it._okInv?1:0}); });
     var tot=0; vals.forEach(function(v){ tot+=(v.tipo*0.5+v.inv*0.5); }); tot/=Math.max(1,vals.length); return {vals:vals, val:tot}; }
 
   /* ======= B · CONSTRUYE ======= */
@@ -16634,7 +16684,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     redraw(false);
     return { corregir:function(){ var e=evaluaConstruir(g); redraw(true); return e; }, undo:doUndo, onUndo:function(cb){ undoCb=cb; if(undoCb) undoCb(undoStack.length>0); } };
   }
-  function evaluaConstruir(g){ var vals=[]; g.items.forEach(function(it){ var ok=false;
+  function evaluaConstruir(g){ var vals=[]; g.items.forEach(function(it){ var ok=false; if(!it.user) it.user=[];   /* WAVE10: guarda */
       if(it.user.length===it.voiced.length){ var uS=it.user.slice().sort(function(a,b){return midi(a)-midi(b);});
         var bajoOk=(((midi(uS[0])%12)+12)%12)===(((midi(it.voiced[0])%12)+12)%12); var setOk=pcSet(it.user)===pcSet(it.voiced); ok=bajoOk&&setOk; }
       it._ok=ok; vals.push(ok?1:0); });
