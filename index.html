@@ -16958,7 +16958,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
    Envuelven window.INV_INT / window.ACORD a la interfaz {generar,enunciado,montarEn,puntua,corregirVisual,pdfInfo}. */
 (function(){
   function enunInt(g){ return (g&&g.tipo==='compuestos')
-    ? 'Aplica el truco AIA (acerca, invierte, aleja) y analiza el intervalo final del intervalo compuesto.'
+    ? 'Analiza el intervalo compuesto, inviértelo y vuelve a analizarlo.'
     : 'Clasifica el intervalo, inviértelo y vuelve a clasificarlo.'; }
   window.INV_INT_FMOTOR={
     generar:function(sub){ if(!window.INV_INT) return null; var g=window.INV_INT.generar(sub||'simples'); if(g) g._ivInv=true; return g; },
