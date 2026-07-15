@@ -833,6 +833,84 @@ document.addEventListener('DOMContentLoaded', function(){
   }
   @media(max-width:640px){ .ia-fp-acc{width:46px;height:46px;font-size:26px} }
 </style>
+<script>
+/* ============================================================
+   SUITE · TIEMPO DE ACTIVIDAD · r1 (Iago 15-jul-2026)
+   ------------------------------------------------------------
+   Cuenta SOLO el tiempo real de trabajo del alumno:
+     · pestaña visible (si se va a otra pestaña, no cuenta)
+     · con actividad (ratón/teclado/toque); un hueco de MÁS DE
+       2 MINUTOS sin actividad no se cuenta (baño, distracción…)
+     · acumula entre días y dispositivos (tabla
+       suite_actividad_tiempo vía RPC suite_tiempo_ping — ver
+       suite_tiempo_actividad.sql)
+   El tiempo aparece discretamente en la campana del Diario junto
+   a cada ficha entregada / quiz completado.
+   ============================================================ */
+window.SuiteTiempo=(function(){
+  'use strict';
+  var SB='https://woiptkyrxkbpnvioypit.supabase.co';
+  var AN='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+  var IDLE_S=120, FLUSH_MS=45000;
+  var cuenta=null, tipo=null, ref=null;
+  var last=null, acc=0, enviado=0, previo=0, on=false;
+  function actividad(){
+    if(!on || document.visibilityState!=='visible') return;
+    var now=Date.now();
+    if(last!=null){ var d=(now-last)/1000; if(d>0 && d<IDLE_S) acc+=d; }
+    last=now;
+  }
+  function corta(){ last=null; }
+  function flush(final){
+    if(!on) return;
+    var s=Math.floor(acc); if(s<1) return;
+    acc-=s; enviado+=s;
+    try{
+      fetch(SB+'/rest/v1/rpc/suite_tiempo_ping',{method:'POST', keepalive:!!final,
+        headers:{'Content-Type':'application/json','apikey':AN,'Authorization':'Bearer '+AN},
+        body:JSON.stringify({p_cuenta_id:cuenta, p_tipo:tipo, p_ref:ref, p_secs:s})
+      }).catch(function(){});
+    }catch(e){}
+  }
+  function leerPrevio(){
+    try{
+      fetch(SB+'/rest/v1/suite_actividad_tiempo?select=secs&cuenta_id=eq.'+encodeURIComponent(cuenta)+
+        '&tipo=eq.'+encodeURIComponent(tipo)+'&ref=eq.'+encodeURIComponent(ref),
+        {headers:{'apikey':AN,'Authorization':'Bearer '+AN}})
+      .then(function(r){ return r.ok?r.json():[]; })
+      .then(function(rows){ previo=(rows&&rows[0]&&rows[0].secs)||0; })
+      .catch(function(){});
+    }catch(e){}
+  }
+  function docAttach(doc){
+    if(!doc || doc.__suiteTiempo) return; doc.__suiteTiempo=1;
+    ['pointerdown','pointermove','mousemove','keydown','touchstart','wheel'].forEach(function(ev){
+      try{ doc.addEventListener(ev, actividad, {passive:true, capture:true}); }catch(e){}
+    });
+  }
+  function start(c, t, r){
+    if(on || !c || !r) return;
+    cuenta=String(c); tipo=String(t); ref=String(r); on=true;
+    docAttach(document);
+    document.addEventListener('visibilitychange', function(){
+      if(document.visibilityState!=='visible'){ corta(); flush(); } else { last=Date.now(); }
+    });
+    window.addEventListener('pagehide', function(){ corta(); flush(true); });
+    setInterval(flush, FLUSH_MS);
+    // fases del quiz en iframe (mismo origen): engancharse a su documento
+    setInterval(function(){
+      try{
+        var frs=document.querySelectorAll('iframe');
+        for(var i=0;i<frs.length;i++){ try{ var d=frs[i].contentDocument; if(d) docAttach(d); }catch(e2){} }
+      }catch(e){}
+    }, 2000);
+    leerPrevio();
+    last=Date.now();
+  }
+  function total(){ return Math.round(previo+enviado+acc); }
+  return { start:start, total:total, flush:flush, activo:function(){return on;} };
+})();
+</script>
 </head>
 <body>
 <div class="wrap">
@@ -11110,6 +11188,7 @@ function fpEnviarNota(nota, pcts){
   }
   var payload={
     nota:nota, escala:10,
+    tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
     ejercicios:ALU.items.map(function(it,k){
       return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(pcts[k]*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined };
     }),
@@ -11225,6 +11304,7 @@ function pintaResultado(nota, pcts){
       var sb=fpSb(); if(!sb || !ALU || ALU.simulado){ if(st){ st.textContent='(solo disponible en la ficha real)'; st.style.color='#ffb4b4'; } return; }
       if(st){ st.textContent='Enviando…'; st.style.color='#c9b978'; }
       var pay={ nota:ALU.__notaFinal, escala:10,
+        tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
         ejercicios:ALU.items.map(function(it,k){ return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(((ALU.__pcts&&ALU.__pcts[k])||0)*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined }; }),
         respuestas:ALU.items.map(respuestaDe),
         estado:ALU.items.map(function(it){ return fpSanitEstado(it.item); }),
@@ -11376,7 +11456,10 @@ function pantallaAlumnoC1b(){
 document.addEventListener('DOMContentLoaded', function(){
   var qs=new URLSearchParams(location.search);
   if(qs.get('panel')==='profesor'){ abrirPanel(qs.get('ficha'), qs.get('envio')); return; }
-  if(qs.get('fichaId')){ arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
+  if(qs.get('fichaId')){
+    // TIEMPO DE ACTIVIDAD (15-jul): rastreo de trabajo real en la ficha
+    try{ if(window.SuiteTiempo && qs.get('cuenta')) window.SuiteTiempo.start(qs.get('cuenta'), 'ficha', qs.get('fichaId')); }catch(e){}
+    arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
   if(qs.get('revision') && qs.get('s')){ fpModoRevision(qs.get('revision'), qs.get('s')); return; }   /* WAVE15 */
   var prac=qs.get('practice');
   if(prac){
