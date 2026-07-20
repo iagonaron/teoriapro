@@ -10503,6 +10503,18 @@ function enviar(){
       var d=r && r.data;
       if(!d || d.ok===false) throw new Error((d && d.error) || 'respuesta_invalida');
       FP.enviado=true;
+      // (Iago jul-2026) avisar al Diario del Profesor (la pestaña que abrió el
+      // generador) del envío REAL, para que muestre el visto "Ficha N enviada a
+      // los alumnos" en el apartado de clases.
+      try {
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage({
+            source:'teoria-at-home', type:'ficha_enviada',
+            ficha:(FP.numero!=null ? +FP.numero : (d && d.numero)),
+            notificados:(d && d.notificados), envio:FP.token, ts:Date.now()
+          }, '*');
+        }
+      } catch(e){}
       status('','');
       el('fpExitoHueco').innerHTML='<div class="fp-exito">✅ <b>Ficha '+(FP.numero!=null?FP.numero:'')+
         ' preparada.</b> Los alumnos de 2º GP la recibirán en su campana el <b>viernes a las 19:00</b> '+
