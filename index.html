@@ -11382,6 +11382,86 @@ async function fpModoRevision(rev, sec){
   }
 }
 
+/* --------- SALIR A MITAD DE FICHA · ✕ arriba a la derecha (Iago jul-2026) ---------
+   Solo en el modo alumno real (ni simulación del profesor ni revisión).
+   La ✕ abre una confirmación: el progreso queda guardado (se retoma desde la
+   campana del portal), el profesor no recibe nada hasta completar y enviar,
+   y se recuerda el plazo (&fin= / &gracia= que añade el portal al enlace). */
+var FP_PORTAL_URL='https://iagonaron.github.io/lmpro/';
+function fpSalirAlPortal(){
+  try{ if(window.SuiteTiempo && window.SuiteTiempo.flush) window.SuiteTiempo.flush(true); }catch(e){}
+  window.location.href=FP_PORTAL_URL;
+}
+function fpPlazoActual(){
+  var p=window.__FP_PLAZO||{};
+  var fin=p.fin?Date.parse(p.fin):NaN, gr=p.gracia?Date.parse(p.gracia):NaN, t=Date.now();
+  if(isFinite(fin) && t<=fin) return { fase:'normal', limite:new Date(fin), restante:fin-t };
+  if(isFinite(gr) && t<=gr)   return { fase:'gracia', limite:new Date(gr), restante:gr-t };
+  return null;
+}
+function fpFmtLimite(d){
+  try{
+    return d.toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'})
+      +' a las '+d.toLocaleTimeString('es-ES',{hour:'2-digit',minute:'2-digit'});
+  }catch(e){ return ''+d; }
+}
+function fpFmtRestante(ms){
+  var m=Math.max(0,Math.floor(ms/60000)), d=Math.floor(m/1440), h=Math.floor((m%1440)/60), mi=m%60;
+  if(d>0) return d+(d===1?' día':' días')+(h>0?(' y '+h+(h===1?' hora':' horas')):'');
+  if(h>0) return h+(h===1?' hora':' horas')+(mi>0?(' y '+mi+' min'):'');
+  return mi+' min';
+}
+function fpBotonSalir(){
+  if(!ALU || ALU.simulado || ALU.revision) return;
+  if(document.getElementById('fpAluSalir')) return;
+  var b=document.createElement('button');
+  b.id='fpAluSalir'; b.type='button'; b.textContent='✕';
+  b.setAttribute('aria-label','Salir de la ficha'); b.title='Salir de la ficha';
+  b.style.cssText='position:fixed;top:14px;right:16px;z-index:99990;width:40px;height:40px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:rgba(212,175,55,.10);border:1px solid rgba(212,175,55,.55);color:#f3e4b0;font-size:16px;line-height:1;font-weight:800;cursor:pointer;-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px)';
+  b.onclick=function(){
+    if(!ALU || ALU.simulado || ALU.revision){ try{ b.remove(); }catch(e){} return; }
+    if(ALU.entregada){ fpSalirAlPortal(); return; }   // ya entregada: al portal directamente
+    fpModalSalir();
+  };
+  document.body.appendChild(b);
+}
+function fpModalSalir(){
+  if(document.getElementById('fpSalirOv')) return;
+  var st=fpPlazoActual();
+  var plazoHTML = !st ? '' : (st.fase==='gracia'
+    ? '<div style="margin-top:14px;background:rgba(255,92,92,.12);border:1px solid rgba(255,92,92,.5);border-radius:12px;padding:11px 14px;color:#ffb4b4;font-size:13.5px;line-height:1.55">⏰ Estás en la <b>semana de recuperación</b>: recuerda completarla antes del <b>'+fpFmtLimite(st.limite)+'</b> (te quedan '+fpFmtRestante(st.restante)+').</div>'
+    : '<div style="margin-top:14px;background:rgba(52,211,153,.10);border:1px solid rgba(52,211,153,.45);border-radius:12px;padding:11px 14px;color:#8be3ae;font-size:13.5px;line-height:1.55">📅 Recuerda completarla antes del <b>'+fpFmtLimite(st.limite)+'</b> (te quedan '+fpFmtRestante(st.restante)+').</div>');
+  var hechos=0, total=(ALU&&ALU.items)?ALU.items.length:0;
+  try{
+    hechos=ALU.items.filter(function(it){
+      var r=respuestaDe(it);
+      return r && Array.isArray(r.userSeq) && r.userSeq.some(function(n2){ return n2 && n2._touched; });
+    }).length;
+  }catch(e){}
+  var avanceTxt=hechos>0?(' Llevas <b>'+hechos+' de '+total+'</b> ejercicios con respuesta.'):'';
+  var ov=document.createElement('div'); ov.id='fpSalirOv';
+  ov.style.cssText='position:fixed;inset:0;background:rgba(6,4,1,.72);z-index:100002;display:flex;align-items:center;justify-content:center;padding:22px;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)';
+  var card=document.createElement('div');
+  card.style.cssText='background:linear-gradient(160deg,#221908,#160f04);border:1px solid rgba(212,175,55,.5);border-radius:18px;max-width:470px;width:100%;padding:26px 26px 22px;box-shadow:0 26px 80px #00000070;color:#fbf7ec;font-family:inherit';
+  card.innerHTML=
+    '<div style="font-size:19px;font-weight:900;color:#e9c96a">¿Salir de la ficha?</div>'+
+    '<div style="margin-top:10px;font-size:14px;line-height:1.6;color:#d8caa6">Tranquilo: <b>tu progreso queda guardado</b> y puedes retomar la ficha en otro momento desde la campana del portal, justo donde la dejaste.'+avanceTxt+'</div>'+
+    '<div style="margin-top:12px;font-size:13.5px;line-height:1.6;color:#c9b978">Eso sí: <b>el profesor no recibirá tu ficha hasta que la completes y la envíes</b>.</div>'+
+    plazoHTML+
+    '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap">'+
+      '<button id="fpSalirSi" type="button" style="border:1px solid rgba(212,175,55,.5);background:rgba(212,175,55,.08);color:#f3e4b0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer">Guardar y salir</button>'+
+      '<button id="fpSalirNo" type="button" style="border:0;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer">Seguir con la ficha</button>'+
+    '</div>';
+  ov.appendChild(card); document.body.appendChild(ov);
+  var cerrar=function(){ try{ document.body.removeChild(ov); }catch(e){} };
+  card.querySelector('#fpSalirNo').onclick=cerrar;
+  ov.addEventListener('click', function(e){ if(e.target===ov) cerrar(); });
+  card.querySelector('#fpSalirSi').onclick=function(){
+    try{ progGuardar(); }catch(e){}
+    cerrar(); fpSalirAlPortal();
+  };
+}
+
 /* --------- arranque alumno --------- */
 async function arrancarAlumno(fichaId, cuenta, nFallback){
   var portal=el('view-portal'); if(portal) portal.style.display='none';
@@ -11402,6 +11482,14 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
     if(!data || data.ok===false){ throw new Error((data&&data.error)||'no_abre'); }
     var pack=fpExtraerPaquete(data);
     if(!pack || !pack.ejercicios.length) throw new Error('ficha_vacia');
+    // PLAZO (Iago jul-2026): si la RPC devuelve las fechas de entrega, pisan
+    // a las de la URL (por si el enlace llegó sin &fin= / &gracia=).
+    try{
+      var pzFin=data.fin_normal||data.fecha_fin_normal||(data.ficha&&data.ficha.fin_normal)||null;
+      var pzGra=data.fin_gracia||data.fecha_fin_gracia||(data.ficha&&data.ficha.fin_gracia)||null;
+      var pzPrev=window.__FP_PLAZO||{};
+      if(pzFin||pzGra) window.__FP_PLAZO={ fin:(pzFin||pzPrev.fin||null), gracia:(pzGra||pzPrev.gracia||null) };
+    }catch(e){}
     ALU={ cuenta:cuenta, ficha:fichaId,
           numero:(pack.numero!=null?pack.numero:(nFallback||null)),
           anulados:(pack.anulados||[]).map(Number),   /* WAVE12 */
@@ -11418,6 +11506,7 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
         if(prog.i>=0 && prog.i<ALU.items.length) ALU.i=prog.i|0;
       }
     }catch(e){}
+    fpBotonSalir();   // ✕ fija arriba a la derecha (solo alumno real)
     if(ALU.i===0) fpIntroFicha(); else pintaAlu();
   }catch(e){
     var c=(e&&e.message)||'error';
@@ -11469,6 +11558,9 @@ document.addEventListener('DOMContentLoaded', function(){
   var qs=new URLSearchParams(location.search);
   if(qs.get('panel')==='profesor'){ abrirPanel(qs.get('ficha'), qs.get('envio')); return; }
   if(qs.get('fichaId')){
+    // PLAZO (Iago jul-2026): el portal añade &fin= y &gracia= (ISO) al enlace
+    // para que la ventana de "salir a mitad" recuerde la fecha de entrega.
+    window.__FP_PLAZO={ fin:qs.get('fin')||null, gracia:qs.get('gracia')||null };
     // TIEMPO DE ACTIVIDAD (15-jul): rastreo de trabajo real en la ficha
     try{ if(window.SuiteTiempo && qs.get('cuenta')) window.SuiteTiempo.start(qs.get('cuenta'), 'ficha', qs.get('fichaId')); }catch(e){}
     arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
