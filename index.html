@@ -10461,7 +10461,12 @@ function previsualizar(i){
 /* --------- payload + envío --------- */
 function construirPayloadPRO(){
   var now=new Date().toISOString();
-  var total=FP.ejercicios.length;
+  /* 2-ago-2026 (Iago, opción A) · Los bloques de EXAMEN son de papel (se
+     contestan en la hoja auxiliar y salen por el PDF): NO viajan a la ficha
+     digital. La ficha digital puntúa sobre 100% con los ejercicios restantes
+     (el total y la media se calculan sin ellos). */
+  var _digitales=FP.ejercicios.filter(function(e){ return !(e.spec && e.spec._examen); });
+  var total=_digitales.length;
   return {
     tipo:'ficha_teoria',
     app:'teoria_at_home_pro',
@@ -10477,7 +10482,7 @@ function construirPayloadPRO(){
       valor_por_ejercicio:Math.round((10/Math.max(1,total))*1000)/1000,
       umbral_feedback:0.5, penaliza_caducar:0, solo_al_final:true
     },
-    ejercicios: FP.ejercicios.map(function(e,k){
+    ejercicios: _digitales.map(function(e,k){
       return {
         n:k+1, key:e.key, label:e.label,
         enun:fpEnun(e),
@@ -10516,9 +10521,11 @@ function enviar(){
         }
       } catch(e){}
       status('','');
+      var _nEx=FP.ejercicios.filter(function(e){ return e.spec && e.spec._examen; }).length;
       el('fpExitoHueco').innerHTML='<div class="fp-exito">✅ <b>Ficha '+(FP.numero!=null?FP.numero:'')+
         ' preparada.</b> Los alumnos de 2º GP la recibirán en su campana el <b>viernes a las 19:00</b> '+
-        '(si ya pasó, al momento), con su semana de entrega y su semana de gracia. Puedes cerrar esta pestaña.</div>';
+        '(si ya pasó, al momento), con su semana de entrega y su semana de gracia. Puedes cerrar esta pestaña.'+
+        (_nEx>0?('<br><span style="font-size:12.5px;color:#c9b978">ℹ️ '+_nEx+' bloque(s) de examen NO viajan en la ficha digital (son para el PDF en papel); la ficha puntúa sobre los '+ (FP.ejercicios.length-_nEx) +' ejercicios restantes.</span>'):'')+'</div>';
       window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
     })
     .catch(function(e){
