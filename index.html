@@ -13031,6 +13031,11 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     if(!host||!g) return; host.innerHTML=''; g.__sel=null;
     var wrap=document.createElement('div'); wrap.style.cssText='background:#f3f5ff;border:1px solid #dfe3f4;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
     var score=document.createElement('div'); score.style.cssText='position:relative;overflow:visible'; wrap.appendChild(score); g.__host=score;
+    /* 2-ago-2026 (Iago) · Reglas visibles para el alumno */
+    var _regla=document.createElement('div');
+    _regla.style.cssText='font-size:11.5px;line-height:1.55;color:#6b5d2e;background:#faf6ea;border:1px dashed #e0d3a0;border-radius:9px;padding:7px 10px;margin-bottom:8px';
+    _regla.innerHTML='<b>Reglas:</b> coloca <b>12 sonidos distintos</b> — los enarmónicos cuentan como el MISMO sonido (Re♯ = Mi♭) y la <b>octava es libre</b>. Cada sonido repetido o que falte resta <b>0,5</b>. Evita las «escaleras»: 4 notas seguidas por grados conjuntos en la misma dirección restan 0,25 (y 0,10 más por cada nota extra).';
+    wrap.insertBefore(_regla, score);
     var tb=document.createElement('div'); tb.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border:1px solid #e7d9a8;border-radius:10px;background:#faf6ea'; wrap.appendChild(tb); g.__tb=tb;
     var l=document.createElement('span'); l.style.cssText='font-size:12px;font-weight:800;color:#7a6a3a'; l.textContent='Alteración:'; tb.appendChild(l);
     [['b','♭'],['n','♮'],['#','♯']].forEach(function(pr){ var b=document.createElement('button'); b.type='button'; b.dataset.a=pr[0]; b.textContent=pr[1]; b.style.cssText='width:36px;height:36px;border:1px solid #cbb98a;border-radius:8px;background:#fff;color:#3a2f12;font-size:16px;cursor:pointer'; b.onclick=function(){ setAcc(g,pr[0]); }; tb.appendChild(b); });
@@ -13041,7 +13046,7 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
   function esValida(g){ var pcs=soundingPcs(g); return pcs.length===12 && D().todosDistintos(pcs) && !reglaViola(g); }
   function distintasCount(g){ var pcs=soundingPcs(g), s={}, c=0; pcs.forEach(function(p){ if(!s[p]){ s[p]=1; c++; } }); return c; }
   function penConj(g){ var r=rachaDir(g); return r>=3 ? (0.25 + 0.10*(r-3)) : 0; }   // 4 notas: 25%; +10% por cada extra
-  function puntua(g){ try{ var nMal=12 - distintasCount(g); var sc=1 - 0.25*nMal - penConj(g); return Math.max(0, Math.round(sc*100)/100); }catch(e){ return 0; } }
+  function puntua(g){ try{ var nMal=12 - distintasCount(g); var sc=1 - 0.5*nMal - penConj(g);   /* 2-ago-2026 (Iago): más severo — cada sonido repetido o faltante resta 0,5 (enarmónicos = mismo sonido, ya contemplado por clase de nota) */ return Math.max(0, Math.round(sc*100)/100); }catch(e){ return 0; } }
   function corregirVisual(host, g){
     try{
       if(!g) return 0;
@@ -13053,7 +13058,7 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
         renderStaff(g,true);
         var nMal=12-distintasCount(g), r=rachaDir(g), pc=puntua(g);
         var det=[];
-        if(nMal>0) det.push('<span style="color:#e11d1d">'+nMal+' sonido(s) incorrecto(s) o que faltan (repetidos en rojo): −'+(25*nMal)+'%</span>');
+        if(nMal>0) det.push('<span style="color:#e11d1d">'+nMal+' sonido(s) incorrecto(s) o que faltan (repetidos en rojo): −'+(50*nMal)+'%</span>');
         if(r>=3) det.push('<span style="color:#e11d1d">'+(r+1)+' notas por grados conjuntos en la misma dirección: −25%'+(r>3?(' y −10% × '+(r-3)+' extra'):'')+' = −'+Math.round(penConj(g)*100)+'%</span>');
         if(!det.length) det.push('<span style="color:#22c98a">✓ 12 sonidos distintos y sin cadenas por grados conjuntos: serie válida</span>');
         var box=document.createElement('div'); box.style.cssText='margin-top:10px;font-size:12px;line-height:1.6;color:#5a5030'; box.innerHTML=det.join('<br>')+'<div style="margin-top:6px;font-weight:900;color:'+(pc>=0.5?'#22c98a':'#e11d1d')+'">Puntuación: '+Math.round(pc*100)+'%</div>'; wrap.appendChild(box);
