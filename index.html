@@ -12327,6 +12327,11 @@ function fpPintaCompElegir(host, spec, resuelto, anchoFijo){
   function montarEn(host, g){
     if(!host||!g||!g.subs) return; host.innerHTML='';
     var wrap=document.createElement('div'); wrap.style.cssText='display:flex;flex-direction:column;gap:12px'; host.appendChild(wrap);
+    /* 3-ago-2026 (Iago·B2) · Regla visible para el alumno */
+    var _regla=document.createElement('div');
+    _regla.style.cssText='font-size:11.5px;line-height:1.55;color:#6b5d2e;background:#faf6ea;border:1px dashed #e0d3a0;border-radius:9px;padding:7px 10px';
+    _regla.innerHTML='<b>Regla:</b> rellena los dos compases de cada apartado de forma <b>DIFERENTE</b> entre sí. Si las dos líneas quedan idénticas, ese apartado vale la <b>mitad</b>.';
+    wrap.appendChild(_regla);
     g.subs.forEach(function(sub){ wrap.appendChild(buildSec(g, sub)); });
   }
   /* DOS COMPASES: cabecera (clave+compás) + dos compases separados por barra; cada uno con sus figuras */
@@ -15100,6 +15105,13 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   function montarEscrito(host, g){
     var T=window.TR_ESC; if(!T){ host.innerHTML='<div class="fp-vacio">(motor de transporte no disponible)</div>'; return; }
     host.innerHTML=ESC_HTML; T.setEX(g); if(!g._orden) g._orden=[];
+    /* 3-ago-2026 (Iago·B3) · Regla visible para el alumno */
+    (function(){ var _w=host.querySelector('.tr-escrito-wrap')||host;
+      var _r=document.createElement('div');
+      _r.style.cssText='font-size:11.5px;line-height:1.55;color:#6b5d2e;background:#faf6ea;border:1px dashed #e0d3a0;border-radius:9px;padding:7px 10px;margin:0 0 10px';
+      _r.innerHTML='<b>Cómo se puntúa:</b> la <b>tonalidad de destino y su armadura</b> van juntas y valen el <b>50%</b> — en paquete, todo o nada (cualquiera de las dos mal pierde ese 50% entero). El otro 50% son las <b>alturas de las notas</b>, proporcional; se corrigen contando la armadura que TÚ hayas puesto (si pusiste 2♯, tu Do ya suena Do♯).';
+      _w.insertBefore(_r, _w.firstChild);
+    })();
     var $e=function(id){ return host.querySelector('#'+id); };   /* WAVE4: IDs SOLO dentro del host */
     if(!g._pad){ ['teCorregir','teResult'].forEach(function(i2){ var n=$e(i2); if(n) n.style.display='none'; }); }   /* en ficha NO hay Corregir: se corrige al entregar */
     var selIdx=null;
@@ -15531,21 +15543,21 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   }
   function enunciado(g){ return 'Blues · reconstruye la estructura (cifrado americano)'; }
 
-  // puntuación: -10% por 7ª olvidada (máx -50%); -25% por casilla mal de letra/alteración (sin tope)
+  // puntuación: -10% por 7ª olvidada (máx -50%); -50% por casilla mal de letra y/o alteración (sin tope: 2 casillas mal = 0). Letra+alteración mal en la MISMA casilla = un solo -50%, no sumativo. · endurecido 3-ago-2026 (Iago·B1, antes -25%)
   function evalua(g){
     var miss7=0, wrong=0;
     for(var i=0;i<12;i++){ if(i===g.given) continue; var u=g.sel[i], c=g.cells[i];
       if(!u || !u.letter || u.letter!==c.letter || (u.alter||0)!==(c.alter||0)){ wrong++; }
       else if(!u.seventh){ miss7++; }
     }
-    var pen7=Math.min(0.5, 0.10*miss7), penW=0.25*wrong;
+    var pen7=Math.min(0.5, 0.10*miss7), penW=0.5*wrong; /* 3-ago-2026 (Iago·B1): 0.25→0.5 por casilla, sin tope */
     return { miss7:miss7, wrong:wrong, val:Math.max(0, Math.round((1-pen7-penW)*100)/100) };
   }
 
   var LETRAS=['C','D','E','F','G','A','B'];
   var BLUES_HTML=''+
   '<div class="blu-wrap">'+
-  '  <div class="blu-aviso">Recuerda: en el blues <b>todos los acordes llevan 7ª</b> (por una cuestión de estilo). No te la olvides.</div>'+
+  '  <div class="blu-aviso">Recuerda: en el blues <b>todos los acordes llevan 7ª</b> (por una cuestión de estilo). No te la olvides: cada 7ª olvidada resta 0,10 (máximo −0,50). Y mucho ojo con las casillas: <b>letra o alteración mal = −0,5 por casilla, sin tope</b> (dos casillas mal ya es un 0). Si en una misma casilla fallas letra y alteración, resta 0,5 una sola vez (no se suma doble).</div>'+
   '  <div class="blu-pide">Se da <b class="blu-dado-nom" id="bluDadoNom">—</b>. Reconstruye el resto de la estructura del blues.</div>'+
   '  <div class="blu-grid" id="bluGrid"></div>'+
   '  <div class="blu-sel" id="bluSel" style="display:none">'+
@@ -15610,7 +15622,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
         else if(!u.seventh){ b.classList.add('miss'); b.innerHTML=chordStr(u.letter,u.alter,false)+'<span style="display:block;color:#b8860b;font-size:.72em">falta la 7ª</span>'; }
         else b.classList.add('ok');
       });
-      var msg=[]; if(r.wrong) msg.push(r.wrong+' casilla(s) mal: −'+(25*r.wrong)+'%'); if(r.miss7) msg.push(r.miss7+' 7ª olvidada(s): −'+Math.min(50,10*r.miss7)+'%'); if(!r.wrong&&!r.miss7) msg.push('✓ ¡Perfecto!');
+      var msg=[]; if(r.wrong) msg.push(r.wrong+' casilla(s) mal: −'+(50*r.wrong)+'%'); if(r.miss7) msg.push(r.miss7+' 7ª olvidada(s): −'+Math.min(50,10*r.miss7)+'%'); if(!r.wrong&&!r.miss7) msg.push('✓ ¡Perfecto!');
       if(fb) fb.innerHTML='<span style="color:'+(r.val>=0.5?'#22c98a':'#e11d1d')+'">'+msg.join(' · ')+' &nbsp;·&nbsp; '+Math.round(r.val*100)+'%</span>';
     };
   }
