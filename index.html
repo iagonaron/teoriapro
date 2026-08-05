@@ -10495,6 +10495,7 @@ function enviar(){
   var btn=el('fpEnviar'); btn.disabled=true;
   status('Enviando la ficha…', 'info');
   var payload=construirPayloadPRO();
+  if(FP.opcional) payload.puntua_opcional=true;   // (6-ago Iago) el alumno decidirá si su nota cuenta
   sb.rpc('suite_ficha_enviar_con_token', { p_token:FP.token, p_ejercicios:payload })
     .then(function(r){
       if(r && r.error) throw r.error;
@@ -10518,6 +10519,7 @@ function enviar(){
       el('fpExitoHueco').innerHTML='<div class="fp-exito">✅ <b>Ficha '+(FP.numero!=null?FP.numero:'')+
         ' preparada.</b> Los alumnos de 2º GP la recibirán en su campana el <b>viernes a las 19:00</b> '+
         '(si ya pasó, al momento), con su semana de entrega y su semana de gracia. Puedes cerrar esta pestaña.'+
+        (FP.opcional?'<br><span style="font-size:12.5px;color:#c9b978">🕊 Ficha PUNTÚA OPCIONAL: al corregirse, cada alumno decidirá si su nota cuenta.</span>':'')+
         (_nEx>0?('<br><span style="font-size:12.5px;color:#c9b978">ℹ️ '+_nEx+' bloque(s) de examen NO viajan en la ficha digital (son para el PDF en papel); la ficha puntúa sobre los '+ (FP.ejercicios.length-_nEx) +' ejercicios restantes.</span>'):'')+'</div>';
       window.scrollTo({top:document.body.scrollHeight, behavior:'smooth'});
     })
@@ -10831,9 +10833,11 @@ async function fpGenerarPDF(){
 }
 
 /* --------- apertura + router --------- */
-function abrirPanel(numero, token){
+function abrirPanel(numero, token, opcional){
   FP.numero=(numero!=null && String(numero)!=='' ? numero : null);
   FP.token=token||null;
+  FP.opcional=(opcional===true);   // (6-ago Iago) ficha «puntúa opcional»
+  if(FP.opcional && FP.token){ try{ setTimeout(function(){ status('🕊 Esta ficha se enviará como PUNTÚA OPCIONAL: al corregirse, cada alumno decidirá si su nota cuenta.','info'); }, 300); }catch(e){} }
   var portal=el('view-portal'); if(portal) portal.style.display='none';
   var v=el('view-fichapro'); v.style.display='block';
   el('fpNum').textContent = FP.numero!=null ? ('nº '+FP.numero) : 'nº —';
@@ -11207,10 +11211,28 @@ function entregarFicha(){
   fpPantallaCorrigiendo(N, function(){
     pintaResultado(nota, pcts);
     fpRevelarNota(nota);
-    fpEnviarNota(nota, pcts);
+    // (6-ago Iago) ficha «puntúa opcional»: el alumno elige si su nota cuenta
+    // (por defecto, enviar). La entrega llega igual; solo cambia la nota.
+    if(ALU.opcional && !ALU.revision){ fpEleccionOpcional(nota, pcts); }
+    else { fpEnviarNota(nota, pcts); }
   });
 }
-function fpEnviarNota(nota, pcts){
+function fpEleccionOpcional(nota, pcts){
+  var est=el('aluEnvEstado');
+  if(!est){ fpEnviarNota(nota, pcts); return; }
+  est.className='fp-status info';
+  est.innerHTML='<div style="font-weight:800;margin-bottom:8px">🕊 Esta ficha es de calentamiento: tú decides si tu nota cuenta.</div>'
+    +'<label style="display:flex;gap:8px;align-items:flex-start;text-align:left;font-weight:700;font-size:13.5px;margin:6px 0;cursor:pointer"><input type="radio" name="fpOpc" value="si" checked style="margin-top:2px;accent-color:#d4af37"> Enviar mi nota a Iago</label>'
+    +'<label style="display:flex;gap:8px;align-items:flex-start;text-align:left;font-weight:700;font-size:13.5px;margin:6px 0;cursor:pointer"><input type="radio" name="fpOpc" value="no" style="margin-top:2px;accent-color:#d4af37"> Que esta vez no cuente (se entrega sin nota)</label>'
+    +'<button id="fpOpcGo" type="button" style="margin-top:10px;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border:0;border-radius:10px;padding:10px 20px;font-weight:800;font-size:13.5px;cursor:pointer">Continuar</button>';
+  var go=est.querySelector('#fpOpcGo');
+  if(go) go.onclick=function(){
+    var np=!!est.querySelector('input[name="fpOpc"][value="no"]:checked');
+    ALU.__noPuntua=np;
+    fpEnviarNota(nota, pcts, np);
+  };
+}
+function fpEnviarNota(nota, pcts, noPuntua){
   if(ALU && ALU.simulado){
     var _s3=el('aluEnvEstado');
     if(_s3){ _s3.textContent='\u24d8 Simulaci\u00f3n: la nota NO se env\u00eda (solo pruebas del profesor).'; _s3.className='fp-status info'; }
@@ -11218,6 +11240,8 @@ function fpEnviarNota(nota, pcts){
   }
   var payload={
     nota:nota, escala:10,
+    origin:'teoria_pro', ficha_id:ALU.ficha, numero:(ALU.numero!=null?ALU.numero:undefined),
+    no_puntua:(noPuntua===true)||undefined,   /* (6-ago) el alumno eligió que no cuente */
     tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
     ejercicios:ALU.items.map(function(it,k){
       return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(pcts[k]*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined };
@@ -11234,7 +11258,7 @@ function fpEnviarNota(nota, pcts){
       if(r && r.error) throw r.error;
       var d=r && r.data;
       if(d && d.ok===false) throw new Error(d.error||'error');
-      pinta('✓ Nota enviada a Iago.','ok');
+      pinta(noPuntua===true?'✓ Ficha entregada sin nota: esta vez no cuenta.':'✓ Nota enviada a Iago.','ok');
       progBorrar();
     })
     .catch(function(e){
@@ -11334,6 +11358,8 @@ function pintaResultado(nota, pcts){
       var sb=fpSb(); if(!sb || !ALU || ALU.simulado){ if(st){ st.textContent='(solo disponible en la ficha real)'; st.style.color='#ffb4b4'; } return; }
       if(st){ st.textContent='Enviando…'; st.style.color='#c9b978'; }
       var pay={ nota:ALU.__notaFinal, escala:10,
+        origin:'teoria_pro', ficha_id:ALU.ficha, numero:(ALU.numero!=null?ALU.numero:undefined),
+        no_puntua:(ALU.__noPuntua===true)||undefined,
         tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
         ejercicios:ALU.items.map(function(it,k){ return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(((ALU.__pcts&&ALU.__pcts[k])||0)*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined }; }),
         respuestas:ALU.items.map(respuestaDe),
@@ -11385,6 +11411,18 @@ async function fpModoRevision(rev, sec){
              : Math.round((pcts.reduce(function(a,b){return a+b;},0)*10/Math.max(1,pcts.length))*10)/10;
     wrap.innerHTML=aluHtmlBase();
     pintaResultado(nota, pcts);
+    // (6-ago) si el alumno eligió «que no cuente», que Iago lo vea claro
+    try{
+      if(pl && pl.no_puntua===true){
+        var _wN=wrap.querySelector('#fpNotaBadge');
+        if(_wN && !wrap.querySelector('#fpNoPuntuaChip')){
+          var _c=document.createElement('div'); _c.id='fpNoPuntuaChip';
+          _c.style.cssText='margin-top:10px;display:inline-block;background:rgba(255,255,255,.10);border:1px solid rgba(233,201,106,.5);color:#e9c96a;font-weight:800;font-size:13px;padding:7px 14px;border-radius:99px';
+          _c.textContent='🕊 PUNTÚA OPCIONAL · el alumno eligió que NO cuente (entregada sin nota)';
+          _wN.insertAdjacentElement('afterend', _c);
+        }
+      }
+    }catch(e){}
     try{ fpRevelarNota(nota); }catch(e){}
     /* banner del profesor + los comentarios del alumno, arriba del todo */
     var c=el('aluCuerpo');
@@ -11511,6 +11549,7 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
     ALU={ cuenta:cuenta, ficha:fichaId,
           numero:(pack.numero!=null?pack.numero:(nFallback||null)),
           anulados:(pack.anulados||[]).map(Number),   /* WAVE12 */
+          opcional:!!pack.opcional,   /* (6-ago) ficha «puntúa opcional» */
           entregada:false, i:0,
           items:pack.ejercicios.map(function(e){
             var item=clon((e.motor&&e.motor._spec)||{});
@@ -11549,7 +11588,7 @@ function fpExtraerPaquete(data){
   for(var k=0;k<cand.length;k++){
     var c=cand[k];
     if(c && Array.isArray(c.ejercicios) && c.ejercicios.length){
-      return { ejercicios:c.ejercicios, numero:(c.numero!=null?c.numero:(data.numero!=null?data.numero:null)), anulados:(c.anulados||data.anulados||[]) };   /* WAVE12: anulaciones del Diario */
+      return { ejercicios:c.ejercicios, numero:(c.numero!=null?c.numero:(data.numero!=null?data.numero:null)), anulados:(c.anulados||data.anulados||[]), opcional:!!(c.puntua_opcional||data.puntua_opcional) };   /* WAVE12: anulaciones del Diario · (6-ago) + puntúa opcional */
     }
   }
   if(Array.isArray(data.ejercicios) && data.ejercicios.length){
@@ -11574,7 +11613,7 @@ function pantallaAlumnoC1b(){
 }
 document.addEventListener('DOMContentLoaded', function(){
   var qs=new URLSearchParams(location.search);
-  if(qs.get('panel')==='profesor'){ abrirPanel(qs.get('ficha'), qs.get('envio')); return; }
+  if(qs.get('panel')==='profesor'){ abrirPanel(qs.get('ficha'), qs.get('envio'), qs.get('opcional')==='1'); return; }   /* (6-ago) + puntúa opcional */
   if(qs.get('fichaId')){
     // PLAZO (Iago jul-2026): el portal añade &fin= y &gracia= (ISO) al enlace
     // para que la ventana de "salir a mitad" recuerde la fecha de entrega.
