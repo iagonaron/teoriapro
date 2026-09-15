@@ -10926,7 +10926,15 @@ function progGuardar(){
     p_cuenta_id:ALU.cuenta, p_ficha_id:ALU.ficha,
     p_ejercicio_actual:ALU.i|0, p_hechos:hechos, p_total:ALU.items.length,
     p_respuestas:respuestas
-  }).then(function(r){ if(r&&r.error) console.warn('[fichaspro] progreso', r.error.message); })
+  }).then(function(r){ if(r&&r.error) console.warn('[fichaspro] progreso', r.error.message);
+    /* (Iago 15-sep-2026) el servidor no deja machacar un progreso hecho con uno vacío:
+       si lo rechaza, nos quedamos con el suyo y recargamos UNA vez para retomarlo */
+    try{ var d=r&&r.data; if(d && d.ok===false && d.error==='progreso_mas_avanzado' && d.progreso){
+      var p=d.progreso; var pk={ i:p.ejercicio_actual|0, respuestas:p.respuestas||null, total:p.total|0, t:Date.now() };
+      localStorage.setItem(progClaveLS(ALU.cuenta, ALU.ficha), JSON.stringify(pk));
+      var flag='suite_prog_reload_'+ALU.ficha;
+      if(!sessionStorage.getItem(flag)){ sessionStorage.setItem(flag,'1'); alert('Tenías esta ficha más avanzada guardada. Se recupera ahora.'); location.reload(); }
+    } }catch(e){} })
     .catch(function(e){ console.warn('[fichaspro] progreso', e); });
 }
 async function progLeer(cuenta, ficha){
@@ -11201,7 +11209,8 @@ function entregarFicha(){
   });
   /* WAVE12 · ANULADOS: si el Diario anuló ejercicios, NO cuentan en la media */
   var _anul=(ALU.anulados||[]);
-  var _idx=ALU.items.map(function(it,k){ return {n:(it.n!=null?+it.n:k+1), k:k}; }).filter(function(o){ return _anul.indexOf(o.n)<0; }).map(function(o){ return o.k; });
+  /* (Iago 15-sep-2026) un ejercicio que NO CARGÓ tampoco cuenta: la app ya le dijo al alumno que no contaría */
+  var _idx=ALU.items.map(function(it,k){ return {n:(it.n!=null?+it.n:k+1), k:k, fc:!!it._falloCarga}; }).filter(function(o){ return _anul.indexOf(o.n)<0 && !o.fc; }).map(function(o){ return o.k; });
   if(!_idx.length) _idx=ALU.items.map(function(_,k){ return k; });
   var suma=_idx.reduce(function(a,k){ return a+pcts[k]; },0);
   var nota=Math.round((suma*10/_idx.length)*10)/10;
@@ -11269,6 +11278,12 @@ function fpEnviarNota(nota, pcts, noPuntua){
       pinta(mp[c]?('ⓘ '+mp[c]):('⚠ NO se pudo enviar la nota ('+c+'). Tu ficha está corregida, pero Iago aún no la tiene.'),
             c==='ya_entregada'?'info':'err');
       console.warn('[fichaspro] entregar', e);
+      /* (Iago 15-sep-2026) botón de reintento: antes un fallo de red dejaba la nota sin enviar y sin salida */
+      if(!mp[c]){ try{ var s3=el('aluEnvEstado'); if(s3 && !s3.querySelector('#fpReintentar')){
+        var rb=document.createElement('button'); rb.id='fpReintentar'; rb.type='button'; rb.textContent='↻ Reintentar envío';
+        rb.style.cssText='display:block;margin:10px auto 0;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border:0;border-radius:10px;padding:9px 18px;font-weight:800;font-size:13.5px;cursor:pointer';
+        rb.onclick=function(){ rb.disabled=true; fpEnviarNota(nota, pcts, noPuntua); };
+        s3.appendChild(rb); } }catch(e2){} }
     });
 }
 function pintaResultado(nota, pcts){
@@ -11443,7 +11458,7 @@ async function fpModoRevision(rev, sec){
    La ✕ abre una confirmación: el progreso queda guardado (se retoma desde la
    campana del portal), el profesor no recibe nada hasta completar y enviar,
    y se recuerda el plazo (&fin= / &gracia= que añade el portal al enlace). */
-var FP_PORTAL_URL='https://iagonaron.github.io/lmpro/';
+var FP_PORTAL_URL='https://gp.lmathome.es/#tareas';   /* (15-sep) dominio real (misma sesión) y con las notificaciones abiertas */
 function fpSalirAlPortal(){
   try{ if(window.SuiteTiempo && window.SuiteTiempo.flush) window.SuiteTiempo.flush(true); }catch(e){}
   window.location.href=FP_PORTAL_URL;
