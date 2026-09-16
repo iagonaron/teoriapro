@@ -9479,6 +9479,9 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-float .lbl{font-size:9.5px;letter-spacing:.16em;text-transform:uppercase;color:#b7a15f;font-weight:800;margin-top:4px}
   .fp-float.full{border-color:rgba(47,170,106,.7);box-shadow:0 12px 34px rgba(0,0,0,.55),0 0 0 1px rgba(47,170,106,.4)}
   .fp-float.full .n{color:#8be3ae}
+  .fp-float.full .n b{color:#8be3ae}
+  .fp-float.full .n b::after{content:' ✓';font-size:18px}
+  .fp-float.over .n b{color:#ffb86b}
   @media(max-width:620px){ .fp-float{right:12px;bottom:12px;padding:9px 13px;min-width:84px} .fp-float .n{font-size:22px} }
   .fp-cat{display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
   @media(min-width:920px){ .fp-cat{grid-template-columns:1.65fr 1fr} }
@@ -9694,11 +9697,11 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
       <div class="fp-cat" id="fpCat"></div>
     </section>
     <div class="fp-float" id="fpFloat" title="Ejercicios en la ficha">
-      <div class="n"><b id="fpFloatN">0</b><span>/10</span></div>
+      <div class="n"><b id="fpFloatN">0</b><span>/5</span></div>
       <div class="lbl">en la ficha</div>
     </div>
     <section class="fp-sec">
-      <h3>Revisar ficha · <span id="fpCount">0</span>/10 ejercicios</h3>
+      <h3>Revisar ficha · <span id="fpCount">0</span>/5 ejercicios <small style="font-weight:600;color:var(--muted2)">(objetivo 5 · tope 10)</small></h3>
       <div class="fp-lista" id="fpLista"><div class="fp-vacio">Aún no hay ejercicios: añade del catálogo.</div></div>
     </section>
     <div class="fp-pie">
@@ -9887,7 +9890,8 @@ function pintaLista(){
   var host=el('fpLista'); host.innerHTML='';
   el('fpCount').textContent=FP.ejercicios.length;
   var ff=el('fpFloatN'); if(ff) ff.textContent=FP.ejercicios.length;
-  var fbox=el('fpFloat'); if(fbox) fbox.classList.toggle('full', FP.ejercicios.length>=FP.MAX);
+  // (Iago 16-sep-2026) objetivo 5 ejercicios: VERDE justo en 5; por encima, ámbar (se puede seguir hasta 10)
+  var fbox=el('fpFloat'); if(fbox){ fbox.classList.toggle('full', FP.ejercicios.length===5); fbox.classList.toggle('over', FP.ejercicios.length>5); }
   var v=el('fpValor');
   if(FP.ejercicios.length){
     var val=Math.round((10/FP.ejercicios.length)*100)/100;
