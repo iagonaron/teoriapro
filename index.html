@@ -9529,6 +9529,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-tipo{position:relative}
   .fp-dot{display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.35)}
   .fp-tipo .fp-dot{position:absolute;top:-5px;right:-5px}
+  .fp-frac{position:absolute;right:7px;bottom:4px;font-size:9.5px;font-weight:800;color:#b7a15f;opacity:.9;letter-spacing:.02em}
   .fp-dot-verde{background:#22c55e}.fp-dot-amarillo{background:#facc15}.fp-dot-naranja{background:#fb923c}.fp-dot-rojo{background:#ef4444}.fp-dot-gris{background:#8b93a7}
   .fp-prev{font-size:12.5px;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.35);border-radius:12px;padding:9px 12px;margin:0 0 14px}
   .fp-prev-l{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px}
@@ -9837,7 +9838,8 @@ function fpMakeCard(t, azul){
   var ct=(typeof fpCtxTipo==='function')?fpCtxTipo(t.key):null;
   if(ct){ b.title=fpCtxTitulo(ct); }
   b.innerHTML=(ct?'<i class="fp-dot fp-dot-'+fpCtxColor(ct)+'"></i>':'')+(t.estado==='activo'?'<span class="fp-add">+</span>':'')+
-    t.label+'<small>'+(t.estado==='activo'?(t.desc||'construir el modo indicado'):'todavía no se puede añadir')+'</small>'+chip;
+    t.label+'<small>'+(t.estado==='activo'?(t.desc||'construir el modo indicado'):'todavía no se puede añadir')+'</small>'+chip+
+    (function(){ var hh=(typeof fpHistDe==='function')?fpHistDe(t.key):null; return hh?'<span class="fp-frac" title="En cuántas de las fichas anteriores has preguntado este tipo (digitales + papel)">'+hh.d+'/'+hh.n+'</span>':''; })();
   b.addEventListener('click', function(){
     if(t.estado==='activo'){ anadir(t.key); return; }
     status(t.estado==='constr'
@@ -10907,6 +10909,30 @@ function fpAsegurarRefuerzo(){
   if(FP.refuerzo) return;
   FP.refuerzo=FP.ctx.refuerzo.map(function(r){ var it=fpGenera(r.key); if(!it) return null;
     return { key:r.key, label:fpLabelDe(r.key)||r.label||r.key, alumnos:r.alumnos||[], spec:clon(it), refuerzo:true }; }).filter(Boolean);
+}
+/* (Iago 16-sep-2026) HISTORIAL por tipo: «d / N fichas» (digitales enviadas por key + en papel por el texto del PDF). */
+var FP_PAPEL_RE={
+  modos:/\bmodos?\b/i, indice:/[íi]ndice ac[úu]stico/i,
+  comp_elegir:/marca el comp[áa]s correcto/i, comp_rellenar:/rellena los dos compases/i, comp_replicar:/4 formas de equivalente/i,
+  seriearmonica:/serie arm[óo]nica/i, dode_construir:/dodecafonismo.*construye/i, dode_completa:/dodecafonismo.*completa/i, dode_identifica:/dodecafonismo.*identifica/i,
+  acordespro_id:/identifica los siguientes acordes|identifica los dos primeros acordes/i, acordespro_build:/construye los siguientes acordes|construye cada acorde en el estado/i,
+  blues:/\bblues\b/i, modulacion:/modulaci[óo]n/i,
+  transporte_escrito:/transporte escrito/i, transporte_mental:/transporte mental/i, transporte_resumen:/transporte resumen/i,
+  escala_mayor:/escalas?\..*\bmayor\b/i, escala_menor:/escalas?\..*\bmenor\b/i, escala_otras:/pentat|crom[áa]tica|tonos enteros|escala pedida/i,
+  intervalos_id:/identifica el n[úu]mero y la especie|clasifica los intervalos/i, intervalos_build:/construye los intervalos|coloca la 2ª nota/i,
+  acordes_id:/identifica los siguientes acordes|identifica los dos primeros acordes/i, acordes_build:/construye los siguientes acordes|construye cada acorde en el estado/i,
+  cadencias:/cadencia/i,
+  ton_nombre:/tonalidad mayor y su relativ|indica tonalidad/i, ton_armadura:/coloca la armadura/i, ton_vecinos:/tonos? vecin|tonalidades vecinas/i,
+  inversion_int_simples:/inversi[óo]n.*intervalos simples|clasifica el intervalo, invi[ée]rtelo/i, inversion_int_compuestos:/inversi[óo]n.*intervalos compuestos|intervalo compuesto, invi[ée]rtelo/i,
+  inversion_aco_identifica:/identifica el acorde y la inversi[óo]n|identifica el tipo de acorde/i, inversion_aco_construir:/construye el acorde en la inversi[óo]n/i,
+  enarmoniapro:/enarmon/i,
+  ex_afro:/afrolatin/i, ex_desarrollar:/desarrollar/i, ex_breves:/preguntas breves/i, ex_eleccion:/elecci[óo]n/i
+};
+function fpHistDe(key){
+  var c=FP.ctx, h=c&&c.historial; if(!h) return null;
+  var d=(h.digital&&h.digital[key])|0, re=FP_PAPEL_RE[key];
+  if(re){ (h.papel||[]).forEach(function(pf){ if((h.papel_numeros_digitales||[]).indexOf(pf.numero)>=0) return; if((pf.lineas||[]).some(function(l){ return re.test(String(l)); })) d++; }); }
+  return { d:d, n:h.total|0 };
 }
 function fpEsc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 function pintaRefuerzo(host){
