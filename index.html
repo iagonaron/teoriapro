@@ -10531,6 +10531,7 @@ function enviar(){
   if(!FP.ejercicios.length){ status('Añade al menos un ejercicio.', 'err'); return; }
   var sb=fpSb();
   if(!sb){ status('Sin conexión con Supabase (¿cargó supabase-js?).', 'err'); return; }
+  try{ window.FichasCarpeta && FichasCarpeta.preparar(); }catch(e){}   // 16-sep-2026: permiso de la carpeta con el gesto del clic
   var btn=el('fpEnviar'); btn.disabled=true;
   status('Enviando la ficha…', 'info');
   var payload=construirPayloadPRO();
@@ -10541,6 +10542,8 @@ function enviar(){
       var d=r && r.data;
       if(!d || d.ok===false) throw new Error((d && d.error) || 'respuesta_invalida');
       FP.enviado=true;
+      // (Iago 16-sep-2026) al enviar, la versión ALUMNO en PDF se guarda sola en la carpeta de fichas en papel
+      (async function(){ try{ if(window.FichasCarpeta && await FichasCarpeta.hayCarpeta()){ FP._tituloDoc='FICHA Nº '+(FP.numero!=null?FP.numero:'')+' · TEORÍA'; var dA=await fpConstruirPDF(false); await FichasCarpeta.guardar(dA.output('blob'), {grado:'GP', titulo:'Ficha '+(FP.numero!=null?FP.numero:(d&&d.numero!=null?d.numero:''))}); } }catch(e){ console.warn('[fichas-carpeta]', e); } })();
       // (Iago jul-2026) avisar al Diario del Profesor (la pestaña que abrió el
       // generador) del envío REAL, para que muestre el visto "Ficha N enviada a
       // los alumnos" en el apartado de clases.
@@ -17428,7 +17431,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 })();
 </script>
 
-<script src="fichas-carpeta.js?v=1"></script>
+<script src="fichas-carpeta.js?v=2"></script>
 <script>try{ FichasCarpeta.montar('fpPdf'); }catch(e){}</script>
 </body>
 </html>
