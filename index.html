@@ -9522,6 +9522,23 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-chip.rep{background:rgba(91,157,255,.16);color:#bcd3ff;border:1px solid rgba(91,157,255,.42)}
   .fp-chip.constr{background:rgba(255,255,255,.06);color:#c9b88a;border:1px dashed rgba(255,255,255,.28)}
   .fp-lista{display:flex;flex-direction:column;gap:9px}
+  /* (16-sep-2026) semana pasada + refuerzo */
+  .fp-tipo{position:relative}
+  .fp-dot{display:inline-block;width:10px;height:10px;border-radius:50%;box-shadow:0 0 0 2px rgba(0,0,0,.35)}
+  .fp-tipo .fp-dot{position:absolute;top:-5px;right:-5px}
+  .fp-dot-verde{background:#22c55e}.fp-dot-amarillo{background:#facc15}.fp-dot-naranja{background:#fb923c}.fp-dot-rojo{background:#ef4444}.fp-dot-gris{background:#8b93a7}
+  .fp-prev{font-size:12.5px;color:var(--ink);background:rgba(255,255,255,.05);border:1px solid rgba(212,175,55,.35);border-radius:12px;padding:9px 12px;margin:0 0 14px}
+  .fp-prev-l{display:flex;flex-wrap:wrap;gap:6px 12px;margin-top:6px}
+  .fp-prev-t{display:inline-flex;align-items:center;gap:6px}
+  .fp-prev-leg{margin-top:7px;font-size:11px;color:var(--muted2);display:flex;flex-wrap:wrap;align-items:center;gap:4px 6px}
+  .fp-ref{margin-top:22px;padding-top:14px;border-top:2px dashed rgba(233,201,106,.5)}
+  .fp-ref-h{font-size:13px;font-weight:900;letter-spacing:.06em;text-transform:uppercase;color:var(--gold-soft);margin:0 0 6px}
+  .fp-ref-note{font-size:12.5px;color:var(--muted);margin:0 0 10px;line-height:1.45}
+  .fp-ej-ref{border-color:rgba(233,201,106,.7)!important;box-shadow:0 0 0 1px rgba(233,201,106,.2)}
+  .fp-ref-al{display:flex;flex-wrap:wrap;align-items:center;gap:6px;margin-top:6px}
+  .fp-ref-lbl{font-size:12px;font-weight:800;color:var(--gold-soft)}
+  .fp-ref-chip{font-size:12px;font-weight:700;color:#f6efd8;background:rgba(233,201,106,.14);border:1px solid rgba(233,201,106,.45);border-radius:999px;padding:3px 9px}
+  .fp-refuerzo{background:linear-gradient(90deg,rgba(233,201,106,.22),rgba(233,201,106,.08));border:1px solid rgba(233,201,106,.6);color:#f6efd8;border-radius:12px;padding:10px 14px;font-size:13.5px;line-height:1.45;margin:0 auto 12px;max-width:860px}
   .fp-ej{display:flex;align-items:center;gap:12px;border:1px solid rgba(212,175,55,.35);border-radius:13px;
     padding:10px 14px;background:linear-gradient(160deg,rgba(212,175,55,.09),rgba(18,13,4,.5));flex-wrap:wrap}
   .fp-ej-sol{flex:1 1 100%;background:#fff;border-radius:10px;margin-top:8px;padding:10px 8px 16px;min-height:96px}
@@ -9814,7 +9831,9 @@ function fpMakeCard(t, azul){
   var chip= t.test              ? ''   /* WAVE9: el título ya dice Test — sin sello abajo */
           : t.estado==='prox'   ? '<span class="fp-chip'+(azul?' rep':' prox')+'">· '+t.nota+' ·</span>'
           : t.estado==='constr' ? '<span class="fp-chip constr">en construcción</span>' : '';
-  b.innerHTML=(t.estado==='activo'?'<span class="fp-add">+</span>':'')+
+  var ct=(typeof fpCtxTipo==='function')?fpCtxTipo(t.key):null;
+  if(ct){ b.title=fpCtxTitulo(ct); }
+  b.innerHTML=(ct?'<i class="fp-dot fp-dot-'+fpCtxColor(ct)+'"></i>':'')+(t.estado==='activo'?'<span class="fp-add">+</span>':'')+
     t.label+'<small>'+(t.estado==='activo'?(t.desc||'construir el modo indicado'):'todavía no se puede añadir')+'</small>'+chip;
   b.addEventListener('click', function(){
     if(t.estado==='activo'){ anadir(t.key); return; }
@@ -9826,6 +9845,14 @@ function fpMakeCard(t, azul){
 }
 function pintaCat(){
   var host=el('fpCat'); host.innerHTML='';
+  if(FP.ctx && FP.ctx.ultima){
+    var u=FP.ctx.ultima;
+    var tl=(u.tipos||[]).map(function(t){ return '<span class="fp-prev-t"><i class="fp-dot fp-dot-'+fpCtxColor(t)+'"></i>'+fpEsc(fpLabelDe(t.key)||t.label||t.key)+(t.n>1?' ×'+t.n:'')+'</span>'; }).join('');
+    var pv=document.createElement('div'); pv.className='fp-prev';
+    pv.innerHTML='<b>Semana pasada · Ficha '+fpEsc(u.numero)+'</b> · '+(u.entregas|0)+' entrega'+(u.entregas===1?'':'s')+'<div class="fp-prev-l">'+tl+'</div>'+
+      '<div class="fp-prev-leg">Bolita = lo preguntaste la semana pasada · color = % de la clase que lo superó (&gt;50 %): <i class="fp-dot fp-dot-verde"></i>&gt;80 <i class="fp-dot fp-dot-amarillo"></i>60–80 <i class="fp-dot fp-dot-naranja"></i>40–60 <i class="fp-dot fp-dot-rojo"></i>&lt;40 <i class="fp-dot fp-dot-gris"></i>sin corregir</div>';
+    host.appendChild(pv);
+  }
   /* ---- columna dorada: Grado Profesional, por unidades ---- */
   var colP=document.createElement('div'); colP.className='fp-col-pro';
   var hP=document.createElement('div'); hP.className='fp-col-head oro'; hP.textContent='Grado Profesional · por unidades'; colP.appendChild(hP);
@@ -9896,6 +9923,7 @@ function pintaLista(){
       });
     });
   }
+  try{ pintaRefuerzo(host); }catch(e){ console.warn('[fichaspro] refuerzo', e); }
   el('fpEnviar').disabled = FP.enviado || !FP.token || !FP.ejercicios.length;
 }
 /* --- render VexFlow de un ejercicio: resuelto (solución en ROJO, calco GE)
@@ -10483,6 +10511,18 @@ function construirPayloadPRO(){
         unidad:1,
         motor:{ _interactivo:e.key, _spec:e.spec }
       };
+    }),
+    // (Iago 16-sep-2026) REFUERZO ESPECÍFICO: mismos campos que un ejercicio normal + a quién va.
+    // El portal lo añade al final SOLO a esos alumnos (cuentas); el resto no lo ve.
+    refuerzos: (FP.refuerzo||[]).map(function(e){
+      return {
+        key:e.key, label:e.label, enun:fpEnun(e), area:e.key, practica:e.key, unidad:1,
+        motor:{ _interactivo:e.key, _spec:e.spec },
+        refuerzo:true,
+        alumnos:(e.alumnos||[]).map(function(a){ return a.canon_id; }),
+        cuentas:[].concat.apply([], (e.alumnos||[]).map(function(a){ return a.cuentas||[]; })),
+        nombres:(e.alumnos||[]).map(function(a){ return a.nombre; })
+      };
     })
   };
 }
@@ -10844,6 +10884,62 @@ function abrirPanel(numero, token, opcional){
   el('fpSinToken').style.display = FP.token ? 'none' : 'block';
   pintaCat(); pintaLista();
   document.title='Ficha '+(FP.numero!=null?FP.numero:'')+' · TEORÍA at home';
+  /* (Iago 16-sep-2026) REFUERZO + «qué pregunté la semana pasada»: contexto del curso (solo lectura) */
+  FP.ctx=null; FP.refuerzo=null;
+  if(FP.token){ (async function(){ try{
+    var n=0; while(!(window.supabase && window.supabase.createClient) && n<80){ await new Promise(function(r){setTimeout(r,100);}); n++; }
+    var sb=fpSb(); if(!sb) return;
+    var r=await sb.rpc('suite_ficha_profe_contexto', { p_token:FP.token });
+    if(r.error) throw r.error;
+    if(r.data && r.data.ok){ FP.ctx=r.data; pintaCat(); pintaLista(); }
+  }catch(e){ console.warn('[fichaspro] contexto', e); } })(); }
+}
+function fpCtxTipo(key){ var c=FP.ctx; if(!c||!c.ultima) return null; return (c.ultima.tipos||[]).filter(function(t){ return t.key===key; })[0]||null; }
+function fpCtxColor(t){ if(!t||t.pct_superan==null) return 'gris'; var p=+t.pct_superan; return p>80?'verde':(p>=60?'amarillo':(p>=40?'naranja':'rojo')); }
+function fpCtxTitulo(t){ if(!t) return ''; var nf=FP.ctx&&FP.ctx.ultima?('Ficha '+FP.ctx.ultima.numero):'ficha anterior';
+  return nf+' · '+t.n+' ejercicio'+(t.n>1?'s':'')+(t.pct_superan==null?' · aún sin entregas corregidas':(' · lo superó el '+t.pct_superan+'% de la clase ('+t.superan+' de '+t.n_alumnos+')')); }
+function fpAsegurarRefuerzo(){
+  if(!FP.ctx||!Array.isArray(FP.ctx.refuerzo)) return;
+  if(FP.refuerzo) return;
+  FP.refuerzo=FP.ctx.refuerzo.map(function(r){ var it=fpGenera(r.key); if(!it) return null;
+    return { key:r.key, label:fpLabelDe(r.key)||r.label||r.key, alumnos:r.alumnos||[], spec:clon(it), refuerzo:true }; }).filter(Boolean);
+}
+function fpEsc(x){ return String(x==null?'':x).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+function pintaRefuerzo(host){
+  if(!FP.ctx) return;
+  fpAsegurarRefuerzo();
+  var lista=FP.refuerzo||[];
+  var sec=document.createElement('div'); sec.className='fp-ref'; sec.id='fpRefuerzo';
+  var h='<div class="fp-ref-h">🎯 Refuerzo específico · '+lista.length+' ejercicio'+(lista.length===1?'':'s')+'</div>';
+  if(!lista.length){ h+='<div class="fp-vacio">Nadie necesita refuerzo esta semana: ningún alumno bajó del 30 % en un tipo de ejercicio en su última ficha.</div>'; sec.innerHTML=h; host.appendChild(sec); return; }
+  h+='<div class="fp-ref-note">Cada ejercicio va <b>solo</b> a los alumnos indicados (sacaron ≤30 % en ese tipo en su última ficha). Se añade al final de su ficha, con un aviso «solo para ti», y cuenta en su nota. Los demás alumnos no lo ven.</div>';
+  sec.innerHTML=h;
+  lista.forEach(function(e,i){
+    var row=document.createElement('div'); row.className='fp-ej fp-ej-ref';
+    row.innerHTML='<div class="fp-ej-n">★</div>'+
+      '<div><div class="fp-ej-tipo">'+e.label+'</div>'+
+      '<div class="fp-ej-enun">'+fpEnun(e)+'</div>'+
+      '<div class="fp-ref-al"><span class="fp-ref-lbl">Para:</span>'+e.alumnos.map(function(a){ return '<span class="fp-ref-chip" title="'+fpEsc(a.ficha||'')+' · '+fpEsc(a.pct)+' %">'+fpEsc(a.nombre)+'</span>'; }).join('')+'</div></div>'+
+      '<div class="fp-ej-btns">'+
+        '<button class="fp-mini" data-a="re" data-i="'+i+'" type="button" title="Regenerar variante">🔁</button>'+
+        '<button class="fp-mini rojo" data-a="x" data-i="'+i+'" type="button" title="No reforzar este tipo esta semana">✕</button>'+
+      '</div>'+
+      '<div class="fp-ej-sol" data-rsol="'+i+'"></div>';
+    sec.appendChild(row);
+  });
+  host.appendChild(sec);
+  requestAnimationFrame(function(){
+    sec.querySelectorAll('.fp-ej-sol').forEach(function(d){ var e=FP.refuerzo[+d.dataset.rsol]; if(e) fpPintaEjercicio(d, e.spec, true); });
+  });
+  sec.querySelectorAll('.fp-mini').forEach(function(b){
+    b.addEventListener('click', function(){
+      var i=+b.dataset.i, a=b.dataset.a; var e=FP.refuerzo[i]; if(!e) return;
+      if(a==='x'){ FP.refuerzo.splice(i,1); pintaLista(); }
+      else { var firma=function(sp){ return sp ? ((sp._mode||sp.tipo||'')+'·'+((sp.tonica&&sp.tonica.nom)||'')) : ''; };
+             var prev=firma(e.spec), it=null, n=0; do{ it=fpGenera(e.key); n++; }while(it && firma(it)===prev && n<30);
+             if(it){ e.spec=clon(it); pintaLista(); } }
+    });
+  });
 }
 window.abrirGenerador=function(){ try{ abrirPanel(null,null); }catch(e){} };
 
@@ -11091,7 +11187,8 @@ function pintaAlu(){
   var it=ALU.items[i];
   var c=el('aluCuerpo');
   c.innerHTML=
-    '<div class="fp-kicker" style="text-align:center">Ejercicio '+(i+1)+' de '+N+'</div>'+
+    (it.refuerzo?'<div class="fp-refuerzo">⭐ <b>Ejercicio solo para ti</b> · Vamos a practicar esto porque nos cuesta un poco. Recuerda que en el portal, en el apartado de Teoría (TEORÍA at home PRO), puedes hacer todos los ejercicios de este tipo que quieras. Y también tienes la explicación y ejemplos en el PDF <b>Apuntes de Teoría 2º GP</b> que te imprimí. Y si quieres, escríbeme un mensaje: te paso más material o agendamos una clase presencial de refuerzo para explicar justo lo que necesitas y que te quedes sin dudas.</div>':'')+
+    '<div class="fp-kicker" style="text-align:center">Ejercicio '+(i+1)+' de '+N+(it.refuerzo?' · refuerzo':'')+'</div>'+
     '<h2 class="fp-titulo fp-titulo-alu" style="text-align:center;margin-bottom:14px">'+it.enun+'</h2>'+
     '<div class="fp-alu-card '+(ALU.__dir==='prev'?'fp-slide-in-l':(ALU.__dir==='next'?'fp-slide-in':'fp-sim-enter'))+'"><div id="aluHost"></div></div>'+
     '<div style="text-align:center;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">'+
@@ -11253,7 +11350,7 @@ function fpEnviarNota(nota, pcts, noPuntua){
     no_puntua:(noPuntua===true)||undefined,   /* (6-ago) el alumno eligió que no cuente */
     tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
     ejercicios:ALU.items.map(function(it,k){
-      return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(pcts[k]*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined };
+      return { n:it.n, key:it.key, label:it.label, refuerzo:it.refuerzo||undefined, enun:it.enun, pct:Math.round(pcts[k]*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined };
     }),
     respuestas:ALU.items.map(respuestaDe),
     estado:ALU.items.map(function(it){ return fpSanitEstado(it.item); })   /* WAVE15: lo que el alumno ingresó, rastreable */
@@ -11376,7 +11473,7 @@ function pintaResultado(nota, pcts){
         origin:'teoria_pro', ficha_id:ALU.ficha, numero:(ALU.numero!=null?ALU.numero:undefined),
         no_puntua:(ALU.__noPuntua===true)||undefined,
         tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
-        ejercicios:ALU.items.map(function(it,k){ return { n:it.n, key:it.key, label:it.label, enun:it.enun, pct:Math.round(((ALU.__pcts&&ALU.__pcts[k])||0)*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined }; }),
+        ejercicios:ALU.items.map(function(it,k){ return { n:it.n, key:it.key, label:it.label, refuerzo:it.refuerzo||undefined, enun:it.enun, pct:Math.round(((ALU.__pcts&&ALU.__pcts[k])||0)*100)/100, anulado:((ALU.anulados||[]).indexOf(it.n!=null?+it.n:k+1)>=0)||undefined, fallo_carga:it._falloCarga||undefined, fallo_avisado:it._falloAvisado||undefined }; }),
         respuestas:ALU.items.map(respuestaDe),
         estado:ALU.items.map(function(it){ return fpSanitEstado(it.item); }),
         feedback:{ items:items, texto:items.map(function(i2){ return (i2.n!=null?('Ej. '+i2.n+': '):'')+i2.texto; }).join('\n'), fecha:new Date().toISOString() } };
@@ -11405,6 +11502,8 @@ async function fpModoRevision(rev, sec){
     var pl=d.payload||{};
     var pack=fpExtraerPaquete({ ejercicios_json:d.ejercicios_json });
     if(!pack||!pack.ejercicios.length) throw new Error('ficha_vacia');
+    // (16-sep-2026) base + refuerzos de ESTE alumno, en el orden en que los hizo
+    try{ var refs0=(pack.payload&&Array.isArray(pack.payload.refuerzos))?pack.payload.refuerzos:[]; refs0.forEach(function(r){ if(Array.isArray(r.cuentas)&&r.cuentas.map(String).indexOf(String(cuenta))>=0){ var rc=clon(r); rc.n=pack.ejercicios.length+1; pack.ejercicios.push(rc); } }); }catch(e){}
     ALU={ simulado:true, revision:true, cuenta:null, ficha:null,
           numero:(d.numero!=null?d.numero:'—'),
           anulados:(pl.anulados||[]).map(Number),
@@ -11412,7 +11511,7 @@ async function fpModoRevision(rev, sec){
           items:pack.ejercicios.map(function(e,k){
             var est=(Array.isArray(pl.estado)&&pl.estado[k])?clon(pl.estado[k]):null;   /* lo que ingresó el alumno */
             var item=est||clon((e.motor&&e.motor._spec)||{});
-            return { n:e.n, key:e.key, label:e.label||'Ejercicio', enun:e.enun||'', item:item };
+            return { n:e.n, key:e.key, label:e.label||'Ejercicio', enun:e.enun||'', item:item, refuerzo:!!e.refuerzo };
           }) };
     if(!Array.isArray(pl.estado) && Array.isArray(pl.respuestas)){
       pl.respuestas.forEach(function(rr,k){ if(ALU.items[k]) aplicaRespuesta(ALU.items[k], rr); });
@@ -11570,6 +11669,7 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
             var item=clon((e.motor&&e.motor._spec)||{});
             return { n:e.n, key:e.key, label:e.label||'Ejercicio', enun:e.enun||'', item:item };
           }) };
+    try{ fpAnadirRefuerzos(ALU, pack, cuenta); }catch(e){ console.warn('[fichaspro] refuerzos', e); }
     msg('Buscando progreso guardado…');
     try{
       var prog=await progLeer(cuenta, fichaId);
@@ -11596,6 +11696,15 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
     console.warn('[fichaspro] abrir', e);
   }
 }
+/* (Iago 16-sep-2026) REFUERZO: los ejercicios «solo para ti» de esta cuenta van al final de su ficha */
+function fpAnadirRefuerzos(alu, pack, cuenta){
+  var refs=(pack && pack.payload && Array.isArray(pack.payload.refuerzos)) ? pack.payload.refuerzos : [];
+  refs.forEach(function(r){
+    if(!(Array.isArray(r.cuentas) && r.cuentas.map(String).indexOf(String(cuenta))>=0)) return;
+    var item=clon((r.motor&&r.motor._spec)||{});
+    alu.items.push({ n:alu.items.length+1, key:r.key, label:r.label||'Ejercicio', enun:r.enun||'', item:item, refuerzo:true });
+  });
+}
 function fpExtraerPaquete(data){
   if(!data) return null;
   var cand=[ data.ejercicios_json, data.payload, data.ficha_json,
@@ -11603,7 +11712,7 @@ function fpExtraerPaquete(data){
   for(var k=0;k<cand.length;k++){
     var c=cand[k];
     if(c && Array.isArray(c.ejercicios) && c.ejercicios.length){
-      return { ejercicios:c.ejercicios, numero:(c.numero!=null?c.numero:(data.numero!=null?data.numero:null)), anulados:(c.anulados||data.anulados||[]), opcional:!!(c.puntua_opcional||data.puntua_opcional) };   /* WAVE12: anulaciones del Diario · (6-ago) + puntúa opcional */
+      return { ejercicios:c.ejercicios, numero:(c.numero!=null?c.numero:(data.numero!=null?data.numero:null)), anulados:(c.anulados||data.anulados||[]), opcional:!!(c.puntua_opcional||data.puntua_opcional), payload:c };   /* WAVE12: anulaciones del Diario · (6-ago) + puntúa opcional */
     }
   }
   if(Array.isArray(data.ejercicios) && data.ejercicios.length){
