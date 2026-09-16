@@ -9850,14 +9850,7 @@ function fpMakeCard(t, azul){
 }
 function pintaCat(){
   var host=el('fpCat'); host.innerHTML='';
-  if(FP.ctx && FP.ctx.ultima){
-    var u=FP.ctx.ultima;
-    var tl=(u.tipos||[]).map(function(t){ return '<span class="fp-prev-t"><i class="fp-dot fp-dot-'+fpCtxColor(t)+'"></i>'+fpEsc(fpLabelDe(t.key)||t.label||t.key)+(t.n>1?' ×'+t.n:'')+'</span>'; }).join('');
-    var pv=document.createElement('div'); pv.className='fp-prev';
-    pv.innerHTML='<b>Semana pasada · Ficha '+fpEsc(u.numero)+'</b> · '+(u.entregas|0)+' entrega'+(u.entregas===1?'':'s')+'<div class="fp-prev-l">'+tl+'</div>'+
-      '<div class="fp-prev-leg">Bolita = lo preguntaste la semana pasada · color = % de la clase que lo superó (&gt;50 %): <i class="fp-dot fp-dot-verde"></i>&gt;80 <i class="fp-dot fp-dot-amarillo"></i>60–80 <i class="fp-dot fp-dot-naranja"></i>40–60 <i class="fp-dot fp-dot-rojo"></i>&lt;40 <i class="fp-dot fp-dot-gris"></i>sin corregir</div>';
-    host.appendChild(pv);
-  }
+  // (Iago 16-sep-2026) sin cabecera ni leyenda: solo las bolitas en cada tipo (el detalle sale al pasar el ratón)
   /* ---- columna dorada: Grado Profesional, por unidades ---- */
   var colP=document.createElement('div'); colP.className='fp-col-pro';
   var hP=document.createElement('div'); hP.className='fp-col-head oro'; hP.textContent='Grado Profesional · por unidades'; colP.appendChild(hP);
