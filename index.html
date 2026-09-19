@@ -6450,16 +6450,34 @@ function corregirESCVar(e,i,cell){
   const sol=e.notasSol;
   let got=e.userSeq.filter(n=>!n._opt);   // excluir 8ª opcional
   let notasOk = got.length===sol.length;
+  /* (19-sep-2026, repaso) LA OCTAVA NO CUENTA EN ESTAS ESCALAS.
+     Es la regla R6 que ya aplica el motor de la ficha desde el 2-ago-2026
+     («la escala vale construida en CUALQUIER octava»), pero esta tarjeta suelta
+     nunca la recibio. Como el enunciado no dice ninguna octava y aqui no hay
+     ninguna cabeza dada que la ancle, la pentatonica de La sorteada en La3 se
+     daba TODA por mala si el alumno la escribia, perfecta, en La4.
+     Se prueba un desplazamiento GLOBAL de -2 a +2 octavas (toda la escala por
+     igual, nunca nota a nota) y vale si alguno cuadra. En las precolocadas no
+     se toca nada: alli la octava la fija la propia app. */
+  const octLibre = (e._precolocada!==true);
   if(notasOk){
     if(porAltura){
       // comparar por ALTURA, ordenando ambas secuencias (acepta enarmonías y orden libre)
       const midis = arr=>arr.map(x=> x.midi!=null?x.midi:midiNota(x.step,x.octave,x.alter)).sort((a,b)=>a-b);
-      const ms=midis(sol), mg=midis(got);
-      for(let k=0;k<ms.length;k++){ if(ms[k]!==mg[k]){ notasOk=false; break; } }
-    } else {
-      for(let k=0;k<sol.length;k++){
-        if(got[k].step!==sol[k].step||got[k].octave!==sol[k].octave||got[k].alter!==sol[k].alter){ notasOk=false; break; }
+      const ms=midis(sol), mg0=midis(got);
+      let cuadra=false;
+      for(let d=(octLibre?-2:0); d<=(octLibre?2:0) && !cuadra; d++){
+        cuadra = ms.every((m,k)=> m === mg0[k]-12*d);
       }
+      notasOk = cuadra;
+    } else {
+      let cuadra=false;
+      for(let d=(octLibre?-2:0); d<=(octLibre?2:0) && !cuadra; d++){
+        cuadra = sol.every((s,k)=> got[k] && got[k].step===s.step
+                                 && got[k].octave===s.octave+d
+                                 && (got[k].alter||0)===(s.alter||0));
+      }
+      notasOk = cuadra;
     }
   }
   // armadura: se evalúa en precolocadas y en pentatónica
@@ -15871,7 +15889,13 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     'F,0':[['E',1,0],['G',-2,0]],'G,0':[['F',2,0],['A',-2,0]],'A,0':[['G',2,0],['B',-2,0]],
     'B,0':[['C',-1,1],['A',2,0]],'C,1':[['D',-1,0],['B',2,-1]],'D,1':[['E',-1,0],['F',-2,0]],
     'F,1':[['G',-1,0],['E',2,0]],'G,1':[['A',-1,0]],'A,1':[['B',-1,0],['C',-2,1]],
-    'D,-1':[['C',1,0],['E',-2,0]],'E,-1':[['D',1,0],['F',-2,0]],'G,-1':[['F',1,0],['A',-2,0]],
+    /* (19-sep-2026, repaso) Mismo arreglo que ya llevaba la tarjeta de enarmonias
+       de elemental desde el 2-ago-2026: Mi doble bemol suena Re natural (no Re bemol)
+       y La doble bemol suena Sol natural (no Sol bemol). Los enarmonicos que faltaban
+       son Si doble sostenido y Mi doble sostenido. Tal como estaba, el alumno que
+       escribia lo correcto sacaba cero en ese apartado, y encima se le ensenaba como
+       solucion una nota que no es. */
+    'D,-1':[['C',1,0],['B',2,-1]],'E,-1':[['D',1,0],['F',-2,0]],'G,-1':[['F',1,0],['E',2,0]],
     'A,-1':[['G',1,0]],'B,-1':[['A',1,0],['C',-2,1]],'E,1':[['F',0,0],['G',-2,0]],
     'B,1':[['C',0,1],['D',-2,1]],'F,-1':[['E',0,0],['D',2,0]],'C,-1':[['B',0,-1],['A',2,-1]]
   };
