@@ -2095,7 +2095,8 @@ function makeWheel(host, items, startIdx, onChange){
   host.addEventListener('wheel',e=>{ e.preventDefault();
     wheelAcc+=e.deltaY; if(wheelClr) clearTimeout(wheelClr); wheelClr=setTimeout(()=>{wheelAcc=0;},160);
     if(wheelLock) return;
-    if(Math.abs(wheelAcc)>=24){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
+    /* (22-sep-2026, Iago) trackpad/rueda del ratón un poco MENOS sensible: umbral 24 -> 30 unidades de deltaY por paso (bloqueo 120 ms sin cambios) */
+    if(Math.abs(wheelAcc)>=30){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
   },{passive:false});
   build(); commit(idx,false);
   return {
@@ -3424,7 +3425,8 @@ function makeWheel(host, items, startIdx, onChange){
   host.addEventListener('wheel',e=>{ e.preventDefault();
     wheelAcc+=e.deltaY; if(wheelClr) clearTimeout(wheelClr); wheelClr=setTimeout(()=>{wheelAcc=0;},160);
     if(wheelLock) return;
-    if(Math.abs(wheelAcc)>=24){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
+    /* (22-sep-2026, Iago) trackpad/rueda del ratón un poco MENOS sensible: umbral 24 -> 30 unidades de deltaY por paso (bloqueo 120 ms sin cambios) */
+    if(Math.abs(wheelAcc)>=30){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
   },{passive:false});
   build(); commit(idx,false);
   return {
@@ -5085,41 +5087,24 @@ function dibujarCompases(hostId, items, opts){
 }
 
 /* ===== RUEDA iOS (makeWheel) ===== */
-/* ruedas: número (incluye "—") y especie (depende del número) */
+/* ruedas: número (incluye "—") y especie (lista fija desde 22-sep-2026, ya no depende del número) */
 /* números: "—" por defecto (abajo), números hacia ARRIBA (2 arriba del todo) */
 function numerosDisponibles(){ return ["14","13","12","11","10","9","8","7","6","5","4","3","2","—"]; }
-/* especies según el número, ordenadas VISUALMENTE:
-   - justos (4,5,8,11,12): [Aum. (arriba), J (centro/defecto), Dis. (abajo)]
-   - resto: [D.Aum, Aum, M (arriba) , — (centro/defecto), m, Dis, D.Dis (abajo)] (solo las que existan) */
+/* (22-sep-2026, Iago) RUEDA DE ESPECIE FIJA: ya no depende del número (antes: justos
+   [Aum. J Dis.] y resto [Aum. M — m Dis.], solo las existentes en CAT). Ahora ofrece
+   SIEMPRE todas las especies, con el guion "—" en el centro (sin elegir) y, hacia
+   arriba, M · J · Aum.; hacia abajo, m · Dis. El alumno decide entre todas; si elige
+   una imposible para ese número, el corrector la da por MAL (compara etiquetas).
+   El parámetro `num` se conserva por compatibilidad pero se ignora.
+   arriba->abajo: [Aum., J, M, —, m, Dis.] */
 function especiesParaNumero(num){
-  if(num==null) return ["—"];
-  const codes=CAT.filter(e=>e[0]===num).map(e=>e[1]);
-  const tieneJ = codes.includes('J');
-  if(tieneJ){
-    // justos: Aum arriba, Justa por defecto, Dis abajo
-    const arr=[];
-    if(codes.includes('AA')) arr.push(ESP_LABEL.AA);
-    if(codes.includes('A'))  arr.push(ESP_LABEL.A);
-    arr.push(ESP_LABEL.J);
-    if(codes.includes('d'))  arr.push(ESP_LABEL.d);
-    if(codes.includes('dd')) arr.push(ESP_LABEL.dd);
-    return arr;
-  }
-  // no justos: arriba lo "grande", abajo lo "pequeño", guion en medio
-  const arr=[];
-  if(codes.includes('AA')) arr.push(ESP_LABEL.AA);
-  if(codes.includes('A'))  arr.push(ESP_LABEL.A);
-  if(codes.includes('M'))  arr.push(ESP_LABEL.M);
-  arr.push("—");
-  if(codes.includes('m'))  arr.push(ESP_LABEL.m);
-  if(codes.includes('d'))  arr.push(ESP_LABEL.d);
-  if(codes.includes('dd')) arr.push(ESP_LABEL.dd);
-  return arr;
+  return [ESP_LABEL.A, ESP_LABEL.J, ESP_LABEL.M, "—", ESP_LABEL.m, ESP_LABEL.d];
 }
-/* índice por defecto: en justos = la "J"; en el resto = el "—" */
+/* índice por defecto: el "—" (22-sep-2026: antes en justos era la "J"; ahora la rueda
+   arranca siempre en el guion y no se autoposiciona) */
 function idxDefecto(arr){
-  const j=arr.indexOf(ESP_LABEL.J); if(j>=0) return j;
-  const g=arr.indexOf("—"); return g<0?0:g;
+  const g=arr.indexOf("—"); if(g>=0) return g;
+  const j=arr.indexOf(ESP_LABEL.J); return j<0?0:j;
 }
 function idxGuion(arr){ const i=arr.indexOf("—"); return i<0?0:i; }
 function labToCode(lab){ for(const k in ESP_LABEL){ if(ESP_LABEL[k]===lab) return k; } return null; }
@@ -5150,11 +5135,10 @@ function renderAnswersA(){
     makeWheel(wNum,numItems,idxGuion(numItems),(ni)=>{
       const raw=numItems[ni]; const num=(raw==="—")?null:parseInt(raw,10);
       selA[i].num=num;
-      const esps=especiesParaNumero(num);
-      espApi.setItems(esps,true); espApi.setIndex(idxDefecto(esps),true);
-      selA[i].esp=esps[idxDefecto(esps)];
+      /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número:
+         se queda donde esté (empieza en "—") y ofrece siempre todas las especies. */
     });
-    const espInit=especiesParaNumero(null);
+    const espInit=especiesParaNumero(null);   /* lista fija: Aum. J M — m Dis. */
     espApi=makeWheel(wEsp,espInit,idxDefecto(espInit),()=>{ selA[i].esp=espApi.getValue(); });
     selA[i].esp="—";
   });
@@ -5427,9 +5411,10 @@ window.nuevoIVTODO=nuevoIVTODO;
       var _startN=(_sn&&numItems.indexOf(_sn)>=0)?numItems.indexOf(_sn):idxGuion(numItems);
       makeWheel(wNum, numItems, _startN, function(ni){
         var raw=numItems[ni]; var nn=(raw==='—')?null:parseInt(raw,10); sub.sel.num=nn;
-        var esps=especiesParaNumero(nn); espApi.setItems(esps,true); espApi.setIndex(idxDefecto(esps),true); sub.sel.esp=esps[idxDefecto(esps)];
+        /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número:
+           se queda donde esté (empieza en "—") y ofrece siempre todas las especies. */
       });
-      var espInit=especiesParaNumero(sub.sel?sub.sel.num:null);
+      var espInit=especiesParaNumero(null);   /* (22-sep-2026) lista fija, no depende del número */
       var _startE=(sub.sel&&sub.sel.esp&&espInit.indexOf(sub.sel.esp)>=0)?espInit.indexOf(sub.sel.esp):idxDefecto(espInit);
       espApi=makeWheel(wEsp, espInit, _startE, function(){ sub.sel.esp=espApi.getValue(); });
       if(sub.sel && (sub.sel.esp==null)) sub.sel.esp=espInit[_startE];
@@ -11477,7 +11462,7 @@ function pintaResultado(nota, pcts){
     return '<div style="border-top:1px solid rgba(212,175,55,.18);padding:16px 0">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
           '<div style="font-size:14px;color:#fbf7ec;font-weight:800">'+(k+1)+'. '+it.enun+'</div>'+
-          (anulado?'<span style="flex:none;background:rgba(255,255,255,.10);color:#d8caa6;font-weight:900;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta</span>':'<span style="flex:none;background:'+(ok?'rgba(52,211,153,.18)':'rgba(255,92,92,.16)')+';color:'+(ok?'#8be3ae':'#ffb4b4')+';font-weight:900;font-size:13px;padding:5px 11px;border-radius:99px">'+pct+'%</span>')+
+          (anulado?'<span style="flex:none;background:rgba(255,255,255,.10);color:#d8caa6;font-weight:900;font-size:12px;padding:5px 11px;border-radius:99px;letter-spacing:.04em">ANULADO · no cuenta'+(ALU.revAlumno?' para la nota':'')+'</span>':'<span style="flex:none;background:'+(ok?'rgba(52,211,153,.18)':'rgba(255,92,92,.16)')+';color:'+(ok?'#8be3ae':'#ffb4b4')+';font-weight:900;font-size:13px;padding:5px 11px;border-radius:99px">'+pct+'%</span>')+
         '</div>'+
         '<div class="fp-corr-host" data-k="'+k+'"></div>'+
         practicar+
@@ -11487,6 +11472,8 @@ function pintaResultado(nota, pcts){
     '<div style="text-align:center;margin-top:4px">'+
       '<div style="font-size:28px;font-weight:900;color:#fbf7ec">¡Ficha terminada! ✨</div>'+
       '<div id="fpNotaBadge" class="fp-nota-pop'+(nota>=7?' fp-nota-ring':'')+'" style="margin-top:12px;display:inline-block;background:linear-gradient(120deg,'+(aprob?'#e9c96a,#b8860b':'#ff9b9b,#c0392b')+');color:'+(aprob?'#1a1305':'#fff')+';font-weight:900;font-size:20px;padding:12px 28px;border-radius:99px;box-shadow:0 12px 30px rgba(212,175,55,.35)">Puntuación: <span id="fpNotaVal">0,0</span> / 10</div>'+
+      /* (22-sep-2026) RECLAMACIONES: enlace discreto bajo la nota que lleva al buzón de abajo */
+      (ALU.simulado?'':'<div id="fpReclamaLinea" style="margin-top:10px;color:var(--muted);font-size:12.5px">¿Crees que hay algún ejercicio mal corregido? <button id="fpReclamar" type="button" style="background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.55);color:#e9c96a;border-radius:99px;padding:4px 12px;font-weight:800;font-size:12.5px;cursor:pointer;font-family:inherit">Reclámalo</button></div>')+
       '<div style="margin-top:12px;color:var(--muted);font-size:13.5px">Resumen de tus respuestas. Los ejercicios con menos del 50% tienen un enlace para practicar.</div>'+
       '<div style="margin-top:10px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;font-weight:700">'+
         '<span style="color:#22c98a">● lo que hiciste bien</span>'+
@@ -11499,7 +11486,7 @@ function pintaResultado(nota, pcts){
     (ALU.simulado?'':(
     '<details id="aluFbBox" style="margin:26px auto 8px;max-width:680px;background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.3);border-radius:14px;padding:12px 16px">'+
       '<summary style="cursor:pointer;font-weight:800;color:#e9c96a;font-size:14px;list-style-position:inside">💬 ¿Crees que algún ejercicio está mal corregido o tuviste algún problema con la ficha?</summary>'+
-      '<div style="color:var(--muted);font-size:12.5px;margin-top:8px">Deja aquí tu comentario y me encargo de solucionarlo. ¡Gracias por la comprensión!</div>'+
+      '<div style="color:var(--muted);font-size:12.5px;margin-top:8px">Deja aquí tu comentario y me encargo de solucionarlo. Si hay un problema con el ejercicio, te lo marca mal y no ha sido culpa tuya, lo eliminaré y tu nota se recalculará sin él. ¡Gracias por la comprensión!</div>'+
       '<div id="aluFbList"></div>'+
       '<div style="display:flex;gap:10px;align-items:center;margin-top:12px;flex-wrap:wrap">'+
         '<button class="fp-mini" id="aluFbMas" type="button" style="padding:8px 13px;font-size:12.5px">＋ Añadir otro ejercicio</button>'+
@@ -11530,12 +11517,20 @@ function pintaResultado(nota, pcts){
       var d=document.createElement('div'); d.className='aluFbItem';
       d.style.cssText='margin-top:10px;padding-top:10px;border-top:1px dashed rgba(212,175,55,.22)';
       d.innerHTML=
-        '<label style="font-size:12px;color:var(--muted)">Ejercicio nº <input class="fbN" type="number" min="1" style="width:60px;background:rgba(0,0,0,.3);border:1px solid #6b551d;border-radius:6px;color:#f0e6c8;padding:5px 7px"> <span style="opacity:.7">(opcional)</span></label>'+
+        /* (22-sep-2026) el nº de ejercicio es lo que Iago usa para ANULARLO: más visible que antes («opcional») */
+        '<label style="font-size:12.5px;color:var(--ink);font-weight:700;display:inline-flex;align-items:center;gap:6px;flex-wrap:wrap">Ejercicio nº <input class="fbN" type="number" min="1" style="width:64px;background:rgba(0,0,0,.3);border:1.5px solid #d4af37;border-radius:6px;color:#f0e6c8;padding:5px 7px;font-weight:800"> <span style="font-weight:600;color:#e9c96a">(dime el nº para poder anularlo)</span></label>'+
         '<textarea class="fbT" placeholder="Cuéntame qué pasó…" style="width:100%;min-height:60px;margin-top:6px;background:rgba(0,0,0,.3);border:1px solid #6b551d;border-radius:8px;color:#f0e6c8;padding:8px;font:13px/1.45 inherit;box-sizing:border-box"></textarea>';
       el('aluFbList').appendChild(d);
     };
     fbRow();
     var fbMas=el('aluFbMas'); if(fbMas) fbMas.addEventListener('click', fbRow);
+    /* (22-sep-2026) «Reclámalo» (bajo la nota): abre el buzón, baja suave y enfoca el primer comentario */
+    try{ var fbRec=el('fpReclamar'); if(fbRec) fbRec.addEventListener('click', function(){
+      var box=el('aluFbBox'); if(!box) return;
+      box.open=true;
+      try{ box.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(e){ box.scrollIntoView(); }
+      setTimeout(function(){ try{ var ta=box.querySelector('textarea.fbT'); if(ta) ta.focus({ preventScroll:true }); }catch(e){} }, 520);
+    }); }catch(e){}
     fbB.addEventListener('click', function(){
       var st=el('aluFbSt');
       var items=[]; el('aluFbList').querySelectorAll('.aluFbItem').forEach(function(d){
@@ -11563,17 +11558,21 @@ function pintaResultado(nota, pcts){
 }
 
 /* --------- WAVE15 · REVISIÓN DEL PROFESOR: ?revision=<ficha>:<cuenta>&s=<secreto> --------- */
-async function fpModoRevision(rev, sec){
+/* (22-sep-2026) + REVISIÓN DEL ALUMNO: ?revision=<ficha>:<cuenta>&alu=1 (sin secreto).
+   Usa suite_ficha_revision_alumno (misma respuesta; solo la cuenta dueña de la entrega
+   validada) y pinta la misma ficha corregida sin banner ni controles de profesor. */
+async function fpModoRevision(rev, sec, alu){
   var portal=el('view-portal'); if(portal) portal.style.display='none';
   var v=el('view-fichapro'); v.style.display='block';
   var wrap=v.querySelector('.fp-wrap');
-  wrap.innerHTML='<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700">Cargando revisión…</div>';
+  wrap.innerHTML='<div style="min-height:60vh;display:flex;align-items:center;justify-content:center;color:var(--muted);font-weight:700">'+(alu?'Cargando tu ficha corregida…':'Cargando revisión…')+'</div>';
   try{
     var partes=String(rev).split(':'); var fichaId=partes[0], cuenta=partes[1];
     if(!fichaId||!cuenta) throw new Error('enlace_invalido');
     var intentos=0; while(!(window.supabase&&window.supabase.createClient)&&intentos<60){ await new Promise(function(r2){setTimeout(r2,100);}); intentos++; }
     var sb=fpSb(); if(!sb) throw new Error('sin_supabase');
-    var r=await sb.rpc('suite_ficha_revision',{ p_secreto:sec, p_ficha_id:fichaId, p_cuenta_id:cuenta });
+    var r=alu ? await sb.rpc('suite_ficha_revision_alumno',{ p_cuenta_id:cuenta, p_ficha_id:fichaId })
+              : await sb.rpc('suite_ficha_revision',{ p_secreto:sec, p_ficha_id:fichaId, p_cuenta_id:cuenta });
     if(r&&r.error) throw r.error;
     var d=r&&r.data; if(!d||d.ok!==true) throw new Error((d&&d.error)||'no_disponible');
     var pl=d.payload||{};
@@ -11581,7 +11580,7 @@ async function fpModoRevision(rev, sec){
     if(!pack||!pack.ejercicios.length) throw new Error('ficha_vacia');
     // (16-sep-2026) base + refuerzos de ESTE alumno, en el orden en que los hizo
     try{ var refs0=(pack.payload&&Array.isArray(pack.payload.refuerzos))?pack.payload.refuerzos:[]; refs0.forEach(function(r){ if(Array.isArray(r.cuentas)&&r.cuentas.map(String).indexOf(String(cuenta))>=0){ var rc=clon(r); rc.n=pack.ejercicios.length+1; pack.ejercicios.push(rc); } }); }catch(e){}
-    ALU={ simulado:true, revision:true, cuenta:null, ficha:null,
+    ALU={ simulado:true, revision:true, revAlumno:!!alu, cuenta:null, ficha:null,
           numero:(d.numero!=null?d.numero:'—'),
           anulados:(pl.anulados||[]).map(Number),
           entregada:true, i:0,
@@ -11604,7 +11603,7 @@ async function fpModoRevision(rev, sec){
     pintaResultado(nota, pcts);
     // (6-ago) si el alumno eligió «que no cuente», que Iago lo vea claro
     try{
-      if(pl && pl.no_puntua===true){
+      if(pl && pl.no_puntua===true && !alu){
         var _wN=wrap.querySelector('#fpNotaBadge');
         if(_wN && !wrap.querySelector('#fpNoPuntuaChip')){
           var _c=document.createElement('div'); _c.id='fpNoPuntuaChip';
@@ -11615,8 +11614,34 @@ async function fpModoRevision(rev, sec){
       }
     }catch(e){}
     try{ fpRevelarNota(nota); }catch(e){}
-    /* banner del profesor + los comentarios del alumno, arriba del todo */
     var c=el('aluCuerpo');
+    if(alu){
+      /* (22-sep-2026) rótulo del ALUMNO: «Tu ficha N corregida · nota X», anulados y reclamación */
+      var fmt2=function(x){ return (x==null||!isFinite(+x))?null:(+x).toFixed(2).replace('.',','); };
+      var escA=function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
+      var anulA=(ALU.anulados||[]).slice().sort(function(a,b){return a-b;});
+      var notaTxt=fmt2(d.nota);
+      var hA='<div style="font-size:15px;font-weight:900;color:var(--ink)">✅ Tu ficha '+(d.numero!=null?escA(d.numero):'')+' corregida'+(notaTxt!=null?(' · nota <span style="color:#e9c96a">'+notaTxt+'</span>'):' · sin nota (esta vez no cuenta)')+'</div>';
+      if(anulA.length) hA+='<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">'+(anulA.length===1?'El ejercicio <b>'+anulA[0]+'</b> está anulado: no cuenta para la nota.':'Los ejercicios <b>'+anulA.join(', ')+'</b> están anulados: no cuentan para la nota.')+'</div>';
+      var rcA=(pl.reclamacion&&typeof pl.reclamacion==='object')?pl.reclamacion:null;
+      if(rcA && rcA.estado){
+        var okA=(rcA.estado==='aceptada'), aA=fmt2(rcA.nota_antes), dA=fmt2(rcA.nota_despues);
+        hA+='<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">'+(okA?'✔':'✖')+' Reclamación <b style="color:'+(okA?'#8be3ae':'#ffb4b4')+'">'+(okA?'aceptada':'denegada')+'</b>'+(rcA.n!=null?(' (ej. '+escA(rcA.n)+')'):'')+((aA!=null&&dA!=null)?(' · nota '+aA+' → '+dA):'')+(rcA.mensaje?('<div style="margin-top:3px;font-style:italic;opacity:.85">«'+escA(rcA.mensaje)+'»</div>'):'')+'</div>';
+      }
+      var banA=document.createElement('div'); banA.id='fpRevAlu';
+      banA.style.cssText='margin:0 0 16px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.55);border-radius:12px;padding:12px 16px;line-height:1.5;text-align:center';
+      banA.innerHTML=hA;
+      if(c){ c.insertBefore(banA, c.firstChild);
+        // el badge muestra la nota registrada con dos decimales (la misma del rótulo)
+        try{ var nbA=el('fpNotaBadge'); if(nbA && notaTxt!=null) nbA.innerHTML='Puntuación: <span>'+notaTxt+'</span> / 10'; }catch(e){}
+        var volA=document.createElement('div'); volA.style.cssText='text-align:center;margin:22px 0 8px';
+        volA.innerHTML='<button class="fp-mini" id="fpRevVolver" type="button" style="padding:10px 20px;font-weight:800">Volver al portal</button>';
+        c.appendChild(volA);
+        var vbA=volA.querySelector('#fpRevVolver'); if(vbA) vbA.onclick=function(){ fpSalirAlPortal(); };
+      }
+      return;
+    }
+    /* banner del profesor + los comentarios del alumno, arriba del todo */
     var fbi=null;
     if(pl.feedback){ fbi=(pl.feedback.items&&pl.feedback.items.length)?pl.feedback.items:(pl.feedback.texto?[{n:pl.feedback.n,texto:pl.feedback.texto}]:null); }
     var ban=document.createElement('div');
@@ -11625,7 +11650,9 @@ async function fpModoRevision(rev, sec){
       (fbi?('<div style="margin-top:8px;border-top:1px dashed rgba(255,184,77,.4);padding-top:8px">'+fbi.map(function(x){ return '💬 '+(x.n!=null?('<b>Ej. '+x.n+':</b> '):'')+String(x.texto||'').replace(/</g,'&lt;'); }).join('<br>')+'</div>'):'');
     if(c) c.insertBefore(ban, c.firstChild);
   }catch(e){
-    wrap.innerHTML='<div style="margin:20vh auto;max-width:560px;text-align:center;color:var(--muted);font-size:15px">No se pudo cargar la revisión: <b>'+(((e&&e.message)||e)+'').replace(/</g,'&lt;')+'</b><br><br>¿Ejecutaste la v4 de anulaciones_supabase.sql (función suite_ficha_revision)?</div>';
+    wrap.innerHTML=alu
+      ? '<div style="margin:20vh auto;max-width:560px;text-align:center;color:var(--muted);font-size:15px">No se pudo abrir tu ficha corregida: <b>'+(((e&&e.message)||e)+'').replace(/</g,'&lt;')+'</b><br><br>Si el enlace es de tu correo, comprueba que lo abres entero; si sigue fallando, avisa a Iago.</div>'
+      : '<div style="margin:20vh auto;max-width:560px;text-align:center;color:var(--muted);font-size:15px">No se pudo cargar la revisión: <b>'+(((e&&e.message)||e)+'').replace(/</g,'&lt;')+'</b><br><br>¿Ejecutaste la v4 de anulaciones_supabase.sql (función suite_ficha_revision)?</div>';
   }
 }
 
@@ -11823,6 +11850,7 @@ document.addEventListener('DOMContentLoaded', function(){
     try{ if(window.SuiteTiempo && qs.get('cuenta')) window.SuiteTiempo.start(qs.get('cuenta'), 'ficha', qs.get('fichaId')); }catch(e){}
     arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
   if(qs.get('revision') && qs.get('s')){ fpModoRevision(qs.get('revision'), qs.get('s')); return; }   /* WAVE15 */
+  if(qs.get('revision') && qs.get('alu')==='1'){ fpModoRevision(qs.get('revision'), null, true); return; }   /* (22-sep-2026) revisión del ALUMNO, sin secreto ni sesión */
   var prac=qs.get('practice');
   if(prac){
     var vista=FP_PRACTICE_VIEW[prac]||prac;
@@ -16416,7 +16444,10 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   function invNum(num, comp){ return (comp?23:9)-num; }
 
   var NUM_JUSTOS=new Set([4,5,8,11,12,15]);
-  function especiesParaNumero(num,comp){ if(num==null) return ['—']; if(NUM_JUSTOS.has(num)){ var a=['Aum.','J','Dis.']; if(comp) a=['D.Aum.'].concat(a).concat(['D.Dis.']); return a; } var arr=['Aum.','M'], ab=['m','Dis.']; if(comp){ arr=['D.Aum.'].concat(arr); ab=ab.concat(['D.Dis.']); } return arr.concat(['—']).concat(ab); }
+  /* (22-sep-2026, Iago) RUEDA DE ESPECIE FIJA: ya no depende del número. Siempre todas las especies:
+     arriba->abajo [D.Aum.], Aum., J, M, —, m, Dis., [D.Dis.] (dobles solo con compuestos). `num` se ignora.
+     Elegir una especie imposible para ese número se corrige como MAL (el corrector compara etiquetas). */
+  function especiesParaNumero(num,comp){ var arr=['Aum.','J','M'], ab=['m','Dis.']; if(comp){ arr=['D.Aum.'].concat(arr); ab=ab.concat(['D.Dis.']); } return arr.concat(['—']).concat(ab); }
   function numerosDisponibles(comp){ var nums=comp?[15,14,13,12,11,10,9,8,7,6,5,4,3,2]:[8,7,6,5,4,3,2]; return nums.concat(['—']); }
   function idxGuion(items){ var g=items.indexOf('—'); if(g>=0) return g; var j=items.indexOf('J'); if(j>=0) return j; return Math.floor(items.length/2); }
   function idxGuionNum(items){ var i=items.indexOf('—'); return i<0?0:i; }
@@ -16607,7 +16638,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       var sol=document.createElement('div'); sol.className='wsol'; cell.appendChild(sol);
       var numItems=numerosDisponibles(true).map(String), espApi=null;
       var nStart=(sel.num!=null && numItems.indexOf(String(sel.num))>=0)?numItems.indexOf(String(sel.num)):idxGuionNum(numItems);   // restaura si ya había respuesta (fichas: al navegar)
-      window.makeWheel(wN,numItems,nStart,function(ix){ var raw=numItems[ix]; sel.num=(raw==='—')?null:parseInt(raw,10); var esps=especiesParaNumero(sel.num,true); espApi.setItems(esps,true); var gi=idxGuion(esps); espApi.setIndex(gi,true); sel.esp=esps[gi]; });
+      window.makeWheel(wN,numItems,nStart,function(ix){ var raw=numItems[ix]; sel.num=(raw==='—')?null:parseInt(raw,10); /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número */ });
       var espInit=especiesParaNumero(sel.num,true); var eStart=(sel.esp!=null && sel.esp!=='—' && espInit.indexOf(sel.esp)>=0)?espInit.indexOf(sel.esp):idxGuion(espInit);
       espApi=window.makeWheel(wE,espInit,eStart,function(){ sel.esp=espApi.getValue(); }); sel.esp=espInit[eStart];
       return {cell:cell, sol:sol};
@@ -16742,7 +16773,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       var sol0=document.createElement('div'); sol0.className='wsol'; cell0.appendChild(sol0); par._solEl0=sol0;
       var numItems0=numerosDisponibles(false).map(String), espApi0=null;
       var nStart0=(par.sel0.num!=null && numItems0.indexOf(String(par.sel0.num))>=0)?numItems0.indexOf(String(par.sel0.num)):idxGuionNum(numItems0);
-      window.makeWheel(wN0,numItems0,nStart0,function(ix){ var raw=numItems0[ix]; par.sel0.num=(raw==='—')?null:parseInt(raw,10); var esps=especiesParaNumero(par.sel0.num,false); espApi0.setItems(esps,true); var gi=idxGuion(esps); espApi0.setIndex(gi,true); par.sel0.esp=esps[gi]; });
+      window.makeWheel(wN0,numItems0,nStart0,function(ix){ var raw=numItems0[ix]; par.sel0.num=(raw==='—')?null:parseInt(raw,10); /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número */ });
       var espInit0=especiesParaNumero(par.sel0.num,false); var eStart0=(par.sel0.esp!=null && par.sel0.esp!=='—' && espInit0.indexOf(par.sel0.esp)>=0)?espInit0.indexOf(par.sel0.esp):idxGuion(espInit0);
       espApi0=window.makeWheel(wE0,espInit0,eStart0,function(){ par.sel0.esp=espApi0.getValue(); }); par.sel0.esp=espInit0[eStart0];
       /* COLUMNA 2: analiza la INVERSIÓN */
@@ -16761,7 +16792,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       var sol=document.createElement('div'); sol.className='wsol'; cell.appendChild(sol); par._solEl=sol;
       var numItems=numerosDisponibles(false).map(String), espApi=null;
       var nStart=(par.sel.num!=null && numItems.indexOf(String(par.sel.num))>=0)?numItems.indexOf(String(par.sel.num)):idxGuionNum(numItems);   // restaura si ya había respuesta (fichas: al navegar)
-      window.makeWheel(wN,numItems,nStart,function(ix){ var raw=numItems[ix]; par.sel.num=(raw==='—')?null:parseInt(raw,10); var esps=especiesParaNumero(par.sel.num,false); espApi.setItems(esps,true); var gi=idxGuion(esps); espApi.setIndex(gi,true); par.sel.esp=esps[gi]; });
+      window.makeWheel(wN,numItems,nStart,function(ix){ var raw=numItems[ix]; par.sel.num=(raw==='—')?null:parseInt(raw,10); /* (22-sep-2026, Iago) la rueda de especie NO se mueve al tocar la de número */ });
       var espInit=especiesParaNumero(par.sel.num,false); var eStart=(par.sel.esp!=null && par.sel.esp!=='—' && espInit.indexOf(par.sel.esp)>=0)?espInit.indexOf(par.sel.esp):idxGuion(espInit);
       espApi=window.makeWheel(wE,espInit,eStart,function(){ par.sel.esp=espApi.getValue(); }); par.sel.esp=espInit[eStart];
       pairCell.appendChild(cell0); pairCell.appendChild(cell); wheels.appendChild(pairCell);
