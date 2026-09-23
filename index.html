@@ -2095,8 +2095,8 @@ function makeWheel(host, items, startIdx, onChange){
   host.addEventListener('wheel',e=>{ e.preventDefault();
     wheelAcc+=e.deltaY; if(wheelClr) clearTimeout(wheelClr); wheelClr=setTimeout(()=>{wheelAcc=0;},160);
     if(wheelLock) return;
-    /* (22-sep-2026, Iago) trackpad/rueda del ratón un poco MENOS sensible: umbral 24 -> 30 unidades de deltaY por paso (bloqueo 120 ms sin cambios) */
-    if(Math.abs(wheelAcc)>=30){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
+    /* (22-sep-2026, Iago) trackpad/rueda del ratón un poco MENOS sensible: umbral 24 -> 40 unidades de deltaY por paso, igual que en Grado Elemental (bloqueo 120 ms sin cambios) */
+    if(Math.abs(wheelAcc)>=40){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
   },{passive:false});
   build(); commit(idx,false);
   return {
@@ -3425,8 +3425,8 @@ function makeWheel(host, items, startIdx, onChange){
   host.addEventListener('wheel',e=>{ e.preventDefault();
     wheelAcc+=e.deltaY; if(wheelClr) clearTimeout(wheelClr); wheelClr=setTimeout(()=>{wheelAcc=0;},160);
     if(wheelLock) return;
-    /* (22-sep-2026, Iago) trackpad/rueda del ratón un poco MENOS sensible: umbral 24 -> 30 unidades de deltaY por paso (bloqueo 120 ms sin cambios) */
-    if(Math.abs(wheelAcc)>=30){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
+    /* (22-sep-2026, Iago) trackpad/rueda del ratón un poco MENOS sensible: umbral 24 -> 40 unidades de deltaY por paso, igual que en Grado Elemental (bloqueo 120 ms sin cambios) */
+    if(Math.abs(wheelAcc)>=40){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
   },{passive:false});
   build(); commit(idx,false);
   return {
