@@ -13,7 +13,8 @@ window.TXT_TIP=function(raton,tactil){ return window.ES_TACTIL?tactil:raton; };
 document.addEventListener('DOMContentLoaded', function(){
   try{
     var st=document.createElement('style');
-    st.textContent='html,body{touch-action:manipulation} button,.wheel,svg,.acc-btn{touch-action:manipulation}';
+    /* (23-sep-2026, Iago) .wheel FUERA de esta regla: con touch-action:manipulation la tablet hacía scroll de página mientras se giraba la rueda. La rueda lleva touch-action:none en su CSS. */
+    st.textContent='html,body{touch-action:manipulation} button,svg,.acc-btn{touch-action:manipulation}';
     document.head.appendChild(st);
     if(window.ES_TACTIL){
       /* pistas estáticas: fuera lo de «clic derecho» en tablet */
@@ -2024,6 +2025,8 @@ let _wheelAC=null;
 function _wheelCtx(){ try{ if(!_wheelAC) _wheelAC=new (window.AudioContext||window.webkitAudioContext)(); if(_wheelAC.state==='suspended') _wheelAC.resume(); return _wheelAC; }catch(e){ return null; } }
 function wheelTick(){
   const ctx=_wheelCtx(); if(!ctx) return;
+  /* (23-sep-2026, Iago) «suena tipo metralleta»: como mucho un tick cada 55 ms */
+  const _now=performance.now(); if(window.__wheelTickT && _now-window.__wheelTickT<55) return; window.__wheelTickT=_now;
   try{
     const t=ctx.currentTime;
     // "tock" suave: senoide grave con caída rápida + filtro pasa-bajos
@@ -2048,6 +2051,13 @@ function makeWheel(host, items, startIdx, onChange){
   let data=items.slice(), idx=startIdx||0, live=idx;
   let dragging=false, startY=0, moved=0;
   let wheelAcc=0, wheelLock=false, wheelClr=null;
+  /* (23-sep-2026, Iago) ARMADURAS PASO A PASO: en las ruedas de nº de alteraciones
+     (ítems tipo «3♯», «0», «2♭») la armadura se repinta en cada paso mientras se
+     arrastra, no solo al levantar el dedo. Se avisa al onChange con el ítem vivo
+     (coalescido por frame); al soltar, el commit lo llama otra vez con el final. */
+  const esArm=/[♯♭]/.test(data.join('')) && data.length>=8;
+  let liveRaf=null;
+  function previewLive(c){ if(!esArm || !onChange) return; if(liveRaf) cancelAnimationFrame(liveRaf); liveRaf=requestAnimationFrame(()=>{ liveRaf=null; try{ onChange(c); }catch(e){} }); }
   function build(){
     list.innerHTML='';
     data.forEach((t,i)=>{ const d=document.createElement('div'); d.className='witem'+(i===idx?' sel':''); d.dataset.i=i;
@@ -2071,7 +2081,7 @@ function makeWheel(host, items, startIdx, onChange){
     list.style.transition='none';
     list.style.transform='translateY('+(H-idx*H+dy)+'px)';
     const c=Math.max(0,Math.min(data.length-1,Math.round(idx-dy/H)));
-    if(c!==live){ live=c; hi(c); wheelTick(); }
+    if(c!==live){ live=c; hi(c); wheelTick(); previewLive(c); }
     if(e.cancelable) e.preventDefault();
   }
   function detach(){ ['pointermove','mousemove','touchmove'].forEach(t=>window.removeEventListener(t,onMove)); ['pointerup','mouseup','touchend','pointercancel'].forEach(t=>window.removeEventListener(t,onUp)); }
@@ -3354,6 +3364,8 @@ let _wheelAC=null;
 function _wheelCtx(){ try{ if(!_wheelAC) _wheelAC=new (window.AudioContext||window.webkitAudioContext)(); if(_wheelAC.state==='suspended') _wheelAC.resume(); return _wheelAC; }catch(e){ return null; } }
 function wheelTick(){
   const ctx=_wheelCtx(); if(!ctx) return;
+  /* (23-sep-2026, Iago) «suena tipo metralleta»: como mucho un tick cada 55 ms */
+  const _now=performance.now(); if(window.__wheelTickT && _now-window.__wheelTickT<55) return; window.__wheelTickT=_now;
   try{
     const t=ctx.currentTime;
     // "tock" suave: senoide grave con caída rápida + filtro pasa-bajos
@@ -3378,6 +3390,13 @@ function makeWheel(host, items, startIdx, onChange){
   let data=items.slice(), idx=startIdx||0, live=idx;
   let dragging=false, startY=0, moved=0;
   let wheelAcc=0, wheelLock=false, wheelClr=null;
+  /* (23-sep-2026, Iago) ARMADURAS PASO A PASO: en las ruedas de nº de alteraciones
+     (ítems tipo «3♯», «0», «2♭») la armadura se repinta en cada paso mientras se
+     arrastra, no solo al levantar el dedo. Se avisa al onChange con el ítem vivo
+     (coalescido por frame); al soltar, el commit lo llama otra vez con el final. */
+  const esArm=/[♯♭]/.test(data.join('')) && data.length>=8;
+  let liveRaf=null;
+  function previewLive(c){ if(!esArm || !onChange) return; if(liveRaf) cancelAnimationFrame(liveRaf); liveRaf=requestAnimationFrame(()=>{ liveRaf=null; try{ onChange(c); }catch(e){} }); }
   function build(){
     list.innerHTML='';
     data.forEach((t,i)=>{ const d=document.createElement('div'); d.className='witem'+(i===idx?' sel':''); d.dataset.i=i;
@@ -3401,7 +3420,7 @@ function makeWheel(host, items, startIdx, onChange){
     list.style.transition='none';
     list.style.transform='translateY('+(H-idx*H+dy)+'px)';
     const c=Math.max(0,Math.min(data.length-1,Math.round(idx-dy/H)));
-    if(c!==live){ live=c; hi(c); wheelTick(); }
+    if(c!==live){ live=c; hi(c); wheelTick(); previewLive(c); }
     if(e.cancelable) e.preventDefault();
   }
   function detach(){ ['pointermove','mousemove','touchmove'].forEach(t=>window.removeEventListener(t,onMove)); ['pointerup','mouseup','touchend','pointercancel'].forEach(t=>window.removeEventListener(t,onUp)); }
