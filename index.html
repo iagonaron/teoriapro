@@ -6921,22 +6921,33 @@ window.MODOS_MOTOR = {
       var got=(e.userSeq||[]).filter(function(n){return !n._opt;});
       var midiOf=function(n){ return n.midi!=null?n.midi:midiNota(n.step,n.octave,n.alter||0); };
       var pc=function(n){ return ((midiOf(n)%12)+12)%12; };
+      /* (24-sep-2026, Iago) En escalas MAYORES, MENORES y PENTATÓNICAS (mayor y menor) la
+         ARMADURA vale el 50 % de la puntuación; el otro 50 % son las notas (todo o nada, como
+         antes). Si la escala no lleva alteraciones (Do M / La m), no poner nada deliberadamente
+         ya da ese 50 %. Los MODOS siguen siendo todo o nada. */
+      var fam=String(e.familia||'');
+      var mitad = (fam==='mayor' || fam==='menor' || fam==='pentatonica' || fam==='pentatonica_may' || fam==='pentatonica_men');
       if(!precol){
         // pentatónica/hexátona/cromática: el alumno coloca por altura. Se corrige
         // por CLASE DE ALTURA (la octava se da por buena). Si lleva armadura
-        // (pentatónica), también debe coincidir. BINARIO: todo bien o 0.
-        if(!got.length) return 0;
-        if(conArm && (e.userArm||0)!==((e.fifths!=null)?e.fifths:0)) return 0;
-        var solPC=sol.map(pc).sort(function(a,b){return a-b;});
-        var aluPC=got.map(pc).sort(function(a,b){return a-b;});
-        if(solPC.length!==aluPC.length) return 0;
-        for(var t=0;t<solPC.length;t++){ if(solPC[t]!==aluPC[t]) return 0; }
-        return 1;
+        // (pentatónica), también debe coincidir.
+        var armOkV = !conArm || ((e.userArm||0)===((e.fifths!=null)?e.fifths:0));
+        var notasOkV = true;
+        if(!got.length) notasOkV=false;
+        else {
+          var solPC=sol.map(pc).sort(function(a,b){return a-b;});
+          var aluPC=got.map(pc).sort(function(a,b){return a-b;});
+          if(solPC.length!==aluPC.length) notasOkV=false;
+          else for(var t=0;t<solPC.length;t++){ if(solPC[t]!==aluPC[t]){ notasOkV=false; break; } }
+        }
+        if(mitad && conArm) return (armOkV?0.5:0) + (notasOkV?0.5:0);
+        return (armOkV && notasOkV) ? 1 : 0;
       }
-      // precolocada (modos/mayor/menor): BINARIO todo-o-nada. Armadura correcta Y
-      // todas las accidentales correctas. Do jónico sin tocar nada = correcto.
+      // precolocada (modos/mayor/menor): armadura correcta Y todas las accidentales
+      // correctas. Do jónico sin tocar nada = correcto. Mayor/menor: 50 % + 50 %.
       var armSol=(e.fifths!=null)?e.fifths:0;
-      if((e.userArm||0)!==armSol) return 0;
+      var armOkP=((e.userArm||0)===armSol);
+      var notasOkP=true;
       for(var k=0;k<sol.length;k++){
         var s2=sol[k];
         var armA=armAlterFor(s2.step, armSol);
@@ -6944,9 +6955,10 @@ window.MODOS_MOTOR = {
         if(!esAcc) continue;
         var u2=got[k];
         var acierta = u2 && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
-        if(!acierta) return 0;
+        if(!acierta){ notasOkP=false; break; }
       }
-      return 1;
+      if(mitad) return (armOkP?0.5:0) + (notasOkP?0.5:0);
+      return (armOkP && notasOkP) ? 1 : 0;
     }catch(err){ console.warn('[MODOS_MOTOR] puntua', err); return 0; }
   },
   // ---- CORRECCIÓN VISUAL para el resumen (verde=bien / rojo=mal / azul=solución) ----
