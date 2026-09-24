@@ -1303,7 +1303,7 @@ window.SuiteTiempo=(function(){
     <div class="ex-top">
       <div class="ex-letter"><b>♭♯</b><span>Construye el modo indicado</span></div>
       <div style="display:flex;gap:8px">
-        <button class="iconbtn" onclick="nuevoMODO()" title="Nuevo modo">
+        <button class="iconbtn" onclick="nuevoMODO()" title="Nuevo modo" style="display:none" aria-hidden="true">
           <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
           Nuevo
         </button>
@@ -6810,6 +6810,16 @@ function nuevoMODO(){
   let it,prev=dataESC[3]?dataESC[3]._mode:null,n=0;
   do{ it=escItemModo(); n++; }while(it._mode===prev && n<30);
   dataESC[3]=it; it._corregido=false; it._solVisible=false; it._okGreen=false;
+  /* (24-sep-2026, Iago) «le doy a Nuevo y cambian las notas pero no el enunciado,
+     y el modo sigue corregido». renderMODO, si ya hay pentagrama, solo redibuja
+     las notas (para no perder la selección al interactuar); con un modo NUEVO hay
+     que montarlo entero: enunciado, controles, marca de corrección y pentagrama.
+     Además se suelta el enganche de las fichas (__FP_HOST) para que no pinte allí. */
+  window.__FP_HOST=null; window.__FP_ITEM=null;
+  const hostM=document.getElementById('escRowsM');
+  if(hostM) hostM.innerHTML='';
+  document.querySelectorAll('#scoreESC3,#ansESC3').forEach(function(n){ n.removeAttribute('id'); });
+  if(typeof escUndo!=='undefined' && escUndo) escUndo[3]=[];
   renderMODO();
 }
 function renderMODO(){
