@@ -6938,7 +6938,7 @@ window.MODOS_MOTOR = {
          cada una bien puesta suma su parte y una que sobra resta. Si la solución no lleva ninguna
          alteración accidental y el alumno no ha puesto ninguna, esa parte está BIEN (no poner nada es
          una respuesta válida). Los MODOS siguen siendo todo o nada. */
-      var PESO_ARM = 0.25;
+      var PESO_ARM = 0.5;   /* (25-sep-2026, Iago) la armadura vale un 50 %, como en GE (antes 0.25) */
       var fam=String(e.familia||'');
       var mitad = (fam==='mayor' || fam==='menor' || fam==='pentatonica' || fam==='pentatonica_may' || fam==='pentatonica_men');
       if(!precol){
