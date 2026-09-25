@@ -6226,8 +6226,11 @@ function buildEscEditControls(ans, e, i){
     [['♯',1],['♮',0],['♭',-1]].forEach(([sym,a])=>{   // ♯ arriba, ♭ abajo
       const b=document.createElement('button'); b.className='acc-btn esc-acc'; b.style.cssText='min-width:32px;height:30px;font-size:16px';
       b.textContent=sym; b.dataset.i=i; b.dataset.g=gi; b.dataset.a=a;
-      if(e.userNotas[gi].alter===a) b.classList.add('on');
+      /* (25-sep-2026, Iago) alteraciones neutras: solo se ilumina lo que el alumno tocó, nunca lo que da la
+         armadura; y ♯ sobre ♯ (o ♭ sobre ♭) de la armadura no hace nada. (Controles antiguos: hoy sin uso.) */
+      if(e.userNotas[gi]._touched===true && e.userNotas[gi].alter===a) b.classList.add('on');
       b.addEventListener('click',()=>{
+        if(a!==0 && e.userNotas[gi]._touched!==true && e.userNotas[gi].alter===a && armAlterFor(e.userNotas[gi].step, e.userArm||0)===a) return;
         e.userNotas[gi].alter=a; e.userNotas[gi]._touched=true;
         renderESCStaveOne(i);
         btns.querySelectorAll('.esc-acc').forEach(x=>x.classList.toggle('on',+x.dataset.a===a));
@@ -6246,7 +6249,8 @@ function refreshEscAccButtons(i,edCol){
   const e=dataESC[i];
   edCol.querySelectorAll('.esc-acc-group').forEach(grp=>{
     const gi=+grp.dataset.g;
-    grp.querySelectorAll('.esc-acc').forEach(b=>b.classList.toggle('on', e.userNotas[gi].alter===+b.dataset.a));
+    /* (25-sep-2026, Iago) alteraciones neutras: solo la alteración puesta a mano (_touched), no la de la armadura */
+    grp.querySelectorAll('.esc-acc').forEach(b=>b.classList.toggle('on', e.userNotas[gi]._touched===true && e.userNotas[gi].alter===+b.dataset.a));
   });
 }
 /* controles unificados: armadura (precolocada/pentatónica) y/o panel ♯/♮/♭ */
@@ -6283,6 +6287,10 @@ function buildEscVarControls(ans, e, i){
     accRow.querySelectorAll('.esc-var-acc').forEach(b=>b.addEventListener('click',()=>{
       const a=+b.dataset.a;
       if(e._selVar!=null && e.userSeq[e._selVar]){
+        /* (25-sep-2026, Iago) alteraciones neutras: si la nota ya lleva ♯ (o ♭) POR LA ARMADURA y el alumno
+           pulsa ♯ (o ♭), no pasa nada: ni cambia la altura, ni se marca como tocada, ni se ilumina nada. */
+        const nSel=e.userSeq[e._selVar];
+        if(conArm && a!==0 && escAltExplicita(nSel)===null && (nSel.alter||0)===a && armAlterFor(nSel.step, e.userArm||0)===a) return;
         e.userSeq[e._selVar].alter=a; e.userSeq[e._selVar]._touched=true; e.userSeq[e._selVar]._inherited=false; e._okGreen=false; unlockCard('cardESC'+i); unlockCard('cardMODO');
         renderESCi(i);
       } else if(!pre){
@@ -6297,11 +6305,23 @@ function applyArmToSeq(i){
   const e=dataESC[i];
   e.userSeq.forEach(n=>{ if(n._touched!==true){ n.alter=armAlterFor(n.step, e.userArm||0); } });
 }
+/* (25-sep-2026, Iago) alteraciones neutras: parte EXPLÍCITA de la alteración de una nota, es decir,
+   la que el alumno puso él mismo (botón ♯/♮/♭ con la nota seleccionada, o alteración pendiente al
+   colocarla). Si la alteración viene de la armadura (o heredada) o la nota no se ha tocado -> null. */
+function escAltExplicita(n){
+  if(!n) return null;
+  if(n._touched===true || n._inherited===false) return n.alter||0;
+  return null;
+}
 /* marca el botón ♯/♮/♭ que corresponde a la alteración de la nota seleccionada */
 function refreshEscVarAcc(e,accRow){
   if(e._selVar!=null && e.userSeq[e._selVar]){
-    const a=e.userSeq[e._selVar].alter||0;
-    accRow.querySelectorAll('.esc-var-acc').forEach(x=>x.classList.toggle('on',+x.dataset.a===a));
+    /* (25-sep-2026, Iago) alteraciones neutras: en escalas CON armadura (mayor/menor/modos precolocadas
+       y pentatónica) solo se ilumina lo que el alumno puso a mano; nunca lo que da la armadura.
+       Sin armadura (hexátona/cromática) todo es explícito y se deja como estaba. */
+    const conArmSel=(e._precolocada===true || e._conArmadura===true);
+    const a=conArmSel ? escAltExplicita(e.userSeq[e._selVar]) : (e.userSeq[e._selVar].alter||0);
+    accRow.querySelectorAll('.esc-var-acc').forEach(x=>x.classList.toggle('on',a!=null && +x.dataset.a===a));
   } else {
     accRow.querySelectorAll('.esc-var-acc').forEach(x=>x.classList.remove('on'));
   }
@@ -15454,7 +15474,11 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     /* GN-UNIF 8-jul-2026 · estado del botón deshacer */
     function gnUndoUpdTE(){ var b=$e('teDeshacer'); if(b) b.disabled=!((g._gnUndo&&g._gnUndo.length)||(g._orden&&g._orden.length)); }
     gnUndoUpdTE();
-    ['teAccB','teAccN','teAccS'].forEach(function(id){ var bb=$e(id); bb.onclick=function(){ if(selIdx==null)return; var alu=g.aluNotas[selIdx]; if(!alu)return; var a=bb.dataset.a; alu.alter=a==='b'?-1:a==='#'?1:0; redraw(); }; });
+    ['teAccB','teAccN','teAccS'].forEach(function(id){ var bb=$e(id); bb.onclick=function(){ if(selIdx==null)return; var alu=g.aluNotas[selIdx]; if(!alu)return; var a=bb.dataset.a; var nueva=a==='b'?-1:a==='#'?1:0;
+      /* (25-sep-2026, Iago) alteraciones neutras: si la nota (sin alteración propia) ya es ♯ (o ♭) por la
+         armadura que ha puesto el alumno, pulsar ♯ (o ♭) no hace nada (ni se escribe un ♯ redundante). */
+      if(nueva!==0 && !alu.alter && inKS(alu.step, nueva, g.aluArm)) return;
+      alu.alter=nueva; redraw(); }; });
     /* GN-UNIF 8-jul-2026 · deshacer con pila {gi, valorAnterior}: recupera también notas machacadas o borradas con la × */
     $e('teDeshacer').onclick=function(){
       var recuperada=null;   /* SEL-UNICA 10-jul-2026 · gi de la nota recuperada, para dejarla seleccionada */
