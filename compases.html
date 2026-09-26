@@ -237,9 +237,9 @@
   <span class="opt-banner">Compases poco frecuentes · mixtos · decimales · fraccionarios</span>
 
   <nav class="mode-bar" aria-label="Tipo de ejercicio">
-    <button class="mode-tab" data-mode="A"><span class="mt-k">Ejercicio A</span><span class="mt-t">Rellena el compás</span></button>
+    <button class="mode-tab active" data-mode="A"><span class="mt-k">Ejercicio A</span><span class="mt-t">Rellena el compás</span></button>
     <button class="mode-tab" data-mode="B"><span class="mt-k">Ejercicio B</span><span class="mt-t">Elige el compás</span></button>
-    <button class="mode-tab active" data-mode="C"><span class="mt-k">Ejercicio C</span><span class="mt-t">Replica el compás</span></button>
+    <button class="mode-tab" data-mode="C"><span class="mt-k">Ejercicio C</span><span class="mt-t">Replica el compás</span></button>
   </nav>
 
   <!-- ============ EJERCICIO A ============ -->
@@ -728,7 +728,7 @@
   /* ====================================================== */
   /* ===================  PESTAÑAS  ====================== */
   /* ====================================================== */
-  var currentMode='C', rzT=null;
+  var currentMode='A', rzT=null;   /* (26-sep-2026, Iago) se abre siempre en el ejercicio A */
   function showStage(mode){
     currentMode=mode;
     document.getElementById('stageA').style.display = (mode==='A')?'block':'none';
@@ -749,7 +749,7 @@
 
   /* ===== Arranque ===== */
   newC();
-  showStage('C');
+  showStage('A');   /* (26-sep-2026, Iago) antes abría en el C */
 })();
 </script>
 </body>

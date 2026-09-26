@@ -230,6 +230,12 @@ document.addEventListener('DOMContentLoaded', function(){
   /* pads de repaso: distintivo dorado */
   .mode-card.repaso{background:linear-gradient(180deg,#1c1a15,#111014);border-color:rgba(212,175,55,.26)}   /* WAVE9: contorno sutil */
   .mode-card.repaso h2{color:var(--ink);font-weight:700}
+  /* (26-sep-2026, Iago) la palabra REPASO pasa a una cinta en diagonal abajo a la derecha (como la banda
+     «Alumnos de 4º» del portal GE); arriba a la izquierda queda sitio para «VER APUNTES» */
+  .mode-card.repaso .repaso-cinta{position:absolute;right:0;bottom:0;width:112px;height:112px;overflow:hidden;pointer-events:none}
+  .mode-card.repaso .repaso-cinta span{position:absolute;right:-38px;bottom:22px;transform:rotate(-45deg);width:160px;text-align:center;padding:4px 0;
+    background:rgba(198,164,108,.12);border-top:1px solid rgba(198,164,108,.4);border-bottom:1px solid rgba(198,164,108,.4);
+    color:#c6a46c;font-size:9.5px;font-weight:700;letter-spacing:.2em;text-transform:uppercase;line-height:1.2}
   .mode-card.repaso .repaso-tag{
     position:absolute;top:11px;left:14px;font-size:9px;font-weight:700;letter-spacing:.24em;text-transform:uppercase;
     color:var(--muted2);background:none;padding:0;box-shadow:none;
@@ -949,13 +955,13 @@ window.SuiteTiempo=(function(){
       <button class="mode-card" data-path="modulacion"><h2>Modulación</h2></button>
       <button class="mode-card" data-path="transporte"><h2>Transporte</h2><span class="card-sub">resumen · escrito · mental</span></button>
 
-      <button class="mode-card repaso" data-path="intervalos"><span class="repaso-tag">repaso</span><h2>Intervalos</h2><span class="card-sub">simples · compuestos</span></button>
-      <button class="mode-card repaso" data-path="acordes"><span class="repaso-tag">repaso</span><h2>Acordes</h2><span class="card-sub">triadas · 7D</span></button>
-      <button class="mode-card repaso" data-path="inversion"><span class="repaso-tag">repaso</span><h2>Inversión</h2><span class="card-sub">intervalos · acordes</span></button>
+      <button class="mode-card repaso" data-path="intervalos"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Intervalos</h2><span class="card-sub">simples · compuestos</span></button>
+      <button class="mode-card repaso" data-path="acordes"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Acordes</h2><span class="card-sub">triadas · 7D</span></button>
+      <button class="mode-card repaso" data-path="inversion"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Inversión</h2><span class="card-sub">intervalos · acordes</span></button>
 
-      <button class="mode-card repaso" data-path="escalas"><span class="repaso-tag">repaso</span><h2>Escalas</h2><span class="card-sub">menores · mayores · otras</span></button>
-      <button class="mode-card repaso" data-path="tonalidades"><span class="repaso-tag">repaso</span><h2>Tonalidades</h2><span class="card-sub">tonalidad · armadura · vecinos</span></button>
-      <button class="mode-card repaso" data-path="enarmoniapro"><span class="repaso-tag">repaso</span><h2>Enarmonías</h2><span class="card-sub">nota · parcial · total · tonalidad</span></button>
+      <button class="mode-card repaso" data-path="escalas"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Escalas</h2><span class="card-sub">menores · mayores · otras</span></button>
+      <button class="mode-card repaso" data-path="tonalidades"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Tonalidades</h2><span class="card-sub">tonalidad · armadura · vecinos</span></button>
+      <button class="mode-card repaso" data-path="enarmoniapro"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Enarmonías</h2><span class="card-sub">nota · parcial · total · tonalidad</span></button>
     </div>
 
     <div class="eva-foot"><button class="maint-link" id="genLink">Generador de fichas</button> <span style="opacity:.35;margin:0 4px">·</span> <button class="maint-link" id="maintLink">Mantenimiento</button></div>
@@ -17833,6 +17839,45 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   }
 
   window.PapelFichas = { ofrecer: ofrecer, copias: copias };
+})();
+</script>
+
+<!-- (26-sep-2026, Iago) VER APUNTES: tarjetas doradas → Apuntes de teoría 2GP (su apartado exacto);
+     tarjetas de repaso → Kit salvavidas 4GE en dorado. Solo alumnos con cuenta validada (de momento,
+     solo la cuenta Protester, para revisarlos). Para quitarlo: borrar este bloque. -->
+<script>window.APX_CFG={tema:'gp', soloTester:true};</script>
+<script src="apuntes.js?v=1"></script>
+<script src="apuntes-kit.js?v=1"></script>
+<script src="apuntes-2gp.js?v=1"></script>
+<script>
+(function(){
+  if(!window.APX || new URLSearchParams(location.search).get('fichaId')) return;
+  var T=[
+    ['cadencias','Cadencias',['cadencias']],
+    ['indiceacustico','Índice acústico',['gp-indice']],
+    ['modos','Modos',['gp-modos']],
+    ['compasespro','Compases extraños',['gp-compases']],
+    ['seriearmonica','Serie armónica',['gp-serie']],
+    ['dodecafonismo','Dodecafonismo',['gp-serialismo']],
+    ['acordespro','Acordes avanzado',['gp-cifrado']],
+    ['modulacion','Modulación',['gp-modulacion']],
+    ['transporte','Transporte',['gp-transporte']],
+    ['intervalos','Intervalos · repaso',['intervalos','int-comp']],
+    ['acordes','Acordes · repaso',['acordes']],
+    ['inversion','Inversión · repaso',['inv-simples','inv-comp','inv-acordes']],
+    ['escalas','Escalas · repaso',['esc-menores','esc-mayores','esc-otras']],
+    ['tonalidades','Tonalidades · repaso',['relativos','tonalidad','armadura','vecinas']],
+    ['enarmoniapro','Enarmonías · repaso',['enarmonias']]
+  ];
+  window.APX.montar(T.map(function(t){ return {sel:'.home-grid .mode-card[data-path="'+t[0]+'"]', nombre:t[1], temas:t[2]}; }), {
+    /* (26-sep-2026, Iago) alumnos con cuenta: la tarjeta «Compases» se llama «Compases extraños» */
+    alValidar:function(){
+      var c=document.querySelector('.home-grid .mode-card[data-path="compasespro"]'); if(!c) return;
+      var h=c.querySelector('h2'), s=c.querySelector('.card-sub');
+      if(h) h.textContent='Compases extraños';
+      if(s) s.textContent='mixtos-decimales y fraccionarios';
+    }
+  });
 })();
 </script>
 
