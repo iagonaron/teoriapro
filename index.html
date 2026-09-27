@@ -11437,7 +11437,8 @@ function pintaAlu(){
     '<div class="fp-kicker" style="text-align:center">Ejercicio '+(i+1)+' de '+N+(it.refuerzo?' · refuerzo':'')+'</div>'+
     '<h2 class="fp-titulo fp-titulo-alu" style="text-align:center;margin-bottom:14px">'+it.enun+'</h2>'+
     '<div class="fp-alu-card '+(ALU.__dir==='prev'?'fp-slide-in-l':(ALU.__dir==='next'?'fp-slide-in':'fp-sim-enter'))+'"><div id="aluHost"></div></div>'+
-    '<div style="text-align:center;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">'+
+    /* (27-sep-2026, Iago) APUNTES EN LAS FICHAS: class="fp-ayuda" marca esta fila para colgarle «APUNTES» (bloque ApxFicha, al final) */
+    '<div class="fp-ayuda" style="text-align:center;margin-top:12px;display:flex;align-items:center;justify-content:center;gap:10px;flex-wrap:wrap">'+
       (fpTienePad(it.key)
         ? '<button class="fp-practica" id="aluPractica" type="button">No lo sé hacer: necesito practicar esto ↗</button>'
         : '<span style="font-size:13px;color:#c9b978;font-weight:700">¿Dudas? Revisa los apuntes 📖</span>')+
@@ -11471,6 +11472,7 @@ function pintaAlu(){
   }catch(e){}
   fpQuitaDuplicados(el('aluHost'));   /* sin textos repetidos bajo el título */
   var bpr=el('aluPractica'); if(bpr) bpr.addEventListener('click', function(){ fpModalPracticar(it.key); });
+  try{ if(window.ApxFicha) window.ApxFicha.pinta(c.querySelector('.fp-ayuda'), it.key); }catch(e){}   /* (27-sep-2026, Iago) APUNTES EN LAS FICHAS */
   var bp=el('aluPrev'), bn=el('aluNext'), bf=el('aluFin');
   if(bp) bp.addEventListener('click', function(){ try{ SFX.back(); }catch(e){} ALU.__dir='prev'; ALU.i--; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
   if(bn) bn.addEventListener('click', function(){ try{ SFX.next(); }catch(e){} ALU.__dir='next'; ALU.i++; progGuardar(); pintaAlu(); window.scrollTo(0,0); fpCartelEj(ALU.i+1); });
@@ -17973,6 +17975,212 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       if(s) s.textContent='mixtos-decimales y fraccionarios';
     }
   });
+})();
+</script>
+
+<!-- (27-sep-2026, Iago) APUNTES EN LAS FICHAS: en cada ejercicio de la ficha del alumno, al lado de «No lo sé hacer:
+     necesito practicar esto» sale «APUNTES» (abre el tema de ESE ejercicio en el mismo visor que «VER APUNTES») y
+     «VER VÍDEO» si ese tipo de ejercicio tiene vídeo (hoy: los tres de Compases PRO → intro «Compases extraños», la misma
+     del botón ▶ de la tarjeta, bloque ivf-* de abajo). En los ejercicios tipo test (test_*) y en los que no tienen
+     práctica (blues, examen) sale solo «¿Dudas? Ver APUNTES».
+     MISMA PUERTA que «VER APUNTES» (APX_CFG.soloTester, arriba): hoy solo lo ve la cuenta Protester; el día que se abran
+     los apuntes a todos (soloTester:false) aparece a la vez. Si el ejercicio no tiene tema de apuntes, la fila se queda
+     como estaba.
+     Abrir los apuntes o el vídeo no toca la ficha: van por encima y, mientras están abiertos, la ficha queda «inert» (ni
+     clics ni tabulador) y no le llegan Esc ni ←/→. El vídeo no puede sacar al alumno de la ficha («Ir a ejercicios»
+     solo cierra el vídeo).
+     Para quitarlo: borrar este bloque y las dos marcas «(27-sep-2026, Iago) APUNTES EN LAS FICHAS» de pintaAlu
+     (class="fp-ayuda" y la línea de ApxFicha.pinta). -->
+<script>
+(function(){
+  'use strict';
+  if(!window.APX || !new URLSearchParams(location.search).get('fichaId')) return;   /* solo en la ficha del alumno */
+
+  /* ---- lo propio de GP ---- */
+  /* tipo de ejercicio → temas (el mismo reparto que las tarjetas del bloque VER APUNTES de arriba); el 3.er dato es
+     la pestaña que se abre primero. Solo se usan los temas que existan en APX_TEMAS (por eso 'gp-cadencias', que aún
+     no está publicado, puede ir ya en la lista: saldrá cuando exista). */
+  function G(nombre, temas, primero){ return {nombre:nombre, temas:temas, primero:primero||temas[0]}; }
+  var INT=['intervalos','int-comp'], INV=['inv-simples','inv-comp','inv-acordes'], TON=['relativos','tonalidad','armadura','vecinas'],
+      ESC=['esc-menores','esc-mayores','esc-otras'];
+  var COMP=G('Compases extraños',['gp-compases']), SERIE=G('Serie armónica',['gp-serie']), DODE=G('Dodecafonismo',['gp-serialismo']),
+      CIFR=G('Acordes avanzado',['gp-cifrado']), MODU=G('Modulación',['gp-modulacion']), TRAN=G('Transporte',['gp-transporte']);
+  var MAPA={
+    modos:G('Modos',['gp-modos']), indice:G('Índice acústico',['gp-indice']),
+    comp_elegir:COMP, comp_rellenar:COMP, comp_replicar:COMP,
+    seriearmonica:SERIE,
+    dode_construir:DODE, dode_completa:DODE, dode_identifica:DODE,
+    acordespro_id:CIFR, acordespro_build:CIFR, blues:CIFR,   /* blues: el cifrado americano (la estructura del blues no está en los apuntes web) */
+    modulacion:MODU,
+    transporte_escrito:TRAN, transporte_mental:TRAN, transporte_resumen:TRAN,
+    cadencias:G('Cadencias',['gp-cadencias','cadencias']),
+    escala_mayor:G('Escalas · repaso',ESC,'esc-mayores'), escala_menor:G('Escalas · repaso',ESC,'esc-menores'), escala_otras:G('Escalas · repaso',ESC,'esc-otras'),
+    intervalos_id:G('Intervalos · repaso',INT), intervalos_build:G('Intervalos · repaso',INT),
+    acordes_id:G('Acordes · repaso',['acordes']), acordes_build:G('Acordes · repaso',['acordes']),
+    tonalidades:G('Tonalidades · repaso',TON), ton_nombre:G('Tonalidades · repaso',TON,'tonalidad'),
+    ton_armadura:G('Tonalidades · repaso',TON,'armadura'), ton_vecinos:G('Tonalidades · repaso',TON,'vecinas'),
+    inversion_int_simples:G('Inversión · repaso',INV,'inv-simples'), inversion_int_compuestos:G('Inversión · repaso',INV,'inv-comp'),
+    inversion_aco_identifica:G('Inversión · repaso',INV,'inv-acordes'), inversion_aco_construir:G('Inversión · repaso',INV,'inv-acordes'),
+    enarmoniapro:G('Enarmonías · repaso',['enarmonias']),
+    /* tests: solo los tramos que tienen tema en los apuntes web (2.2: solo la parte de timbre). Los demás
+       (1.1 Fonógrafo, 2.1, 3.1, 3.3, 4.x, 5.x) se quedan con «¿Dudas? Revisa los apuntes 📖» */
+    test_1_2:COMP, test_2_2:SERIE, test_2_3:SERIE, test_3_2:DODE,
+    test_8_1:MODU, test_8_2:MODU, test_8_3:MODU, test_9_1:TRAN, test_9_2:TRAN
+  };
+  function esTest(k){ return /^test_/.test(String(k||'')); }   /* tipo test: 2 preguntas · 3 opciones */
+  /* tipo de ejercicio → vídeo (la misma intro que el botón ▶ de la tarjeta «Compases», bloque ivf-*) */
+  var VIDEO={ comp_elegir:'intros/compases-extranos/index.html', comp_rellenar:'intros/compases-extranos/index.html', comp_replicar:'intros/compases-extranos/index.html' };
+  var SEL_PRACTICA='#aluPractica', CLASE_BOTON='fp-practica', ACENTO='#d4af37';
+  var CSS_PROPIO=
+    '.fp-ayuda.apxf-fila{align-items:stretch !important}'+
+    /* mismo tamaño que «No lo sé hacer…» (misma clase fp-practica); aquí solo cambia el color: liso y opaco */
+    '.fp-practica.apxf-btn{display:inline-flex;align-items:center;justify-content:center;gap:7px;max-width:100%;background:#d4af37;border-color:#d4af37;color:#1a1407}'+
+    '.fp-practica.apxf-btn:hover{background:#e2c050;border-color:#e2c050;color:#1a1407}'+
+    '.fp-practica.apxf-btn:focus-visible{outline:2px solid #fbf7ec;outline-offset:2px}';
+
+  /* ---- a partir de aquí, igual en GE y en GP ---- */
+  var ICO_LIBRO='<svg viewBox="0 0 24 24" width="15" height="15" fill="none" stroke="currentColor" stroke-width="1.9" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C5.5 4.3 8.5 4.3 12 6c3.5-1.7 6.5-1.7 9-.5v13c-2.5-1.2-5.5-1.2-9 .5-3.5-1.7-6.5-1.7-9-.5z"/><path d="M12 6v13.5"/></svg>';
+  var ICO_PLAY='<svg viewBox="0 0 12 12" width="12" height="12" aria-hidden="true"><path d="M2.2 1.1v9.8L10.6 6z" fill="currentColor"/></svg>';
+  var cssPuesto=false;
+  function css(){
+    if(cssPuesto) return; cssPuesto=true;
+    var s=document.createElement('style'); s.id='apxf-css';
+    s.textContent=CSS_PROPIO+
+      '.apxf-btn svg{flex:none;display:block}'+
+      '.apxf-vid{position:fixed;inset:0;z-index:2147482000;background:#050403;display:flex;align-items:center;justify-content:center}'+
+      '.apxf-vid-caja{position:relative;width:min(92vw,calc(86vh*16/9));height:min(51.75vw,86vh);background:#000;border:1px solid '+ACENTO+';border-radius:14px;overflow:hidden}'+
+      '.apxf-vid-caja iframe{position:absolute;inset:0;width:100%;height:100%;border:0}'+
+      '.apxf-vid-x{position:fixed;top:14px;right:16px;z-index:1;width:40px;height:40px;border-radius:10px;border:1px solid #5c5c5c;background:#161616;color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer}'+
+      '.apxf-vid-x:hover,.apxf-vid-x:focus-visible{border-color:'+ACENTO+';outline:none}';
+    document.head.appendChild(s);
+  }
+
+  /* ---- puerta: la misma que «VER APUNTES» (APX.montar): cuenta validada y, mientras soloTester, cuenta de prueba ---- */
+  var ok=null, pend=null;   /* ok: null = todavía preguntando */
+  window.ApxFicha={ pinta:function(cont, key){
+    if(!cont) return;
+    if(ok===null){ pend={c:cont, k:key}; return; }
+    if(ok) decora(cont, key);
+  } };
+  try{
+    window.APX.comprobar(function(info){
+      var solo=!(window.APX_CFG && window.APX_CFG.soloTester===false);
+      ok=!!(info && info.validado && (info.tester || !solo));
+      var p=pend; pend=null;
+      if(ok && p && document.body.contains(p.c)) decora(p.c, p.k);
+    });
+  }catch(e){ ok=false; }
+
+  function grupo(key){
+    var m=MAPA[key]; if(!m) return null;
+    var T=window.APX_TEMAS||{};
+    var temas=m.temas.filter(function(t){ return !!T[t]; });
+    if(!temas.length) return null;
+    return {nombre:m.nombre, temas:temas, idx:Math.max(0, temas.indexOf(m.primero))};
+  }
+  function boton(txt, ico, aria, fn){
+    var b=document.createElement('button'); b.type='button'; b.className=CLASE_BOTON+' apxf-btn';
+    b.innerHTML=ico+'<span>'+txt+'</span>'; b.setAttribute('aria-label', aria);
+    b.addEventListener('click', function(ev){ ev.preventDefault(); fn(b); });
+    return b;
+  }
+  function decora(cont, key){
+    if(!cont || cont.getAttribute('data-apxf')) return;
+    var g=grupo(key), vid=VIDEO[key]||null;
+    var prac=cont.querySelector(SEL_PRACTICA);
+    var soloDudas=!prac || esTest(key);             /* test, o ejercicio sin práctica: solo «¿Dudas? Ver APUNTES» */
+    if(soloDudas ? !g : !(g || vid)) return;        /* sin apuntes (ni vídeo): la fila se queda como estaba */
+    css();
+    cont.setAttribute('data-apxf','1');
+    cont.classList.add('apxf-fila');
+    if(soloDudas){
+      /* lo que había («¿Dudas? Revisa los apuntes 📖» o, en los test, el botón de practicar) queda oculto, sin borrarlo */
+      var antes=document.createElement('span'); antes.className='apxf-antes'; antes.hidden=true; antes.style.display='none';
+      while(cont.firstChild) antes.appendChild(cont.firstChild);
+      cont.appendChild(antes);
+      cont.appendChild(boton('¿Dudas? Ver APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre, function(b){ abrirApuntes(g, b); }));
+      return;
+    }
+    if(g) cont.appendChild(boton('APUNTES', ICO_LIBRO, 'Ver los apuntes de '+g.nombre, function(b){ abrirApuntes(g, b); }));
+    if(vid) cont.appendChild(boton('VER VÍDEO', ICO_PLAY, 'Ver el vídeo de introducción', function(b){ abrirVideo(vid, b); }));
+  }
+
+  /* ---- mientras hay algo abierto encima (apuntes o vídeo), la ficha no se toca ---- */
+  var abierto=null, inertes=[];
+  function bloquea(excepto){
+    [].forEach.call(document.body.children, function(n){
+      if(excepto.indexOf(n)>=0 || n.hasAttribute('inert') || /^(SCRIPT|STYLE|LINK)$/.test(n.tagName)) return;
+      n.setAttribute('inert',''); inertes.push(n);
+    });
+  }
+  function alCerrar(){
+    var a=abierto; abierto=null;
+    inertes.forEach(function(n){ n.removeAttribute('inert'); }); inertes=[];
+    if(a && a.boton && document.body.contains(a.boton)){ try{ a.boton.focus({preventScroll:true}); }catch(e){} }
+  }
+  /* el visor de apuntes se cierra solo (✕, «Volver», Esc, atrás del navegador): se nota porque sale del <body> */
+  new MutationObserver(function(){
+    if(abierto && !abierto.nodos.some(function(n){ return document.body.contains(n); })) alCerrar();
+  }).observe(document.body, {childList:true});
+  /* Esc y ←/→ no pasan a la ficha (Esc = «¿Salir de la ficha?», ←/→ = cambiar de ejercicio); Esc cierra lo de encima */
+  window.addEventListener('keydown', function(e){
+    if(!abierto) return;
+    var k=e.key;
+    if(k==='Escape' || k==='Esc' || k==='ArrowLeft' || k==='ArrowRight'){
+      e.stopPropagation();
+      if(k==='Escape' || k==='Esc'){ e.preventDefault(); abierto.cerrar(); }
+    }
+  }, true);
+
+  function abrirApuntes(g, b){
+    if(abierto) return;
+    var antes=[].slice.call(document.body.children);
+    try{ window.APX.abrir({nombre:g.nombre, temas:g.temas}, g.idx, b); }catch(e){ console.warn('[apuntes ficha]', e); return; }
+    var nuevos=[].filter.call(document.body.children, function(n){ return antes.indexOf(n)<0; });
+    if(!nuevos.length) return;
+    abierto={ nodos:nuevos, boton:b, cerrar:function(){
+      var x=nuevos[0].querySelector('.apx-x');
+      if(x) x.click(); else { try{ history.back(); }catch(e){} }
+    } };
+    bloquea(nuevos);
+  }
+
+  function abrirVideo(src, b){
+    if(abierto) return;
+    css();
+    var tok='apxf'+Date.now(), ovAntes=document.documentElement.style.overflow;
+    var ov=document.createElement('div'); ov.className='apxf-vid';
+    ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-label','Vídeo de introducción');
+    ov.innerHTML='<div class="apxf-vid-caja"></div><button type="button" class="apxf-vid-x" aria-label="Cerrar el vídeo" title="Cerrar el vídeo">✕</button>';
+    var f=document.createElement('iframe'); f.title='Vídeo de introducción';
+    f.setAttribute('allow','autoplay; fullscreen');
+    f.setAttribute('sandbox','allow-scripts allow-same-origin');   /* sin allow-top-navigation: el vídeo no puede sacar de la ficha */
+    f.addEventListener('load', function(){
+      /* al final del vídeo, «Ir a ejercicios» solo lo cierra: el alumno ya está en sus ejercicios */
+      try{ f.contentDocument.addEventListener('click', function(ev){ var t=ev.target; if(t && t.closest && t.closest('#irEjercicios')){ ev.preventDefault(); ev.stopPropagation(); cierra(false); } }, true); }catch(e){}
+      try{ f.contentWindow.focus(); }catch(e){}
+    });
+    f.src=src+(src.indexOf('?')<0 ? '?' : '&')+'auto&embed';
+    ov.querySelector('.apxf-vid-caja').appendChild(f);
+    function alMensaje(e){ if(e.source===f.contentWindow && e.data && e.data.intro==='salir') cierra(false); }   /* «Salir» del vídeo */
+    function alAtras(e){ if(e && e.state && e.state.apxf===tok) return; cierra(true); }                          /* atrás del navegador/móvil */
+    function cierra(porAtras){
+      if(!abierto || abierto.nodos[0]!==ov) return;
+      window.removeEventListener('message', alMensaje); window.removeEventListener('popstate', alAtras);
+      ov.remove();   /* fuera el iframe: se para el sonido */
+      document.documentElement.style.overflow=ovAntes;
+      if(!porAtras){ try{ if(history.state && history.state.apxf===tok) history.back(); }catch(e){} }
+      alCerrar();
+    }
+    document.body.appendChild(ov); document.documentElement.style.overflow='hidden';
+    abierto={ nodos:[ov], boton:b, cerrar:function(){ cierra(false); } };
+    bloquea([ov]);
+    ov.querySelector('.apxf-vid-x').addEventListener('click', function(){ cierra(false); });
+    window.addEventListener('message', alMensaje);
+    try{ history.pushState({apxf:tok}, ''); }catch(e){}
+    window.addEventListener('popstate', alAtras);
+    try{ ov.querySelector('.apxf-vid-x').focus({preventScroll:true}); }catch(e){}
+  }
 })();
 </script>
 
