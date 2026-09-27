@@ -23,6 +23,8 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
 - «Intros didácticas»: vídeos de introducción (carpeta intros/ y botón ▶ en las tarjetas).
 - «Fichas y rediseño»: arreglo URGENTE del guardado de las fichas de alumno (27-sep) y, más adelante,
   la estética nueva solo para las cuentas Tester/Protester (una línea «LM piel» tras `<meta charset>`).
+- «Apuntes en fichas»: botones «APUNTES» / «VER VÍDEO» en la ficha del alumno (27-sep). Lo preparó otra
+  conversación y lo publica el coordinador.
 - (otras conversaciones: añadid aquí vuestro nombre y de qué os ocupáis)
 
 ## Dependencias (léelo si cambias la estética o el HTML de las tarjetas)
@@ -33,8 +35,17 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   bloque. Los estilos `.ivf-play` / `.ivf-*` se pueden adaptar a la estética nueva.
   Prueba: pulsar ▶ → la tarjeta gira, crece y arranca el vídeo; ✕, Esc o «Salir» la cierran.
 - intros/compases-extranos/ es autónoma (no carga nada del portal): no hace falta tocarla.
+- Botones «APUNTES» / «VER VÍDEO» de la ficha del alumno = bloque «(27-sep-2026, Iago) APUNTES EN LAS
+  FICHAS» (ApxFicha, entre VER APUNTES e `ivf-*`). Si cambiáis la fila de «No lo sé hacer…» en `pintaAlu`,
+  conservad `class="fp-ayuda"` e `id="aluPractica"`. Si añadís una intro a `INTROS`, añadidla también a
+  `VIDEO` de ese bloque. Los botones usan la clase `fp-practica` para el tamaño (la estética «LM piel» la
+  heredará); el color lo fija `.apxf-btn`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 27-sep 21:57 · Apuntes en fichas · EN CURSO · index.html: botones «APUNTES» / «VER VÍDEO» / «¿Dudas? Ver
+  APUNTES» en la fila de «No lo sé hacer…» de la ficha del alumno (pintaAlu: `class="fp-ayuda"` + 1 línea
+  `ApxFicha.pinta`; bloque ApxFicha entre VER APUNTES e `ivf-*`). Misma puerta que VER APUNTES (solo Protester).
+  No toca las tarjetas ni el bloque `ivf-*` (reutiliza su intro `intros/compases-extranos/` en un visor propio).
 - 27-sep 14:15 · Fichas y rediseño · HECHO · commit 00cf7ad · index.html: FIX guardado de fichas (punto de control completo
   para todos los tipos, ruedas del índice/tonalidades/transporte/enarmonías con la respuesta al volver, «hechos»
   reales). Solo toca funciones de la ficha del alumno; no toca tarjetas ni el bloque `ivf-*`.
