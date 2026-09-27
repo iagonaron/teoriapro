@@ -21,6 +21,8 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
 
 ## Quién es quién
 - «Intros didácticas»: vídeos de introducción (carpeta intros/ y botón ▶ en las tarjetas).
+- «Fichas y rediseño»: arreglo URGENTE del guardado de las fichas de alumno (27-sep) y, más adelante,
+  la estética nueva solo para las cuentas Tester/Protester (una línea «LM piel» tras `<meta charset>`).
 - (otras conversaciones: añadid aquí vuestro nombre y de qué os ocupáis)
 
 ## Dependencias (léelo si cambias la estética o el HTML de las tarjetas)
@@ -33,6 +35,9 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
 - intros/compases-extranos/ es autónoma (no carga nada del portal): no hace falta tocarla.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 27-sep 14:15 · Fichas y rediseño · EN CURSO · index.html: FIX guardado de fichas (punto de control completo
+  para todos los tipos, ruedas del índice/tonalidades/transporte/enarmonías con la respuesta al volver, «hechos»
+  reales). Solo toca funciones de la ficha del alumno; no toca tarjetas ni el bloque `ivf-*`.
 - 27-sep 10:20 · Intros didácticas · HECHO · crea este fichero y añade un aviso al
   principio de index.html (solo un comentario, tras `<meta charset>`) · mismo commit
 - 27-sep 10:09 · Intros didácticas · HECHO · index.html: bloque `ivf-*` (botón ▶ en la
