@@ -35,7 +35,7 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
 - intros/compases-extranos/ es autónoma (no carga nada del portal): no hace falta tocarla.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 27-sep 14:15 · Fichas y rediseño · EN CURSO · index.html: FIX guardado de fichas (punto de control completo
+- 27-sep 14:15 · Fichas y rediseño · HECHO · commit 00cf7ad · index.html: FIX guardado de fichas (punto de control completo
   para todos los tipos, ruedas del índice/tonalidades/transporte/enarmonías con la respuesta al volver, «hechos»
   reales). Solo toca funciones de la ficha del alumno; no toca tarjetas ni el bloque `ivf-*`.
 - 27-sep 10:20 · Intros didácticas · HECHO · crea este fichero y añade un aviso al
