@@ -3253,7 +3253,7 @@ window.addEventListener('resize',()=>{ if(dataID.length) renderIDScore(); if(dat
         b.style.cssText='display:flex;justify-content:space-between;align-items:center;gap:6px;width:100%;text-align:left;border-radius:8px;padding:6px 8px;font-size:11px;font-weight:600;cursor:pointer;line-height:1.15';
         var chipH=(code==='dim7')?'<span class="ab-tach">7</span>':chip;   /* WAVE6: 7 dim tachado en diagonal */
         b.innerHTML='<span>'+t.texto+'</span><b style="font-weight:800;white-space:nowrap">'+chipH+'</b>';
-        estiloBtn(b,'normal');
+        estiloBtn(b, sub.selTipo===code?'sel':'normal');   /* (27-sep-2026, Iago) FIX fichas: el tipo ya elegido sale marcado al volver */
         b.addEventListener('click', function(){ sub.selTipo=code; Object.keys(sub._btns).forEach(function(k){ estiloBtn(sub._btns[k], k===code?'sel':'normal'); }); });
         sub._btns[code]=b; grid.appendChild(b);
       });
@@ -5722,10 +5722,15 @@ window.nuevoIVTODO=nuevoIVTODO;
       var stepInv=["B","A","G","F","E","D","C"];
       var notasItems=notasInv.concat(["\u2014"]);
       if(window.makeWheel){
-        window.makeWheel(wN, notasItems, notasItems.length-1, function(ix){ it.sel[i].step=(ix<stepInv.length)?stepInv[ix]:null; });
+        /* (27-sep-2026, Iago) FIX fichas: las ruedas arrancan en lo que ya estaba contestado (it.sel[i]),
+           no siempre en \u00ab\u2014\u00bb (al volver al ejercicio o al retomar la ficha parec\u00eda que no se hab\u00eda guardado) */
+        var s0=it.sel[i]||{};
         var octInv=["6","5","4","3","2","1"];
         var octItems=octInv.concat(["\u2014"]);
-        window.makeWheel(wO, octItems, octItems.length-1, function(ix){ it.sel[i].oct=(ix<octInv.length)?parseInt(octInv[ix],10):null; });
+        var ixN=(s0.step && stepInv.indexOf(s0.step)>=0)?stepInv.indexOf(s0.step):notasItems.length-1;
+        var ixO=(s0.oct!=null && octInv.indexOf(String(s0.oct))>=0)?octInv.indexOf(String(s0.oct)):octItems.length-1;
+        window.makeWheel(wN, notasItems, ixN, function(ix){ it.sel[i].step=(ix<stepInv.length)?stepInv[ix]:null; });
+        window.makeWheel(wO, octItems, ixO, function(ix){ it.sel[i].oct=(ix<octInv.length)?parseInt(octInv[ix],10):null; });
       }
       /* SEL-UNICA 10-jul-2026 · toggle de alteración con feedback de estado (.on)
          y guarda anti doble-disparo touch+click. Un toque marca/desmarca. */
@@ -5739,6 +5744,8 @@ window.nuevoIVTODO=nuevoIVTODO;
         b.addEventListener('click',toggle);
         b.addEventListener('touchend',function(ev){ b._iaT=true; toggle(ev); setTimeout(function(){ b._iaT=false; },450); },{passive:false});
       });
+      /* (27-sep-2026, Iago) FIX fichas: el ♭/♯ ya elegido sale marcado al volver a montar */
+      accRow.querySelectorAll('.ia-fp-acc').forEach(function(x){ x.classList.toggle('on', !!it.sel[i].alter && x.dataset.a===it.sel[i].alter); });
     })(i); }
   }
 
@@ -5830,6 +5837,7 @@ window.nuevoIVTODO=nuevoIVTODO;
         it.sel=t;
         opts.querySelectorAll('.cad-fp-opt').forEach(function(x){ x.style.outline=(x===b)?'2px solid #d4af37':'none'; });
       });
+      if(it.sel===t) b.style.outline='2px solid #d4af37';   /* (27-sep-2026, Iago) FIX fichas: la opción ya elegida sale marcada al volver */
       opts.appendChild(b);
     });
   }
@@ -11143,8 +11151,73 @@ function respuestaDe(it){
   try{ return { userArm:(it.item.userArm!=null?it.item.userArm:null),
                 userSeq:clon(it.item.userSeq||[]) }; }catch(e){ return null; }
 }
+/* (27-sep-2026, Iago) FIX fichas: punto de control COMPLETO. respuestaDe solo guarda {userArm,userSeq}
+   (el formato de modos/escalas): índice acústico, cadencias, test, intervalos, tonalidades, etc. se
+   guardaban VACÍOS y al retomar la ficha salían en blanco. El progreso lleva ahora además _estado =
+   instantánea completa del ejercicio (la misma que viaja en la entrega como «estado»).
+   La ENTREGA sigue usando respuestaDe (el estado ya va aparte: no se duplica). */
+function respuestaProgDe(it){
+  var r=respuestaDe(it)||{ userArm:null, userSeq:[] };
+  try{ var est=fpSanitEstado(it.item); if(est && typeof est==='object') r._estado=est; }catch(e){}
+  return r;
+}
+/* (27-sep-2026, Iago) FIX fichas: comprobación defensiva antes de recuperar un _estado: tiene que ser el
+   MISMO ejercicio. Se comparan, si existen en el spec original, los datos del ENUNCIADO (no cambian al
+   contestar); las respuestas (sel, resp, userSeq, user, aluNotas…) no cuentan. Si no coincide, se hace
+   lo de siempre (solo userArm/userSeq). */
+var FP_FIJOS_FLAGS=['_test','_tresc','_trment','_tres','_blues','_enarm','_examen','_aco','_iv','_ia','_cad','_tonA','_tonB','_tonC','_cel','_rell','_rep','_serie','_dodeA','_dodeB','_dodeC','_mod','_ivInv','_acoInv','_ton','_grupo','_precolocada','_variable','_conArmadura'];
+var FP_FIJOS_TOP=['_mode','tonica','tipo','fifths','notasSol','familia','nNotas','notas','qs','tramo','gen','modo','_cat','key','esc','compas','transp','destino','claveDestino','dispar','fund','EX','kind','n','p0notes','varNotes','missing','central','centralModo','vecinos','letterA','altA','mode','fA','interval','dir','letterB','altB','fB','diff','cells','given','dada','num','code','invNum','invCode'];
+var FP_FIJOS_SUB=['f','nom','tipo','notas','fund','objetivo','n1','_n2cat','lab','num','code','direccion','bars','options','form','spec','target','dada','sols','need','cambios','voiced','tones','root','inv','invNum','invCode'];
+function fpCanon(v){   // JSON estable (claves ordenadas): el jsonb de Supabase reordena las claves
+  if(v===undefined) return 'u';
+  if(v===null || typeof v!=='object') return JSON.stringify(v);
+  if(Array.isArray(v)) return '['+v.map(fpCanon).join(',')+']';
+  return '{'+Object.keys(v).filter(function(k){ return v[k]!==undefined && typeof v[k]!=='function' && k.indexOf('__')!==0; }).sort()
+    .map(function(k){ return JSON.stringify(k)+':'+fpCanon(v[k]); }).join(',')+'}';
+}
+function fpMismoEjercicio(orig, est){
+  try{
+    if(!orig || !est || typeof orig!=='object' || typeof est!=='object') return false;
+    for(var f=0; f<FP_FIJOS_FLAGS.length; f++){ var fk=FP_FIJOS_FLAGS[f]; if(!!orig[fk]!==!!est[fk]) return false; }
+    var igual=function(a,b,claves){ for(var i=0;i<claves.length;i++){ var k=claves[i]; if(a[k]===undefined) continue; if(fpCanon(a[k])!==fpCanon(b[k])) return false; } return true; };
+    if(!igual(orig, est, FP_FIJOS_TOP)) return false;
+    var grupos=['subs','items','pares'];
+    for(var g=0; g<grupos.length; g++){ var gk=grupos[g]; if(!Array.isArray(orig[gk])) continue;
+      if(!Array.isArray(est[gk]) || est[gk].length!==orig[gk].length) return false;
+      for(var j=0; j<orig[gk].length; j++){ var a=orig[gk][j], b=est[gk][j];
+        if(!a || typeof a!=='object') continue; if(!b || typeof b!=='object') return false;
+        if(!igual(a, b, FP_FIJOS_SUB)) return false; } }
+    if(orig.ton && typeof orig.ton==='object' && (orig.ton.dada || orig.ton.sol)){   // enarmonías: tonalidad dada
+      if(!est.ton || fpCanon(orig.ton.dada)!==fpCanon(est.ton.dada) || fpCanon(orig.ton.sol)!==fpCanon(est.ton.sol)) return false; }
+    return true;
+  }catch(e){ return false; }
+}
+/* (27-sep-2026, Iago) FIX fichas: «hechos» = ejercicios ya pasados (índice más alto alcanzado, ALU.maxI).
+   Antes solo contaba los de modos/escalas con notas tocadas y el portal decía «2 hechos» aunque fueran más. */
+function fpHechos(){
+  if(!ALU || !ALU.items) return 0;
+  var viejo=0;
+  try{ viejo=ALU.items.filter(function(it){
+    var r=respuestaDe(it);
+    return r && Array.isArray(r.userSeq) && r.userSeq.some(function(n){ return n && n._touched; });
+  }).length; }catch(e){}
+  return Math.min(ALU.items.length, Math.max(ALU.maxI|0, viejo));
+}
 function aplicaRespuesta(it, r){
   if(!r || typeof r!=='object') return;
+  /* (27-sep-2026, Iago) FIX fichas: si el progreso trae la instantánea completa (_estado) y es el mismo
+     ejercicio, se recupera ENTERA (vale para todos los tipos). Si no (progresos antiguos), lo de antes. */
+  if(r._estado && typeof r._estado==='object' && fpMismoEjercicio(it.item, r._estado)){
+    try{
+      var est=clon(r._estado);
+      /* la marca solo visual __pulsado (alteraciones neutras, 26-sep) no va en _estado (se quitan las
+         claves __): se recupera de userSeq, como hacía el formato antiguo */
+      if(Array.isArray(r.userSeq) && Array.isArray(est.userSeq) && r.userSeq.length===est.userSeq.length){
+        r.userSeq.forEach(function(n,k){ if(n && n.__pulsado!=null && est.userSeq[k]) est.userSeq[k].__pulsado=n.__pulsado; });
+      }
+      it.item=est; return;
+    }catch(e){}
+  }
   try{
     if(r.userArm!=null) it.item.userArm=r.userArm;
     if(Array.isArray(r.userSeq) && Array.isArray(it.item.userSeq) &&
@@ -11183,11 +11256,11 @@ function fpSimularAlumno(){
 }
 function progGuardar(){
   if(!ALU || ALU.entregada || ALU.simulado) return;   /* la simulación no guarda progreso */
-  var respuestas=ALU.items.map(respuestaDe);
-  var hechos=ALU.items.filter(function(it){
-    var r=respuestaDe(it);
-    return r && Array.isArray(r.userSeq) && r.userSeq.some(function(n){ return n && n._touched; });
-  }).length;
+  /* (27-sep-2026, Iago) FIX fichas: punto de control completo (respuestaProgDe, con _estado) y
+     hechos = ejercicios ya pasados (el índice más alto alcanzado, que se actualiza al navegar) */
+  ALU.maxI=Math.max(ALU.maxI|0, ALU.i|0);
+  var respuestas=ALU.items.map(respuestaProgDe);
+  var hechos=fpHechos();
   var pack={ i:ALU.i|0, hechos:hechos, total:ALU.items.length, respuestas:respuestas, t:Date.now() };
   try{ localStorage.setItem(progClaveLS(ALU.cuenta, ALU.ficha), JSON.stringify(pack)); }catch(e){}
   var sb=fpSb(); if(!sb) return;
@@ -11199,7 +11272,7 @@ function progGuardar(){
     /* (Iago 15-sep-2026) el servidor no deja machacar un progreso hecho con uno vacío:
        si lo rechaza, nos quedamos con el suyo y recargamos UNA vez para retomarlo */
     try{ var d=r&&r.data; if(d && d.ok===false && d.error==='progreso_mas_avanzado' && d.progreso){
-      var p=d.progreso; var pk={ i:p.ejercicio_actual|0, respuestas:p.respuestas||null, total:p.total|0, t:Date.now() };
+      var p=d.progreso; var pk={ i:p.ejercicio_actual|0, hechos:p.hechos|0, respuestas:p.respuestas||null, total:p.total|0, t:Date.now() };   /* (27-sep-2026) FIX fichas: + hechos */
       localStorage.setItem(progClaveLS(ALU.cuenta, ALU.ficha), JSON.stringify(pk));
       var flag='suite_prog_reload_'+ALU.ficha;
       if(!sessionStorage.getItem(flag)){ sessionStorage.setItem(flag,'1'); alert('Tenías esta ficha más avanzada guardada. Se recupera ahora.'); location.reload(); }
@@ -11215,7 +11288,7 @@ async function progLeer(cuenta, ficha){
       var d=r && r.data;
       if(!r.error && d && d.ok && d.progreso){
         var p=d.progreso;
-        remoto={ i:p.ejercicio_actual|0, respuestas:p.respuestas||null, total:p.total|0,
+        remoto={ i:p.ejercicio_actual|0, hechos:p.hechos|0, respuestas:p.respuestas||null, total:p.total|0,   /* (27-sep-2026) FIX fichas: + hechos */
                  t:Date.parse(p.actualizado_en)||0 };
       }
     }
@@ -11817,13 +11890,9 @@ function fpModalSalir(){
     ? '<div style="margin-top:14px;background:rgba(255,92,92,.12);border:1px solid rgba(255,92,92,.5);border-radius:12px;padding:11px 14px;color:#ffb4b4;font-size:13.5px;line-height:1.55">⏰ Estás en la <b>semana de recuperación</b>: recuerda completarla antes del <b>'+fpFmtLimite(st.limite)+'</b> (te quedan '+fpFmtRestante(st.restante)+').</div>'
     : '<div style="margin-top:14px;background:rgba(52,211,153,.10);border:1px solid rgba(52,211,153,.45);border-radius:12px;padding:11px 14px;color:#8be3ae;font-size:13.5px;line-height:1.55">📅 Recuerda completarla antes del <b>'+fpFmtLimite(st.limite)+'</b> (te quedan '+fpFmtRestante(st.restante)+').</div>');
   var hechos=0, total=(ALU&&ALU.items)?ALU.items.length:0;
-  try{
-    hechos=ALU.items.filter(function(it){
-      var r=respuestaDe(it);
-      return r && Array.isArray(r.userSeq) && r.userSeq.some(function(n2){ return n2 && n2._touched; });
-    }).length;
-  }catch(e){}
-  var avanceTxt=hechos>0?(' Llevas <b>'+hechos+' de '+total+'</b> ejercicios con respuesta.'):'';
+  /* (27-sep-2026, Iago) FIX fichas: el mismo recuento que el portal (ejercicios ya pasados), no solo modos */
+  try{ ALU.maxI=Math.max(ALU.maxI|0, ALU.i|0); hechos=fpHechos(); }catch(e){}
+  var avanceTxt=hechos>0?(' Llevas <b>'+hechos+' de '+total+'</b> ejercicios hechos.'):'';
   var ov=document.createElement('div'); ov.id='fpSalirOv';
   ov.style.cssText='position:fixed;inset:0;background:rgba(6,4,1,.72);z-index:100002;display:flex;align-items:center;justify-content:center;padding:22px;-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px)';
   var card=document.createElement('div');
@@ -11879,7 +11948,7 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
           numero:(pack.numero!=null?pack.numero:(nFallback||null)),
           anulados:(pack.anulados||[]).map(Number),   /* WAVE12 */
           opcional:!!pack.opcional,   /* (6-ago) ficha «puntúa opcional» */
-          entregada:false, i:0,
+          entregada:false, i:0, maxI:0,   /* (27-sep-2026) FIX fichas: maxI = índice más alto alcanzado */
           items:pack.ejercicios.map(function(e){
             var item=clon((e.motor&&e.motor._spec)||{});
             return { n:e.n, key:e.key, label:e.label||'Ejercicio', enun:e.enun||'', item:item };
@@ -11891,6 +11960,8 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
       if(prog && Array.isArray(prog.respuestas) && (prog.total|0)===ALU.items.length){
         prog.respuestas.forEach(function(rr,k){ if(ALU.items[k]) aplicaRespuesta(ALU.items[k], rr); });
         if(prog.i>=0 && prog.i<ALU.items.length) ALU.i=prog.i|0;
+        /* (27-sep-2026, Iago) FIX fichas: al retomar, lo ya pasado cuenta como hecho (no baja al volver a guardar) */
+        ALU.maxI=Math.min(ALU.items.length-1, Math.max(ALU.i|0, prog.i|0, prog.hechos|0));
       }
     }catch(e){}
     fpBotonSalir();   // ✕ fija arriba a la derecha (solo alumno real)
@@ -12058,7 +12129,10 @@ console.info('[teoriapro] FICHAS PRO r16 · vista Acordes basico (motor foto: 1 
         colu.appendChild(wNota); colu.appendChild(accRow); cols.appendChild(colu);
         var REV=NOTAS_ES.slice().reverse(); var GUION=NOTAS_ES.length;
         var items=REV.map(function(n){return n+suf;}).concat(['—']);
-        var api=makeWheel(wNota, items, GUION, function(idx){ if(idx===GUION){ sel.nota=null; } else { sel.nota=REV[idx]; } sel.alt=''; repaint(api,sel,suf,accRow,REV,GUION); });
+        /* (27-sep-2026, Iago) FIX fichas: la rueda arranca en la tonalidad ya contestada (antes siempre en «—») */
+        var _st=(sel.nota && REV.indexOf(sel.nota)>=0)?REV.indexOf(sel.nota):GUION;
+        var api=makeWheel(wNota, items, _st, function(idx){ if(idx===GUION){ sel.nota=null; } else { sel.nota=REV[idx]; } sel.alt=''; repaint(api,sel,suf,accRow,REV,GUION); });
+        if(sel.nota) repaint(api,sel,suf,accRow,REV,GUION);   /* (27-sep-2026) FIX fichas: + su ♭/♯ */
         accRow.querySelectorAll('.acc-btn').forEach(function(b){ b.addEventListener('click', function(){ if(!sel.nota) return; sel.alt=(sel.alt===b.dataset.a)?'':b.dataset.a; repaint(api,sel,suf,accRow,REV,GUION); }); });
       });
       var stag=document.createElement('div'); stag.className='sol'; stag.style.cssText='min-height:14px;font-size:11px;text-align:center;color:#c9b978'; cell.appendChild(stag); sub.__stag=stag;
@@ -15503,11 +15577,17 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     redraw();
     function refrescarTon(){ var lbl=$e('teTonLbl'); if(!g.aluTonNat){ g.aluTon=null; lbl.textContent='—'; return; } var acc=g.aluTonAlt===1?'♯':g.aluTonAlt===-1?'♭':''; g.aluTon=g.aluTonNat+acc; lbl.textContent=g.aluModoElegido?(g.aluTonNat+acc+(g.aluTonModo==='m'?' menor':' Mayor')):(g.aluTonNat+acc); }
     var nats=["Do","Re","Mi","Fa","Sol","La","Si"], natInv=nats.slice().reverse().concat(['—']);
-    window.makeWheel($e('teWTonNat'), natInv, natInv.length-1, function(ix){ g.aluTonNat=(ix<nats.length)?nats[nats.length-1-ix]:null; refrescarTon(); });
+    /* (27-sep-2026, Iago) FIX fichas: ruedas, ♭/♯, M/m y rótulo arrancan en lo ya contestado (antes siempre en «—») */
+    var ixTonE=(g.aluTonNat && natInv.indexOf(g.aluTonNat)>=0)?natInv.indexOf(g.aluTonNat):natInv.length-1;
+    window.makeWheel($e('teWTonNat'), natInv, ixTonE, function(ix){ g.aluTonNat=(ix<nats.length)?nats[nats.length-1-ix]:null; refrescarTon(); });
     var armV=[]; for(var s=7;s>=1;s--) armV.push({f:s,txt:s+'♯'}); armV.push({f:null,txt:'—'}); for(var b=1;b<=7;b++) armV.push({f:-b,txt:b+'♭'});
-    window.makeWheel($e('teWArm'), armV.map(function(o){return o.txt;}), armV.findIndex(function(o){return o.f===null;}), function(ix){ g.aluArm=armV[ix].f; redraw(); });
+    var ixArmE=armV.findIndex(function(o){ return o.f===(g.aluArm!=null?g.aluArm:null); }); if(ixArmE<0) ixArmE=armV.findIndex(function(o){return o.f===null;});
+    window.makeWheel($e('teWArm'), armV.map(function(o){return o.txt;}), ixArmE, function(ix){ g.aluArm=armV[ix].f; redraw(); });
     [['teTonB',-1],['teTonS',1]].forEach(function(p){ $e(p[0]).onclick=function(){ g.aluTonAlt=(g.aluTonAlt===p[1])?0:p[1]; $e('teTonB').classList.toggle('on',g.aluTonAlt===-1); $e('teTonS').classList.toggle('on',g.aluTonAlt===1); refrescarTon(); }; });
     [['teTonMayor','M'],['teTonMenor','m']].forEach(function(p){ $e(p[0]).onclick=function(){ g.aluTonModo=p[1]; g.aluModoElegido=true; $e('teTonMayor').classList.toggle('on',g.aluTonModo==='M'); $e('teTonMenor').classList.toggle('on',g.aluTonModo==='m'); refrescarTon(); }; });
+    $e('teTonB').classList.toggle('on',g.aluTonAlt===-1); $e('teTonS').classList.toggle('on',g.aluTonAlt===1);   /* (27-sep-2026) FIX fichas */
+    if(g.aluModoElegido){ $e('teTonMayor').classList.toggle('on',g.aluTonModo==='M'); $e('teTonMenor').classList.toggle('on',g.aluTonModo==='m'); }
+    refrescarTon();
     window.TR_ESC_onPlace=function(gi){ selIdx=gi; redraw(); gnUndoUpdTE(); };   /* GN-UNIF 8-jul-2026 */
     /* GN-UNIF 8-jul-2026 · estado del botón deshacer */
     function gnUndoUpdTE(){ var b=$e('teDeshacer'); if(b) b.disabled=!((g._gnUndo&&g._gnUndo.length)||(g._orden&&g._orden.length)); }
@@ -15551,13 +15631,21 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     $m('tmTonOrig').textContent='Tonalidad original: '+(g.key.name||'—')+' mayor';
     function refrescarTonM(){ var lbl=$m('tmTonLbl'); if(!g.aluTonNat){ g.aluTon=null; lbl.textContent='—'; return; } var acc=g.aluTonAlt===1?'♯':g.aluTonAlt===-1?'♭':''; g.aluTon=g.aluTonNat+acc; lbl.textContent=g.aluModoElegido?(g.aluTonNat+acc+(g.aluTonModo==='m'?' menor':' Mayor')):(g.aluTonNat+acc); }
     var clavesNom=T.CLAVES.map(function(c){return c.nom;}), clavesInv=clavesNom.slice().reverse().concat(['—']);
-    window.makeWheel($m('tmWClave'), clavesInv, clavesInv.length-1, function(ix){ g.aluClave=(ix<clavesNom.length)?T.CLAVES[clavesNom.length-1-ix]:null; T.dibujarRespuesta($m('tmScoreResp')); });
+    /* (27-sep-2026, Iago) FIX fichas: ruedas, ♭/♯, M/m y rótulo arrancan en lo ya contestado (antes siempre en «—») */
+    var ixClM=clavesInv.length-1;
+    if(g.aluClave){ var kCl=T.CLAVES.findIndex(function(c){ return c.id===g.aluClave.id; }); if(kCl>=0) ixClM=clavesNom.length-1-kCl; }
+    window.makeWheel($m('tmWClave'), clavesInv, ixClM, function(ix){ g.aluClave=(ix<clavesNom.length)?T.CLAVES[clavesNom.length-1-ix]:null; T.dibujarRespuesta($m('tmScoreResp')); });
     var nats=["Do","Re","Mi","Fa","Sol","La","Si"], natInv=nats.slice().reverse().concat(['—']);
-    window.makeWheel($m('tmWTonNat'), natInv, natInv.length-1, function(ix){ g.aluTonNat=(ix<nats.length)?nats[nats.length-1-ix]:null; refrescarTonM(); });
+    var ixTonM=(g.aluTonNat && natInv.indexOf(g.aluTonNat)>=0)?natInv.indexOf(g.aluTonNat):natInv.length-1;
+    window.makeWheel($m('tmWTonNat'), natInv, ixTonM, function(ix){ g.aluTonNat=(ix<nats.length)?nats[nats.length-1-ix]:null; refrescarTonM(); });
     var armV=[]; for(var s=7;s>=1;s--) armV.push({f:s,txt:s+'♯'}); armV.push({f:null,txt:'—'}); for(var b=1;b<=7;b++) armV.push({f:-b,txt:b+'♭'});
-    window.makeWheel($m('tmWArm'), armV.map(function(o){return o.txt;}), armV.findIndex(function(o){return o.f===null;}), function(ix){ g.aluArm=armV[ix].f; T.dibujarRespuesta($m('tmScoreResp')); });
+    var ixArmM=armV.findIndex(function(o){ return o.f===(g.aluArm!=null?g.aluArm:null); }); if(ixArmM<0) ixArmM=armV.findIndex(function(o){return o.f===null;});
+    window.makeWheel($m('tmWArm'), armV.map(function(o){return o.txt;}), ixArmM, function(ix){ g.aluArm=armV[ix].f; T.dibujarRespuesta($m('tmScoreResp')); });
     [['tmTonB',-1],['tmTonS',1]].forEach(function(p){ $m(p[0]).onclick=function(){ g.aluTonAlt=(g.aluTonAlt===p[1])?0:p[1]; $m('tmTonB').classList.toggle('on',g.aluTonAlt===-1); $m('tmTonS').classList.toggle('on',g.aluTonAlt===1); refrescarTonM(); }; });
     [['tmTonMayor','M'],['tmTonMenor','m']].forEach(function(p){ $m(p[0]).onclick=function(){ g.aluTonModo=p[1]; g.aluModoElegido=true; $m('tmTonMayor').classList.toggle('on',g.aluTonModo==='M'); $m('tmTonMenor').classList.toggle('on',g.aluTonModo==='m'); refrescarTonM(); }; });
+    $m('tmTonB').classList.toggle('on',g.aluTonAlt===-1); $m('tmTonS').classList.toggle('on',g.aluTonAlt===1);   /* (27-sep-2026) FIX fichas */
+    if(g.aluModoElegido){ $m('tmTonMayor').classList.toggle('on',g.aluTonModo==='M'); $m('tmTonMenor').classList.toggle('on',g.aluTonModo==='m'); }
+    refrescarTonM();
     $m('tmCorregir').onclick=function(){
       var okTon=g.aluTon===g.destino.name, okArm=(g.aluArm!=null)?(g.aluArm===g.destino.fifths):(g.destino.fifths===0), okClave=g.aluClave&&g.aluClave.id===g.claveDestino.id;
       var p=(okTon?1/3:0)+(okArm?1/3:0)+(okClave?1/3:0);
@@ -16197,7 +16285,9 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       function seg(title){ var s=document.createElement('div'); s.className='ena-ton-seg'; var h=document.createElement('div'); h.className='ena-hint'; h.textContent=title; var body=document.createElement('div'); body.style.cssText='display:flex;gap:6px;align-items:center;justify-content:center'; s.appendChild(h); s.appendChild(body); s._body=body; return s; }
       var wn=document.createElement('div'); wn.className='wheel'; wn.style.cssText='height:86px;width:44px';
       var notas=['Do','Re','Mi','Fa','Sol','La','Si'], natInv=notas.slice().reverse().concat(['—']);
-      window.makeWheel(wn,natInv,natInv.length-1,function(ix){ g.ton.sel.step=(ix<notas.length)?ES2L[notas[notas.length-1-ix]]:null; refr(); });
+      /* (27-sep-2026, Iago) FIX fichas: las ruedas de la tonalidad arrancan en lo ya contestado (antes siempre en «—») */
+      var ixTonEn=(g.ton.sel.step && natInv.indexOf(ES[g.ton.sel.step])>=0)?natInv.indexOf(ES[g.ton.sel.step]):natInv.length-1;
+      window.makeWheel(wn,natInv,ixTonEn,function(ix){ g.ton.sel.step=(ix<notas.length)?ES2L[notas[notas.length-1-ix]]:null; refr(); });
       var accC=document.createElement('div'); accC.style.cssText='display:flex;flex-direction:column;gap:6px';
       var bb=document.createElement('button'); bb.className='ena-tbtn'; bb.textContent='♭'; var bs=document.createElement('button'); bs.className='ena-tbtn'; bs.textContent='♯';
       bb.onclick=function(){ g.ton.sel.alter=(g.ton.sel.alter===-1)?0:-1; pa(); refr(); }; bs.onclick=function(){ g.ton.sel.alter=(g.ton.sel.alter===1)?0:1; pa(); refr(); }; accC.appendChild(bb); accC.appendChild(bs);
@@ -16206,7 +16296,9 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       bM.onclick=function(){ g.ton.sel.mode='M'; pa(); refr(); }; bm.onclick=function(){ g.ton.sel.mode='m'; pa(); refr(); }; mC.appendChild(bM); mC.appendChild(bm);
       var wa=document.createElement('div'); wa.className='wheel'; wa.style.cssText='height:86px;width:48px';
       var armV=[]; for(var s=7;s>=1;s--) armV.push({f:s,t:s+'♯'}); armV.push({f:null,t:'—'}); for(var b2=1;b2<=7;b2++) armV.push({f:-b2,t:b2+'♭'});
-      window.makeWheel(wa,armV.map(function(o){return o.t;}),armV.findIndex(function(o){return o.f===null;}),function(ix){ g.ton.sel.f=armV[ix].f||0; refr(); });
+      var fSelEn=g.ton.sel.f, ixArmEn=armV.findIndex(function(o){ return fSelEn ? o.f===fSelEn : o.f===null; });   /* (27-sep-2026) FIX fichas (0 = «—») */
+      if(ixArmEn<0) ixArmEn=armV.findIndex(function(o){return o.f===null;});
+      window.makeWheel(wa,armV.map(function(o){return o.t;}),ixArmEn,function(ix){ g.ton.sel.f=armV[ix].f||0; refr(); });
       var segT=seg('Tonalidad'); segT._body.appendChild(wn); segT._body.appendChild(accC); segT._body.appendChild(mC);
       var segA=seg('Armadura'); segA._body.appendChild(wa);
       sel.appendChild(segT); sel.appendChild(segA); tb.appendChild(sel);
