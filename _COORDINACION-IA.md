@@ -42,7 +42,7 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   heredará); el color lo fija `.apxf-btn`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 08:46 · Fichas y rediseño · EN CURSO · index.html: apuntes nuevos con las respuestas de Iago (?v=2: apuntes.js,
+- 28-sep 08:46 · Fichas y rediseño · HECHO · commit f67c1b5 · index.html: apuntes nuevos con las respuestas de Iago (?v=2: apuntes.js,
   apuntes-kit.js, apuntes-2gp.js; solo Protester), Cadencias → gp-cadencias (tarjeta y ficha) y la línea «LM piel»
   tras `<meta charset>` (index.html, compases.html, modulacion.html; no hace nada sin la cuenta de prueba). No toca
   las tarjetas, `ivf-*` ni intros/.
