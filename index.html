@@ -18412,5 +18412,351 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
      Para quitarlo: borrar este bloque. -->
 <style>#apx-ov .apx-x{visibility:hidden}</style>
 
+<!-- (28-sep-2026, Iago) VÍDEOS DE GRADO ELEMENTAL EN LAS TARJETAS DE REPASO («Intervalos», «Inversión», «Escalas» y
+     «Tonalidades»): botón ▶ arriba a la derecha, IGUAL que en Teoría at home (GE, su bloque ivg-*): la tarjeta se voltea,
+     crece y deja ELEGIR vídeo. Son los vídeos de GE tal cual (misma música), copiados en intros/<carpeta>/: cada carpeta es
+     autónoma y lo único que cambia respecto a GE es adónde llevan «Salir» e «Ir a ejercicios» (a este portal).
+     Dentro del vídeo: «Salir» (o Esc) vuelve a la elección; «Ir a ejercicios» cierra y abre el ejercicio de repaso de ese
+     vídeo; ✕, clic fuera, Esc o atrás del navegador cierran.
+     VÍDEOS EN PRUEBA: todos llevan «prueba: true» → solo los ven las cuentas Tester y Protester (APX.comprobar, la misma
+     comprobación que «VER APUNTES»), con la etiqueta «EN PRUEBA» y el pulgar 👍 de revisión. El 👍 es EL MISMO que en GE
+     (Supabase: suite_intro_revisiones / suite_intro_marcar, clave «intros/<carpeta>/index.html»): un 👍 por vídeo, vale
+     para los dos portales.
+     PARA PUBLICARLOS (solo cuando Iago lo diga, y solo los que tengan 👍): «prueba: true» → «alumnos: true» (solo cuentas
+     validadas, es decir, alumnos logueados; NUNCA invitados) y añadirlos a VIDEO del bloque «APUNTES EN LAS FICHAS» (la lista
+     está en _COORDINACION-IA.md).
+     intros/la-tonalidad/ no sale en ningún menú: está solo para que funcione el cartel «▶ La tonalidad» de los vídeos de
+     escalas. Si se cambia uno de estos vídeos en GE (teoriaathome, intros/), hay que copiarlo también aquí.
+     No toca el bloque ivf-* (▶ de «Compases»). Para quitarlo: borrar este bloque (y, si se quiere, esas carpetas de intros/). -->
+<style>
+  /* el ▶ de la tarjeta, igual que el de «Compases» (ivf-play): dorado de GP y, con la estética nueva, rosa (sus variables --gold*) */
+  .ivg-play{position:absolute;top:9px;right:11px;z-index:4;width:30px;height:30px;box-sizing:border-box;display:grid;place-items:center;
+    border-radius:8px;border:1px solid rgba(212,175,55,.55);background:rgba(0,0,0,.18);color:var(--gold-soft,#e9c96a);cursor:pointer;
+    transition:background .18s,color .18s,border-color .18s,transform .18s}
+  .ivg-play svg{width:11px;height:11px;margin-left:2px;display:block}
+  .ivg-play:hover,.ivg-play:focus-visible{background:linear-gradient(135deg,var(--gold1,#d4af37),var(--gold2,#b8860b));color:#1a1407;border-color:transparent;outline:none;transform:scale(1.06)}
+  .ivg-fondo{position:fixed;inset:0;z-index:9998;background:rgba(3,5,14,.8);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);opacity:0;transition:opacity .5s ease}
+  .ivg-caja{position:fixed;z-index:9999;perspective:1800px}
+  .ivg-giro{position:absolute;inset:0;transform-style:preserve-3d}
+  .ivg-cara{position:absolute;inset:0;-webkit-backface-visibility:hidden;backface-visibility:hidden;border-radius:18px;overflow:hidden}
+  .ivg-cara .mode-card{position:absolute!important;inset:0;width:100%!important;height:100%!important;margin:0!important;transform:none!important;pointer-events:none;box-shadow:none!important}
+  .ivg-detras{transform:rotateY(180deg);background:#070b1c;border:1px solid rgba(232,67,147,.6);box-shadow:0 30px 90px rgba(0,0,0,.65)}
+  .ivg-detras iframe{position:absolute;inset:0;width:100%;height:100%;border:0;opacity:0;transition:opacity .45s ease}
+  /* elección de vídeo (tamaños relativos a la caja: sirve igual en ordenador, tablet y móvil) */
+  .ivg-menu{position:absolute;inset:0;container-type:size;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5cqh;
+    padding:6cqh 4cqw;box-sizing:border-box;opacity:0;transition:opacity .35s ease;font-family:"Helvetica Neue",Arial,system-ui,sans-serif}
+  .ivg-kick{font-size:max(10px,1.5cqw);font-weight:800;letter-spacing:.26em;text-transform:uppercase;color:#e84393}
+  .ivg-opciones{display:flex;flex-wrap:wrap;gap:3cqh 3cqw;width:100%;justify-content:center}
+  .ivg-opciones.ivg-muchas .ivg-op{flex-basis:34cqw}                        /* 3–4 vídeos: dos filas */
+  .ivg-opciones.ivg-muchas .ivg-tit{font-size:max(11px,2.2cqw)}
+  .ivg-opciones.ivg-muchas .ivg-sub{font-size:max(9px,1.2cqw)}
+  .ivg-prueba{position:absolute!important;top:6%;left:4%;font-size:max(9px,1.05cqw);font-weight:800;letter-spacing:.12em;color:#ff9fd0;
+    border:1px dashed rgba(255,159,208,.85);border-radius:6px;padding:.25em .6em;background:rgba(5,9,22,.55)}
+  .ivg-prueba.ok{color:#86efac;border:1px solid rgba(134,239,172,.85)}
+  .ivg-ok{position:absolute!important;right:4%;bottom:6%;z-index:2;font-size:max(15px,2.3cqw);line-height:1;padding:.28em .36em;border-radius:8px;
+    border:1px dashed rgba(255,255,255,.55);background:rgba(5,9,22,.6);filter:grayscale(1);opacity:.7;cursor:pointer;transition:opacity .18s,border-color .18s,background .18s}
+  .ivg-ok:hover,.ivg-ok:focus-visible{opacity:1;outline:none;border-color:#e84393}
+  .ivg-ok.on{filter:none;opacity:1;border:1px solid #4ade80;background:rgba(74,222,128,.25)}
+  .ivg-op{position:relative;flex:0 1 43.5cqw;aspect-ratio:16/9;box-sizing:border-box;border-radius:14px;border:1px solid rgba(255,255,255,.16);cursor:pointer;
+    background:#0b1020 center/cover no-repeat;color:#fff;overflow:hidden;padding:0 4%;margin:0;font:inherit;text-align:center;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1.4cqh;
+    transition:transform .18s,border-color .18s,box-shadow .18s}
+  .ivg-op::before{content:"";position:absolute;inset:0;background:rgba(5,9,22,.64);transition:background .18s}
+  .ivg-op>*{position:relative}
+  .ivg-op:hover,.ivg-op:focus-visible{transform:translateY(-3px);border-color:#e84393;box-shadow:0 14px 40px rgba(232,67,147,.28);outline:none}
+  .ivg-op:hover::before,.ivg-op:focus-visible::before{background:rgba(5,9,22,.52)}
+  .ivg-num{font-size:max(10px,1.3cqw);font-weight:800;letter-spacing:.22em;color:#e84393}
+  .ivg-tit{font-size:max(12px,2.7cqw);font-weight:800;letter-spacing:.04em;text-transform:uppercase;line-height:1.08}
+  .ivg-bar{width:3.2cqw;height:2px;background:#e84393;border-radius:2px}
+  .ivg-sub{font-size:max(10px,1.4cqw);color:#cbd5e1;line-height:1.3}
+  .ivg-dur{display:inline-flex;align-items:center;gap:.55em;margin-top:.4cqh;font-size:max(10px,1.3cqw);font-weight:700;color:#fff;
+    border:1px solid rgba(255,255,255,.35);border-radius:8px;padding:.35em .8em;transition:background .18s,border-color .18s}
+  .ivg-dur svg{width:.75em;height:.75em;display:block}
+  .ivg-op:hover .ivg-dur,.ivg-op:focus-visible .ivg-dur{background:#e84393;border-color:#e84393}
+  .ivg-visto{position:absolute!important;top:6%;right:4%;font-size:max(9px,1.05cqw);font-weight:800;letter-spacing:.12em;color:#fff;
+    background:#e84393;border-radius:6px;padding:.25em .6em}
+  @container (max-width:560px){ .ivg-sub,.ivg-bar{display:none} .ivg-kick{font-size:9px} .ivg-op{flex-basis:44cqw;gap:3cqh;border-radius:10px} }
+  @container (max-width:560px){ .ivg-opciones.ivg-muchas .ivg-op{flex-basis:37cqw;gap:1.5cqh} .ivg-muchas .ivg-num{display:none}
+    .ivg-prueba{top:4%;left:3%;padding:.1em .4em;font-size:8px;letter-spacing:.06em} .ivg-ok{font-size:13px;right:3%;bottom:4%}
+    .ivg-muchas .ivg-prueba{font-size:0;letter-spacing:0;padding:0;width:9px;height:9px;border-radius:50%;background:#e84393;border:0;top:7%;left:6%}
+    .ivg-muchas .ivg-prueba.ok{background:#4ade80} }   /* móvil con 3–4 vídeos: «EN PRUEBA» = punto, para no tapar el título */
+  .ivg-cerrar,.ivg-volver{position:fixed;top:14px;z-index:10000;height:40px;box-sizing:border-box;border-radius:10px;border:1px solid rgba(255,255,255,.3);
+    background:rgba(0,0,0,.45);color:#fff;font:600 16px/1 system-ui,sans-serif;cursor:pointer;opacity:0;transition:opacity .3s,border-color .2s}
+  .ivg-cerrar{right:16px;width:40px}
+  .ivg-volver{left:16px;padding:0 14px;font-size:14px;display:none}
+  .ivg-cerrar:hover,.ivg-cerrar:focus-visible,.ivg-volver:hover,.ivg-volver:focus-visible{border-color:#e84393;outline:none}
+  /* lo mismo que en GE hace el bloque «TARJETA QUE GIRA» (de «Fichas y rediseño»): la copia que gira va sin desenfoque y sin
+     ▶ ni «VER APUNTES»; la cara de delante se desvanece al girar y vuelve al cerrar; la ✕ y «‹ Vídeos» responden al primer
+     clic aunque la estética nueva les meta un icono dentro */
+  html body .ivg-caja .ivg-cara .mode-card{-webkit-backdrop-filter:none!important;backdrop-filter:none!important}
+  .ivg-cara .ivg-play,.ivg-cara .ivf-play,.ivg-cara .apx-btn,.ivg-cara .apx-back{display:none!important}
+  .ivg-delante{animation:ivgGiroFuera .11s linear both}
+  .ivg-fondo[style*="opacity: 0"]+.ivg-caja .ivg-delante{animation:ivgGiroDentro .16s linear .26s both}
+  .ivg-cerrar *,.ivg-volver *{pointer-events:none}
+  @keyframes ivgGiroFuera{from{opacity:1}to{opacity:0}}
+  @keyframes ivgGiroDentro{from{opacity:0}to{opacity:1}}
+  @media (prefers-reduced-motion:reduce){.ivg-delante,.ivg-fondo[style*="opacity: 0"]+.ivg-caja .ivg-delante{animation:none}}
+</style>
+<script>
+(function(){
+  'use strict';
+  if (new URLSearchParams(location.search).get('fichaId')) return;          /* no en la ficha del alumno */
+  /* data-path de la tarjeta → vídeos (carpeta de esta web · título · subtítulo · duración)
+     · practica: el ejercicio de repaso adonde lleva «Ir a ejercicios» (la misma clave que ?practice= en este portal)
+     · prueba: true → SOLO lo ven Tester y Protester, hasta que Iago diga «haz públicos los vídeos revisados» */
+  var INTROS = {
+    intervalos: { nombre: 'Intervalos', lista: [
+      { src: 'intros/intervalos/index.html', tit: 'Intervalos', sub: 'Número · Especie · El truco de las manos', dur: '5:21', practica: 'intervalos_id', prueba: true },
+      { src: 'intros/intervalos-compuestos/index.html', tit: 'Intervalos compuestos', sub: 'Acercar · Analizar · Listo', dur: '1:48', practica: 'intervalos_id', prueba: true }
+    ] },
+    inversion: { nombre: 'Inversión', lista: [
+      { src: 'intros/inversion-intervalos/index.html', tit: 'Inversión de intervalos', sub: 'Suman nueve · La especie se da la vuelta', dur: '1:32', practica: 'inversion_int_simples', prueba: true },
+      { src: 'intros/inversion-compuestos/index.html', tit: 'Inversión de compuestos', sub: 'Me acerco · Invierto · Me alejo', dur: '1:54', practica: 'inversion_int_compuestos', prueba: true }
+    ] },
+    escalas: { nombre: 'Escalas', lista: [
+      { src: 'intros/escalas-menores/index.html', tit: 'Escalas menores', sub: 'Natural · Armónica · Melódica · Dórica', dur: '3:26', practica: 'escala_menor', prueba: true },
+      { src: 'intros/escalas-mayores/index.html', tit: 'Escalas Mayores', sub: 'Tipo 1 · Tipo 2 · Tipo 3 · Tipo 4', dur: '3:00', practica: 'escala_mayor', prueba: true },
+      { src: 'intros/otras-escalas/index.html', tit: 'Otras escalas', sub: 'Pentatónicas · Hexátona · Cromática', dur: '3:31', practica: 'escala_otras', prueba: true }
+    ] },
+    tonalidades: { nombre: 'Tonalidades', lista: [   /* Iago: en Tonalidades, solo estos tres */
+      { src: 'intros/indica-la-tonalidad/index.html', tit: 'Indica la tonalidad', sub: 'Sostenidos · Bemoles · Relativo menor', dur: '4:24', practica: 'ton_nombre', prueba: true },
+      { src: 'intros/indica-la-armadura/index.html', tit: 'Indica la armadura', sub: 'Paso cero · Bemoles · Sostenidos', dur: '2:42', practica: 'ton_armadura', prueba: true },
+      { src: 'intros/tonalidades-vecinas/index.html', tit: 'Tonalidades vecinas', sub: 'Armadura · Relativo · Una más y una menos', dur: '1:32', practica: 'ton_vecinos', prueba: true }
+    ] }
+  };
+  /* «Ir a ejercicios» del final del vídeo: se cierra y se abre ese ejercicio de repaso (sin recargar la página);
+     si algo falla, se va a ?practice=<clave>, que abre lo mismo */
+  function baja(sel){ return function(){ var c = document.querySelector(sel); if (c) c.scrollIntoView({ behavior: 'smooth', block: 'start' }); }; }
+  function pestanaInv(t){ return function(){ window.invOuter('intervalos'); window.invTab(t); }; }
+  var EJERCICIOS = {   /* clave de ?practice= → [vista de este portal (la de la tarjeta), colocación fina] */
+    intervalos_id: ['intervalos', null],
+    inversion_int_simples: ['inversion', pestanaInv('simples')],
+    inversion_int_compuestos: ['inversion', pestanaInv('compuestos')],
+    escala_menor: ['escalas', baja('#view-escalas #cardESC0')],
+    escala_mayor: ['escalas', baja('#view-escalas #cardESC1')],
+    escala_otras: ['escalas', baja('#view-escalas #cardESC2')],
+    ton_nombre: ['tonalidades', baja('#view-tonalidades #cardTA')],
+    ton_armadura: ['tonalidades', baja('#view-tonalidades #cardTB')],
+    ton_vecinos: ['tonalidades', baja('#view-tonalidades #cardTC')]
+  };
+  function abreEj(v){
+    var k = v && v.practica, e = EJERCICIOS[k]; if (!e) return;
+    var ok = false;
+    try { ok = !!(window.__abrirVista && window.__abrirVista(e[0])); } catch (x) {}
+    if (!ok) { location.href = '?practice=' + encodeURIComponent(k); return; }
+    if (e[1]) setTimeout(function(){ try { e[1](); } catch (x) {} }, 320);
+  }
+  /* quién puede ver cada vídeo: sin marca, todos; alumnos: true, solo cuentas validadas (alumnos logueados; nunca
+     invitados); prueba: true, solo Tester y Protester (APX.comprobar) */
+  var tester = false, alumno = false, cuentaId = null, marcas = {};
+  function visibles(path){ return INTROS[path].lista.filter(function(v){ return v.prueba ? tester : (v.alumnos ? (alumno || tester) : true); }); }
+  /* ---- pulgar 👍 de Iago en los vídeos EN PRUEBA (Supabase: suite_intro_revisiones / suite_intro_marcar; el mismo que en GE) ---- */
+  var SB = 'https://woiptkyrxkbpnvioypit.supabase.co', SBK = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6IndvaXB0a3lyeGticG52aW95cGl0Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzY0NzI2ODYsImV4cCI6MjA5MjA0ODY4Nn0.B2nKgj5rD0rkdLeMIrd9KgD8lUPWsBT4Y7aCtmnvbjA';
+  function rpc(fn, args){
+    return fetch(SB + '/rest/v1/rpc/' + fn, { method: 'POST', headers: { 'Content-Type': 'application/json', apikey: SBK, Authorization: 'Bearer ' + SBK }, body: JSON.stringify(args) })
+      .then(function(r){ if (!r.ok) throw new Error('http ' + r.status); return r.json(); });
+  }
+  function leeCuenta(){
+    var c = null, tema = (window.APX_CFG && window.APX_CFG.tema === 'ge') ? 'ge' : 'gp';
+    try { c = localStorage.getItem('apx_cuenta_' + tema); } catch (e) {}
+    if (!c) { try { var s = JSON.parse(localStorage.getItem(tema === 'gp' ? 'lmpro_session' : 'lmeav_session') || 'null'); if (s && s.id && s.estado === 'validado') c = s.id; } catch (e) {} }
+    return c;
+  }
+  function refrescaPulgares(){
+    Array.prototype.forEach.call(document.querySelectorAll('.ivg-ok'), function(ok){
+      var on = !!marcas[ok.getAttribute('data-src')];
+      ok.classList.toggle('on', on); ok.setAttribute('aria-pressed', on ? 'true' : 'false');
+      ok.title = on ? 'Revisado y correcto · pulsa para quitarlo' : 'Marcar como revisado y correcto (solo lo ves tú)';
+      var tag = ok.parentNode && ok.parentNode.querySelector('.ivg-prueba');
+      if (tag) { tag.textContent = on ? 'REVISADO' : 'EN PRUEBA'; tag.classList.toggle('ok', on); }
+    });
+  }
+  function cargaMarcas(){
+    if (!tester || !cuentaId) return;
+    rpc('suite_intro_revisiones', { p_id: cuentaId }).then(function(d){ if (d && d.ok && d.marcas) { marcas = d.marcas; refrescaPulgares(); } }).catch(function(){});
+  }
+  function alternaPulgar(src){
+    if (!tester || !cuentaId) return;
+    var nuevo = !marcas[src]; marcas[src] = nuevo; refrescaPulgares();
+    rpc('suite_intro_marcar', { p_id: cuentaId, p_src: src, p_ok: nuevo })
+      .then(function(d){ if (!d || !d.ok) throw new Error((d && d.error) || 'error'); })
+      .catch(function(){ marcas[src] = !nuevo; refrescaPulgares(); try { alert('No se ha podido guardar el 👍. Inténtalo otra vez.'); } catch (e) {} });
+  }
+  var ICO = '<svg viewBox="0 0 12 12" aria-hidden="true"><path d="M2.2 1.1v9.8L10.6 6z" fill="currentColor"/></svg>';
+  var abierto = null, vistos = {};
+  var reducir = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+  function el(tag, cls){ var e = document.createElement(tag); if (cls) e.className = cls; return e; }
+  function destino(){
+    var vw = innerWidth, vh = innerHeight, w = Math.min(vw * 0.92, vh * 0.86 * 16 / 9), h = w * 9 / 16;
+    return { left: (vw - w) / 2, top: (vh - h) / 2, width: w, height: h };
+  }
+  function px(b){ return { left: b.left + 'px', top: b.top + 'px', width: b.width + 'px', height: b.height + 'px' }; }
+
+  /* ---- la cara de atrás: elegir vídeo ---- */
+  function pintaMenu(a, foco){
+    a.detras.innerHTML = '';
+    var m = el('div', 'ivg-menu'); m.setAttribute('role', 'group'); m.setAttribute('aria-label', 'Elige un vídeo');
+    var k = el('div', 'ivg-kick'); k.textContent = a.def.nombre + ' · vídeos'; m.appendChild(k);
+    var ops = el('div', 'ivg-opciones' + (a.lista.length > 2 ? ' ivg-muchas' : '')); m.appendChild(ops);
+    var botones = [];
+    a.lista.forEach(function(v, i){
+      var b = el('button', 'ivg-op'); b.type = 'button';
+      b.style.backgroundImage = 'url("' + v.src.replace(/index\.html$/, 'fondo.jpg') + '")';
+      b.innerHTML = '<span class="ivg-num">' + (i + 1) + '</span><span class="ivg-tit"></span><span class="ivg-bar"></span>' +
+        '<span class="ivg-sub"></span><span class="ivg-dur">' + ICO + '<span></span></span>' + (vistos[v.src] ? '<span class="ivg-visto">✓ VISTO</span>' : '') +
+        (v.prueba ? '<span class="ivg-prueba" title="Solo lo ven Tester y Protester hasta que se publique">EN PRUEBA</span>' : '');
+      if (v.prueba && tester) {   /* pulgar 👍: revisado y correcto (no abre el vídeo) */
+        var ok = el('span', 'ivg-ok'); ok.setAttribute('role', 'button'); ok.tabIndex = 0; ok.setAttribute('data-src', v.src); ok.textContent = '👍';
+        ok.setAttribute('aria-label', 'Revisado: «' + v.tit + '» está bien');
+        ok.addEventListener('click', function(ev){ ev.stopPropagation(); ev.preventDefault(); alternaPulgar(v.src); });
+        ok.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' || ev.key === ' ') { ev.stopPropagation(); ev.preventDefault(); alternaPulgar(v.src); } });
+        b.appendChild(ok);
+      }
+      b.querySelector('.ivg-tit').textContent = v.tit;
+      b.querySelector('.ivg-sub').textContent = v.sub;
+      b.querySelector('.ivg-dur span').textContent = v.dur;
+      b.setAttribute('aria-label', 'Ver el vídeo «' + v.tit + '» (' + v.dur + ')');
+      b.addEventListener('click', function(ev){ ev.stopPropagation(); ver(v); });
+      ops.appendChild(b); botones.push(b);
+    });
+    a.detras.appendChild(m);
+    refrescaPulgares();
+    a.volver.style.display = 'none'; a.cerrar.style.display = ''; a.video = null;   /* en la lista de vídeos, solo la ✕ */
+    requestAnimationFrame(function(){ m.style.opacity = '1'; });
+    var f = botones[Math.max(0, foco || 0)];
+    try { f.focus({ preventScroll: true }); } catch (e) {}
+  }
+  function ver(v){
+    var a = abierto; if (!a || a.cerrando) return;
+    a.detras.innerHTML = '';                                              /* fuera la elección */
+    var f = el('iframe'); f.src = v.src + '?auto&embed'; f.title = 'Vídeo: ' + v.tit;
+    f.setAttribute('allow', 'autoplay; fullscreen');
+    f.onload = function(){
+      f.style.opacity = '1';
+      try {   /* «Ir a ejercicios»: sin salir de la web */
+        f.contentDocument.addEventListener('click', function(ev){
+          var t = ev.target; if (t && t.closest && t.closest('#irEjercicios')) { ev.preventDefault(); ev.stopPropagation(); vistos[v.src] = true; cierra({ ejercicios: true }); }
+        }, true);
+      } catch (e) {}
+      try { f.contentWindow.focus(); } catch (e) {}
+    };
+    a.detras.appendChild(f);
+    a.video = { v: v, frame: f };
+    a.volver.style.display = 'block'; a.volver.style.opacity = '1';
+    a.cerrar.style.display = 'none';   /* con un vídeo puesto, solo «‹ Vídeos» arriba a la izquierda: nunca «volver» y ✕ a la vez */
+  }
+  function volverAMenu(){
+    var a = abierto; if (!a || a.cerrando || !a.video) return;
+    var i = a.lista.indexOf(a.video.v);
+    vistos[a.video.v.src] = true;
+    pintaMenu(a, i);                                                      /* quita el iframe: se para el sonido */
+  }
+
+  /* ---- abrir: la tarjeta se voltea y crece ---- */
+  function abrir(card, path){
+    if (abierto) return;
+    var r = card.getBoundingClientRect(), d = destino(), dur = reducir ? 1 : 820, easing = 'cubic-bezier(.22,.8,.26,1)';
+    var fondo = el('div', 'ivg-fondo'), caja = el('div', 'ivg-caja'), giro = el('div', 'ivg-giro');
+    var delante = el('div', 'ivg-cara ivg-delante'), detras = el('div', 'ivg-cara ivg-detras');
+    var clon = card.cloneNode(true); clon.removeAttribute('data-path'); clon.setAttribute('aria-hidden', 'true'); clon.tabIndex = -1;
+    delante.appendChild(clon); giro.appendChild(delante); giro.appendChild(detras); caja.appendChild(giro);
+    caja.setAttribute('role', 'dialog'); caja.setAttribute('aria-modal', 'true'); caja.setAttribute('aria-label', 'Vídeos de ' + INTROS[path].nombre);
+    Object.assign(caja.style, px(r));
+    var cerrar = el('button', 'ivg-cerrar'); cerrar.type = 'button'; cerrar.textContent = '✕'; cerrar.setAttribute('aria-label', 'Cerrar');
+    var volver = el('button', 'ivg-volver'); volver.type = 'button'; volver.textContent = '‹ Vídeos'; volver.setAttribute('aria-label', 'Volver a elegir vídeo');
+    document.body.appendChild(fondo); document.body.appendChild(caja); document.body.appendChild(cerrar); document.body.appendChild(volver);
+    card.style.visibility = 'hidden';
+    document.documentElement.style.overflow = 'hidden';
+    var tok = 'ivg' + Date.now();
+    abierto = { card: card, path: path, def: INTROS[path], lista: visibles(path), caja: caja, giro: giro, detras: detras, fondo: fondo, cerrar: cerrar, volver: volver, tok: tok, video: null };
+    try { history.pushState({ ivg: tok }, ''); } catch (e) {}
+    requestAnimationFrame(function(){ fondo.style.opacity = '1'; });
+    caja.animate([px(r), px(d)], { duration: dur, easing: easing, fill: 'forwards' });
+    giro.animate([{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(180deg)' }], { duration: dur, easing: easing, fill: 'forwards' }).onfinish = function(){
+      if (!abierto || abierto.caja !== caja || abierto.cerrando) return;
+      pintaMenu(abierto, 0);
+      cerrar.style.opacity = '1';
+    };
+  }
+  /* ---- cerrar: vuelve a la tarjeta (o, desde «Ir a ejercicios», se desvanece y abre el ejercicio) ---- */
+  function cierra(o){
+    o = o || {};
+    if (!abierto || abierto.cerrando) return;
+    var a = abierto; a.cerrando = true;
+    var vv = a.video ? a.video.v : null;
+    a.detras.innerHTML = '';                                              /* fuera el vídeo (se para el sonido) */
+    a.cerrar.style.opacity = '0'; a.volver.style.opacity = '0';
+    if (!o.porAtras) { try { if (history.state && history.state.ivg === a.tok) history.back(); } catch (e) {} }
+    function fin(){
+      a.card.style.visibility = ''; a.caja.remove(); a.fondo.remove(); a.cerrar.remove(); a.volver.remove();
+      document.documentElement.style.overflow = '';
+      abierto = null;
+    }
+    if (o.ejercicios) {
+      a.fondo.style.opacity = '0'; a.caja.style.transition = 'opacity .25s ease'; a.caja.style.opacity = '0';
+      setTimeout(function(){ fin(); abreEj(vv); }, reducir ? 0 : 260);
+      return;
+    }
+    var r = a.card.getBoundingClientRect(), b = a.caja.getBoundingClientRect(), dur = reducir ? 1 : 700, easing = 'cubic-bezier(.4,.1,.3,1)';
+    a.caja.getAnimations().forEach(function(x){ x.cancel(); }); a.giro.getAnimations().forEach(function(x){ x.cancel(); });
+    a.caja.animate([px(b), px(r)], { duration: dur, easing: easing, fill: 'forwards' });
+    a.giro.animate([{ transform: 'rotateY(180deg)' }, { transform: 'rotateY(0deg)' }], { duration: dur, easing: easing, fill: 'forwards' }).onfinish = function(){
+      fin();
+      try { a.card.querySelector('.ivg-play').focus({ preventScroll: true }); } catch (e) {}
+    };
+    a.fondo.style.opacity = '0';
+  }
+  document.addEventListener('click', function(e){
+    if (!abierto) return;
+    var t = e.target, en = function(cls){ return t && t.closest ? t.closest(cls) : null; };
+    if (t === abierto.fondo || en('.ivg-cerrar') === abierto.cerrar) cierra();
+    else if (en('.ivg-volver') === abierto.volver) volverAMenu();
+  });
+  document.addEventListener('keydown', function(e){
+    if (!abierto || (e.key !== 'Escape' && e.key !== 'Esc')) return;
+    e.preventDefault(); e.stopPropagation();
+    if (abierto.video) volverAMenu(); else cierra();
+  }, true);
+  window.addEventListener('message', function(e){      /* «Salir» (o Esc) dentro del vídeo: a la elección */
+    if (abierto && abierto.video && e.source === abierto.video.frame.contentWindow && e.data && e.data.intro === 'salir') volverAMenu();
+  });
+  window.addEventListener('popstate', function(){ if (abierto && !abierto.cerrando) cierra({ porAtras: true }); });
+  window.addEventListener('resize', function(){
+    if (!abierto || abierto.cerrando) return;
+    abierto.caja.getAnimations().forEach(function(x){ x.cancel(); });
+    Object.assign(abierto.caja.style, px(destino()));
+  });
+
+  /* ---- botón ▶ en cada tarjeta de repaso con vídeos (solo si a esa cuenta le toca ver alguno) ---- */
+  function monta(){
+    Object.keys(INTROS).forEach(function(path){
+      var card = document.querySelector('.home-grid .mode-card[data-path="' + path + '"]');
+      if (!card || card.querySelector(':scope > .ivg-play') || !visibles(path).length) return;
+      if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
+      var b = el('span', 'ivg-play'); b.setAttribute('role', 'button'); b.tabIndex = 0;
+      b.setAttribute('aria-label', 'Ver los vídeos de ' + INTROS[path].nombre); b.title = 'Vídeos de repaso (Grado Elemental)'; b.innerHTML = ICO;
+      function act(ev){ ev.stopPropagation(); ev.preventDefault(); abrir(card, path); }
+      b.addEventListener('click', act);
+      b.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' || ev.key === ' ') act(ev); });
+      ['pointerdown', 'mousedown', 'touchstart'].forEach(function(t){ b.addEventListener(t, function(e){ e.stopPropagation(); }, { passive: true }); });
+      card.appendChild(b);
+    });
+  }
+  function arranca(){
+    monta();
+    var g = document.querySelector('.home-grid');
+    if (g && window.MutationObserver) new MutationObserver(monta).observe(g, { childList: true });
+    try {   /* ¿cuenta Tester o Protester? → se ven también los vídeos EN PRUEBA */
+      if (window.APX && window.APX.comprobar) window.APX.comprobar(function(info){
+        if (!info || !info.validado) return;
+        alumno = true; tester = !!info.tester; cuentaId = leeCuenta();
+        monta(); cargaMarcas();
+      });
+    } catch (e) {}
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', arranca); else arranca();
+})();
+</script>
+
 </body>
 </html>
