@@ -41,13 +41,31 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   `VIDEO` de ese bloque. Los botones usan la clase `fp-practica` para el tamaño (la estética «LM piel» la
   heredará); el color lo fija `.apxf-btn`.
 
+- (28-sep, Intros didácticas) VÍDEOS DE GRADO ELEMENTAL EN LAS TARJETAS DE REPASO: bloque de ese nombre (clases `ivg-*`,
+  el mismo que en teoriaathome) justo antes de </body>. Pone ▶ en `.home-grid .mode-card[data-path=…]` de intervalos,
+  inversion, escalas y tonalidades: si cambiáis el HTML de las tarjetas, conservad `data-path` o actualizad `INTROS` en
+  ese bloque. «Ir a ejercicios» usa `window.__abrirVista` y, para colocar, `invOuter`/`invTab` y los id `cardESC0-2`
+  (escalas) y `cardTA-TC` (tonalidades): si se renombran, actualizad `EJERCICIOS` en ese bloque. El ▶ copia el estilo de
+  `.ivf-play` (variables `--gold*`) y el bloque ya trae lo equivalente a «TARJETA QUE GIRA» para `ivg-*`.
+  Los vídeos con «prueba: true» solo los ven Tester y Protester (APX.comprobar). El 👍 es el MISMO que en GE (Supabase,
+  clave `intros/<carpeta>/index.html`, sin «gp:»). AL PUBLICARLOS (solo cuando Iago lo diga y solo los que tengan 👍):
+  «prueba: true» → «alumnos: true» (nunca invitados) y añadirlos a `VIDEO` de «APUNTES EN LAS FICHAS»: intervalos_id e
+  intervalos_build → intros/intervalos/, inversion_int_simples → intros/inversion-intervalos/, inversion_int_compuestos →
+  intros/inversion-compuestos/, escala_menor → intros/escalas-menores/, escala_mayor → intros/escalas-mayores/,
+  escala_otras → intros/otras-escalas/, ton_nombre → intros/indica-la-tonalidad/, ton_armadura →
+  intros/indica-la-armadura/, ton_vecinos → intros/tonalidades-vecinas/ (cada una con /index.html).
+  Esas carpetas son COPIAS de teoriaathome/intros/ (solo cambia `INTRO_CFG` del index.html: «Salir» e «Ir a ejercicios»
+  llevan a este portal): si se cambia uno de esos vídeos en GE, hay que copiarlo aquí también. intros/la-tonalidad/ no
+  sale en ningún menú (solo la abre el cartel «▶ La tonalidad» de los vídeos de escalas).
+
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 20:25 · Intros didácticas · EN CURSO · vídeos de Grado Elemental TAL CUAL (EN PRUEBA: solo Tester y Protester) en
-  las tarjetas de REPASO «Intervalos», «Inversión», «Escalas» y «Tonalidades» · carpetas nuevas intros/intervalos/,
-  intervalos-compuestos/, inversion-intervalos/, inversion-compuestos/, indica-la-tonalidad/, indica-la-armadura/,
-  tonalidades-vecinas/, escalas-menores/, escalas-mayores/, otras-escalas/ y la-tonalidad/ (esta sin menú) · index.html:
-  solo un bloque nuevo «VÍDEOS DE GRADO ELEMENTAL EN LAS TARJETAS DE REPASO» (ivg-*) justo antes de </body>; no toca
-  ivf-*, ni «TARJETA QUE GIRA», ni nada más. Parto de b0c2986.
+- 28-sep 20:33 · Intros didácticas · HECHO · commits 9b5a04c, 24ac2bd, f1f0c11, 40d97e2, 6dc0d38, 62260b2, 19c1911,
+  dbc3efc, e305faa, ed6a8a5 y 7465347 (una carpeta de intros/ cada uno) y d915f15 (index.html) · vídeos de Grado Elemental
+  TAL CUAL (EN PRUEBA: solo Tester y Protester) en las tarjetas de REPASO «Intervalos», «Inversión», «Escalas» y
+  «Tonalidades» · carpetas nuevas intros/intervalos/, intervalos-compuestos/, inversion-intervalos/, inversion-compuestos/,
+  indica-la-tonalidad/, indica-la-armadura/, tonalidades-vecinas/, escalas-menores/, escalas-mayores/, otras-escalas/ y
+  la-tonalidad/ (esta sin menú) · index.html: solo un bloque nuevo «VÍDEOS DE GRADO ELEMENTAL EN LAS TARJETAS DE REPASO»
+  (ivg-*) justo antes de </body>; no toca ivf-*, ni «TARJETA QUE GIRA», ni nada más. Partí de b0c2986.
 - 28-sep 09:19 · Fichas y rediseño · HECHO · commit 9ae4de9 · index.html: (1) ficha del alumno, APUNTES: antes una ventana
   «¿Necesitas mirar los apuntes?» y, abiertos, «‹ Volver» bloqueado 1 minuto, sin ✕ (bloque «APUNTES EN LAS FICHAS»;
   solo Protester); (2) VER APUNTES sin la ✕ de la derecha (un <style> al final); (3) tarjeta Compases que gira con ▶:
