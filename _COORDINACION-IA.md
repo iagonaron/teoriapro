@@ -42,6 +42,12 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   heredará); el color lo fija `.apxf-btn`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 28-sep 20:25 · Intros didácticas · EN CURSO · vídeos de Grado Elemental TAL CUAL (EN PRUEBA: solo Tester y Protester) en
+  las tarjetas de REPASO «Intervalos», «Inversión», «Escalas» y «Tonalidades» · carpetas nuevas intros/intervalos/,
+  intervalos-compuestos/, inversion-intervalos/, inversion-compuestos/, indica-la-tonalidad/, indica-la-armadura/,
+  tonalidades-vecinas/, escalas-menores/, escalas-mayores/, otras-escalas/ y la-tonalidad/ (esta sin menú) · index.html:
+  solo un bloque nuevo «VÍDEOS DE GRADO ELEMENTAL EN LAS TARJETAS DE REPASO» (ivg-*) justo antes de </body>; no toca
+  ivf-*, ni «TARJETA QUE GIRA», ni nada más. Parto de b0c2986.
 - 28-sep 09:19 · Fichas y rediseño · HECHO · commit 9ae4de9 · index.html: (1) ficha del alumno, APUNTES: antes una ventana
   «¿Necesitas mirar los apuntes?» y, abiertos, «‹ Volver» bloqueado 1 minuto, sin ✕ (bloque «APUNTES EN LAS FICHAS»;
   solo Protester); (2) VER APUNTES sin la ✕ de la derecha (un <style> al final); (3) tarjeta Compases que gira con ▶:
