@@ -42,7 +42,7 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   heredará); el color lo fija `.apxf-btn`.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 28-sep 08:20 · Intros didácticas · EN CURSO · intros/compases-extranos/escenas.js: el rótulo del título
+- 28-sep 08:20 · Intros didácticas · HECHO · commit a27fb17 · intros/compases-extranos/escenas.js: el rótulo del título
   («GRADO PROFESIONAL · UNIDAD 1») pasa de dorado a rosa (una línea). No toca index.html ni nada más.
 - 27-sep 21:57 · Apuntes en fichas · EN CURSO · index.html: botones «APUNTES» / «VER VÍDEO» / «¿Dudas? Ver
   APUNTES» en la fila de «No lo sé hacer…» de la ficha del alumno (pintaAlu: `class="fp-ayuda"` + 1 línea
