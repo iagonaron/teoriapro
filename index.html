@@ -2,6 +2,7 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
+<script>/* LM piel (27-sep-2026): estetica nueva SOLO en los navegadores de Iago Tester/Protester (marca lm_piel=1). Para quitarla, borra esta linea. */try{if((' '+document.cookie).indexOf(' lm_piel=1')>-1||location.search.indexOf('piel=1')>-1)document.write('<script src="https://ge.lmathome.es/piel/lm-piel.js" data-app="teoria-gp"></scr'+'ipt>')}catch(e){}</script>
 <!-- ⚠ (27-sep-2026, Iago) VARIAS CONVERSACIONES DE CLAUDE SUBEN CAMBIOS A ESTE REPOSITORIO A LA VEZ.
      Antes de subir nada, lee _COORDINACION-IA.md (en la raíz del repositorio): quién toca qué y cómo subir sin pisarse.
      Regla de oro: parte SIEMPRE del último commit de main, nunca de una copia antigua. -->
@@ -17943,14 +17944,17 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
      tarjetas de repaso → Kit salvavidas 4GE en dorado. Solo alumnos con cuenta validada (de momento,
      solo la cuenta Protester, para revisarlos). Para quitarlo: borrar este bloque. -->
 <script>window.APX_CFG={tema:'gp', soloTester:true};</script>
-<script src="apuntes.js?v=1"></script>
-<script src="apuntes-kit.js?v=1"></script>
-<script src="apuntes-2gp.js?v=1"></script>
+<!-- (27-sep-2026, Iago) apuntes con las respuestas de Iago (motor nuevo + kit + 2GP con la página nueva «gp-cadencias»):
+     «?v=2» para que ningún navegador mezcle un fichero viejo de su caché con los nuevos. Si se vuelven a cambiar
+     apuntes*.js, subir el número. -->
+<script src="apuntes.js?v=2"></script>
+<script src="apuntes-kit.js?v=2"></script>
+<script src="apuntes-2gp.js?v=2"></script>
 <script>
 (function(){
   if(!window.APX || new URLSearchParams(location.search).get('fichaId')) return;
   var T=[
-    ['cadencias','Cadencias',['cadencias']],
+    ['cadencias','Cadencias',['gp-cadencias']],   /* (27-sep-2026, Iago) antes ['cadencias'] (la página del kit 4GE): ahora sus apuntes de Cadencias de 2º GP */
     ['indiceacustico','Índice acústico',['gp-indice']],
     ['modos','Modos',['gp-modos']],
     ['compasespro','Compases extraños',['gp-compases']],
@@ -18013,7 +18017,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     acordespro_id:CIFR, acordespro_build:CIFR, blues:CIFR,   /* blues: el cifrado americano (la estructura del blues no está en los apuntes web) */
     modulacion:MODU,
     transporte_escrito:TRAN, transporte_mental:TRAN, transporte_resumen:TRAN,
-    cadencias:G('Cadencias',['gp-cadencias','cadencias']),
+    cadencias:G('Cadencias',['gp-cadencias']),   /* (27-sep-2026, Iago) como la tarjeta: solo los apuntes de 2º GP (con el kit salían dos pestañas «Cadencias») */
     escala_mayor:G('Escalas · repaso',ESC,'esc-mayores'), escala_menor:G('Escalas · repaso',ESC,'esc-menores'), escala_otras:G('Escalas · repaso',ESC,'esc-otras'),
     intervalos_id:G('Intervalos · repaso',INT), intervalos_build:G('Intervalos · repaso',INT),
     acordes_id:G('Acordes · repaso',['acordes']), acordes_build:G('Acordes · repaso',['acordes']),
