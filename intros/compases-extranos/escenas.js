@@ -70,7 +70,7 @@
     });
   }
   function tituloGrande(g) {
-    texto(g, 'GRADO PROFESIONAL  ·  UNIDAD 1', CX, 392, { anchor: 'middle', size: 26, peso: 800, ls: '0.3em', fill: C.oro });
+    texto(g, 'GRADO PROFESIONAL  ·  UNIDAD 1', CX, 392, { anchor: 'middle', size: 26, peso: 800, ls: '0.3em', fill: C.rosa });   // (27-sep) sin dorado: rosa
     texto(g, 'COMPASES EXTRAÑOS', CX, 528, { anchor: 'middle', size: 112, peso: 800, ls: '0.05em', fill: C.blanco });
     N.el('rect', { x: CX - 60, y: 566, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
     texto(g, 'Mixtos · Decimales · Fraccionarios', CX, 640, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
