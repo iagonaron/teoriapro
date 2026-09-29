@@ -60,11 +60,14 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 29-sep 11:45 · Intros didácticas · EN CURSO · intros/: vídeos de Grado Profesional EN PRUEBA (indice-acustico, modos;
-  música de «Compases extraños») y copias de 3 vídeos GE nuevos (acordes, inversion-acordes, enarmonias) · en las 10 copias GE
-  ya subidas, los mismos cambios que en teoriaathome 8358889 (retoques y música re-empalmada) · index.html: bloque ivg
-  (INTROS/EJERCICIOS: ▶ en Índice acústico, Modos, Acordes y Enarmonías; Inversión de acordes dentro de «Inversión»; APUNTES
-  desde los vídeos) y, en «APUNTES EN LAS FICHAS», solo VIDEOS/TEMA_VIDEO de esos vídeos. Parto de 0c4a6ac. Subo con GitHub Desktop.
+- 29-sep 12:00 · Intros didácticas · HECHO · commit 2c466e1 (EN CURSO en df084e7) · intros/: indice-acustico y modos (vídeos de
+  Grado Profesional EN PRUEBA, música de «Compases extraños»; ▶ en las tarjetas «Índice acústico» y «Modos», data-path
+  indiceacustico y modos) y copias de 3 vídeos GE nuevos EN PRUEBA: acordes (tarjeta «Acordes», data-path acordes),
+  enarmonias (tarjeta «Enarmonías», enarmoniapro) e inversion-acordes (dentro de «Inversión»); cada copia lleva su
+  INTRO_CFG de Teoría PRO · las 10 copias GE ya subidas, al día con teoriaathome 8358889 · index.html: bloque ivg (INTROS,
+  EJERCICIOS y APUNTES desde los vídeos) y, en «APUNTES EN LAS FICHAS», solo VIDEOS/TEMA_VIDEO de estos vídeos (sin 👍 no
+  los ven los alumnos). Subido con GitHub Desktop (clon en el Escritorio de Iago, _github-claude/): los mp3 que pasan por el
+  Mac llevan metadatos C2PA en la cabecera ID3 (audio idéntico). Espejo de Dropbox igual que GitHub.
 - 29-sep 08:39 · Fichas y rediseño · HECHO · commit ebb4361 · index.html · ficha del alumno: «No lo sé hacer / tengo dudas» como
   texto + hasta 3 botones con contorno rosa (Apuntes · Vídeo · Practicar ejercicios sueltos) en pintaAlu y en el
   bloque «APUNTES EN LAS FICHAS» (ApxFicha); en las preguntas test (fonógrafo y demás temas del Libro 2GP), «Apuntes»
