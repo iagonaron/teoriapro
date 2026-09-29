@@ -18149,6 +18149,10 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     modos:{ nombre:'Modos', lista:[ {src:'intros/modos/index.html', tit:'Modos', dur:'3:40'} ] },
     seriearmonica:{ nombre:'Serie armónica', lista:[ {src:'intros/serie-armonica/index.html', tit:'Serie armónica', dur:'2:48'} ] },
     dodecafonismo:{ nombre:'Dodecafonismo', lista:[ {src:'intros/dodecafonismo/index.html', tit:'Dodecafonismo', dur:'4:17'} ] },
+    acordespro:{ nombre:'Acordes avanzados', lista:[ {src:'intros/acordes-avanzados/index.html', tit:'Acordes avanzados', dur:'4:34'} ] },
+    cadencias:{ nombre:'Cadencias', lista:[ {src:'intros/cadencias-pro/index.html', tit:'Cadencias', dur:'4:07'} ] },
+    modulacion:{ nombre:'Modulación diatónica', lista:[ {src:'intros/modulacion/index.html', tit:'Modulación diatónica', dur:'5:28'} ] },
+    transporte:{ nombre:'Transporte', lista:[ {src:'intros/transporte/index.html', tit:'Transporte', dur:'7:28'} ] },
     acordes:{ nombre:'Acordes', lista:[ {src:'intros/acordes/index.html', tit:'Acordes', dur:'2:53'} ] },
     invacordes:{ nombre:'Inversión de acordes', lista:[ {src:'intros/inversion-acordes/index.html', tit:'Inversión de acordes', dur:'3:02'} ] },
     enarmoniapro:{ nombre:'Enarmonías', lista:[ {src:'intros/enarmonias/index.html', tit:'Enarmonías', dur:'2:32'} ] }
@@ -18160,7 +18164,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas',
     tonalidades:'tonalidades', ton_nombre:'tonalidades', ton_armadura:'tonalidades', ton_vecinos:'tonalidades',
     acordes_id:'acordes', acordes_build:'acordes', inversion_aco_identifica:'invacordes', inversion_aco_construir:'invacordes', enarmoniapro:'enarmoniapro',
-    indice:'indiceacustico', modos:'modos', seriearmonica:'seriearmonica', dode_construir:'dodecafonismo', dode_completa:'dodecafonismo', dode_identifica:'dodecafonismo' };   /* (29-sep-2026, Intros didácticas) temas nuevos */
+    indice:'indiceacustico', modos:'modos', seriearmonica:'seriearmonica', dode_construir:'dodecafonismo', dode_completa:'dodecafonismo', dode_identifica:'dodecafonismo', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', modulacion:'modulacion', transporte_escrito:'transporte', transporte_mental:'transporte', transporte_resumen:'transporte' };   /* (29-sep-2026, Intros didácticas) temas nuevos */
   var PRIMERO={ ton_nombre:'intros/indica-la-tonalidad/index.html', ton_armadura:'intros/indica-la-armadura/index.html',
     ton_vecinos:'intros/tonalidades-vecinas/index.html', inversion_int_simples:'intros/inversion-intervalos/index.html',
     inversion_int_compuestos:'intros/inversion-compuestos/index.html', escala_menor:'intros/escalas-menores/index.html',
@@ -18841,6 +18845,18 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
     dodecafonismo: { nombre: 'Dodecafonismo', lista: [
       { src: 'intros/dodecafonismo/index.html', tit: 'Dodecafonismo', sub: 'La serie · P · R · I', dur: '4:17', practica: 'dode_construir', prueba: true }
     ] },
+    acordespro: { nombre: 'Acordes avanzados', lista: [
+      { src: 'intros/acordes-avanzados/index.html', tit: 'Acordes avanzados', sub: 'Cifrado americano · Tríadas · Cuatríadas', dur: '4:34', practica: 'acordespro_id', prueba: true }
+    ] },
+    cadencias: { nombre: 'Cadencias', lista: [
+      { src: 'intros/cadencias-pro/index.html', tit: 'Cadencias', sub: 'Auténtica · Plagal · Semicadencia · Rota', dur: '4:07', practica: 'cadencias', prueba: true }
+    ] },
+    modulacion: { nombre: 'Modulación diatónica', lista: [
+      { src: 'intros/modulacion/index.html', tit: 'Modulación diatónica', sub: 'Armaduras · Acorde puente · Nueva tonalidad', dur: '5:28', practica: 'modulacion', prueba: true }
+    ] },
+    transporte: { nombre: 'Transporte', lista: [
+      { src: 'intros/transporte/index.html', tit: 'Transporte', sub: 'Escrito · Mental · Diferencias', dur: '7:28', practica: 'transporte_escrito', prueba: true }
+    ] },
     acordes: { nombre: 'Acordes', lista: [
       { src: 'intros/acordes/index.html', tit: 'Acordes', sub: 'Tríadas · Séptima de dominante', dur: '2:53', practica: 'acordes_id', prueba: true }
     ] },
@@ -18865,6 +18881,10 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
     ton_vecinos: ['tonalidades', baja('#view-tonalidades #cardTC')],
     inversion_aco_identifica: ['inversion', function(){ window.invOuter('acordes'); window.acoTab('identificar'); }],   /* (29-sep-2026) */
     acordes_id: ['acordes', null], enarmoniapro: ['enarmoniapro', null],   /* (29-sep-2026) */
+    transporte_escrito: ['transporte', function(){ var b = document.querySelector('[data-tab="escrita"]'); if (b) b.click(); }],   /* (29-sep-2026) pestaña «Escrito» */
+    modulacion: ['modulacion', null],   /* (29-sep-2026) */
+    cadencias: ['cadencias', null],   /* (29-sep-2026) */
+    acordespro_id: ['acordespro', null],   /* (29-sep-2026) */
     dode_construir: ['dodecafonismo', null],   /* (29-sep-2026) */
     seriearmonica: ['seriearmonica', null],   /* (29-sep-2026) */
     indice: ['indiceacustico', null],   /* (29-sep-2026) */
@@ -19144,7 +19164,7 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
       if (!card || card.querySelector(':scope > .ivg-play') || !visibles(path).length) return;
       if (getComputedStyle(card).position === 'static') card.style.position = 'relative';
       var b = el('span', 'ivg-play'); b.setAttribute('role', 'button'); b.tabIndex = 0;
-      b.setAttribute('aria-label', 'Ver los vídeos de ' + INTROS[path].nombre); b.title = 'Vídeos de repaso (Grado Elemental)'; b.innerHTML = ICO;
+      b.setAttribute('aria-label', 'Ver los vídeos de ' + INTROS[path].nombre); b.title = 'Vídeos de ' + INTROS[path].nombre;   /* (29-sep-2026) ya no son solo los de repaso de GE */ b.innerHTML = ICO;
       function act(ev){ ev.stopPropagation(); ev.preventDefault(); abrir(card, path); }
       b.addEventListener('click', act);
       b.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' || ev.key === ' ') act(ev); });
