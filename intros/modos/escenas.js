@@ -930,15 +930,17 @@
       const co = fraseG(g, [['cada modo, ', C.suave], ['su color', C.blanco]], CX, 270, { size: 34, peso: 800, italic: true, anchor: 'middle' });
       aparece(s, co, Wd('S2', 'color') - 0.3, fin, { dy: 6 });
       COLORES.forEach((c, i) => {
-        const x = 330 + i * 440, y = 340, w = 400, h = 420, G = N.group(g);
+        /* (29-sep-2026, Iago) «no quiero que pongas aquí lo de Re → Mi ni nada de eso de notas»: la tarjeta lleva solo el
+           nombre del modo y sus palabras (antes, debajo del nombre, los acordes de c.ac); más baja y con las palabras más
+           arriba. Para quitarlo: h = 420, volver a poner frase(G, c.ac, x + w / 2, y + 138, …) y las palabras en y + 230. */
+        const x = 330 + i * 440, y = 340, w = 400, h = 380, G = N.group(g);
         const r = panel(G, x, y, w, h, { rx: 24 });
         texto(G, c.m, x + w / 2, y + 74, { anchor: 'middle', size: 52, peso: 800, italic: true, fill: C.blanco });
-        frase(G, c.ac, x + w / 2, y + 138, { size: 30, peso: 800, anchor: 'middle' });
         aparece(s, G, Wd(c.pal[0][2], c.m.normalize('NFD').replace(/[̀-ͯ]/g, '')) - 0.3, fin, { dy: 10 });
         const blq = T.bloque[c.blq];
         s.on(t => { const kk = blq ? win(t, blq.t0 - 0.1, blq.t1, .2, .4) : 0; r.setAttribute('stroke', mezcla('#3a4556', C.rosa, kk)); r.setAttribute('stroke-width', (1.5 + 3 * kk).toFixed(2)); });
         c.pal.forEach(([w2, key, fr], j) => {
-          const P = N.group(g); texto(P, w2, x + w / 2, y + 230 + j * 62, { anchor: 'middle', size: 36, peso: 800, fill: C.rosa, italic: true });
+          const P = N.group(g); texto(P, w2, x + w / 2, y + 180 + j * 62, { anchor: 'middle', size: 36, peso: 800, fill: C.rosa, italic: true });
           aparece(s, P, Wd(fr, key) - 0.2, fin, { dy: 6 });
         });
         const O = N.group(g), Oi2 = N.group(O); icoOido(Oi2, x + w - 46, y + 46, 0.55); color(Oi2, C.rosa);
