@@ -60,6 +60,9 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 12:04 · Intros didácticas · EN CURSO · todos los vídeos de intros/: motor más ligero (la foto y el velo salen del SVG a capas
+  propias: index.html y la línea del velo de escenas.js) y carteles que no se salen en ningún ordenador (dibujo.js). Nada
+  más. Parto de 941104f.
 - 29-sep 12:00 · Intros didácticas · HECHO · commit 2c466e1 (EN CURSO en df084e7) · intros/: indice-acustico y modos (vídeos de
   Grado Profesional EN PRUEBA, música de «Compases extraños»; ▶ en las tarjetas «Índice acústico» y «Modos», data-path
   indiceacustico y modos) y copias de 3 vídeos GE nuevos EN PRUEBA: acordes (tarjeta «Acordes», data-path acordes),
