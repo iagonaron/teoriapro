@@ -60,11 +60,12 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 29-sep 22:06 · Fichas y rediseño · EN CURSO · intros/modos/escenas.js (vídeo «Modos», EN PRUEBA): Iago pide quitar la
-  línea de acordes («Re m → Sol», «Re → Mi», «Re m → Mi♭») de las tres tarjetas de «¡escúchalos!»: solo el nombre del
-  modo y sus palabras. Toco solo ese bloque (COLORES/escenaEscucha). Aparte, sin tocar el repo, preparo tres
-  improvisaciones (dórico, lidio y frigio) para sustituir los acordes de SON_DOR/SON_LID/SON_FRI; si Iago las aprueba,
-  habrá que rehacer modos.mp3, tiempos.js y datos.js: lo apuntaré aquí antes. Si rehacéis «Modos», partid de este escenas.js.
+- 29-sep 22:06 · Fichas y rediseño · HECHO · commit 3f8dff8 (EN CURSO en 200434b) · intros/modos/escenas.js (vídeo «Modos»,
+  EN PRUEBA): las tres tarjetas de «¡escúchalos!» ya no llevan la línea de acordes («Re m → Sol», «Re → Mi», «Re m → Mi♭»):
+  solo el nombre del modo y sus palabras (tarjeta de 380 de alto, palabras desde y + 180). Para deshacer: el bloque marcado
+  «(29-sep-2026, Iago)». PENDIENTE, sin tocar el repo: tres improvisaciones (dórico, lidio, frigio) para sustituir los
+  acordes de SON_DOR/SON_LID/SON_FRI, en revisión por Iago; si las aprueba, habrá que rehacer modos.mp3, tiempos.js y
+  datos.js: se apuntará aquí antes de tocarlos.
 - 29-sep 20:51 · Intros didácticas · HECHO · commit 36b0ac8 (EN CURSO en 8cbe86c) · tanda 1440-A (copias GE):
   intros/intervalos, intervalos-compuestos, inversion-intervalos, inversion-compuestos, escalas-menores y otras-escalas pasan
   a MP4 1440p60 con audio 256k (<slug>_1440.mp4 + window.VIDEO_MP4 en su index.html). Para volver al modo de siempre en un
