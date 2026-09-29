@@ -59,6 +59,9 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   sale en ningún menú (solo la abre el cartel «▶ La tonalidad» de los vídeos de escalas).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 06:50 · Intros didácticas · EN CURSO · index.html: en el bloque «VÍDEOS DE GRADO ELEMENTAL EN LAS TARJETAS DE
+  REPASO» (ivg-*), «La tonalidad» sale también en el menú de la tarjeta «Tonalidades» (4 vídeos, como en GE; lo pide
+  Iago). Solo cambian 2 líneas de ese bloque (INTROS y su comentario). Parto de 1b82288.
 - 28-sep 20:33 · Intros didácticas · HECHO · commits 9b5a04c, 24ac2bd, f1f0c11, 40d97e2, 6dc0d38, 62260b2, 19c1911,
   dbc3efc, e305faa, ed6a8a5 y 7465347 (una carpeta de intros/ cada uno) y d915f15 (index.html) · vídeos de Grado Elemental
   TAL CUAL (EN PRUEBA: solo Tester y Protester) en las tarjetas de REPASO «Intervalos», «Inversión», «Escalas» y
