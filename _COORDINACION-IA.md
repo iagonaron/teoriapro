@@ -60,6 +60,9 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 17:47 · Fichas y rediseño · EN CURSO · index.html · ESCALAS MAYORES con bemoles: las tónicas eran solo teclas
+  blancas (de las mayores, solo Fa lleva bemoles). Para las mayores se añaden Si♭, Mi♭, La♭ y Re♭ (escItem7, que usan
+  la práctica y las fichas); sin dobles alteraciones. Menores y otras, igual.
 - 29-sep 16:49 · Intros didácticas · HECHO · commits c3efba3 y f1d3a66 (EN CURSO en 0a4e631) · (1) vídeo GP nuevo EN
   PRUEBA: intros/dodecafonismo/ (▶ en la tarjeta «Dodecafonismo», solo Protester) + index.html (bloque ivg y VIDEOS/
   TEMA_VIDEO); (2) MP4 de las copias GE: indica-la-armadura y tonalidades-vecinas (60 fps) y escalas-mayores (1440p60,
