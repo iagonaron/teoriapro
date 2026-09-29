@@ -60,13 +60,16 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 29-sep 08:39 · Fichas y rediseño · EN CURSO · index.html · ficha del alumno: «No lo sé hacer / tengo dudas» como
+- 29-sep 08:39 · Fichas y rediseño · HECHO · commit ebb4361 · index.html · ficha del alumno: «No lo sé hacer / tengo dudas» como
   texto + hasta 3 botones con contorno rosa (Apuntes · Vídeo · Practicar ejercicios sueltos) en pintaAlu y en el
   bloque «APUNTES EN LAS FICHAS» (ApxFicha); en las preguntas test (fonógrafo y demás temas del Libro 2GP), «Apuntes»
   (el Libro 2GP en PDF si no hay apuntes web) y «Ver portal interactivo»; ventana «Vamos a practicar esto» con la
   estética nueva (fpModalPracticar); vídeos con 👍 en la ficha (lista propia dentro de ApxFicha: NO toca INTROS, ivg-*,
   ivf-* ni intros/); revisión del profesor: &ej=N centra el ejercicio y rótulo con la estética nueva. Parto de
   c244f8a.
+  AVISO para «Intros didácticas»: en la ficha, «Vídeo» enseña a los alumnos los vídeos del tema ya publicados o con 👍.
+  El 👍 no lo pueden leer las cuentas de alumno, así que va copiado en VERIFICADOS (bloque «APUNTES EN LAS FICHAS»):
+  al dar un 👍 nuevo o publicar un vídeo, añadidlo también ahí (y a VIDEOS si es un vídeo nuevo).
 - 29-sep 06:50 · Intros didácticas · HECHO · commit 5725e4c · index.html: en el bloque «VÍDEOS DE GRADO ELEMENTAL EN LAS
   TARJETAS DE REPASO» (ivg-*), «La tonalidad» sale también en el menú de la tarjeta «Tonalidades» (4 vídeos, como en GE;
   lo pide Iago). Solo cambian 2 líneas de ese bloque (INTROS y su comentario). Partí de 1b82288.
