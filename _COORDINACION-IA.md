@@ -55,13 +55,14 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   escala_otras → intros/otras-escalas/, ton_nombre → intros/indica-la-tonalidad/, ton_armadura →
   intros/indica-la-armadura/, ton_vecinos → intros/tonalidades-vecinas/ (cada una con /index.html).
   Esas carpetas son COPIAS de teoriaathome/intros/ (solo cambia `INTRO_CFG` del index.html: «Salir» e «Ir a ejercicios»
-  llevan a este portal): si se cambia uno de esos vídeos en GE, hay que copiarlo aquí también. intros/la-tonalidad/ no
-  sale en ningún menú (solo la abre el cartel «▶ La tonalidad» de los vídeos de escalas).
+  llevan a este portal): si se cambia uno de esos vídeos en GE, hay que copiarlo aquí también. intros/la-tonalidad/ sale
+  la primera en el menú de «Tonalidades» (4 vídeos, como en GE; 29-sep) y también la abre el cartel «▶ La tonalidad»
+  de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 29-sep 06:50 · Intros didácticas · EN CURSO · index.html: en el bloque «VÍDEOS DE GRADO ELEMENTAL EN LAS TARJETAS DE
-  REPASO» (ivg-*), «La tonalidad» sale también en el menú de la tarjeta «Tonalidades» (4 vídeos, como en GE; lo pide
-  Iago). Solo cambian 2 líneas de ese bloque (INTROS y su comentario). Parto de 1b82288.
+- 29-sep 06:50 · Intros didácticas · HECHO · commit 5725e4c · index.html: en el bloque «VÍDEOS DE GRADO ELEMENTAL EN LAS
+  TARJETAS DE REPASO» (ivg-*), «La tonalidad» sale también en el menú de la tarjeta «Tonalidades» (4 vídeos, como en GE;
+  lo pide Iago). Solo cambian 2 líneas de ese bloque (INTROS y su comentario). Partí de 1b82288.
 - 28-sep 20:33 · Intros didácticas · HECHO · commits 9b5a04c, 24ac2bd, f1f0c11, 40d97e2, 6dc0d38, 62260b2, 19c1911,
   dbc3efc, e305faa, ed6a8a5 y 7465347 (una carpeta de intros/ cada uno) y d915f15 (index.html) · vídeos de Grado Elemental
   TAL CUAL (EN PRUEBA: solo Tester y Protester) en las tarjetas de REPASO «Intervalos», «Inversión», «Escalas» y
