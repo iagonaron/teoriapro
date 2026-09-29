@@ -60,6 +60,12 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 16:49 · Intros didácticas · HECHO · commits c3efba3 y f1d3a66 (EN CURSO en 0a4e631) · (1) vídeo GP nuevo EN
+  PRUEBA: intros/dodecafonismo/ (▶ en la tarjeta «Dodecafonismo», solo Protester) + index.html (bloque ivg y VIDEOS/
+  TEMA_VIDEO); (2) MP4 de las copias GE: indica-la-armadura y tonalidades-vecinas (60 fps) y escalas-mayores (1440p60,
+  audio 256k); (3) intros/*/motor.js (las 18 + dodecafonismo): cursor escondido mientras suena; (4) index.html, bloques
+  ivg e ivf: pulsar fuera del vídeo ya no lo cierra y el cursor se esconde a los 2,5 s. Para deshacer: motor.js e
+  index.html del commit 0c2bc07.
 - 29-sep 16:02 · Intros didácticas · EN CURSO · (1) vídeo GP nuevo EN PRUEBA: intros/dodecafonismo/ (▶ en la tarjeta
   «Dodecafonismo») + index.html: bloque ivg (INTROS y EJERCICIOS) y VIDEOS/TEMA_VIDEO de «APUNTES EN LAS FICHAS»; (2) MP4
   60 fps de las copias GE indica-la-armadura, tonalidades-vecinas y escalas-mayores (1440p); (3) intros/*/motor.js: cursor
