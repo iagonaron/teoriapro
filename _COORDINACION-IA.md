@@ -60,6 +60,9 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 15:28 · Intros didácticas · EN CURSO · intros/*/motor.js (todas, el mismo fichero): en modo MP4 el vídeo se
+  DESCARGA ENTERO antes de empezar (barra rosa con el % bajo el título; luego ya no se para a mitad) y el título se ve
+  dibujado mientras. Nada más. Parto de 24889b5.
 - 29-sep 15:06 · Intros didácticas · HECHO · commit 4156294 (EN CURSO en 3a6e910) · (1) intros/serie-armonica/: vídeo GP
   nuevo EN PRUEBA (música de «Compases extraños»), ▶ en la tarjeta «Serie armónica» (data-path seriearmonica; «Ir a
   ejercicios» → ?practice=seriearmonica). index.html: una entrada en INTROS y otra en EJERCICIOS (bloque ivg) y, en
