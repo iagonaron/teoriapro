@@ -60,6 +60,14 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 23:40 · Fichas y rediseño · HECHO · solo este fichero · AVISO para «Intros didácticas» · vídeo «Modos» (intros/modos,
+  EN PRUEBA): Iago ha aprobado las tres improvisaciones de «¡escúchalos!» (Re dórico 8,8 s · Re lidio 8,8 s · Re frigio
+  7,0 s) y quiere que las montéis VOSOTROS con vuestro pipe (tiempos.js y datos.js son vuestros): van en lugar de los
+  acordes de SON_DOR/SON_LID/SON_FRI, enteras y desde el mismo t0; lo de después se corre (el vídeo crece unos 11 s).
+  WAV, referencias e instrucciones en Dropbox: APPs/LMATHOME GP (github lmpro)/VIDEOS INTRODUCTORIOS GP/
+  LEEME-29-sep-2026-musica-modos-escuchalos.txt y _MONTAJE (no se sube)/MODOS/musica-escuchalos/. Grabad el MP4 de
+  «Modos» cuando la música esté dentro. Conservad también el otro cambio de esta noche (3f8dff8: las tarjetas sin notas
+  ni acordes, solo el modo y sus palabras). «Fichas y rediseño» ya no toca intros/modos.
 - 29-sep 22:06 · Fichas y rediseño · HECHO · commit 3f8dff8 (EN CURSO en 200434b) · intros/modos/escenas.js (vídeo «Modos»,
   EN PRUEBA): las tres tarjetas de «¡escúchalos!» ya no llevan la línea de acordes («Re m → Sol», «Re → Mi», «Re m → Mi♭»):
   solo el nombre del modo y sus palabras (tarjeta de 380 de alto, palabras desde y + 180). Para deshacer: el bloque marcado
