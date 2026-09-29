@@ -60,6 +60,11 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 20:18 · Intros didácticas · EN CURSO · vídeos GP nuevos EN PRUEBA (solo Tester/Protester): intros/acordes-avanzados/,
+  intros/cadencias-pro/, intros/modulacion/ e intros/transporte/ (▶ en las tarjetas «Acordes avanzado», «Cadencias»,
+  «Modulación» y «Transporte») + index.html: bloque ivg (INTROS y EJERCICIOS), VIDEOS/TEMA_VIDEO de «APUNTES EN LAS FICHAS»
+  y el título del ▶ («Vídeos de …» en vez de «Vídeos de repaso (Grado Elemental)»). Parto de 7f5c46e (escalas con bemoles:
+  no lo toco).
 - 29-sep 17:47 · Fichas y rediseño · HECHO · commit 8719679 · index.html · ESCALAS MAYORES con bemoles: las tónicas eran solo teclas
   blancas (de las mayores, solo Fa lleva bemoles). Para las mayores se añaden Si♭, Mi♭, La♭ y Re♭ (escItem7, que usan
   la práctica y las fichas); sin dobles alteraciones. Menores y otras, igual.
