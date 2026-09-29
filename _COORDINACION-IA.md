@@ -60,9 +60,12 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 29-sep 12:04 · Intros didácticas · EN CURSO · todos los vídeos de intros/: motor más ligero (la foto y el velo salen del SVG a capas
-  propias: index.html y la línea del velo de escenas.js) y carteles que no se salen en ningún ordenador (dibujo.js). Nada
-  más. Parto de 941104f.
+- 29-sep 12:08 · Intros didácticas · HECHO · commit e8b837a (EN CURSO en e7aac70) · todos los vídeos de intros/: la foto del
+  conservatorio y el velo salen del SVG a dos capas propias (index.html: #fondoCapa y #velo; escenas.js: solo la línea del
+  velo, que ahora cambia style.opacity) y dibujo.js mide bien los textos con espaciado entre letras (había un Chrome, el de la
+  pantalla del aula de Iago, que no lo contaba y los carteles se quedaban cortos) y ajusta el texto a su cartel. Mismo aspecto;
+  el pintado por fotograma baja de ~31 a ~2 ms en los fundidos del título y de ~2 a ~0,5 ms en el resto (medido a 4K).
+  Si hacéis un vídeo nuevo, usad este index.html y este dibujo.js (script: _herramientas/motor34.py en el Escritorio de Iago).
 - 29-sep 12:00 · Intros didácticas · HECHO · commit 2c466e1 (EN CURSO en df084e7) · intros/: indice-acustico y modos (vídeos de
   Grado Profesional EN PRUEBA, música de «Compases extraños»; ▶ en las tarjetas «Índice acústico» y «Modos», data-path
   indiceacustico y modos) y copias de 3 vídeos GE nuevos EN PRUEBA: acordes (tarjeta «Acordes», data-path acordes),
