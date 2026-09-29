@@ -60,6 +60,11 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 16:02 · Intros didácticas · EN CURSO · (1) vídeo GP nuevo EN PRUEBA: intros/dodecafonismo/ (▶ en la tarjeta
+  «Dodecafonismo») + index.html: bloque ivg (INTROS y EJERCICIOS) y VIDEOS/TEMA_VIDEO de «APUNTES EN LAS FICHAS»; (2) MP4
+  60 fps de las copias GE indica-la-armadura, tonalidades-vecinas y escalas-mayores (1440p); (3) intros/*/motor.js: cursor
+  escondido mientras suena; (4) index.html, bloques ivg e ivf: pulsar fuera del vídeo ya no lo cierra y el cursor se
+  esconde a los 2,5 s. Parto de 0c2bc07.
 - 29-sep 15:33 · Intros didácticas · HECHO · commit 4ef13a9 (EN CURSO en b9f8e60) · intros/*/motor.js (las 18, el mismo
   fichero): en modo MP4 el vídeo se DESCARGA ENTERO (fetch → Blob) antes de empezar; mientras, se ve el título dibujado y
   una barra rosa con el % descargado bajo él; luego ya no se para a mitad. Sin descarga posible, como antes. Para volver al
