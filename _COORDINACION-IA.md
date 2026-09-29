@@ -60,6 +60,10 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 15:33 · Intros didácticas · HECHO · commit 4ef13a9 (EN CURSO en b9f8e60) · intros/*/motor.js (las 18, el mismo
+  fichero): en modo MP4 el vídeo se DESCARGA ENTERO (fetch → Blob) antes de empezar; mientras, se ve el título dibujado y
+  una barra rosa con el % descargado bajo él; luego ya no se para a mitad. Sin descarga posible, como antes. Para volver al
+  motor anterior: el motor.js del commit 24889b5.
 - 29-sep 15:28 · Intros didácticas · EN CURSO · intros/*/motor.js (todas, el mismo fichero): en modo MP4 el vídeo se
   DESCARGA ENTERO antes de empezar (barra rosa con el % bajo el título; luego ya no se para a mitad) y el título se ve
   dibujado mientras. Nada más. Parto de 24889b5.
