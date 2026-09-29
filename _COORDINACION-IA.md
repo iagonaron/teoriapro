@@ -60,6 +60,13 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 13:08 · Intros didácticas · HECHO · commits 4f3f78e y cf0ca47 (EN CURSO en 01a1080) · (1) intros/*/motor.js: modo
+  MP4 (si el index.html de un vídeo declara window.VIDEO_MP4 = '<fichero>.mp4' y window.ENLACES_MP4 = zonas pulsables de sus
+  carteles, se reproduce ese vídeo grabado a 60 fps en vez de dibujarlo en directo; ?svg = modo de siempre; ?fps = contador) y
+  el primero grabado: la copia GE escalas-mayores (escalas_mayores_60.mp4, 10 MB, + una línea en su index.html).
+  (2) index.html: bloques ivg (vídeos GE/GP) e ivf (tarjeta «Compases») con SIN_GIRO = true (la caja del vídeo sale ya
+  grande y plana, sin volteo, fundidos ni desenfoque) + bloque CSS «VÍDEOS SIN VOLTEO» antes de </body>; para volver al
+  giro, SIN_GIRO = false. Seguiré grabando el resto de vídeos a MP4, con su EN CURSO.
 - 29-sep 12:46 · Intros didácticas · EN CURSO · (1) vídeos en MP4 a 60 fps, fluidos en cualquier pantalla: motor.js nuevo en
   todas las intros (modo MP4 solo si su index.html declara window.VIDEO_MP4; si no, igual que siempre) y el primero grabado,
   la copia GE escalas-mayores (escalas_mayores_60.mp4 + una línea en su index.html); (2) después, index.html: las tarjetas
