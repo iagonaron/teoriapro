@@ -60,6 +60,9 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 20:48 · Intros didácticas · EN CURSO · vídeos en MP4 1440p a 60 fps (audio 256k), tanda 1440-A (copias GE):
+  intros/intervalos, intervalos-compuestos, inversion-intervalos, inversion-compuestos, escalas-menores y otras-escalas: cada
+  una, su <slug>_1440.mp4 + una línea en su index.html (window.VIDEO_MP4). Nada más. Parto de aaf6a70.
 - 29-sep 20:22 · Intros didácticas · HECHO · commit 3d3459c (EN CURSO en 6fb16a5) · vídeos GP nuevos EN PRUEBA (solo
   Tester/Protester): intros/acordes-avanzados/ (4:34), intros/cadencias-pro/ (4:07), intros/modulacion/ (5:28) e
   intros/transporte/ (7:28), con ▶ en sus tarjetas; index.html: bloque ivg (INTROS + EJERCICIOS: acordespro_id, cadencias,
