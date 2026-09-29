@@ -6137,6 +6137,16 @@ const ESC_PATRONES_MAY={
   "Mayor tipo 3":[0,2,4,5,7,8,10],"Mayor tipo 4":[0,2,4,5,7,9,10],
 };
 const MAJOR_FIFTHS={C:0,D:2,E:4,F:-1,G:1,A:3,B:5};
+/* (29-sep-2026, Iago) «En escalas mayores me salen todo el rato escalas con sostenidos; mírame si no está bugeado lo de
+   los bemoles.» Las tónicas eran solo las teclas blancas y, de las mayores, solo Fa lleva bemoles. Para las MAYORES se
+   añaden Si♭, Mi♭, La♭ y Re♭: cinco con sostenidos (Sol, Re, La, Mi, Si), cinco con bemoles (Fa, Si♭, Mi♭, La♭, Re♭)
+   y Do. Las menores y las otras escalas siguen igual. «a» es la alteración de la tónica (−1 = bemol). */
+const ESC_TONICAS_MAY=ESC_TONICAS.concat([
+  {nom:"Si♭",s:"B",o:3,a:-1},{nom:"Mi♭",s:"E",o:4,a:-1},{nom:"La♭",s:"A",o:4,a:-1},{nom:"Re♭",s:"D",o:4,a:-1}
+]);
+function escFifthsMay(ton){ return (MAJOR_FIFTHS[ton.s]||0)+7*(ton.a||0); }
+/* con el panel solo hay ♯ ♮ ♭: nada de dobles alteraciones (Re♭ Mayor tipo 2 y 3 pedirían Si𝄫) */
+function escSinDobles(notas){ return !(notas||[]).some(n=>Math.abs(n.alter||0)>1); }
 function escVarNotas(fam,s,o){
   const it=STEPS.indexOf(s), mt=midiNota(s,o,0);
   function build(idxs,semis){
@@ -6151,8 +6161,8 @@ function escVarNotas(fam,s,o){
   if(fam==='cromatica'){ const out=[]; for(let k=0;k<12;k++) out.push({midi:mt+k}); return out; }
   return [];
 }
-function escGenerarNotas(s,o,patron){
-  const midiTon=midiNota(s,o,0); const idxTon=STEPS.indexOf(s); const notas=[];
+function escGenerarNotas(s,o,patron,a){
+  const midiTon=midiNota(s,o,a||0); const idxTon=STEPS.indexOf(s); const notas=[];
   for(let i=0;i<patron.length;i++){
     const idx=(idxTon+i)%7; const octava=o+Math.floor((idxTon+i)/7); const step=STEPS[idx];
     const alter=midiTon+patron[i]-midiNota(step,octava,0);
@@ -6161,18 +6171,21 @@ function escGenerarNotas(s,o,patron){
   return notas;
 }
 function escItem7(familia){
-  const ton=pick(ESC_TONICAS);
   const tipos = familia==='mayor'?ESC_TIPOS_MAY:ESC_TIPOS;
   const pesos = familia==='mayor'?ESC_PESOS_MAY:ESC_PESOS;
   const patrones = familia==='mayor'?ESC_PATRONES_MAY:ESC_PATRONES;
   const pool=[]; tipos.forEach(t=>{ for(let i=0;i<pesos[t];i++) pool.push(t); });
-  const tipo=pick(pool);
-  const notasSol=escGenerarNotas(ton.s,ton.o,patrones[tipo]);
+  let ton, tipo, notasSol, intentos=0;
+  do {
+    ton=pick(familia==='mayor'?ESC_TONICAS_MAY:ESC_TONICAS);
+    tipo=pick(pool);
+    notasSol=escGenerarNotas(ton.s,ton.o,patrones[tipo],ton.a);
+  } while(!escSinDobles(notasSol) && ++intentos<40);
   const userSeq=notasSol.map(n=>({step:n.step,octave:n.octave,alter:0}));
   const t0=notasSol[0]; userSeq.push({step:t0.step,octave:t0.octave+1,alter:0,_opt:true});
   return {familia, _variable:true, _precolocada:true, tonica:ton, tipo,
           notasSol, nNotas:notasSol.length, userSeq, _selVar:null, userArm:null,
-          fifths:(familia==='mayor'?MAJOR_FIFTHS[ton.s]:MINOR_FIFTHS[ton.s])};
+          fifths:(familia==='mayor'?escFifthsMay(ton):MINOR_FIFTHS[ton.s])};
 }
 function escNombreVar(f){
   if(f==='pentatonica'||f==='pentatonica_may'||f==='pentatonica_men') return 'pentatónica';
