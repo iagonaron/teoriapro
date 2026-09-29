@@ -60,6 +60,11 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 20:22 · Intros didácticas · HECHO · commit 3d3459c (EN CURSO en 6fb16a5) · vídeos GP nuevos EN PRUEBA (solo
+  Tester/Protester): intros/acordes-avanzados/ (4:34), intros/cadencias-pro/ (4:07), intros/modulacion/ (5:28) e
+  intros/transporte/ (7:28), con ▶ en sus tarjetas; index.html: bloque ivg (INTROS + EJERCICIOS: acordespro_id, cadencias,
+  modulacion, transporte_escrito → pestaña «Escrito»), VIDEOS/TEMA_VIDEO de «APUNTES EN LAS FICHAS» y el título del ▶.
+  No toca lo de escalas con bemoles (7f5c46e). Para quitarlos: sus líneas en INTROS/EJERCICIOS/VIDEOS/TEMA_VIDEO.
 - 29-sep 20:18 · Intros didácticas · EN CURSO · vídeos GP nuevos EN PRUEBA (solo Tester/Protester): intros/acordes-avanzados/,
   intros/cadencias-pro/, intros/modulacion/ e intros/transporte/ (▶ en las tarjetas «Acordes avanzado», «Cadencias»,
   «Modulación» y «Transporte») + index.html: bloque ivg (INTROS y EJERCICIOS), VIDEOS/TEMA_VIDEO de «APUNTES EN LAS FICHAS»
