@@ -18134,6 +18134,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     /* (29-sep-2026, Intros didácticas) vídeos nuevos EN PRUEBA: aquí solo los ven Tester/Protester hasta que tengan 👍 (VERIFICADOS) */
     indiceacustico:{ nombre:'Índice acústico', lista:[ {src:'intros/indice-acustico/index.html', tit:'Índice acústico', dur:'2:12'} ] },
     modos:{ nombre:'Modos', lista:[ {src:'intros/modos/index.html', tit:'Modos', dur:'3:40'} ] },
+    seriearmonica:{ nombre:'Serie armónica', lista:[ {src:'intros/serie-armonica/index.html', tit:'Serie armónica', dur:'2:48'} ] },
     acordes:{ nombre:'Acordes', lista:[ {src:'intros/acordes/index.html', tit:'Acordes', dur:'2:53'} ] },
     invacordes:{ nombre:'Inversión de acordes', lista:[ {src:'intros/inversion-acordes/index.html', tit:'Inversión de acordes', dur:'3:02'} ] },
     enarmoniapro:{ nombre:'Enarmonías', lista:[ {src:'intros/enarmonias/index.html', tit:'Enarmonías', dur:'2:32'} ] }
@@ -18145,7 +18146,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas',
     tonalidades:'tonalidades', ton_nombre:'tonalidades', ton_armadura:'tonalidades', ton_vecinos:'tonalidades',
     acordes_id:'acordes', acordes_build:'acordes', inversion_aco_identifica:'invacordes', inversion_aco_construir:'invacordes', enarmoniapro:'enarmoniapro',
-    indice:'indiceacustico', modos:'modos' };   /* (29-sep-2026, Intros didácticas) temas nuevos */
+    indice:'indiceacustico', modos:'modos', seriearmonica:'seriearmonica' };   /* (29-sep-2026, Intros didácticas) temas nuevos */
   var PRIMERO={ ton_nombre:'intros/indica-la-tonalidad/index.html', ton_armadura:'intros/indica-la-armadura/index.html',
     ton_vecinos:'intros/tonalidades-vecinas/index.html', inversion_int_simples:'intros/inversion-intervalos/index.html',
     inversion_int_compuestos:'intros/inversion-compuestos/index.html', escala_menor:'intros/escalas-menores/index.html',
@@ -18820,6 +18821,9 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
     modos: { nombre: 'Modos', lista: [
       { src: 'intros/modos/index.html', tit: 'Modos', sub: 'Familia · Armadura · Nota característica', dur: '3:40', practica: 'modos', prueba: true }
     ] },
+    seriearmonica: { nombre: 'Serie armónica', lista: [
+      { src: 'intros/serie-armonica/index.html', tit: 'Serie armónica', sub: 'El código · El truco 1-2-4-8', dur: '2:48', practica: 'seriearmonica', prueba: true }
+    ] },
     acordes: { nombre: 'Acordes', lista: [
       { src: 'intros/acordes/index.html', tit: 'Acordes', sub: 'Tríadas · Séptima de dominante', dur: '2:53', practica: 'acordes_id', prueba: true }
     ] },
@@ -18844,6 +18848,7 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
     ton_vecinos: ['tonalidades', baja('#view-tonalidades #cardTC')],
     inversion_aco_identifica: ['inversion', function(){ window.invOuter('acordes'); window.acoTab('identificar'); }],   /* (29-sep-2026) */
     acordes_id: ['acordes', null], enarmoniapro: ['enarmoniapro', null],   /* (29-sep-2026) */
+    seriearmonica: ['seriearmonica', null],   /* (29-sep-2026) */
     indice: ['indiceacustico', null],   /* (29-sep-2026) */
     modos: ['modos', null]   /* (29-sep-2026) */
   };
