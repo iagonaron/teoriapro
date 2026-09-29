@@ -60,6 +60,10 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 14:24 · Intros didácticas · EN CURSO · (1) vídeo GP nuevo EN PRUEBA: intros/serie-armonica/ (▶ en la tarjeta
+  «Serie armónica», data-path seriearmonica) + index.html: solo el bloque ivg (INTROS y EJERCICIOS) y VIDEOS/TEMA_VIDEO de
+  «APUNTES EN LAS FICHAS»; (2) MP4 a 60 fps de las copias GE la-tonalidad e indica-la-tonalidad (su .mp4 + una línea en
+  su index.html). Parto de a98c829.
 - 29-sep 13:08 · Intros didácticas · HECHO · commits 4f3f78e y cf0ca47 (EN CURSO en 01a1080) · (1) intros/*/motor.js: modo
   MP4 (si el index.html de un vídeo declara window.VIDEO_MP4 = '<fichero>.mp4' y window.ENLACES_MP4 = zonas pulsables de sus
   carteles, se reproduce ese vídeo grabado a 60 fps en vez de dibujarlo en directo; ?svg = modo de siempre; ?fps = contador) y
