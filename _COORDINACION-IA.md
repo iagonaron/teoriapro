@@ -60,6 +60,11 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 29-sep 15:06 · Intros didácticas · HECHO · commit 4156294 (EN CURSO en 3a6e910) · (1) intros/serie-armonica/: vídeo GP
+  nuevo EN PRUEBA (música de «Compases extraños»), ▶ en la tarjeta «Serie armónica» (data-path seriearmonica; «Ir a
+  ejercicios» → ?practice=seriearmonica). index.html: una entrada en INTROS y otra en EJERCICIOS (bloque ivg) y, en
+  «APUNTES EN LAS FICHAS», VIDEOS.seriearmonica y TEMA_VIDEO seriearmonica (sin 👍 no lo ven los alumnos). (2) copias GE
+  la-tonalidad e indica-la-tonalidad en MP4 a 60 fps (el mismo .mp4 que en teoriaathome + una línea en su index.html).
 - 29-sep 14:24 · Intros didácticas · EN CURSO · (1) vídeo GP nuevo EN PRUEBA: intros/serie-armonica/ (▶ en la tarjeta
   «Serie armónica», data-path seriearmonica) + index.html: solo el bloque ivg (INTROS y EJERCICIOS) y VIDEOS/TEMA_VIDEO de
   «APUNTES EN LAS FICHAS»; (2) MP4 a 60 fps de las copias GE la-tonalidad e indica-la-tonalidad (su .mp4 + una línea en
