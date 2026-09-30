@@ -60,10 +60,12 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 30-sep 19:58 · Intros didácticas · EN CURSO · intros/*/*.mp3 (23 audios) e intros/*/*_60.mp4 y *_1440.mp4 (12 vídeos):
-  MÁS MARGEN EN EL AUDIO (Iago: «noto un pelín distorsionada mi voz… algo más de margen»). Misma mezcla, 2 dB más
-  baja (−18 LUFS), picos a −3,5 dB, filtro suave por debajo de 60 Hz y MP3 a 192 kbps; en los MP4 solo cambia la pista
-  de audio (AAC hecho desde la mezcla, no desde el MP3). Mismos tiempos. No toca index.html, escenas ni tiempos.
+- 30-sep 20:30 · Intros didácticas · HECHO · commit 462601c (EN CURSO en a91cbe7) · intros/*/*.mp3 (23 audios) e
+  intros/*/*_60.mp4 y *_1440.mp4 (12 vídeos): MÁS MARGEN EN EL AUDIO (Iago: «noto un pelín distorsionada mi voz… algo
+  más de margen»). Misma mezcla, 2 dB más baja (−18 LUFS), picos a −3,5 dB, filtro suave por debajo de 60 Hz y MP3 a
+  192 kbps; en los MP4 solo cambia la pista de audio (AAC hecho desde la mezcla): el vídeo es idéntico (comprobado paquete a
+  paquete). Mismos tiempos; no toca index.html, escenas ni tiempos. Para volver al audio de antes: git revert 462601c.
+  Espejo de Dropbox igual que GitHub (lo de antes, en APPs/_PARA BORRAR/30-sep-2026-noche-audio-antes-de-mas-margen).
 - 30-sep 09:40 · Intros didácticas · HECHO · commit 517ae10 (EN CURSO en 491e460) · correcciones de Iago («Corregir claude» y las de ayer) y PUBLICACIÓN
   de todos los vídeos para alumnos (Iago: «puedes hacer públicos todos los vídeos»; Nuevas grafías no está en el portal):
   intros/{acordes,inversion-acordes,indice-acustico,serie-armonica,cadencias-pro,modulacion}/escenas.js ·
