@@ -666,6 +666,10 @@
       }));
       const q = fraseG(g, [['¿cuál de todos los ', C.blanco], ['Do', C.rosa], ['?', C.blanco]], CX, 250, { size: 50, peso: 800, anchor: 'middle' });
       aparece(s, q, tDo, F0('A3') - 0.1, { dy: 8 });
+      // (30-sep-2026, Iago) «en este momento añade un texto que dice: ¡Todavía hay más!» (un piano de verdad tiene 8 Do; aquí
+      // se ven 5): debajo del teclado, con flechas hacia los dos lados, desde «Un montón» hasta el índice acústico
+      const mas = fraseG(g, [['←  ', C.suave], ['¡Todavía hay más!', C.rosa], ['  →', C.suave]], CX, 718, { size: 44, peso: 800, italic: true, anchor: 'middle' });
+      aparece(s, mas, Wd('A2', 'monton') - 0.2, F0('A3') - 0.1, { dy: 8 });
       const tGr = Wd('A2', 'grave') - 0.3;
       ['C2', 'C3'].forEach((n, i) => {
         const Q = N.group(g); color(Q, C.rosa); texto(Q, '?', tk.tec[n].cx, 372, { anchor: 'middle', size: 54, peso: 800, fill: 'currentColor' });
@@ -852,7 +856,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

@@ -646,7 +646,8 @@
   function mS(sz) {
     const H = 0.716 * sz, r = 0.112 * sz, sw = 0.052 * sz;
     return { sz, H, g: 0.05 * sz, g2: 0.035 * sz, lw: 0.085 * sz, dw: 0.38 * sz, dy: -0.36 * sz,
-      r, sw, cy: -H + r + sw / 2, tw: 0.36 * sz, th: 0.31 * sz, s7: 0.64 * sz, y7: -H + 0.716 * 0.64 * sz, sus: 0.5 * sz };
+      r, sw, cy: -H + r + sw / 2, tw: 0.36 * sz, th: 0.31 * sz, s7: 0.64 * sz, y7: -H + 0.716 * 0.64 * sz, sus: 0.5 * sz,
+      tk: 0.115 * 0.64 * sz, gT: 0.03 * sz };   // tachón del «7» (grosor ≈ el trazo del 7) y aire extra entre la letra y el 7 tachado
   }
   const f1 = v => v.toFixed(1);
   /** «-» a media altura de la letra (x = inicio). */
@@ -662,7 +663,17 @@
   const dBarra = (x, m) => { const cx = x + m.r + m.sw / 2, e = 1.45 * m.r; return `M${f1(cx - e)},${f1(m.cy + e)} L${f1(cx + e)},${f1(m.cy - e)}`; };
   /** Triángulo volado «Δ». */
   const dTriangulo = (x, m) => { const y0 = -m.H + m.sw / 2, y1 = -m.H + m.th; return `M${f1(x + m.tw / 2)},${f1(y0)} L${f1(x + m.tw)},${f1(y1)} L${f1(x)},${f1(y1)} Z`; };
-  /** Cifrado estático: 'D', 'D-', 'D+', 'D°', 'Dsus4', 'D7', 'D-7', 'DΔ', 'Dø', 'D°7' (y lo mismo con otras letras).
+  // (30-sep-2026, Iago) «El de séptima disminuida yo lo cifro con 7 tachado»: D + «7» cruzado por un trazo inclinado (como el 7
+  // tachado del bajo cifrado y el del portal). En los cifrados se escribe 'D7' + TACH.
+  const TACH = '\u0338';
+  const W7T = 0.61;          // ancho del 7 tachado (× cuerpo del 7): el tachón sobresale un poco a la derecha del número
+  /** Tachón del «7»: de abajo-izquierda a arriba-derecha (≈30°), cruza el palo del 7 por su mitad y sobresale un poco del
+   *  número por los dos lados; por arriba no llega a la barra del 7. x = inicio del «7». */
+  const dTachon = (x, m) => {
+    const u = m.s7, cx = x + 0.27 * u, cy = m.y7 - 0.30 * u, hx = 0.275 * u, hy = 0.159 * u;
+    return `M${f1(cx - hx)},${f1(cy + hy)} L${f1(cx + hx)},${f1(cy - hy)}`;
+  };
+  /** Cifrado estático: 'D', 'D-', 'D+', 'D°', 'Dsus4', 'D7', 'D-7', 'DΔ', 'Dø', 'D°7', 'D7̸' (= 'D7' + TACH) (y lo mismo con otras letras).
    *  (x, yB) = inicio (o centro / final con o.anchor) y línea base. Letra y calidad en currentColor (o.colL / o.colQ).
    *  Devuelve el grupo con _w, _L, _Q, _wL (ancho de la letra) y _qx (donde empieza la calidad). */
   function simbolo(parent, spec, x, yB, sz, o) {
@@ -683,10 +694,37 @@
     }
     else if (c0 === 'Δ') { cx += gap; tr(dTriangulo(cx, m), m.sw); cx += m.tw; rest = rest.slice(1); gap = m.g2; }
     else if (rest.startsWith('sus4')) { cx += 0.6 * gap; const t4 = texto(Q, 'sus4', cx, 0, { size: m.sus, peso: 700, fill: 'currentColor' }); cx += D.medir(t4); rest = rest.slice(4); gap = m.g2; }
-    if (rest[0] === '7') { cx += gap; const t7 = texto(Q, '7', cx, m.y7, { size: m.s7, peso: 800, fill: 'currentColor' }); cx += D.medir(t7); }
+    if (rest[0] === '7') {
+      const tach = rest[1] === TACH;
+      cx += gap + (tach ? m.gT : 0);
+      const t7 = texto(Q, '7', cx, m.y7, { size: m.s7, peso: 800, fill: 'currentColor' }), w7 = D.medir(t7);
+      if (tach) { tr(dTachon(cx, m), m.tk); cx += Math.max(w7, W7T * m.s7); } else cx += w7;
+    }
     const ax = o.anchor === 'middle' ? x - cx / 2 : (o.anchor === 'end' ? x - cx : x);
     W.setAttribute('transform', `translate(${ax.toFixed(1)},${yB.toFixed(1)})`);
     W._w = cx; W._x = ax; W._L = L; W._Q = Q; W._wL = wL; W._qx = wL + m.g;
+    return W;
+  }
+  /** (30-sep-2026) «D°7» que en tM se convierte en el cifrado de Iago, D + «7» tachado: el circulito se encoge y se va,
+   *  el 7 se arrima a la letra y se dibuja el tachón. Centrado en x (se recentra al cambiar de ancho). */
+  function simboloDim7(s, parent, x, yB, sz, tM) {
+    const m = mS(sz), W = N.group(parent, 'cifrado');
+    const L = N.group(W, 'letra'), Q = N.group(W, 'calidad');
+    const wL = D.medir(texto(L, 'D', 0, 0, { size: sz, peso: 800, fill: 'currentColor' })), q0 = wL + m.g;
+    const Ci = N.group(Q); trazo(Ci, dCirculo(q0, m), { w: m.sw });
+    const W7 = N.group(Q), w7 = D.medir(texto(W7, '7', 0, m.y7, { size: m.s7, peso: 800, fill: 'currentColor' }));
+    const pT = trazo(W7, dTachon(0, m), { w: m.tk });
+    const xA = q0 + 2 * m.r + m.sw + m.g2, xB = wL + m.g + m.gT, wA = xA + w7, wB = xB + Math.max(w7, W7T * m.s7);
+    const ccx = q0 + m.r + m.sw / 2, ccy = m.cy;
+    s.on(t => {
+      const kc = ease(ramp(t, tM, tM + 0.35)), k7 = ease(ramp(t, tM + 0.1, tM + 0.55)), kt = ease(ramp(t, tM + 0.5, tM + 0.85));
+      opa(Ci, 1 - kc);
+      Ci.setAttribute('transform', `translate(${f1(ccx)},${f1(ccy)}) scale(${(1 - 0.5 * kc).toFixed(3)}) translate(${f1(-ccx)},${f1(-ccy)})`);
+      W7.setAttribute('transform', `translate(${f1(lerp(xA, xB, k7))},0)`);
+      trazoK(pT, kt); pT.style.display = kt <= 0.001 ? 'none' : '';
+      W.setAttribute('transform', `translate(${f1(x - lerp(wA, wB, k7) / 2)},${f1(yB)})`);
+    });
+    W._L = L; W._Q = Q;
     return W;
   }
   /** Trazo (pathLength 1) con tramos de vida [[ta, tb, dur]]: se dibuja en [ta, ta+dur], se ve hasta tb y sale en 0,3 s. */
@@ -980,6 +1018,10 @@
       const tTr = Wx('C6', 'triangulo') - 0.15, tC6a = Wx('C6', 'mayor') - 0.1, tMas6 = Wx('C6', 'mas') - 0.1, tSe6 = Wx('C6', 'septima') - 0.1, tC6b = Wx('C6', 'mayor', 2) - 0.1;
       const tCc = Wx('C9', 'circulo') - 0.1, tTa = Wx('C9', 'tachado') - 0.1, tC9a = Wx('C9', 'disminuido') - 0.1, tSe9 = Wx('C9', 'septima') - 0.1, tC9b = Wx('C9', 'menor') - 0.1, tSemi = Wx('C9', 'semidisminuido') - 0.15;
       const tC7 = Wx('C10', 'circulito') - 0.1, tSi = Wx('C10', 'siete') - 0.15, tDi10 = Wx('C10', 'disminuido') - 0.1, tSe10 = Wx('C10', 'septima') - 0.1, tC10 = Wx('C10', 'disminuida') - 0.1;
+      // (30-sep-2026, Iago) «Puedes poner º7 cuando lo locuto, pero luego cámbialo por el 7 tachado»: el D°7 se ve mientras dice
+      // «circulito y un siete… séptima disminuida… todas las terceras son menores» y, en «y el acorde no podría ser más
+      // deprimente» (momento tranquilo: no entra nada más), se convierte en D + 7 tachado (su cifrado); así suena y así se queda
+      const tM = Wx('C10', 'acorde', 2) - 0.2;
 
       // todo lo principal va en M: se aparta durante el consejo (C5) y al final
       const M = N.group(g, 'principal');
@@ -995,7 +1037,8 @@
           N.el('rect', { x: x - 66, y: FY - 42, width: 132, height: 84, rx: 14, fill: 'none', stroke: C.tenue, 'stroke-width': 2, 'stroke-dasharray': '7 7' }, R);
           const F = N.group(R, 'ficha'), Fi = N.group(F);
           const RR = N.el('rect', { x: x - 66, y: FY - 42, width: 132, height: 84, rx: 14, fill: C.panel, stroke: C.suave, 'stroke-width': 2.5 }, Fi);
-          simbolo(Fi, sp, x, FY + 0.36 * 44, 44, { anchor: 'middle' });
+          if (sp === 'D°7') simboloDim7(s, Fi, x, FY + 0.36 * 44, 44, tM);     // D°7 → D + 7 tachado (a la vez que el grande)
+          else simbolo(Fi, sp, x, FY + 0.36 * 44, 44, { anchor: 'middle' });
           pop(s, Fi, tFill[i], null, x, FY, { k0: .7 });
           s.on(t => {
             const kk = ventanas(t, tCur[i], .3, .3);
@@ -1022,33 +1065,36 @@
       const Qg = N.group(WS);
       const pGu = trazo(Qg, dGuion(q0, m), { w: m.lw }), pVe = trazo(Qg, dVertical(q0, m), { w: m.lw });
       const GCi = N.group(Qg), dxCi = pista([[0, oO], [tC7, 0]], 0.4);   // el círculo del ø vuelve a su sitio al quitar la barra (°7)
-      s.on(t => GCi.setAttribute('transform', `translate(${dxCi(t).toFixed(2)},0)`));
+      const ccx = q0 + m.r + m.sw / 2, ccy = m.cy;                         // (30-sep) y en tM se encoge y se va (D°7 → D 7 tachado)
+      s.on(t => { const kc = 1 - 0.5 * ease(ramp(t, tM, tM + 0.35));
+        GCi.setAttribute('transform', `translate(${dxCi(t).toFixed(2)},0) translate(${f1(ccx)},${f1(ccy)}) scale(${kc.toFixed(3)}) translate(${f1(-ccx)},${f1(-ccy)})`); });
       const pCiT = trazo(Qg, dCirculo(q0, m), { w: m.sw }), pCiC = trazo(GCi, dCirculo(q0, m), { w: m.sw });
       const pBa = trazo(Qg, dBarra(q0 + oO, m), { w: m.sw }), pTri = trazo(Qg, dTriangulo(q0, m), { w: m.sw });
       trazoTramos(s, pGu, [[tGu, tCi, 0.45], [tMe, tTr - 0.1, 0.45]]);      // «-» (y la raya del «+»)
       trazoTramos(s, pVe, [[tMa, tCi, 0.4]]);                               // «+»
       trazoTramos(s, pCiT, [[tCi + 0.2, tSu, 0.5]]);                        // «°»
       trazoTramos(s, pTri, [[tTr + 0.1, tCc - 0.05, 0.6]]);                 // «Δ»
-      trazoTramos(s, pCiC, [[tCc, FIN, 0.5]]);                              // «ø» → «°7»
+      trazoTramos(s, pCiC, [[tCc, tM, 0.5]]);                               // «ø» → «°7» → (tM) se va: queda el 7 tachado
       trazoTramos(s, pBa, [[tTa, tC7, 0.35]]);
       const xSu = wD + 0.6 * m.g;
       const tm1 = texto(Qg, 'sus4', 0, 0, { size: m.sus, peso: 700 }); const wSu = D.medir(tm1); tm1.remove();
       const tm2 = texto(Qg, '7', 0, 0, { size: m.s7, peso: 800 }); const w7 = D.medir(tm2); tm2.remove();
       const ESu = escrito(s, Qg, xSu - 3, -m.H - 12, wSu + 8, m.H + 30, [[tSu + 0.1, tRe, 0.6]]);
       texto(ESu, 'sus4', xSu, 0, { size: m.sus, peso: 700, fill: 'currentColor' });
-      const x7a = wD + m.g, x7b = q0 + m.dw + m.g2, x7c = q0 + 2 * m.r + m.sw + m.g2;
-      const x7 = pista([[0, x7a], [tMe, x7b], [tSi - 0.6, x7c]], 0.4);
+      const x7a = wD + m.g, x7b = q0 + m.dw + m.g2, x7c = q0 + 2 * m.r + m.sw + m.g2, x7t = x7a + m.gT;
+      const x7 = pista([[0, x7a], [tMe, x7b], [tSi - 0.6, x7c], [tM + 0.1, x7t]], 0.45);   // (tM) el 7 se arrima a la D
       const W7 = N.group(Qg);
       const E7 = escrito(s, W7, -3, m.y7 - 0.8 * m.s7, w7 + 8, 0.95 * m.s7, [[t7, tTr - 0.1, 0.35], [tSi, FIN, 0.35]]);
       texto(E7, '7', 0, m.y7, { size: m.s7, peso: 800, fill: 'currentColor' });
+      const pTa = trazo(W7, dTachon(0, m), { w: m.tk }); trazoTramos(s, pTa, [[tM + 0.5, FIN, 0.35]]);   // (tM) …y se tacha
       s.on(t => W7.setAttribute('transform', `translate(${x7(t).toFixed(1)},0)`));
       const wDm = q0 + m.dw, wDs = xSu + wSu, wD7 = x7a + w7, wDm7 = x7b + w7, wDT = q0 + m.tw;
-      const wDc = q0 + oO + 2 * m.r + m.sw, wDb = q0 + 2.9 * m.r + m.sw, wDo7 = x7c + w7, wDo = q0 + 2 * m.r + m.sw;
-      const anchoS = pista([[0, wD], [tGu, wDm], [tCi, wDo], [tSu, wDs], [tRe, wD], [t7, wD7], [tMe, wDm7], [tTr, wDT], [tCc, wDc], [tTa, wDb], [tC7, wDo], [tSi, wDo7]], 0.45);
+      const wDc = q0 + oO + 2 * m.r + m.sw, wDb = q0 + 2.9 * m.r + m.sw, wDo7 = x7c + w7, wDo = q0 + 2 * m.r + m.sw, wDt = x7t + Math.max(w7, W7T * m.s7);
+      const anchoS = pista([[0, wD], [tGu, wDm], [tCi, wDo], [tSu, wDs], [tRe, wD], [t7, wD7], [tMe, wDm7], [tTr, wDT], [tCc, wDc], [tTa, wDb], [tC7, wDo], [tSi, wDo7], [tM + 0.1, wDt]], 0.45);
       s.on(t => {
         WS.setAttribute('transform', `translate(${(XS - anchoS(t) / 2).toFixed(1)},${YB})`);
         color(Lg, mezcla(C.blanco, C.rosa, win(t, a - 1, tLetra, .1, .45)));
-        color(Qg, mezcla(C.blanco, C.rosa, ventanas(t, [[tGu, tGu + 2.6], [tMa, tMa + 2.4], [tCi, tCi + 2.6], [tSu, tSu + 3.0], [t7, t7 + 2.4], [tMe, tMe + 2.2], [tTr, tTr + 2.4], [tCc, tTa + 2.4], [tC7, tSi + 2.4]])));
+        color(Qg, mezcla(C.blanco, C.rosa, ventanas(t, [[tGu, tGu + 2.6], [tMa, tMa + 2.4], [tCi, tCi + 2.6], [tSu, tSu + 3.0], [t7, t7 + 2.4], [tMe, tMe + 2.2], [tTr, tTr + 2.4], [tCc, tTa + 2.4], [tC7, tSi + 2.4], [tM - 0.15, tM + 1.6]])));
       });
       // nombre de la tríada bajo el símbolo
       const nombreT = (txt, ta, tb) => { const G = fraseG(M, [[txt, 'currentColor']], XS, 732, { size: 44, peso: 800, anchor: 'middle' }); mostrarEn(s, G, ta, tb, .3, .3); s.on(t => color(G, mezcla(C.blanco, C.rosa, win(t, ta, ta + 1.8, .25, .4)))); return G; };
@@ -1268,7 +1314,11 @@
       const PROG = ['D7', 'D7', 'D7', 'D7', 'G7', 'G7', 'D7', 'D7', 'A7', 'G7', 'D7', 'D7'];
       const GX = j => 560 + j * 200, GY = [490, 610, 730];
       const tSe2 = Wx('B3', 'septima', 2) - 0.15, tMo = Wd('B4', 'mozart') - 0.3, tBs = Wd('B5', 'bluesero') - 0.15;
-      const MB = S.SON_BLUES || [], t0B = F0('SON_BLUES');
+      // (30-sep-2026) el blues, más lento (12 compases de 0,75 s): cada casilla se enciende de su compás al siguiente
+      // (S.SON_BLUES = inicio de cada compás); el último, el D7 tenido (~1,5 s)
+      const MB = S.SON_BLUES || [], MR = S.SON_BLUES_riff || [], t0B = F0('SON_BLUES');
+      const inicio = kk => MB[kk] != null ? MB[kk] : t0B + 0.12 + kk * 0.75;
+      const finCompas = kk => kk < 11 ? inicio(kk + 1) : inicio(11) + 1.5;
       const RJw = N.group(g), RJ = N.group(RJw); aparece(s, RJ, tTo, fin, { dy: 8 });
       s.on(t => opa(RJw, 1 - 0.6 * win(t, tMo - 0.2, t0B + 0.05, .4, .3)));
       GY.forEach((y, r) => {
@@ -1283,11 +1333,50 @@
         const H = N.el('rect', { x: x - 84, y: y - 40, width: 168, height: 80, rx: 12, fill: C.rosa, 'fill-opacity': 0.16, stroke: C.rosa, 'stroke-width': 2.5 }, G);
         const sb = simbolo(G, ch, x, y + 0.36 * 56, 56, { anchor: 'middle', colL: C.blanco });
         pop(s, G, tTo + 0.1 + kk * 0.05, null, x, y, { k0: .6 });
-        const m0 = MB[kk] != null ? MB[kk] : t0B + 0.12 + kk * 0.38, m1 = kk === 11 ? m0 + 1.3 : m0 + 0.38;
+        const m0 = inicio(kk), m1 = finCompas(kk);
         s.on(t => {
           const on = win(t, m0 - 0.03, m1, .05, .12);
           opa(H, on); color(sb._L, mezcla(C.blanco, C.rosa, on));
           color(sb._Q, mezcla(C.blanco, C.rosa, Math.max(on, win(t, tSe2, tMo - 0.1, .3, .4))));
+        });
+      });
+      // (30-sep-2026, Iago) «que el baile haga re fa sol la, ese riff según cada acorde»: bajo la rejilla, las cuatro notas del riff
+      // de la mano izquierda (1–♭3–4–5 del acorde que suena); cada una se enciende al sonar (S.SON_BLUES_riff: 4 por compás y
+      // 1 en el último). Cuando cambia el acorde, las notas se relevan casilla a casilla, de izquierda a derecha (la vieja sube y
+      // se va, la nueva entra desde abajo), justo al empezar el compás: nunca se pisan dos nombres.
+      const RIFF = { D7: ['Re', 'Fa', 'Sol', 'La'], G7: ['Sol', 'Si♭', 'Do', 'Re'], A7: ['La', 'Do', 'Re', 'Mi'] };
+      const RIFF_T = [0, 0.25, 0.375, 0.625];
+      const tRiff = (kk, j) => { const i = kk < 11 ? 4 * kk + j : 44; return MR[i] != null ? MR[i] : inicio(kk) + RIFF_T[j]; };
+      const YR = 858, PR = 124, xRi = j => CX + (j - 1.5) * PR;
+      const RF = N.group(g, 'riff'); aparece(s, RF, t0B - 0.2, fin, { dy: 0, fi: .2, fo: .4 });
+      [1, 2, 3].forEach(j => {           // los puntos entre las notas (los mismos para los tres acordes)
+        const P = N.group(RF); texto(P, '·', xRi(j) - PR / 2, YR, { anchor: 'middle', size: 38, peso: 800, fill: C.suave });
+        aparece(s, P, tRiff(0, j) - 0.05, null, { dy: 0, fi: .2 });
+      });
+      Object.keys(RIFF).forEach(ch => {
+        const tramos = [];                // compases seguidos con este acorde → [inicio, fin]
+        PROG.forEach((c, kk) => {
+          if (c !== ch) return;
+          const a_ = inicio(kk), b_ = kk === 11 ? fin + 1 : finCompas(kk), u = tramos[tramos.length - 1];
+          if (u && Math.abs(u[1] - a_) < 0.01) u[1] = b_; else tramos.push([a_, b_]);
+        });
+        RIFF[ch].forEach((nm, j) => {
+          const Wo = N.group(RF), W = fraseG(Wo, [[nm, 'currentColor']], xRi(j), YR, { size: 38, peso: 800, anchor: 'middle' });
+          if (ch === 'D7') aparece(s, W, tRiff(0, j) - 0.05, null, { dy: 6, fi: .2 });      // en el primer compás, una a una
+          const dj = -0.01 + 0.06 * j, h = 0.07, R = 28;      // relevo de esta casilla: centrado en (inicio del compás + dj), ±h s
+          s.on(t => {
+            let v = 0, dy = 0;
+            tramos.forEach(([a_, b_], i) => {
+              const primero = ch === 'D7' && i === 0, ai = a_ + dj, bi = b_ + dj;
+              if ((!primero && t < ai - h) || t > bi + h) return;
+              const kin = primero ? 1 : ease(ramp(t, ai - h, ai + h)), kout = ease(ramp(t, bi - h, bi + h)), vv = Math.min(kin, 1 - kout);
+              if (vv > v) { v = vv; dy = kout > 0 ? -R * kout : R * (1 - kin); }
+            });
+            opa(Wo, v); if (v > 0) Wo.setAttribute('transform', `translate(0,${dy.toFixed(1)})`);
+          });
+          const ts = [];
+          PROG.forEach((c, kk) => { if (c === ch && (kk < 11 || j === 0)) ts.push([tRiff(kk, j), kk === 11 ? 1.5 : 0.3]); });
+          s.on(t => color(W, mezcla(C.blanco, C.rosa, ts.reduce((mx, [tt, d]) => Math.max(mx, win(t, tt - 0.03, tt + d, .04, .22)), 0))));
         });
       });
       lineaPartes(s, g, [[[['todos con ', C.blanco], ['séptima de dominante', C.rosa]], tTo + 0.2]], CX, 330, tMo - 0.15, { size: 40 });
@@ -1349,7 +1438,8 @@
       const c2 = N.group(g); chip(c2, 'posición cerrada', 1170, 782, { size: 28, anchor: 'middle', relleno: false, ls: '0.04em' });
       pop(s, c2, Wx('E2', 'posicion') - 0.2, fin, 1170, 782);
       // «…todo por terceras»* — *con permiso del sus4 (que no se enfade)
-      lineaPartes(s, g, [[[['todo por terceras', C.rosa]], tTe], [[['*', C.rosa]], Wx('E3', 'perdoname') - 0.1]], CX, 872, fin, { size: 40 });
+      // (30-sep-2026) fuera «Perdóname, eh» (E3): el asterisco llega con «Bueno, con permiso…» (E4)
+      lineaPartes(s, g, [[[['todo por terceras', C.rosa]], tTe], [[['*', C.rosa]], Wx('E4', 'bueno') - 0.15]], CX, 872, fin, { size: 40 });
       const tPe = Wx('E4', 'permiso') - 0.3, tSu = Wx('E4', 'sus4') - 0.2, tEn = Wx('E4', 'enfade') - 0.45;
       const NP = N.group(g); aparece(s, NP, tPe, fin, { dy: 6 });
       const fp = frase(NP, [['* con permiso del ', C.suave]], 0, 0, { size: 30, peso: 700, italic: true });
@@ -1379,7 +1469,7 @@
       const sep = N.group(g); N.line(sep, 960, 240, 960, 800, 2, { stroke: C.tenue }); mostrarEn(s, sep, tCu, fin);
       const yF = i => 392 + i * 94;
       const TRI = [['D', '3M', '5J'], ['D-', '3ªm', '5J'], ['D+', '3M', '5A'], ['D°', '3ªm', '5D'], ['Dsus4', '4J', '5J']];
-      const CUA = [['D7', 'D', '7ªm'], ['D-7', 'D-', '7ªm'], ['DΔ', 'D', '7M'], ['Dø', 'D°', '7ªm'], ['D°7', 'D°', '7D']];
+      const CUA = [['D7', 'D', '7ªm'], ['D-7', 'D-', '7ªm'], ['DΔ', 'D', '7M'], ['Dø', 'D°', '7ªm'], ['D7' + TACH, 'D°', '7D']];   // (30-sep) el de Iago: 7 tachado
       const REF = { 'D': 0, 'D-': 1, 'D°': 3 };
       const symT = [];
       TRI.forEach(([sp, i3, i5], i) => {
@@ -1429,7 +1519,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

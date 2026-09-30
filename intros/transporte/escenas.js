@@ -1265,8 +1265,36 @@
     return G;
   }
 
-  // ================================================================ M · P · transporte mental (Re M → 3ªm ↑ → Fa M): se tachan armadura y clave;
-  //                                     y «Espera un momento»: ¿por qué el Sol♯ de arriba lleva abajo un becuadro?
+  // ================================================================ M · P · transporte mental (Re M → 3ªm ↑ → Fa M) en UN SOLO pentagrama
+  //   (30-sep, Iago: «evitaría poner otro pentagrama… tiene más sentido que te apañes con un pentagrama porque es lo que
+  //   representaría en la realidad. Vas haciendo tachones y anotaciones sobre la marcha»). La partitura del atril y, sobre ella,
+  //   a lápiz y al hilo de lo que se dice: se tacha la armadura (encima, 1♭), se tacha la clave (delante, la de Fa en 4.ª), debajo
+  //   de cada nota su nombre nuevo y, en el Sol♯, el ♯ tachado y un ♮ debajo. «Espera un momento»: ¿por qué ese Sol♯ (arriba)
+  //   lleva debajo un becuadro? ¿Por qué está tachado?
+  /** Anotación a lápiz que se escribe de izquierda a derecha: g se descubre (caja x0..x1 × y0..y1) de t0 a t0+dur.
+   *  o.lapiz: el lápiz sigue la punta. (Opacidad de g: la pone esta función; atenuar desde un grupo padre.) */
+  function escribeIzq(s, g, x0, y0, x1, y1, t0, dur, o) {
+    o = o || {};
+    const id = 'clipTr' + (nClip++);
+    const defs = N.el('defs', null, g.parentNode);
+    const cp = N.el('clipPath', { id, clipPathUnits: 'userSpaceOnUse' }, defs);
+    const r = N.el('rect', { x: x0 - 6, y: y0 - 6, width: 0, height: y1 - y0 + 12 }, cp);
+    g.setAttribute('clip-path', `url(#${id})`);
+    const L = o.lapiz ? N.group(g.parentNode) : null;
+    if (L) dibujoLapiz(L);
+    s.on(t => {
+      const k = ramp(t, t0, t0 + dur), w = (x1 - x0 + 12) * k;
+      r.setAttribute('width', w.toFixed(1));
+      if (k >= 1) g.removeAttribute('clip-path'); else g.setAttribute('clip-path', `url(#${id})`);
+      opa(g, t < t0 ? 0 : 1);
+      if (L) {
+        const vis = win(t, t0 - 0.1, t0 + dur + 0.2, .1, .2); opa(L, vis);
+        if (vis > 0) L.setAttribute('transform', `translate(${(x0 - 6 + w).toFixed(1)},${(y1 - 4 - Math.abs(Math.sin(k * Math.PI * 3)) * (y1 - y0) * 0.55).toFixed(1)})`);
+      }
+    });
+    return L;
+  }
+
   function escenaMental() {
     const a = F0('M1') - 0.3, b = F0('D1') - 0.3;
     escena('mental', a, b, (s, g) => {
@@ -1289,114 +1317,142 @@
       });
       const kc = N.group(g); chip(kc, 'TRANSPORTE MENTAL', CX, 122, { size: 30, anchor: 'middle' });
       pop(s, kc, tSale + 0.35, fin, CX, 122);
-      // ---------- M2 · el ejemplo: transportar este fragmento una 3ªm ↑ (Re M)
-      const tP1 = F0('P1') - 0.25, tCopia = F1('M4') + 0.05, DQ = 175;
-      const BQ = N.group(g);                                     // enunciado + original + etiquetas: centrados mientras están solos; suben cuando sale la copia
-      s.on(t => BQ.setAttribute('transform', `translate(0,${(DQ * (1 - ease(ramp(t, tCopia, tCopia + 0.75)))).toFixed(1)})`));
-      const [e1, e2, e3] = enunciado(BQ, 'transportar este fragmento una', '3ªm', 1, 205);
+
+      // ---------- el bloque (enunciado + razonamiento + pentagrama con sus anotaciones): centrado mientras está solo (M2–M8);
+      //            sube para dejar sitio abajo a los rótulos y a los paneles (M9–M12); vuelve al centro para «Espera un momento» (P)
+      const tP1 = F0('P1') - 0.25, tP5 = F0('P5') - 0.2, tSube = F1('SON_MEN_FA') + 0.03;
+      const yM = 500, DA = 93, DC = 100, sp = SP;
+      const BK = N.group(g);
+      s.on(t => {
+        const dy = DA * (1 - ease(ramp(t, tSube, tSube + 0.7))) + DC * ease(ramp(t, tP1, tP1 + 0.7));
+        BK.setAttribute('transform', `translate(0,${dy.toFixed(1)})`);
+      });
+      // ---------- M2 · el ejemplo: transportar este fragmento una 3ªm ↑ (Re M) · UN pentagrama: el original, el del atril
+      const yE = yM - 225;
+      const [e1, e2, e3] = enunciado(BK, 'transportar este fragmento una', '3ªm', 1, yE);
       aparece(s, e1, Wd('M2', 'transportar') - 0.2, tP1, { dy: 6 });
-      pop(s, e2, Wd('M2', 'tercera') - 0.15, tP1, e2._cx, 205);
+      pop(s, e2, Wd('M2', 'tercera') - 0.15, tP1, e2._cx, yE);
       aparece(s, e3, Wd('M2', 'ascendente') - 0.15, tP1, { dy: 8 });
-      const xS = 450, xL = 300, yA = 345, yB = 590, sp = SP;
-      const LC = N.group(BQ);                                  // columna de etiquetas (se atenúa al final)
-      const xA = xS + 3.9 * sp + 4, xAe = xA + 2 * (N.M.accidentalSharp.adv + 0.14) * sp;
-      const xC = xAe + 0.9 * sp, xN = xC + N.anchoCompas({ tipo: 'simple', num: '2', den: '4' }, sp) + 1.8 * sp;
-      const WM = N.group(BQ), WT = N.group(g);
-      const PM = partitura(WM, { x: xS, yM: yA, arm: [2, '#'], compases: MEL_RE(1.2), xCompas: xC, xNotas: xN });
-      const PT = partitura(WT, { x: xS, yM: yB, arm: [2, '#'], compases: MEL_RE(1.2), xCompas: xC, xNotas: xN });
+      const xS = 558, xL = 338, yNm = yM + 140;
+      const ST = N.group(BK);                                    // el papel: pentagrama + tachones y anotaciones sobre él
+      const NM = N.group(BK);                                    // debajo de las notas: los nombres nuevos (y el ♮)
+      const LC = N.group(BK);                                    // a la izquierda: el razonamiento Re M → 3ªm ↑ → Fa M
+      const WM = N.group(ST);
+      const PM = partitura(WM, { x: xS, yM, arm: [2, '#'], compases: MEL_RE(0) });
+      const xA = PM.arm.items[0].x, xAe = xA + PM.arm.w;
       const tEj = Wd('M2', 'ejemplo') - 0.2;
       PM.notas.forEach((e, i) => pop(s, e.g, tEj + 0.2 + i * 0.06, 1e9, e.cx, e.y, { k0: .4, fi: .25 }));
       PM.vigas.forEach(v => mostrarEn(s, v.g, tEj + 0.2 + v.idx[1] * 0.06, 1e9, .25));
+      oido(s, BK, PM.xFin + 70, yM, ['SON_MEN_RE', 'SON_MEN_FA']);
       // ---------- M3 · aparenta estar en Re M (2♯)
       const tApa = Wd('M3', 'aparenta') - 0.2, tRe = Wd('M3', 're') - 0.15;
-      rosaEn(s, PM.AR, [[tApa, tRe + 1.4]]);
-      tonChip(s, LC, 'D', xL, yA, tRe, fin, [[tRe, tRe + 1.4]]);
-      // ---------- M4 · una 3ªm ↑: Re, Mi, Fa → Fa M
+      tonChip(s, LC, 'D', xL, yM - 66, tRe, fin, [[tRe, tRe + 1.4]]);
+      // ---------- M4 · una 3ªm ↑: Re, Mi, Fa → Fa M (el chip de Fa M, a la altura de los nombres nuevos)
       const tTer = Wd('M4', 'tercera') - 0.2, tFaM = Wd('M4', 'fa', 2) - 0.15;
       const tRMF = [Wd('M4', 're') - 0.1, Wd('M4', 'mi') - 0.1, Wd('M4', 'fa') - 0.1];
-      const TM = fraseG(LC, [['3ªm ↑', 'currentColor']], xL, 432, { size: 32, peso: 800, anchor: 'middle' });
+      const TM = fraseG(LC, [['3ªm ↑', 'currentColor']], xL, yM + 6, { size: 32, peso: 800, anchor: 'middle' });
       aparece(s, TM, tTer, fin, { dy: 6 });
       colorSeq(s, TM, [[-1, C.rosa], [tFaM + 1.6, C.suave]], .4);
       const CU = N.group(LC); color(CU, C.blanco);
-      const cuX = [xL - 62, xL, xL + 62];
-      const cuW = ['Re', 'Mi', 'Fa'].map((n, i) => { const G = N.group(CU); texto(G, n, cuX[i], 502, { anchor: 'middle', size: 30, peso: 800, fill: 'currentColor' }); aparece(s, G, tRMF[i], fin, { dy: 6 }); return G; });
-      [0, 1].forEach(i => { const G = N.group(CU); texto(G, '·', (cuX[i] + cuX[i + 1]) / 2, 502, { anchor: 'middle', size: 30, peso: 800, fill: C.suave }); mostrarEn(s, G, tRMF[i + 1], fin, .25); });
+      const cuX = [xL - 62, xL, xL + 62], yCu = yM + 62;
+      const cuW = ['Re', 'Mi', 'Fa'].map((n, i) => { const G = N.group(CU); texto(G, n, cuX[i], yCu, { anchor: 'middle', size: 30, peso: 800, fill: 'currentColor' }); aparece(s, G, tRMF[i], fin, { dy: 6 }); return G; });
+      [0, 1].forEach(i => { const G = N.group(CU); texto(G, '·', (cuX[i] + cuX[i + 1]) / 2, yCu, { anchor: 'middle', size: 30, peso: 800, fill: C.suave }); mostrarEn(s, G, tRMF[i + 1], fin, .25); });
       const tCon = Wd('M10', 'contar') - 0.2;
       rosaEn(s, cuW[2], [[tRMF[2], tFaM + 1.4], [tCon, tCon + 2.2]]);
       rosaEn(s, cuW[0], [[tCon, tCon + 2.2]]); rosaEn(s, cuW[1], [[tCon, tCon + 2.2]]);
-      tonChip(s, LC, 'F', xL, yB, tFaM, fin, [[tFaM, tFaM + 1.4], [Wd('M5', 'fa') - 0.2, Wd('M5', 'fa') + 1.2]]);
-      // ---------- M5 · la misma partitura (abajo): se tacha la armadura y se añade la nueva (un bemol)
-      s.on(t => { const k = ease(ramp(t, tCopia, tCopia + 0.75)); WT.setAttribute('transform', `translate(0,${((yA + DQ - yB) * (1 - k)).toFixed(1)})`); opa(WT, t < tCopia ? 0 : (0.45 + 0.55 * k) * (t > fin - 0.4 ? 1 - ramp(t, fin - 0.4, fin) : 1)); });
-      const tTa = Wd('M5', 'tachamos') - 0.1, tAn = Wd('M5', 'anadimos') - 0.1, tBem = Wd('M5', 'bemol') - 0.25;
-      const XA = N.group(WT); tachaX(s, XA, xA - 8, yB - 3.3 * sp, xAe + 4, yB + 1.2 * sp, tTa, { w: 4 });
+      tonChip(s, LC, 'F', xL, yNm - 11, tFaM, fin, [[tFaM, tFaM + 1.4], [Wd('M5', 'fa') - 0.2, Wd('M5', 'fa') + 1.2]]);
+
+      // ---------- M5 · se tacha la armadura (aspa a lápiz) y encima se escribe la nueva: un bemol
+      const tTa = Wd('M5', 'tachamos') - 0.1, tBem = Wd('M5', 'bemol') - 0.25;
+      rosaEn(s, PM.AR, [[tApa, tRe + 1.4], [tTa - 0.2, tTa + 0.5]]);
+      s.on(t => opa(PM.AR, 1 - 0.55 * ease(ramp(t, tTa + 0.6, tTa + 1.1))));
+      const XA = N.group(ST); tachaX(s, XA, xA - 8, yM - 3.3 * sp, xAe + 4, yM + 1.2 * sp, tTa, { w: 4 });
       colorSeq(s, XA, [[-1, C.rosa], [tTa + 2.2, C.suave]], .5);
-      rosaEn(s, PT.AR, [[tTa - 0.2, tTa + 0.5]], { a: C.rosa });
-      s.on(t => opa(PT.AR, 1 - 0.55 * ease(ramp(t, tTa + 0.6, tTa + 1.1))));
-      // el bloque (compás, notas, divisorias) se aparta: primero para el bemol, luego para la clave
-      const D1 = 1.5 * sp, D2 = 3.34 * sp;
-      const tCla = Wd('M8', 'ponemos') - 0.1, tFa = Wd('M8', 'fa') - 0.25, tCua = Wd('M8', 'cuarta') - 0.2;
-      const k1 = t => ease(ramp(t, tAn, tAn + 0.5)), k2 = t => ease(ramp(t, tCla, tCla + 0.55));
-      const dxB = t => D1 * k1(t) + D2 * k2(t);
-      s.on(t => { const d = dxB(t); PT.BL.setAttribute('transform', `translate(${d.toFixed(1)},0)`); PT.lineas.forEach(l => l.setAttribute('x2', (PT.xFin + d).toFixed(1))); });
-      const FB = N.group(WT), FBi = N.group(FB);
-      N.glyph(FBi, 'accidentalFlat', xAe + 0.6 * sp, yB, sp);
-      escribe(s, FBi, xAe + 0.6 * sp, yB - 1.8 * sp, xAe + 1.5 * sp, yB + 0.75 * sp, tBem, 0.5);
-      const tBaja = tFa + 0.25;
-      s.on(t => FB.setAttribute('transform', `translate(${(D2 * k2(t)).toFixed(1)},${(sp * ease(ramp(t, tBaja, tBaja + 0.5))).toFixed(1)})`));
-      rosaEn(s, FB, [[tBem, tBem + 2.2], [tBaja - 0.1, tBaja + 1.4]]);
-      // ---------- M6 · lo mismo con la clave
+      const kB = 0.9, wB = N.M.accidentalFlat.adv * kB * sp;
+      const xFl = xA + (2 * N.M.accidentalSharp.adv + 0.14) * sp / 2 - wB / 2, yFl = yM - 4.35 * sp;
+      const FB = N.group(ST), FBi = N.group(FB);
+      N.glyph(FBi, 'accidentalFlat', xFl, yFl, sp, kB);
+      escribe(s, FBi, xFl, yFl - N.M.accidentalFlat.ne[1] * kB * sp, xFl + wB, yFl + 0.7 * kB * sp, tBem, 0.5);
+      colorSeq(s, FB, [[-1, C.rosa], [tBem + 2.2, C.blanco]], .5);
+      // ---------- M6 · lo mismo con la clave: se tacha
       const tCl6 = Wd('M6', 'clave') - 0.2;
-      const XC = N.group(WT); tachaX(s, XC, xS + 0.35 * sp, yB - 3.5 * sp, xS + 3.45 * sp, yB + 3.7 * sp, tCl6, { w: 4 });
+      rosaEn(s, PM.CL, [[tCl6 - 0.2, tCl6 + 0.5]]);
+      s.on(t => opa(PM.CL, 1 - 0.55 * ease(ramp(t, tCl6 + 0.6, tCl6 + 1.1))));
+      const XC = N.group(ST); tachaX(s, XC, xS + 0.35 * sp, yM - 3.5 * sp, xS + 3.45 * sp, yM + 3.7 * sp, tCl6, { w: 4 });
       colorSeq(s, XC, [[-1, C.rosa], [tCl6 + 2.2, C.suave]], .5);
-      rosaEn(s, PT.CL, [[tCl6 - 0.2, tCl6 + 0.5]]);
-      s.on(t => opa(PT.CL, 1 - 0.55 * ease(ramp(t, tCl6 + 0.6, tCl6 + 1.1))));
-      // ---------- M7 · que las notas escritas se llamen ya de la forma nueva: la primera, Fa
-      const tNo = Wd('M7', 'notas') - 0.15, tFor = Wd('M7', 'forma') - 0.2, tPri = Wd('M7', 'primera') - 0.2, tFa1 = Wd('M7', 'fa') - 0.2;
-      const NOMS = ['Fa', 'Mi', 'Re', 'Do', 'Re', 'Si♮', 'Do', 'Sol'];
-      const TS = S.SON_MEN_FA || PT.notas.map((_, i) => F0('SON_MEN_FA') + 0.15 + i * 0.5);
-      const NM = N.group(PT.BL);
-      PT.notas.forEach((e, i) => {
-        const Q = N.group(NM); texto(Q, '?', e.cx, yB + 128, { anchor: 'middle', size: 30, peso: 800, fill: C.suave });
-        const tNom = i === 0 ? tFa1 : TS[i] - 0.05;
-        s.on(t => opa(Q, win(t, tFor + i * 0.05, tNom + 0.1, .3, .2)));
-        const Nm = N.group(NM); frase(Nm, [[NOMS[i], 'currentColor']], e.cx, yB + 128, { size: 30, peso: 800, anchor: 'middle' });
-        s.on(t => opa(Nm, ramp(t, tNom, tNom + 0.25) * (1 - ease(ramp(t, F0('M11') - 0.5, F0('M11'))) + ease(ramp(t, F0('P1') - 0.3, F0('P1') + 0.2)))));
-        e.nom = Nm;
+      // ---------- M7 · las notas escritas se tienen que llamar ya de la forma nueva: la primera, Fa (se escribe debajo)
+      const tNo = Wd('M7', 'notas') - 0.15, tPri = Wd('M7', 'primera') - 0.2, tFa1 = Wd('M7', 'fa') - 0.2;
+      // ---------- M8 · así que, la clave de Fa en 4.ª: se escribe delante de la tachada; su 4.ª línea (Fa) es la de la primera nota
+      const tClW = Wd('M8', 'clave') - 0.1, tCua = Wd('M8', 'cuarta') - 0.2, tAmi = Wd('M9', 'clave') - 0.2;
+      const kF = 0.85, wF = N.M.fClef.adv * kF * sp, xFc = xS - 14 - wF, yFc = yM - sp;
+      const FC = N.group(ST), FCi = N.group(FC);
+      N.glyph(FCi, 'fClef', xFc, yFc, sp, kF);
+      escribe(s, FCi, xFc, yFc - N.M.fClef.ne[1] * kF * sp, xFc + wF, yFc - N.M.fClef.sw[1] * kF * sp, tClW, 0.6);
+      s.on(t => color(FC, mezcla(C.blanco, C.rosa, Math.max(t < tCua + 1.8 ? 1 : 1 - ease(ramp(t, tCua + 1.8, tCua + 2.3)), win(t, tAmi, tAmi + 2.4, .3, .4)))));
+      const L4 = N.group(PM.g); PM.g.insertBefore(L4, PM.CL); color(L4, C.rosa);  // la 4.ª línea: de la clave nueva a la 1.ª nota
+      trazoAnim(s, L4, `M${(xFc + 0.08 * wF).toFixed(1)},${yFc} L${(PM.notas[0].x + 1.5 * sp).toFixed(1)},${yFc}`, tCua, 0.45, { w: 5 });
+      s.on(t => opa(L4, Math.max(win(t, tCua - 0.05, tCua + 1.9, .05, .4), win(t, tAmi, tAmi + 2.4, .3, .4))));
+
+      // ---------- los nombres nuevos, a lápiz debajo de cada nota: el primero en M7 («Fa»), el resto según suenan (SON_MEN_FA).
+      //            En el 6.º (Sol♯ escrito) el ♯ se tacha y se escribe ♮: se lee Si♮ (en Fa M, el Si llevaría ♭ por armadura)
+      const TS = S.SON_MEN_FA || PM.notas.map((_, i) => F0('SON_MEN_FA') + 0.15 + i * 0.5);
+      const NOMS = ['Fa', 'Mi', 'Re', 'Do', 'Re', 'Si', 'Do', 'Sol'];
+      const tNom = PM.notas.map((_, i) => i === 0 ? tFa1 : TS[i] - 0.06);
+      const hNom = PM.notas.map((_, i) => i === 0 ? tCua + 1.8 : TS[i] + 0.45);
+      const e6 = PM.notas[5], y6 = e6.y, wS = N.M.accidentalSharp.adv * sp;
+      const tNat = TS[5] - 0.04, tSos = TS[5] - 0.34, kN = 18 / sp;          // ♮ a lápiz (algo mayor que las letras)
+      let NAT = null, natC = [0, 0];
+      PM.notas.forEach((e, i) => {
+        const W = N.group(NM), Wi = N.group(W);
+        let x0, x1;
+        if (i === 5) {
+          const tS = texto(Wi, 'Si', 0, yNm, { size: 30, peso: 800, italic: true, fill: 'currentColor' });
+          const wSi = D.medir(tS), wN = N.M.accidentalNatural.adv * kN * sp, gap = 9, tot = wSi + gap + wN;
+          x0 = e.cx - tot / 2; x1 = x0 + wSi; tS.setAttribute('x', x0.toFixed(1));
+          NAT = N.group(W); const NATi = N.group(NAT);
+          const xn = x1 + gap, yn = yNm - 11;
+          N.glyph(NATi, 'accidentalNatural', xn, yn, sp, kN); natC = [xn + wN / 2, yn];
+          escribe(s, NATi, xn, yn - N.M.accidentalNatural.ne[1] * kN * sp, xn + wN, yn - N.M.accidentalNatural.sw[1] * kN * sp, tNat, 0.3);
+        } else {
+          const f = frase(Wi, [[NOMS[i], 'currentColor']], e.cx, yNm, { size: 30, peso: 800, anchor: 'middle', italic: true });
+          x0 = f._x; x1 = f._x + f._w;
+        }
+        escribeIzq(s, Wi, x0, yNm - 26, x1 + 3, yNm + 9, tNom[i], i === 0 ? 0.45 : 0.2, { lapiz: i === 0 });
+        s.on(t => color(W, mezcla(C.blanco, C.rosa, t < hNom[i] ? 1 : 1 - ease(ramp(t, hNom[i], hNom[i] + 0.4)))));
       });
-      // ---------- M8 · la clave de Fa en 4.ª (la 4.ª línea es Fa) · el bemol baja a la línea del Si · el Sol♯ pasa a Si♮
-      const xFc = xAe + 0.7 * sp;
-      const FC = N.group(WT), FCi = N.group(FC); N.claveFa(FCi, xFc, yB, sp);
-      escribe(s, FCi, xFc, yB - 2.1 * sp, xFc + 2.8 * sp, yB + 1.6 * sp, tFa, 0.6);
-      const tAmi = Wd('M9', 'clave') - 0.2;
-      rosaEn(s, FCi, [[tFa, tFa + 2.0], [tAmi, tAmi + 2.4]]);
-      const L4 = N.group(PT.g); PT.g.insertBefore(L4, PT.CL); color(L4, C.rosa);
-      N.line(L4, xFc + 0.4 * sp, yB - sp, PT.notas[0].x + D1 + D2 + 1.2 * sp, yB - sp, 5, { 'stroke-linecap': 'round' });
-      mostrarEn(s, L4, tCua, tCua + 1.7, .3, .4);
-      // el sostenido del 6.º se tacha (se aparta) y entra el becuadro
-      const e6 = PT.notas[5], y6 = e6.y, tSos = F0('SON_MEN_FA') - 0.1;
-      const NAT = N.group(e6.c); N.glyph(NAT, 'accidentalNatural', e6.x - (N.M.accidentalNatural.adv + 0.22) * sp, y6, sp);
-      s.on(t => opa(NAT, ease(ramp(t, tSos + 0.25, tSos + 0.55))));
-      const dxS = -0.824 * sp;
-      const xs0 = e6.x - (N.M.accidentalSharp.adv + 0.22) * sp + dxS;
-      const TSo = N.group(PT.MU);
-      trazoAnim(s, TSo, `M${(xs0 - 3).toFixed(1)},${(y6 + 0.95 * sp).toFixed(1)} L${(xs0 + N.M.accidentalSharp.adv * sp + 3).toFixed(1)},${(y6 - 0.95 * sp).toFixed(1)}`, tSos + 0.1, 0.3, { w: 3.5 });
-      const tTach = Wd('P4', 'tachado') - 0.3;
+      // el ♯ del Sol, tachado a lápiz (sobre la marcha, justo antes de que suene)
+      const TSo = N.group(ST);
+      trazoAnim(s, TSo, `M${(e6.altX - 4).toFixed(1)},${(y6 + 0.95 * sp).toFixed(1)} L${(e6.altX + wS + 4).toFixed(1)},${(y6 - 0.95 * sp).toFixed(1)}`, tSos, 0.25, { w: 3.5 });
+
+      // ---------- sonidos: SON_MEN_RE (lo que está escrito, en Re M) y SON_MEN_FA (lo mismo leído en Fa M: se oye una 3ªm más alto)
+      const tEs = Wd('P1', 'espera') - 0.2;
+      const tArr = Wd('P2', 'arriba') - 0.2, tSol = Wd('P2', 'sol') - 0.2, tSost = Wd('P2', 'sostenido') - 0.2;
+      const tAb = Wd('P3', 'abajo') - 0.2, tMis = Wd('P3', 'misma') - 0.25, tBec = Wd('P3', 'becuadro') - 0.2;
+      const tP4 = F0('P4') - 0.2, tTach = Wd('P4', 'tachado') - 0.3;
+      const pRe = pulsoSuena('SON_MEN_RE', PM), pFa = pulsoSuena('SON_MEN_FA', PM);
+      luces(s, PM, [
+        suena('SON_MEN_RE', PM), suena('SON_MEN_FA', PM),
+        (i, t) => win(t, tNo, tNo + 1.1, .25, .35),                                   // «las notas que estén escritas»
+        (i, t) => (i === 0 ? win(t, tPri, tCua + 1.8, .3, .4) : 0),                   // «la primera nota se tiene que llamar Fa»
+        (i, t) => (i === 5 ? win(t, tSol, tP5, .3, .4) : 0),                          // P2–P4: esa nota
+      ], { pulso: (i, t) => Math.max(pRe(i, t), pFa(i, t)) });
+      // colores del ♯ tachado (y su tachón): P2 «el Sol es sostenido» → el ♯ impreso; P4 «¿por qué está tachado?» → ♯ y tachón
       s.on(t => {
-        e6.alt.setAttribute('transform', `translate(${(dxS * ease(ramp(t, tSos, tSos + 0.35))).toFixed(1)},0)`);
-        if (t < tSos) { e6.alt.style.color = ''; return; }
-        const kR = win(t, tTach, tTach + 1.9, .25, .4);
-        color(e6.alt, mezcla(mixHex(C.blanco, C.suave, ease(ramp(t, tSos + 0.2, tSos + 0.6))), C.rosa, kR));
-        color(TSo, mezcla(C.suave, C.rosa, kR));
+        if (t < tSos) { e6.alt.style.color = ''; color(TSo, C.rosa); return; }
+        const kP2 = win(t, tSost, tAb + 0.3, .25, .35), kP4 = win(t, tTach, tP5, .25, .4);
+        color(e6.alt, mezcla(mixHex(C.blanco, C.suave, ease(ramp(t, tSos + 0.2, tSos + 0.6))), C.rosa, Math.max(kP2, kP4)));
+        color(TSo, mezcla(mixHex(C.rosa, C.suave, ease(ramp(t, TS[5] + 1.4, TS[5] + 1.9))), C.rosa, kP4));
       });
-      // sonidos: arriba SON_MEN_RE; abajo SON_MEN_FA (lo que se ve: las mismas líneas, leídas en Fa M)
-      const tP2s = Wd('P2', 'sol') - 0.2, tP3n = Wd('P3', 'misma') - 0.2, tP4 = F0('P4') - 0.2;
-      oido(s, BQ, PM.xFin + 70, yA, ['SON_MEN_RE']); oido(s, g, PT.xFin + D1 + D2 + 62, yB, ['SON_MEN_FA']);
-      luces(s, PM, [suena('SON_MEN_RE', PM), (i, t) => i === 5 ? win(t, tP2s, tP4 + 0.2, .3, .4) : 0], { pulso: pulsoSuena('SON_MEN_RE', PM) });
-      luces(s, PT, [suena('SON_MEN_FA', PT), (i, t) => (i === 0 ? win(t, tPri, tFa + 0.6, .3, .4) : 0), (i, t) => win(t, tNo, tNo + 1.1, .25, .35), (i, t) => i === 5 ? win(t, tP3n, tP4 + 0.2, .3, .4) : 0], { pulso: pulsoSuena('SON_MEN_FA', PT) });
-      PT.notas.forEach((e, i) => rosaEn(s, e.nom, [[i === 0 ? tFa1 : TS[i] - 0.05, (i === 0 ? tFa1 + 1.6 : TS[i] + 0.45)], [i === 5 ? tP3n : -9, i === 5 ? tP4 + 0.2 : -8]]));
-      rosaEn(s, PM.notas[5].alt, [[Wd('P2', 'sostenido') - 0.2, Wd('P2', 'sostenido') + 1.2]], { a: C.rosa });
+      // el ♮: rosa al escribirse (hasta que acaba el ejemplo) y en P3 «…la misma nota lleva… un becuadro»
+      s.on(t => {
+        const k = Math.max(t < F1('SON_MEN_FA') ? 1 : 1 - ease(ramp(t, F1('SON_MEN_FA'), F1('SON_MEN_FA') + 0.5)), win(t, tBec, tTach, .25, .35));
+        color(NAT, mezcla(C.blanco, C.rosa, k));
+        const sc = 1 + 0.25 * win(t, tBec, tTach, .25, .35), xc = natC[0].toFixed(1), yc = natC[1].toFixed(1);
+        if (sc > 1.001) NAT.setAttribute('transform', `translate(${xc},${yc}) scale(${sc.toFixed(4)}) translate(${-xc},${-yc})`); else NAT.removeAttribute('transform');
+      });
+
       // ---------- M9 · un ejemplo amigable: la clave de Fa en 4.ª, la de siempre
-      const yT = 880, tM10 = F0('M10') - 0.2;
+      const yT = 800, tM10 = F0('M10') - 0.2;
       const tAmg = Wd('M9', 'amigable') - 0.2, tHab = Wd('M9', 'habituados') - 0.3;
       const [m1, m2, m3] = lineaCentrada(g, [[['ejemplo amigable:', C.blanco]], [['clave de Fa en 4ª', 'currentColor'], [',', C.blanco]], [['¡la de siempre!', C.blanco]]], CX + 26, yT + 12, { size: 38, peso: 800, gap: 12 });
       const mk9 = N.group(g); marca(mk9, true, m1._f._x - 34, yT, 16);
@@ -1439,31 +1495,28 @@
       itemLista(s, g, true, [['confiar en tu habilidad', 'currentColor']], PV.x + 40, PV.y + 152, tCnf, tP1, { size: 31, tBlanco: tRap });
       itemLista(s, g, true, [['muy rápido', 'currentColor']], PV.x + 40, PV.y + 200, tRap, tP1, { size: 31, tBlanco: tJus });
       itemLista(s, g, true, [['si vas justo de tiempo', 'currentColor']], PV.x + 40, PV.y + 248, tJus, tP1, { size: 31, tBlanco: tP1 });
-      // ---------- P1–P4 · ¡Espera un momento! arriba Sol♯… abajo, la misma nota con becuadro (y el ♯, tachado)
-      const tEs = Wd('P1', 'espera') - 0.2, tP5 = F0('P5') - 0.2;
-      const es = fraseG(g, [['¡Espera un momento!', C.rosa]], CX, 217, { size: 44, peso: 800, italic: true, anchor: 'middle' });
+
+      // ---------- P1–P4 · ¡Espera un momento! ¿Por qué arriba (lo impreso) el Sol es sostenido y abajo (lo anotado) la misma nota
+      //            lleva un becuadro? ¿Por qué está tachado? Se señala cada cosa al nombrarla; lo que no se nombra se atenúa
+      const es = fraseG(BK, [['¡Espera un momento!', C.rosa]], CX, yE + 12, { size: 44, peso: 800, italic: true, anchor: 'middle' });
       aparece(s, es, tEs, tP5 + 0.2, { dy: 8 });
-      const p6 = PM.notas[5], q6 = PT.notas[5];
-      const AR6 = N.group(g); color(AR6, C.rosa);
-      const xq = q6.x + D1 + D2 + 0.6 * sp;
-      N.el('path', { d: `M${p6.cx},${yA + 72} C${p6.cx},${yA + 110} ${xq},${yB - 160} ${xq},${yB - 124}`, fill: 'none', stroke: 'currentColor', 'stroke-width': 3.5, 'stroke-linecap': 'round', 'stroke-dasharray': '2 10' }, AR6);
-      const ang = Math.atan2(58, 0), cab = 14;
-      N.el('polygon', { points: `${xq},${yB - 116} ${(xq - Math.cos(ang - 0.45) * cab).toFixed(1)},${(yB - 116 - Math.sin(ang - 0.45) * cab).toFixed(1)} ${(xq - Math.cos(ang + 0.45) * cab).toFixed(1)},${(yB - 116 - Math.sin(ang + 0.45) * cab).toFixed(1)}`, fill: 'currentColor' }, AR6);
-      mostrarEn(s, AR6, tP3n, tP4 + 0.1, .35, .3);
-      const xT = e6.x + D1 + D2 + dxS - (N.M.accidentalSharp.adv + 0.22) * sp + N.M.accidentalSharp.adv * sp / 2;
-      const QT = N.group(g); texto(QT, '¿?', xT, yB - 128, { anchor: 'middle', size: 46, peso: 800, fill: C.rosa });
-      pop(s, QT, tTach, tP5 + 0.2, xT, yB - 145, { k0: .5 });
+      const xT = e6.altX + wS / 2;
+      const QT = N.group(BK); texto(QT, '¿?', xT, yM - 118, { anchor: 'middle', size: 46, peso: 800, fill: C.rosa });
+      pop(s, QT, tTach, tP5 + 0.2, xT, yM - 134, { k0: .5 });
       // ---------- P5 · será mejor que te sientes: todavía queda una cosa… y no te va a gustar
-      // P2–P3 · se comparan: mientras se habla de «arriba», el de abajo se atenúa (y al revés); con «la misma nota», los dos
-      const tArr = Wd('P2', 'arriba') - 0.2, tAb = Wd('P3', 'abajo') - 0.2, tMis = Wd('P3', 'misma') - 0.25;
-      const dTop = t => 1 - 0.55 * win(t, tAb, tMis, .3, .3), dBot = t => 1 - 0.55 * win(t, tArr, tAb, .3, .3);
-      s.on(t => { const k = 1 - 0.7 * ease(ramp(t, tP5, tP5 + 0.5)); opa(WM, k * dTop(t) * win(t, tEj - 0.2, fin, .4, .4)); opa(LC, k * (1 - ease(ramp(t, fin - 0.4, fin)))); });
-      s.on(t => { const k = (1 - 0.7 * ease(ramp(t, tP5, tP5 + 0.5))) * dBot(t); opa(PT.g, k); opa(FB, k); opa(FC, k); opa(XA, k * (t < tTa ? 0 : 1)); opa(XC, k * (t < tCl6 ? 0 : 1)); });
       const tTod = Wd('P5', 'todavia') - 0.2, tGus = Wd('P5', 'gustar') - 0.35;
-      const s1 = fraseG(g, [['todavía nos queda ', C.blanco], ['una cosa por ver…', C.rosa]], CX, 860, { size: 42, peso: 800, anchor: 'middle' });
+      const s1 = fraseG(BK, [['todavía nos queda ', C.blanco], ['una cosa por ver…', C.rosa]], CX, yM + 240, { size: 42, peso: 800, anchor: 'middle' });
       aparece(s, s1, tTod, fin, { dy: 8 });
-      const s2 = fraseG(g, [['…y no te va a gustar', C.suave]], CX, 930, { size: 36, peso: 700, italic: true, anchor: 'middle' });
+      const s2 = fraseG(BK, [['…y no te va a gustar', C.suave]], CX, yM + 305, { size: 36, peso: 700, italic: true, anchor: 'middle' });
       aparece(s, s2, tGus, fin, { dy: 8 });
+      // opacidades de las capas: el papel aparece con el ejemplo; P2 «arriba» atenúa lo de abajo y P3 «abajo» lo de arriba;
+      // en P5 todo se atenúa; al final, fuera
+      s.on(t => {
+        const k = (1 - 0.7 * ease(ramp(t, tP5, tP5 + 0.5))) * (1 - ease(ramp(t, fin - 0.4, fin)));
+        opa(ST, k * win(t, tSale + 0.58, 1e9, .35, .4) * (1 - 0.55 * win(t, tAb, tMis, .3, .3)));   // tras irse las tarjetas de M1
+        opa(NM, k * (1 - 0.6 * win(t, tArr, tAb, .3, .3)));
+        opa(LC, k);
+      });
     });
   }
 
@@ -2056,7 +2109,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

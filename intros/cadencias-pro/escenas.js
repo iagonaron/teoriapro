@@ -876,6 +876,7 @@
         }
         e.col = mezcla(C.blanco, C.rosa, clamp(k));
         setC(e.H, e.col);
+        setC(e.LG, e.col);     // (30-sep-2026, Iago) «falta colorear la línea adicional del Do4»: sus líneas adicionales, del color de la nota
       }
       for (const L_ of K.ligas) {
         const e = L_.de, dI = o.tIn + DLY(e.q), dO = o.tOut + DLY(e.q);
@@ -1252,7 +1253,8 @@
         { nm: 'Auténtica', fo: ['V', 'I'], pu: '.', t0: Wd('F1', 'autentica') - 0.3, tF: Wd('F1', 'quinto') - 0.3, t1: Wd('F1', 'plagal') - 0.3, tag: Wd('F4', 'autenticas') - 0.3 },
         { nm: 'Plagal', fo: ['IV', 'I'], pu: '.', t0: Wd('F1', 'plagal') - 0.3, tF: Wd('F1', 'cuarto') - 0.3, t1: F0('F2') - 0.2, tag: Wd('F4', 'plagales') - 0.3 },
         { nm: 'Semicadencia', fo: ['…', 'V'], pu: ',', tx: 'se queda en el quinto', t0: Wd('F2', 'semicadencia') - 0.3, tF: Wd('F2', 'quinto') - 0.3, t1: F0('F3') - 0.2 },
-        { nm: 'Rota', fo: ['V', 'vi'], pu: '¡!', tx: 'un final sorprendente', t0: Wd('F3', 'rota') - 0.3, tF: Wd('F3', 'sexto') - 0.3, tT: Wd('F3', 'sorprendente') - 0.3, t1: F0('F4') - 0.2 },
+        // (30-sep-2026, Iago) «aquí el VI ponlo mayúscula, porque podría ser un sexto mayor; prefiero ser genérico justo en este caso»
+        { nm: 'Rota', fo: ['V', 'VI'], pu: '¡!', tx: 'un final sorprendente', t0: Wd('F3', 'rota') - 0.3, tF: Wd('F3', 'sexto') - 0.3, tT: Wd('F3', 'sorprendente') - 0.3, t1: F0('F4') - 0.2 },
       ];
       const xNm = 360, xFo = 890, xPu = 1080, xTx = 1150;
       FIL.forEach((f, i) => {
@@ -1367,7 +1369,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

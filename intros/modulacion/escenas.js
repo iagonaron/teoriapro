@@ -1230,7 +1230,7 @@
       const LZ = EJ2.map((_, j) => flash('SON_MOD2', j));
       const MAR = [[[tDo, tDo + 1.4], [tI1, tI1 + 0.5]], [[tIV, tIV + 0.8]], [[tV7, tV7 + 1.0]], [[tI2, tI2 + 1.0]], [[tPue, tH6]], [[tDom, tM2]], [[tMi, tMi + 1.4], [tCer, tDom]]];
       cols.forEach((c, j) => marcoEn(s, c.cas, maxK([enRosa(MAR[j]), LZ[j]])));
-      const SYt = [[tDo, [[tDo, tDo + 1.6]]], [tIV, [[tIV, tIV + 0.8]]], [tV7, [[tV7, tV7 + 1.0]]], [tI2, [[tI2, tI2 + 1.0]]], [tLa, [[tLa, tLa + 1.6]]], [tSi7, [[tSi7, tSi7 + 1.4]]], [tMi, [[tMi, tMi + 1.6], [tMi6, tMi6 + 1.0]]]];
+      const SYt = [[tDo, [[tDo, tDo + 1.6]]], [tIV, [[tIV, tIV + 0.8]]], [tV7, [[tV7, tV7 + 1.0]]], [tI2, [[tI2, tI2 + 1.0]]], [tLa, [[tLa, tLa + 1.6]]], [tSi7, [[tSi7, tSi7 + 1.4], [BN[0] - 0.1, tAun + 1.0]]], [tMi, [[tMi, tMi + 1.6], [tMi6, tMi6 + 1.0]]]];   /* (30-sep-2026) B7 en rosa con sus notas */
       cols.forEach((c, j) => animaCifra(s, c, SYt[j][0], null, SYt[j][1], [LZ[j]]));
       const faH4 = [[tFa, tH5]];
       animaAcorde(s, cols[0].acd, { tAp: tI1, luz: [LZ[0]] });
@@ -1239,8 +1239,13 @@
       animaAcorde(s, cols[3].acd, { tAp: tI2, luz: [LZ[3]] });
       animaAcorde(s, cols[4].acd, { tAp: tLa, luz: [LZ[4]] });
       // Si7: cada nota, en rosa al nombrarla (Si, Re♯, Fa♯, La); el Re♯ (la sensible) se queda en rosa
-      const fin7 = BN[3] + 1.1;
+      // (30-sep-2026, Iago) «el acorde de Si7 quiero que se ilumine en rosa cuando escribes en texto los nombres de las notas,
+      // porque no estaba muy claro que te referías a él»: mientras se escriben «Si · Re♯ · Fa♯ · La = Mayor (aunque…)», el acorde
+      // entero sigue en rosa (antes: 1,1 s tras el La) y lo rodea un recuadro rosa; su cifrado (B7), también en rosa
+      const fin7 = tAun + 1.0;
       animaAcorde(s, cols[5].acd, { tAp: tSi7, luz: [LZ[5]], voz: [[[BN[0], fin7]], [[BN[2], fin7]], [[BN[1], b + 1]], [[BN[3], fin7]]] });
+      const BS = N.group(CFo); BS.setAttribute('transform', `translate(${COLS7[5]},0)`);
+      const bs7 = banda(BS, 150, GEO.yS - 2 * SP - 36, GEO.yS + 9 * SP + 2 * SP + 36); mostrarEn(s, bs7, BN[0] - 0.15, fin7, .35, .45);
       animaAcorde(s, cols[6].acd, { tAp: tMi6, luz: [LZ[6]] });
       const tenA = [[tMi5, tMi5 + 1.4]], tenB = [[tDo5, tMi5 - 0.1]];
       const GA = [[tI1, [[tI1, tI1 + 0.6]]], [tIV, [[tIV, tIV + 0.8]]], [tV7, [[tV7, tV7 + 1.0]]], [tI2, [[tI2, tI2 + 1.0]]], [tSex, [[tSex, tSex + 1.2]]]];
@@ -1552,7 +1557,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

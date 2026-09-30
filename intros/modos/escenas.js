@@ -772,13 +772,15 @@
   }
 
   // ================================================================ R · paso 3: la nota característica (y la chuleta de los siete)
+  // (30-sep-2026, Iago) «prefiero que los ordenes así: jónico, dórico, frigio, lidio, mixolidio, eólico, locrio»
+  // (antes, por familias: jónico, lidio, mixolidio, eólico, dórico, frigio, locrio)
   const CHULETA = [
     { m: 'jónico', f: 'Mayor', n: [['—', C.suave]] },
+    { m: 'dórico', f: 'menor', n: [['6ª ', C.blanco], ['↑', C.rosa]] },
+    { m: 'frigio', f: 'menor', n: [['2ª ', C.blanco], ['↓', C.rosa]] },
     { m: 'lidio', f: 'Mayor', n: [['4ª ', C.blanco], ['↑', C.rosa]] },
     { m: 'mixolidio', f: 'Mayor', n: [['7ª ', C.blanco], ['↓', C.rosa]] },
     { m: 'eólico', f: 'menor', n: [['—', C.suave]] },
-    { m: 'dórico', f: 'menor', n: [['6ª ', C.blanco], ['↑', C.rosa]] },
-    { m: 'frigio', f: 'menor', n: [['2ª ', C.blanco], ['↓', C.rosa]] },
     { m: 'locrio', f: 'menor', n: [['2ª ', C.blanco], ['↓', C.rosa], ['  y  ', C.suave], ['5ª ', C.blanco], ['↓', C.rosa]] },
   ];
   function escenaNota() {
@@ -995,7 +997,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

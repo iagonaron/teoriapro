@@ -680,6 +680,91 @@
     });
   }
 
+  // ---------------------------------------------------------------- (30-sep-2026) utilidades de las correcciones de Iago
+  const transp = (ns, k) => ns.map(n => nom(midi(n) + k));                // la serie, k semitonos más arriba (bemoles del libro)
+  const GL_ALT = { b: 'accidentalFlat', n: 'accidentalNatural', '#': 'accidentalSharp' };
+  const altDe = e => /^([A-G])([#bn]?)(\d)$/.exec(e)[2];                    // '' | 'b' | 'n' | '#'
+  const ANCHO_CAB = () => N.M.noteheadWhole.adv * SP;
+  /** Pentagrama de la serie SIN notas (clave y doble barra final), igual que el de serie(). */
+  function pentaSerie(parent, yS) {
+    const pc = pentaClave(parent, 240, yS, 1440);
+    N.line(pc.g, 1662, yS - 2 * SP, 1662, yS + 2 * SP, N.E.thinBar * SP);
+    N.el('rect', { x: 1672, y: yS - 2 * SP, width: 8, height: 4 * SP, fill: 'currentColor' }, pc.g);
+    return pc;
+  }
+  /** Alteración suelta (en su grupo) delante de una redonda colocada en x. */
+  function alteracion(parent, al, x, y) {
+    const gl = GL_ALT[al], G = N.group(parent, 'alt'), gx = x - (N.M[gl].adv + 0.22) * SP;
+    N.glyph(G, gl, gx, y, SP);
+    G._caja = [gx - 5, y - 1.95 * SP, N.M[gl].adv * SP + 10, 3.45 * SP];
+    return G;
+  }
+  let NCLIP = 0;
+  /** «Se escribe»: el grupo G se descubre de arriba abajo entre ta y ta + d, como un trazo de pluma.
+   *  caja = [x, y, w, h] en las coordenadas del padre de G. Devuelve el envoltorio (con el recorte). */
+  function escribe(s, G, caja, ta, d) {
+    const P = G.parentNode, id = 'dodeEscribe' + (++NCLIP);
+    const cp = N.el('clipPath', { id, clipPathUnits: 'userSpaceOnUse' }, N.el('defs', null, P));
+    const r = N.el('rect', { x: caja[0], y: caja[1], width: caja[2], height: 0 }, cp);
+    const W = N.group(P, 'escrito'); W.appendChild(G); W.setAttribute('clip-path', `url(#${id})`);
+    s.on(t => { const k = ease(ramp(t, ta, ta + (d || .3))); r.setAttribute('height', (caja[3] * k).toFixed(1)); opa(W, k > 0 ? 1 : 0); });
+    return W;
+  }
+  /** (30-sep, Iago: «que se vea como voltea, como un volteo de tarjeta 3D, suave») TARJETA QUE SE VOLTEA sobre su eje
+   *  vertical, con perspectiva de verdad: cada pieza se proyecta (las líneas por sus extremos; los grupos pequeños
+   *  —notas, clave, rótulos— con la transformación local en su ancla). set(th): 0 = cara A de frente · π = cara B de
+   *  frente, que se lee normal (sin espejo). Fondo con esquinas suaves y una sombra que oscurece la tarjeta de canto. */
+  function tarjeta3D(parent, xc, yc, w, h, o) {
+    o = o || {};
+    const f = o.f || 3800, lift = o.lift != null ? o.lift : 60, rx = o.rx || 22;
+    const G = N.group(parent, 'tarjeta3D');
+    const fondo = N.el('path', { fill: 'rgba(11,19,32,0.9)', stroke: 'rgba(255,255,255,0.32)', 'stroke-width': 2.5, 'stroke-linejoin': 'round' }, G);
+    const caras = [N.group(G, 'caraA'), N.group(G, 'caraB')];
+    const sombra = N.el('path', { fill: '#000', opacity: 0, 'pointer-events': 'none' }, G);
+    const cont = [], x0 = xc - w / 2, x1 = xc + w / 2, y0 = yc - h / 2, y1 = yc + h / 2;
+    for (const [cx, cy, a0] of [[x1 - rx, y0 + rx, -Math.PI / 2], [x1 - rx, y1 - rx, 0], [x0 + rx, y1 - rx, Math.PI / 2], [x0 + rx, y0 + rx, Math.PI]])
+      for (let k = 0; k <= 6; k++) { const a = a0 + k * Math.PI / 12; cont.push([cx + rx * Math.cos(a), cy + rx * Math.sin(a)]); }
+    const lin = [[], []], piezas = [[], []];
+    /** Punto (x, y) de la cara c proyectado con la tarjeta girada th. */
+    const P = (c, x, y, th) => {
+      const a = c ? Math.PI - th : th, sg = c ? -1 : 1, u = x - xc, v = y - yc;
+      const p = f / (f + sg * u * Math.sin(a) - lift * Math.sin(th));
+      return [xc + u * Math.cos(a) * p, yc + v * p];
+    };
+    const R = {
+      g: G, caras, fondo,
+      linea(c, xa, ya, xb, yb, sw) { const L = N.el('line', { stroke: 'currentColor', 'stroke-width': sw }, caras[c]); lin[c].push({ L, xa, ya, xb, yb }); return L; },
+      pieza(c, g, ax, ay) { piezas[c].push({ g, ax, ay }); return g; },
+      set(th) {
+        const c = th > Math.PI / 2 ? 1 : 0;
+        opa(caras[0], c ? 0 : 1); opa(caras[1], c ? 1 : 0);
+        const d = 'M' + cont.map(([x, y]) => P(c, x, y, th).map(z => z.toFixed(1)).join(',')).join('L') + 'Z';
+        fondo.setAttribute('d', d); sombra.setAttribute('d', d);
+        sombra.setAttribute('opacity', (0.55 * Math.sin(th)).toFixed(3));
+        for (const q of lin[c]) {
+          const A = P(c, q.xa, q.ya, th), B = P(c, q.xb, q.yb, th);
+          q.L.setAttribute('x1', A[0].toFixed(2)); q.L.setAttribute('y1', A[1].toFixed(2));
+          q.L.setAttribute('x2', B[0].toFixed(2)); q.L.setAttribute('y2', B[1].toFixed(2));
+        }
+        for (const q of piezas[c]) {
+          const A = P(c, q.ax, q.ay, th), Xp = P(c, q.ax + 1, q.ay, th), Xm = P(c, q.ax - 1, q.ay, th), V = P(c, q.ax, q.ay + 1, th);
+          const a11 = (Xp[0] - Xm[0]) / 2, a21 = (Xp[1] - Xm[1]) / 2, a12 = V[0] - A[0], a22 = V[1] - A[1];
+          const e = A[0] - a11 * q.ax - a12 * q.ay, ff = A[1] - a21 * q.ax - a22 * q.ay;
+          q.g.setAttribute('transform', `matrix(${[a11, a21, a12, a22, e, ff].map(z => +z.toFixed(4)).join(' ')})`);
+        }
+      },
+    };
+    return R;
+  }
+  /** Pentagrama de la serie dibujado en una cara de la tarjeta 3D (líneas proyectadas; clave y barra final como piezas). */
+  function caraPenta(R, c, yS) {
+    for (let k = -2; k <= 2; k++) R.linea(c, 240, yS + k * SP, 1680, yS + k * SP, N.E.staffLine * SP);
+    const Cl = N.group(R.caras[c], 'clave'); N.claveSol(Cl, 240 + 0.6 * SP, yS, SP);
+    R.pieza(c, Cl, 240 + (0.6 + N.M.gClef.adv / 2) * SP, yS);
+    R.linea(c, 1662, yS - 2 * SP, 1662, yS + 2 * SP, N.E.thinBar * SP);
+    R.linea(c, 1676, yS - 2 * SP, 1676, yS + 2 * SP, 8);
+  }
+
   // ================================================================ A · la atonalidad, sus salidas y la regla de oro del dodecafonismo
   function escenaAtonal() {
     const a = F0('A1') - 0.2, b = F0('B1') - 0.25;
@@ -842,10 +927,11 @@
       pop(s, kv, Wd('V2', 'variantes') - 0.4, fin, CX, 200);
       const FOR = [['P', 'transportada'], ['R', 'retrógrada'], ['I', 'inversión'], ['RI', 'retrógrada de la inversión']];
       FOR.forEach(([L, d], i) => {
-        const G = N.group(g); color(G, i < 3 ? C.blanco : C.suave);
+        // (30-sep, Iago: «RI ponlo con el mismo tamaño que las demás») RI, igual que P, R e I
+        const G = N.group(g); color(G, C.blanco);
         const x = 330 + i * 420;
         N.el('rect', { x: x - 170, y: 400, width: 340, height: 250, rx: 22, fill: 'rgba(11,19,32,0.9)', stroke: 'currentColor', 'stroke-width': 3 }, G);
-        texto(G, L, x, 540, { anchor: 'middle', size: 110, peso: 800, fill: i < 3 ? C.rosa : 'currentColor' });
+        texto(G, L, x, 540, { anchor: 'middle', size: 110, peso: 800, fill: C.rosa });
         const dd = d.length > 14 ? ['retrógrada', 'de la inversión'] : [d];
         dd.forEach((l, k) => texto(G, l, x, 606 + (k - (dd.length - 1) / 2) * 30, { anchor: 'middle', size: 26, peso: 700, fill: 'currentColor' }));
         pop(s, G, Wd('V2', 'variantes') + 0.1 + i * 0.25, fin, x, 525, { k0: .7 });
@@ -862,21 +948,52 @@
       pop(s, kp, a + 0.2, fin, CX, 120);
       const A = serie(g, P0, Y1, { rotulo: 'P0' }); color(A.g, C.blanco);
       aparece(s, A.g, a + 0.1, fin, { dy: 8 });
-      const tSu = Wd('P2', 'sumas') - 0.3, tCi = Wd('P2', 'cinco') - 0.3, tOb = Wd('P2', 'obtienes') - 0.2;
-      const B = serie(g, P5, Y2, { rotulo: 'P5' }); color(B.g, C.blanco);
-      aparece(s, B.pc.g, tCi, fin, { dy: 8 });
-      if (B.ns.rotulo) mostrarEn(s, B.ns.rotulo, tOb, fin);
-      const TP = S.P5 || [];
-      B.ns.forEach((n, i) => {
-        const tn = (TP[i] != null ? TP[i] : tOb + i * 0.16) - 0.05;
-        llega(s, n.g, tn, tn + 0.45, A.ns[i].cx - n.cx, Y1 - Y2, fin);
+      const tSu = Wd('P2', 'sumas') - 0.3, tMi = Wd('P2', 'mismos') - 0.25, tCi = Wd('P2', 'cinco') - 0.3, tOb = Wd('P2', 'obtienes') - 0.2;
+      const tP5 = Wd('P2', 'p5') - 0.3, tBl = F0('P3') + 0.4;
+      // (30-sep, Iago: «que el paso de P0 a P5 se vea partiendo de un segundo pentagrama duplicado y que de P0 ascienda
+      // hasta su posición de P5; y aprovechas la animación para añadir becuadros») · al decir «sumas», una COPIA de P0 sale
+      // de P0 hacia abajo; con «cinco», cada nota de la copia SUBE 5 semitonos (de izquierda a derecha, escalonadas: llega a su
+      // sitio justo cuando suena) y se ESCRIBEN las alteraciones de P5, en un solo compás: ♭ en Mi♭, La♭, Re♭, Sol♭ y Si♭,
+      // y ♮ en Mi, Re y La (después de Mi♭, Re♭ y La♭). El rótulo de la copia pasa de P0 a P5.
+      const e0 = enCompas(P0), e5 = enCompas(P5), TP = S.P5 || [];
+      const CP = N.group(g, 'copiaP0'); color(CP, C.blanco);
+      pentaSerie(CP, Y2);
+      const L0 = N.group(CP); texto(L0, 'P0', 196, Y2 + 12, { anchor: 'end', size: 38, peso: 800, fill: C.suave });
+      const L5 = N.group(CP); texto(L5, 'P5', 196, Y2 + 12, { anchor: 'end', size: 38, peso: 800, fill: C.rosa });
+      s.on(t => { const k = ease(ramp(t, tP5, tP5 + 0.35)); opa(L0, 1 - k); opa(L5, k); });
+      e0.forEach((n0, i) => {
+        const W = N.group(CP, 'n'); const r = nota(W, n0, XN(i), Y2);
+        const dy = -(N.posSol(e5[i]) - N.posSol(n0)) * SP;
+        const tl = TP[i] != null ? TP[i] : tOb + 0.05 + i * 0.16, tr = tl - 0.55;      // llega cuando suena
+        const lin = [...r.g.querySelectorAll(':scope > line')];                           // línea adicional del Do: se va al subir
+        s.on(t => {
+          const k = ease(ramp(t, tr, tl));
+          W.setAttribute('transform', `translate(0,${(dy * k).toFixed(1)})`);
+          if (r.alt) opa(r.alt, 1 - ramp(t, tr, tr + 0.25));                              // la alteración de P0 se va…
+          lin.forEach(l => l.setAttribute('opacity', (1 - clamp(k * 1.6)).toFixed(3)));
+          color(W, mezcla(C.blanco, C.rosa, win(t, tr, tl + 0.45, .15, .5)));
+        });
+        const al = altDe(e5[i]);                                                          // …y se escribe la de P5
+        if (al) {
+          const Ag = alteracion(CP, al, XN(i), Y2 - N.posSol(e5[i]) * SP);
+          escribe(s, Ag, Ag._caja, tl + 0.03, 0.32);
+          s.on(t => color(Ag, mezcla(C.rosa, C.blanco, ease(ramp(t, tBl, tBl + 0.5)))));
+        }
       });
+      s.on(t => {
+        const k = ease(ramp(t, tSu, tSu + 0.75));
+        CP.setAttribute('transform', `translate(0,${((1 - k) * (Y1 - Y2)).toFixed(1)})`);
+        opa(CP, Math.min(ease(ramp(t, tSu, tSu + 0.3)), 1 - ease(ramp(t, fin - 0.5, fin))));
+      });
+      // «+5 semitonos» (hacia arriba) entre los dos pentagramas
       const M5 = N.group(g); color(M5, C.rosa);
-      flecha(M5, CX, Y1 + 100, CX, Y2 - 100, { w: 4, cab: 16 });
-      texto(M5, '+5 semitonos', CX + 24, (Y1 + Y2) / 2 + 12, { anchor: 'start', size: 34, peso: 800, fill: 'currentColor' });
+      const t5 = texto(M5, '+5 semitonos', 0, (Y1 + Y2) / 2 + 12, { anchor: 'start', size: 34, peso: 800, fill: 'currentColor' });
+      const w5 = D.medir(t5), x5 = CX - (w5 + 40) / 2;
+      t5.setAttribute('x', (x5 + 40).toFixed(1));
+      flecha(M5, x5 + 12, (Y1 + Y2) / 2 + 22, x5 + 12, (Y1 + Y2) / 2 - 26, { w: 4, cab: 16 });
       aparece(s, M5, tCi, fin, { dy: 0 });
       const ms = fraseG(g, [['a todas las notas, ', C.blanco], ['los mismos semitonos', C.rosa]], CX, (Y1 + Y2) / 2 + 12, { size: 30, peso: 700, anchor: 'middle' });
-      s.on(t => opa(ms, win(t, tSu, tCi - 0.1, .3, .3)));
+      s.on(t => opa(ms, win(t, tMi, tCi - 0.1, .3, .3)));
       // P3 · cada número, un semitono más arriba: P0 … P11
       const tCa = Wd('P3', 'cada') - 0.3, tDo = Wd('P3', 'doce') - 0.3;
       const cs = fraseG(g, [['cada número = ', C.blanco], ['1 semitono', C.rosa], [' hacia arriba', C.blanco]], CX, 890, { size: 32, peso: 800, anchor: 'middle' });
@@ -891,34 +1008,93 @@
   function escenaRetro() {
     const a = F0('R1') - 0.2, b = F0('I1') - 0.25;
     escena('retro', a, b, (s, g) => {
-      const fin = b - 0.3, Y1 = 330, Y2 = 690;
+      const fin = b - 0.3, Y1 = 330, Y2 = 688, YT = 945;
       const kr = N.group(g); chip(kr, 'R · RETRÓGRADA', CX, 120, { size: 34, anchor: 'middle' });
       pop(s, kr, Wd('R1', 'retrograda') - 0.3, fin, CX, 120);
       const A = serie(g, P0, Y1, { rotulo: 'P0' }); color(A.g, C.blanco);
       aparece(s, A.g, a + 0.1, fin, { dy: 8 });
-      const tRe = Wd('R1', 'reves') - 0.3;
-      const B = serie(g, R0, Y2, { rotulo: 'R0' }); color(B.g, C.blanco);
-      aparece(s, B.pc.g, tRe - 0.2, fin, { dy: 8 });
-      if (B.ns.rotulo) mostrarEn(s, B.ns.rotulo, tRe + 1.4, fin);
-      B.ns.forEach((n, j) => {
-        const src = A.ns[11 - j], tn = tRe + j * 0.1;
-        llega(s, n.g, tn, tn + 0.8, src.cx - n.cx, Y1 - Y2, fin);
+      const tCo = Wd('R1', 'coges') - 0.3, tRe = Wd('R1', 'reves') - 0.3, tVo = Wd('R2', 'volteas') - 0.35, tVf = tVo + 1.3;
+      const tRb = Wd('R2', 'rebobinas') - 0.3, tBq = tVf + 0.05, TR = S.SON_R0 || [];
+      const tR0 = Wd('R3', 'r0') - 0.3, tR1 = Wd('R3', 'r1') - 0.3, tR2 = Wd('R3', 'r2') - 0.3;
+      const tOt = Wd('R3', 'otras') - 0.25, tDo = Wd('R3', 'doce') - 0.3, tTr = Wd('R3', 'transportadas') - 0.3;
+      // (30-sep, Iago: «que aparezca abajo P0 duplicado y que éste se vea como voltea, como un volteo de tarjeta 3D, suave;
+      // y aprovechas la animación para añadir becuadros») · al decir «coges la serie», una COPIA de P0 sale de P0 hacia abajo,
+      // en su tarjeta; con «volteas», la tarjeta se da la vuelta (3D, suave) y por detrás está R0, que se lee normal; al caer,
+      // se ESCRIBEN sus dos becuadros (Sol♮ tras Sol♭ y Re♮ tras Re♭: un solo compás).
+      const Gw = N.group(g, 'copiaR'); color(Gw, C.blanco);
+      const R3d = tarjeta3D(Gw, CX, Y2, 1720, 280);
+      // cara A · la copia de P0
+      caraPenta(R3d, 0, Y2);
+      const LA_ = N.group(R3d.caras[0]); texto(LA_, 'P0', 196, Y2 + 12, { anchor: 'end', size: 38, peso: 800, fill: C.suave }); R3d.pieza(0, LA_, 171, Y2);
+      enCompas(P0).forEach((n0, i) => { const W = N.group(R3d.caras[0], 'n'); const r = nota(W, n0, XN(i), Y2); R3d.pieza(0, W, r.cx, r.y); });
+      // cara B · R0 (y luego R1, R2… al transportarla): cada nota con sus alturas y alteraciones de las 12 transposiciones
+      caraPenta(R3d, 1, Y2);
+      const LBw = N.group(R3d.caras[1]), LBi = N.group(LBw);
+      const lbT = texto(LBi, 'R0', 196, Y2 + 12, { anchor: 'end', size: 38, peso: 800, fill: C.rosa }); R3d.pieza(1, LBw, 171, Y2);
+      const ER = Array.from({ length: 12 }, (_, n) => enCompas(transp(R0, n)));
+      const NB = R0.map((_, j) => {
+        const x = XN(j), cxj = x + ANCHO_CAB() / 2, W = N.group(R3d.caras[1], 'n');
+        const ps = ER.map(e => N.posSol(e[j])), al = ER.map(e => altDe(e[j]));
+        const lx0 = x - N.E.ledgerExt * SP, lx1 = x + ANCHO_CAB() + N.E.ledgerExt * SP;
+        const LAr = N.line(W, lx0, Y2 - 3 * SP, lx1, Y2 - 3 * SP, N.E.ledger * SP), LAb = N.line(W, lx0, Y2 + 3 * SP, lx1, Y2 + 3 * SP, N.E.ledger * SP);
+        const H = N.group(W, 'cabeza'); N.glyph(H, 'noteheadWhole', x, Y2, SP);
+        const key = ps.map((p, n) => al[n] ? al[n] + '@' + p : null), ACC = {};
+        key.forEach((k, n) => { if (k && !ACC[k]) ACC[k] = alteracion(W, al[n], x, Y2 - ps[n] * SP); });
+        R3d.pieza(1, W, cxj, Y2 - ps[0] * SP);
+        return { W, H, LAr, LAb, ACC, key, ps };
+      });
+      // los becuadros de R0 se escriben al terminar el volteo (rosa y luego blanco, como las demás alteraciones)
+      NB.forEach((o, j) => {
+        if (altDe(ER[0][j]) !== 'n') return;
+        const Ag = o.ACC[o.key[0]], tw = tBq + (j === 11 ? 0.18 : 0);
+        escribe(s, Ag, Ag._caja, tw, 0.32);
+        s.on(t => { const k = ramp(t, tw + 0.75, tw + 1.1); color(Ag, k >= 1 ? '' : mezcla(C.rosa, C.blanco, ease(k))); });
+      });
+      // ⏪ «como si la rebobinas» (en la tarjeta, a la derecha)
+      const RB = N.group(R3d.caras[1]); color(RB, C.rosa);
+      [0, 1].forEach(k => N.el('path', { d: `M${1776 - k * 34},${Y2 - 26} l-34,26 l34,26 z`, fill: 'currentColor' }, RB));
+      R3d.pieza(1, RB, 1742, Y2);
+      mostrarEn(s, RB, tRb, fin);
+      // SON_R0 · cada nota de R0 se enciende cuando suena
+      NB.forEach((o, j) => { if (TR[j] != null) destella(s, o.W, [TR[j]], { d: .5 }); });
+      // R3 · (30-sep, Iago: «cuando mencionas R1, R2… que se vea cómo R0 va subiendo… hasta que dices todas las demás, que
+      // ahí se puede esfumar») · con «R1» sube un semitono, con «R2» otro, y después sigue subiendo deprisa (R3 … R11) y se esfuma
+      const dQ = 0.15, tQ = tR2 + 0.75, TST = [tR1, tR2];
+      for (let m = 3; m <= 11; m++) TST.push(tQ + (m - 3) * dQ);
+      const DST = m => (m <= 2 ? 0.5 : dQ * 0.85);
+      const estado = t => TST.reduce((k, ts, i) => k + ease(ramp(t, ts, ts + DST(i + 1))), 0);
+      s.on(t => {
+        const k = estado(t), n = Math.min(10, Math.floor(k)), fr = k - n;
+        NB.forEach(o => {
+          const p = lerp(o.ps[n], o.ps[n + 1], fr);
+          o.H.setAttribute('transform', `translate(0,${(-p * SP).toFixed(2)})`);
+          opa(o.LAr, clamp((p - 2.5) * 2)); opa(o.LAb, clamp((-2.5 - p) * 2));
+          for (const kk in o.ACC) opa(o.ACC[kk], (kk === o.key[n] ? 1 - fr : 0) + (kk === o.key[n + 1] ? fr : 0));
+        });
+        const txt = 'R' + Math.round(k); if (lbT.textContent !== txt) lbT.textContent = txt;
+        let bump = 0; for (const tb of [tR0, tR1 + 0.25, tR2 + 0.25]) bump = Math.max(bump, win(t, tb, tb + 0.55, .18, .37));
+        LBi.setAttribute('transform', `translate(171,${Y2}) scale(${(1 + 0.18 * bump).toFixed(4)}) translate(-171,${-Y2})`);
+      });
+      // la tarjeta: sale de P0 (con «coges»), se voltea (con «volteas») y al final se esfuma subiendo
+      s.on(t => {
+        const k = ease(ramp(t, tCo, tCo + 0.8)), e = ease(ramp(t, tOt, tOt + 0.9));
+        Gw.setAttribute('transform', `translate(0,${((1 - k) * (Y1 - Y2) - 36 * e).toFixed(1)})`);
+        opa(Gw, Math.min(ease(ramp(t, tCo, tCo + 0.3)), 1 - e));
+        opa(R3d.fondo, ease(ramp(t, tCo + 0.35, tCo + 0.8)));
+        R3d.set(Math.PI * ease(ramp(t, tVo, tVf)));
       });
       const FL = N.group(g); color(FL, C.rosa);
-      flecha(FL, 1600, 520, 400, 520, { w: 4, cab: 18 });
-      texto(FL, 'al revés', CX, 500, { anchor: 'middle', size: 30, peso: 800, fill: 'currentColor' });
-      aparece(s, FL, tRe, fin, { dy: 0 });
-      // R2 · como si la rebobinas: ⏪ y suena al revés
-      const RB = N.group(g); color(RB, C.rosa);
-      [0, 1].forEach(k => N.el('path', { d: `M${1760 - k * 34},${Y2 - 26} l-34,26 l34,26 z`, fill: 'currentColor' }, RB));
-      mostrarEn(s, RB, Wd('R2', 'rebobinas') - 0.3, fin);
-      const TR = S.SON_R0 || [];
-      B.ns.forEach((n, j) => { if (TR[j] != null) destella(s, n.g, [TR[j]], { d: .5 }); });
-      // R3 · también transportadas: R0 … R11
-      const tTr = Wd('R3', 'transportadas') - 0.3, tR0 = Wd('R3', 'r0') - 0.3, tDo = Wd('R3', 'doce') - 0.3;
-      const TI = tira(g, 'R', 900);
-      TI.forEach((G, i) => pop(s, G, (i < 3 ? tR0 + i * 0.55 : tDo) + (i >= 3 ? (i - 3) * 0.08 : 0), fin, G._x, 900, { k0: .6 }));
-      const ts = fraseG(g, [['también ', C.blanco], ['transportadas', C.rosa]], CX, 810, { size: 30, peso: 800, anchor: 'middle' });
+      flecha(FL, 1600, 472, 400, 472, { w: 4, cab: 18 });
+      texto(FL, 'al revés', CX, 450, { anchor: 'middle', size: 30, peso: 800, fill: 'currentColor' });
+      aparece(s, FL, tRe, tOt + 0.9, { dy: 0 });
+      // R3 · también transportadas: R0 … R11 (cada una, cuando la tarjeta llega a ella; con «doce», todas)
+      const TI = tira(g, 'R', YT);
+      const tChip = i => (i === 0 ? tR0 : TST[i - 1] + DST(i) * 0.5);
+      TI.forEach((G, i) => {
+        pop(s, G, tChip(i), fin, G._x, YT, { k0: .6, fi: i > 2 ? .2 : .35 });
+        s.on(t => color(G, mezcla(C.blanco, C.rosa, Math.max(clamp(1 - Math.abs(estado(t) - i)), ease(ramp(t, tDo, tDo + 0.4))))));
+      });
+      const ts = fraseG(g, [['también ', C.blanco], ['transportadas', C.rosa]], CX, 880, { size: 30, peso: 800, anchor: 'middle' });
       aparece(s, ts, tTr, fin, { dy: 6 });
     });
   }
@@ -1003,10 +1179,11 @@
   function escenaRI() {
     const a = F0('Q1') - 0.2, b = F0('E1') - 0.25;
     escena('ri', a, b, (s, g) => {
-      const fin = b - 0.3, tQ3 = F0('Q3') - 0.2;
-      const kr = N.group(g); chip(kr, 'RI · RETRÓGRADA DE LA INVERSIÓN', CX, 200, { size: 32, anchor: 'middle', fondo: '#64748b' });
+      const fin = b - 0.3, tQ3 = F0('Q3') - 0.75;       // (30-sep) lo de Q1–Q2 se va antes: en Q3 se dibuja la matriz
+      // (30-sep, Iago: «RI ponlo con el mismo tamaño que las demás. No seas cutre») el cartel y la RI, como los de P, R e I
+      const kr = N.group(g); chip(kr, 'RI · RETRÓGRADA DE LA INVERSIÓN', CX, 200, { size: 34, anchor: 'middle' });
       pop(s, kr, Wd('Q1', 'cuarta') - 0.3, tQ3, CX, 200);
-      const fo = fraseG(g, [['I', C.rosa], [' leída ', C.blanco], ['al revés', C.rosa], ['  =  ', C.suave], ['RI', C.suave]], CX, 420, { size: 60, peso: 800, anchor: 'middle' });
+      const fo = fraseG(g, [['I', C.rosa], [' leída ', C.blanco], ['al revés', C.rosa], ['  =  ', C.suave], ['RI', C.rosa]], CX, 420, { size: 60, peso: 800, anchor: 'middle' });
       aparece(s, fo, Wd('Q1', 'ri') - 0.4, tQ3, { dy: 8 });
       const tTq = Wd('Q2', 'tranquilo') - 0.3, tEx = Wd('Q2', 'existe') - 0.3, tPr = Wd('Q2', 'preguntar') - 0.3;
       const tq = fraseG(g, [['tranquilo…', C.blanco]], CX, 600, { size: 40, peso: 800, italic: true, anchor: 'middle' });
@@ -1015,23 +1192,72 @@
       aparece(s, ex, tEx, tQ3, { dy: 6 });
       const np = fraseG(g, [['no te la voy a preguntar', C.suave]], CX, 760, { size: 32, peso: 700, italic: true, anchor: 'middle' });
       aparece(s, np, tPr, tQ3, { dy: 6 });
-      // Q3 · 4 formas × 12 transportes = 48 versiones
-      const tCu = Wd('Q3', 'cuatro') - 0.3, tDo = Wd('Q3', 'doce') - 0.3, tCa = Wd('Q3', 'cuarenta') - 0.3, tAb = Wd('Q3', 'aburrirse') - 0.5;
-      const FOR = ['P', 'R', 'I', 'RI'];
-      FOR.forEach((L, i) => {
-        const G = N.group(g); color(G, i < 3 ? C.rosa : C.suave);
-        const x = 470 + i * 120;
-        N.el('rect', { x: x - 52, y: 420, width: 104, height: 104, rx: 16, fill: 'rgba(11,19,32,0.9)', stroke: 'currentColor', 'stroke-width': 3 }, G);
-        texto(G, L, x, 492, { anchor: 'middle', size: L.length > 1 ? 44 : 56, peso: 800, fill: 'currentColor' });
-        pop(s, G, tCu + i * 0.12, fin, x, 472, { k0: .7 });
+      // Q3 · (30-sep, Iago: «pon un dibujo de una matriz antes de que digas lo de los tres ejercicios del portal»)
+      // LA MATRIZ 12 × 12 de la serie del libro: P a la izquierda (→), R a la derecha (←), I arriba (↓), RI abajo (↑).
+      // «cuatro formas» → las 4 familias de rótulos · «doce transportes» → se llenan las filas · «cuarenta y ocho» → los 48
+      // rótulos en rosa. A los lados, 4 formas × 12 transportes = 48 versiones. Se va (suave) antes de los ejercicios.
+      const tGr = F0('Q3') - 0.55, tCu = Wd('Q3', 'cuatro') - 0.25, tFo = Wd('Q3', 'formas') - 0.25, tDo = Wd('Q3', 'doce') - 0.25;
+      const tTp = Wd('Q3', 'transportes') - 0.25, tCa = Wd('Q3', 'cuarenta') - 0.25, tVe = Wd('Q3', 'versiones') - 0.3, tMa = Wd('Q3', 'material') - 0.3;
+      // números relativos (0 = Re): P0 = la serie; I0 = su espejo; fila r = P(I0[r]) = I0[r] + P0[j] (mód. 12)
+      const p0 = P0.map(n => ((midi(n) - midi(P0[0])) % 12 + 12) % 12), i0 = p0.map(v => (12 - v) % 12);
+      const MZ = i0.map(r => p0.map(c => (r + c) % 12));
+      const doce = v => v.slice().sort((x, y) => x - y).join() === '0,1,2,3,4,5,6,7,8,9,10,11';
+      if (p0.join() !== '0,8,5,1,10,6,9,7,4,2,11,3' || i0.join() !== '0,4,7,11,2,6,3,5,8,10,1,9' || !MZ.every(doce) ||
+          !p0.every((_, j) => doce(MZ.map(f => f[j]))) || MZ[0].join() !== p0.join() || MZ.map(f => f[0]).join() !== i0.join())
+        throw new Error('dodecafonismo: la matriz no cuadra');
+      const NREL = ['D', 'Eb', 'E', 'F', 'Gb', 'G', 'Ab', 'A', 'Bb', 'B', 'C', 'Db'];     // Re Mi♭ Mi Fa Sol♭ Sol La♭ La Si♭ Si Do Re♭
+      const CW = 68, CH = 54, GX0 = CX - 6 * CW, GY0 = 540 - 6 * CH, GX1 = GX0 + 12 * CW, GY1 = GY0 + 12 * CH;
+      const xc = j => GX0 + (j + 0.5) * CW, yc = r => GY0 + (r + 0.5) * CH;
+      const MX = N.group(g, 'matriz');
+      s.on(t => opa(MX, win(t, tGr, fin, .3, .5)));
+      const FM = N.el('rect', { x: GX0, y: GY0, width: 12 * CW, height: 12 * CH, rx: 8, fill: 'rgba(11,19,32,0.92)' }, MX);
+      s.on(t => opa(FM, ease(ramp(t, tGr, tGr + 0.6))));
+      // la cuadrícula se dibuja (horizontales de arriba abajo y verticales de izquierda a derecha)
+      const RJ = N.group(MX); color(RJ, C.blanco);
+      const lineas = [];
+      for (let k = 0; k <= 12; k++) {
+        const borde = k === 0 || k === 12, st = borde ? 'rgba(255,255,255,0.6)' : 'rgba(255,255,255,0.17)', w = borde ? 2.5 : 1.5;
+        lineas.push([trazo(RJ, `M${GX0},${GY0 + k * CH} H${GX1}`, { w, stroke: st }), k * 0.035]);
+        lineas.push([trazo(RJ, `M${GX0 + k * CW},${GY0} V${GY1}`, { w, stroke: st }), 0.1 + k * 0.035]);
+      }
+      s.on(t => lineas.forEach(([p, d]) => trazoK(p, ease(ramp(t, tGr + d, tGr + d + 0.4)))));
+      // las 4 familias de rótulos (con su flecha de lectura)
+      const FAM = [[], [], [], []];
+      const rotulo = (txt, x, y, anchor, fl) => {
+        const G = N.group(MX); texto(G, txt, x, y, { anchor, size: 24, peso: 800, fill: 'currentColor' }); flecha(G, fl[0], fl[1], fl[2], fl[3], { w: 2.5, cab: 9 }); return G;
+      };
+      i0.forEach((v, r) => {
+        const y = yc(r);
+        FAM[0].push(rotulo('P' + v, GX0 - 40, y + 8, 'end', [GX0 - 34, y, GX0 - 8, y]));
+        FAM[1].push(rotulo('R' + v, GX1 + 40, y + 8, 'start', [GX1 + 34, y, GX1 + 8, y]));
       });
-      const f4 = fraseG(g, [['4 formas', C.blanco]], 650, 590, { size: 30, peso: 800, anchor: 'middle' }); aparece(s, f4, tCu + 0.3, fin, { dy: 4 });
-      const x12 = N.group(g); texto(x12, '× 12', 1060, 500, { anchor: 'middle', size: 72, peso: 800, fill: C.blanco }); aparece(s, x12, tDo, fin, { dy: 6 });
-      const t12 = fraseG(g, [['transportes', C.blanco]], 1060, 590, { size: 30, peso: 800, anchor: 'middle' }); aparece(s, t12, tDo + 0.2, fin, { dy: 4 });
-      const e48 = N.group(g); texto(e48, '= 48', 1450, 500, { anchor: 'middle', size: 88, peso: 800, fill: C.rosa }); aparece(s, e48, tCa, fin, { dy: 6 });
-      const v48 = fraseG(g, [['versiones de una misma serie', C.blanco]], 1450, 590, { size: 28, peso: 800, anchor: 'middle' }); aparece(s, v48, tCa + 0.2, fin, { dy: 4 });
-      const ms = fraseG(g, [['material de sobra para no aburrirse', C.suave]], CX, 800, { size: 34, peso: 700, italic: true, anchor: 'middle' });
-      aparece(s, ms, tAb, fin, { dy: 6 });
+      p0.forEach((v, j) => {
+        const x = xc(j);
+        FAM[2].push(rotulo('I' + v, x, GY0 - 36, 'middle', [x, GY0 - 30, x, GY0 - 7]));
+        FAM[3].push(rotulo('RI' + v, x, GY1 + 58, 'middle', [x, GY1 + 32, x, GY1 + 7]));
+      });
+      FAM.forEach((F, f) => F.forEach((G, k) => {
+        const ta = tCu + f * 0.16 + k * 0.025, tc = tCa + (f * 12 + k) * 0.006;
+        s.on(t => { opa(G, ease(ramp(t, ta, ta + 0.25))); color(G, mezcla(C.blanco, C.rosa, ease(ramp(t, tc, tc + 0.3)))); });
+      }));
+      // las 12 filas se llenan (cada casilla, el nombre de su nota)
+      MZ.forEach((fila, r) => fila.forEach((v, j) => {
+        const G = N.group(MX); color(G, C.blanco);
+        nombreNota(G, NREL[v], xc(j), yc(r) + 8, { size: 23, anchor: 'middle', peso: 700, fill: 'currentColor' });
+        const ta = tDo + r * 0.09 + j * 0.018;
+        s.on(t => opa(G, ease(ramp(t, ta, ta + 0.2))));
+      }));
+      // a los lados: 4 formas × 12 transportes  [matriz]  = 48 versiones
+      const XL = (90 + GX0 - 40 - 60) / 2, XR = (GX1 + 40 + 60 + 1830) / 2;
+      const q4 = N.group(g); texto(q4, '4', XL, 470, { anchor: 'middle', size: 96, peso: 800, fill: C.blanco }); aparece(s, q4, tCu, fin, { dy: 6 });
+      const qf = fraseG(g, [['formas', C.blanco]], XL, 518, { size: 30, peso: 800, anchor: 'middle' }); aparece(s, qf, tFo, fin, { dy: 4 });
+      const q12 = N.group(g); texto(q12, '× 12', XL, 640, { anchor: 'middle', size: 80, peso: 800, fill: C.blanco }); aparece(s, q12, tDo, fin, { dy: 6 });
+      const qt = fraseG(g, [['transportes', C.blanco]], XL, 688, { size: 30, peso: 800, anchor: 'middle' }); aparece(s, qt, tTp, fin, { dy: 4 });
+      const q48 = N.group(g); texto(q48, '= 48', XR, 480, { anchor: 'middle', size: 96, peso: 800, fill: C.rosa }); aparece(s, q48, tCa, fin, { dy: 6 });
+      const qv = fraseG(g, [['versiones de', C.blanco]], XR, 530, { size: 28, peso: 800, anchor: 'middle' }); aparece(s, qv, tVe, fin, { dy: 4 });
+      const qm = fraseG(g, [['una misma serie', C.blanco]], XR, 566, { size: 28, peso: 800, anchor: 'middle' }); aparece(s, qm, tVe + 0.25, fin, { dy: 4 });
+      const qs1 = fraseG(g, [['material de sobra', C.suave]], XR, 650, { size: 28, peso: 700, italic: true, anchor: 'middle' }); aparece(s, qs1, tMa, fin, { dy: 4 });
+      const qs2 = fraseG(g, [['para no aburrirse', C.suave]], XR, 686, { size: 28, peso: 700, italic: true, anchor: 'middle' }); aparece(s, qs2, tMa + 0.25, fin, { dy: 4 });
     });
   }
 
@@ -1077,16 +1303,56 @@
         ['P', [['la serie: ', C.blanco], ['12 sonidos sin repetir', C.rosa]], [['transportada tantos semitonos como diga el número', C.suave]], F0('F2') - 0.2, F0('F4') - 0.2],
         ['R', [['retrógrada: ', C.blanco], ['al revés', C.rosa]], [['y el número, en su última nota', C.suave]], F0('F4') - 0.2, F0('F6') - 0.2],
         ['I', [['el espejo: ', C.blanco], ['cada intervalo, en dirección contraria', C.rosa]], null, F0('F6') - 0.2, F0('F7') - 0.2],
-        ['RI', [['existe: ', C.suave], ['4 × 12 = 48 variantes', C.suave]], null, F0('F7') - 0.2, fin],
+        // (30-sep, Iago: «RI ponlo con el mismo tamaño que las demás. No seas cutre») RI, igual que P, R e I
+        ['RI', [['existe: ', C.blanco], ['4 × 12 = 48 variantes', C.rosa]], null, F0('F7') - 0.2, fin],
       ];
       FIL.forEach(([L, s1, s2, t1, t2], i) => {
         const y = 350 + i * 145;
-        const G = N.group(g); color(G, L === 'RI' ? C.suave : C.rosa);
-        texto(G, L, 330, y + 22, { anchor: 'middle', size: L.length > 1 ? 50 : 64, peso: 800, fill: 'currentColor' });
+        const G = N.group(g); color(G, C.rosa);
+        texto(G, L, 330, y + 22, { anchor: 'middle', size: 64, peso: 800, fill: 'currentColor' });
         aparece(s, G, t1, fin, { dy: 6 });
         const F1_ = fraseG(g, s1, 440, y + (s2 ? 6 : 16), { size: 36, peso: 800 }); aparece(s, F1_, t1 + 0.15, fin, { dy: 6 });
         if (s2) { const F2_ = fraseG(g, s2, 440, y + 56, { size: 28, peso: 700 }); aparece(s, F2_, (L === 'P' ? Wd('F3', 'transportar') : Wd('F4', 'numero')) - 0.3, fin, { dy: 4 }); }
       });
+      // F4 · (30-sep, Iago: «¿qué quiere decir "y el número, en su última nota"? Yo quería eso») R0 en pequeño: su ÚLTIMA
+      // nota (Re) se enciende, debajo aparece su «0» y viaja hasta el hueco de la etiqueta → «R0». El número de una R se lee
+      // en su última nota (la primera de la P de la que sale).
+      const tAl = Wd('F4', 'al') - 0.3, tUl = Wd('F4', 'ultima') - 0.3, tVi = Wd('F4', 'nota') - 0.1;
+      const cyS = 508, CWm = 54, CHm = 44, xS1 = 1670, xS0 = xS1 - 12 * CWm;
+      const RM = N.group(g, 'r0mini');
+      const cel = R0.map((n, j) => {
+        const G = N.group(RM); color(G, C.blanco);
+        N.el('rect', { x: xS0 + j * CWm, y: cyS - CHm / 2, width: CWm, height: CHm, fill: 'rgba(11,19,32,0.9)', stroke: 'rgba(255,255,255,0.3)', 'stroke-width': 1.5 }, G);
+        nombreNota(G, letra(n), xS0 + (j + 0.5) * CWm, cyS + 8, { size: 21, anchor: 'middle', peso: 700, fill: 'currentColor' });
+        const ta = tAl + j * 0.05; s.on(t => opa(G, ease(ramp(t, ta, ta + 0.25)) * (1 - ease(ramp(t, fin - 0.5, fin)))));
+        return G;
+      });
+      s.on(t => color(cel[11], mezcla(C.blanco, C.rosa, ease(ramp(t, tUl, tUl + 0.3)))));
+      const marco = N.el('rect', { x: xS1 - CWm, y: cyS - CHm / 2, width: CWm, height: CHm, fill: 'none', stroke: C.rosa, 'stroke-width': 3 }, RM);
+      s.on(t => opa(marco, ease(ramp(t, tUl, tUl + 0.3)) * (1 - ease(ramp(t, fin - 0.5, fin)))));
+      // etiqueta «R» con el hueco del número
+      const xH = xS0 - 30, EQ = N.group(g); color(EQ, C.rosa);           // xH = centro del número (pegado a la R)
+      texto(EQ, 'R', xH - 11, cyS + 12, { anchor: 'end', size: 34, peso: 800, fill: 'currentColor' });
+      const hueco = N.el('rect', { x: xH - 8, y: cyS - CHm / 2, width: 23, height: CHm, rx: 6, fill: 'none', stroke: 'currentColor', 'stroke-width': 2, 'stroke-dasharray': '5 5' }, EQ);
+      aparece(s, EQ, tAl, fin, { dy: 0 });
+      // el «0» sale de debajo de la última nota y viaja (por debajo de la fila) hasta el hueco
+      const xL = xS0 + 11.5 * CWm, S0_ = [xL, cyS + CHm / 2 + 34], E0_ = [xH, cyS + CHm / 2 + 12];
+      const C1_ = [xL - 150, cyS + 92], C2_ = [xH + 90, cyS + 92];
+      const bez = u => [0, 1].map(k => (1 - u) ** 3 * S0_[k] + 3 * (1 - u) ** 2 * u * C1_[k] + 3 * (1 - u) * u * u * C2_[k] + u ** 3 * E0_[k]);
+      const TRZ = N.group(g); color(TRZ, C.rosa);
+      const camino = trazo(TRZ, `M${S0_[0]},${S0_[1]} C${C1_[0]},${C1_[1]} ${C2_[0]},${C2_[1]} ${E0_[0]},${E0_[1]}`, { w: 3 });
+      const ang = Math.atan2(E0_[1] - C2_[1], E0_[0] - C2_[0]), cab = 13, pt = a_ => `${(E0_[0] - Math.cos(ang + a_) * cab).toFixed(1)},${(E0_[1] - Math.sin(ang + a_) * cab).toFixed(1)}`;
+      const punta = N.el('polygon', { points: `${E0_[0]},${E0_[1]} ${pt(0.45)} ${pt(-0.45)}`, fill: 'currentColor' }, TRZ);
+      s.on(t => { trazoK(camino, ease(ramp(t, tVi, tVi + 0.8))); opa(punta, ramp(t, tVi + 0.7, tVi + 0.85)); opa(TRZ, 1 - ease(ramp(t, fin - 0.5, fin))); });
+      const CERO = N.group(g), ceroT = texto(CERO, '0', 0, 12, { anchor: 'middle', size: 34, peso: 800, fill: C.rosa });
+      s.on(t => {
+        const v = Math.min(ease(ramp(t, tUl + 0.15, tUl + 0.45)), 1 - ease(ramp(t, fin - 0.5, fin))); opa(CERO, v); if (v <= 0) return;
+        const u = ease(ramp(t, tVi, tVi + 0.8)), w = ease(ramp(t, tVi + 0.8, tVi + 1.05));
+        const [x, y] = u < 1 ? bez(u) : [xH, lerp(E0_[1], cyS, w)];
+        CERO.setAttribute('transform', `translate(${x.toFixed(1)},${y.toFixed(1)})`);
+        opa(hueco, 1 - w);
+      });
+      void ceroT;
     });
   }
 
@@ -1104,7 +1370,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');

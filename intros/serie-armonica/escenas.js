@@ -585,7 +585,12 @@
   }
 
   // ================================================================ P3 · SERIE ARMÓNICA (GP)
-  const TITULO = { kicker: 'GRADO PROFESIONAL  ·  TEORÍA', lineas: ['SERIE ARMÓNICA'], sub: 'El código · El truco 1 · 2 · 4 · 8' };
+  // (30-sep, Iago) subtítulo = el código con sus tamaños, como en la escena B: los dos «tres pequeños» (3ªm) a 0,66.
+  // Los huecos van con espacios duros (U+00A0): los espacios normales al principio o al final de un trozo el SVG se los come.
+  const ESP_T = n => '\u00A0'.repeat(n);
+  const TITULO = { kicker: 'GRADO PROFESIONAL  ·  TEORÍA', lineas: ['SERIE ARMÓNICA'], sub: 'El código 8 5 4 3 3 3 2…',
+    subSegs: [['El código', 1], [ESP_T(5), 1], ['8', 1], [ESP_T(3), 1], ['5', 1], [ESP_T(3), 1], ['4', 1], [ESP_T(3), 1],
+      ['3', 1], [ESP_T(3), 1], ['3', 0.66], [ESP_T(3), 1], ['3', 0.66], [ESP_T(3), 1], ['2', 1], ['…', 1]] };
 
   // ---------------------------------------------------------------- utilidades de este vídeo
   const ALT_GL = { '♭': 'accidentalFlat', '♯': 'accidentalSharp', '♮': 'accidentalNatural' };
@@ -625,6 +630,15 @@
   /** Mezcla de colores que acepta '#rrggbb' y 'rgb(…)' (para encadenar mezclas). */
   const aRGB = c => c[0] === '#' ? [parseInt(c.slice(1, 3), 16), parseInt(c.slice(3, 5), 16), parseInt(c.slice(5, 7), 16)] : c.match(/\d+/g).map(Number);
   const mezcla2 = (c1, c2, k) => { const a = aRGB(c1), b = aRGB(c2); return `rgb(${a.map((v, i) => Math.round(v + (b[i] - v) * clamp(k))).join(',')})`; };
+  /** ✗ que se escribe (dos trazos que se dibujan con dibuja()), en currentColor. Devuelve {g, p: [trazo1, trazo2]}. */
+  function aspaEscrita(parent, x, y, r, w) {
+    const G = N.group(parent, 'aspa');
+    const p1 = trazo(G, `M${x - r},${y - r} L${x + r},${y + r}`, { w });
+    const p2 = trazo(G, `M${x + r},${y - r} L${x - r},${y + r}`, { w });
+    return { g: G, p: [p1, p2] };
+  }
+  /** Escala un grupo alrededor del punto c = [x, y]. */
+  const escalaEn = (G, c, k) => G.setAttribute('transform', `translate(${c[0].toFixed(1)},${c[1].toFixed(1)}) scale(${k.toFixed(4)}) translate(${(-c[0]).toFixed(1)},${(-c[1]).toFixed(1)})`);
 
   // la serie de Mi2 (el ejemplo del libro): nota, clave, nombre, intervalo hasta la siguiente
   const SERIE = [
@@ -639,7 +653,7 @@
     const notas = SERIE.map((it, i) => {
       const G = N.group(g, 'armonico');
       const r = nota(G, it.n, XS(i), it.cl === 'fa' ? sis.yF : sis.yS, { clave: it.cl });
-      return { g: G, cx: r.cx, y: r.y, it };
+      return { g: G, cx: r.cx, y: r.y, it, r };
     });
     return { sis, notas };
   }
@@ -832,8 +846,17 @@
       const EJ = S.EJEMPLO || [], TSS = S.SON_SERIE || [];
       const INTW = [['octava', 1], ['quinta', 1], ['cuarta', 1], ['tercera', 1], ['tercera', 2], ['tercera', 3], ['segunda', 1]];
       const tErr = Wd('C3', 'error') - 0.2, tRo = Wd('C3', 'rompe') - 0.3, tVes = F0('D1') - 0.2;
-      const rojo = t => win(t, tErr, tVes, .25, .35);                   // la cadena rota (C3)
-      const NUM = [], NOMS = [], INTS = [];
+      const rojo = t => win(t, tErr, tVes, .25, .35);                   // la cadena rota (C3): la 3M, en rojo
+      // (30-sep, Iago) C3 · el error y su consecuencia: la 3M desde Mi4 se toma como 3ªm → Sol4 natural (el ♯ se vuelve ♮, en
+      // «error») y el código sigue desde esa nota mala: 3ªm Si♭4, 3ªm Re♭5, 2M Mi♭5 → todo un semitono más bajo (los ♭ caen en
+      // dominó en «la cadena…»). Cada armónico estropeado se pone rojo, con su ✗ debajo y su nombre cambiado. En D1 («Bueno,
+      // ¿ves algo?») todo vuelve suave a la serie buena (Sol♯4, Si4, Re5, Mi5), que es la que usa la parte D (1, 2, 4, 8 = Mi).
+      const tDom = Wd('C3', 'cadena') - 0.1, PASO = 0.28;
+      const tMal = [null, null, null, null, tErr, tDom, tDom + PASO, tDom + 2 * PASO];   // cuándo se estropea cada armónico
+      const tV0 = F0('D1') - 0.45, tV1 = tV0 + 0.5;                                        // la vuelta a la serie buena
+      const roto = (t, i) => tMal[i] == null ? 0 : win(t, tMal[i], tV1, .3, tV1 - tV0);
+      const MAL = { 4: 'Sol4', 5: 'Si♭4', 6: 'Re♭5', 7: 'Mi♭5' };                           // los nombres mientras dura el error
+      const NUM = [], NOMS = [], INTS = [], NOMX = [];
       notas.forEach((n, i) => {
         const tn = (EJ[i] != null ? EJ[i] : F0('C2') + i) - 0.12;
         pop(s, n.g, tn, fin, n.cx, n.y, { k0: .5 });
@@ -841,6 +864,7 @@
         pop(s, G, tn + 0.1, fin, n.cx, 845, { k0: .6 }); NUM.push(G);
         const L = fraseG(g, [[n.it.nom, 'currentColor']], n.cx, 915, { size: 28, peso: 800, anchor: 'middle' });
         aparece(s, L, tn + 0.15, fin, { dy: 4 }); NOMS.push(L);
+        if (MAL[i]) { const X = fraseG(g, [[MAL[i], 'currentColor']], n.cx, 915, { size: 28, peso: 800, anchor: 'middle' }); color(X, C.rojo); opa(X, 0); NOMX[i] = X; }
         if (i < 7) {
           const I = N.group(g); etiquetaInt(I, n.it.int, (XS(i) + XS(i + 1)) / 2 + 17, 215, { size: 40, fill: 'currentColor' });
           const ti = Wd('C2', INTW[i][0], INTW[i][1]) - 0.2;
@@ -857,9 +881,19 @@
         if (TSS[i] != null) k = Math.max(k, win(t, TSS[i] - 0.05, TSS[i] + 0.5, .06, .3));
         const d = D_(t, i);
         let c = mezcla(C.blanco, C.rosa, Math.max(k, d));
-        if (i >= 4) c = mezcla2(c, C.rojo, rojo(t));
+        const km = roto(t, i);                                             // C3: este armónico, estropeado (rojo)
+        if (km > 0) c = mezcla2(c, C.rojo, km);
         color(n.g, c); color(NUM[i], c); color(NOMS[i], c);
-        const ap = D_ap(t, i); opa(n.g, ap); opa(NUM[i], ap); opa(NOMS[i], ap);
+        const ap = D_ap(t, i); opa(n.g, ap); opa(NUM[i], ap);
+        if (!NOMX[i]) opa(NOMS[i], ap);
+        else {                                                             // el nombre bueno baja y se va; luego baja el malo (rojo)
+          const kv = ease(clamp(km * 1.6)), kn = ease(clamp(km * 1.6 - 0.6));   // uno detrás de otro: no se pisan
+          opa(NOMS[i], ap * (1 - kv)); opa(NOMX[i], ap * kn);
+          if (km > 0) {                                                    // (en la vuelta, al revés: el bueno regresa de abajo)
+            NOMS[i].setAttribute('transform', `translate(0,${(12 * kv).toFixed(2)})`);
+            NOMX[i].setAttribute('transform', `translate(0,${(-12 * (1 - kn)).toFixed(2)})`);
+          }
+        }
       }));
       INTS.forEach((o, i) => s.on(t => {
         let c = mezcla(C.rosa, C.blanco, ease(ramp(t, o.ti + 1.0, o.ti + 1.4)));
@@ -867,9 +901,42 @@
         color(o.I, c);
         opa(o.I, win(t, o.ti, tVes, .35, .4));                          // (en D ya no hacen falta: fuera)
       }));
-      // C3 · un error y la cadena se rompe: aspa sobre la 3M
-      const X_ = N.group(g); color(X_, C.rojo); aspa(X_, (XS(3) + XS(4)) / 2 + 17, 200, 26, 7);
-      mostrarEn(s, X_, tErr + 0.1, tVes, .2, .3);
+      // C3 · un error y la cadena se rompe: aspa (escrita) sobre la 3M
+      const X_ = N.group(g); color(X_, C.rojo);
+      const X3 = aspaEscrita(X_, (XS(3) + XS(4)) / 2 + 17, 200, 26, 7);
+      dibuja(s, X3.p, tErr + 0.1, 0.3);
+      mostrarEn(s, X_, tErr + 0.1, tVes, .06, .3);
+      // el 5.º: el ♯ se convierte en ♮ (Sol natural): el ♯ encoge y se va, el ♮ entra «estampado»; en D1, al revés
+      const n5 = notas[4], SOS = n5.r.alt, MA = N.M;
+      const xSos = n5.r.x - (MA.accidentalSharp.adv + 0.22) * SP, cSos = [xSos + MA.accidentalSharp.adv * SP / 2, n5.y];
+      const NAT = N.group(n5.g, 'natural'), xNat = n5.r.x - (MA.accidentalNatural.adv + 0.22) * SP;   // mismo sitio que el ♯
+      N.glyph(NAT, 'accidentalNatural', xNat, n5.y, SP);
+      const cNat = [xNat + MA.accidentalNatural.adv * SP / 2, n5.y];
+      s.on(t => {
+        const fuera = win(t, tErr, tV1, .2, .3);                          // el ♯: fuera en «error», vuelve al final de la vuelta
+        opa(SOS, 1 - fuera); escalaEn(SOS, cSos, lerp(1, 0.55, fuera));
+        const v = win(t, tErr + 0.12, tV0 + 0.3, .3, .3); opa(NAT, v);
+        if (v > 0) escalaEn(NAT, cNat, t < tErr + 1 ? lerp(1.6, 1, eo(ramp(t, tErr + 0.12, tErr + 0.42))) : lerp(1, 0.55, ease(ramp(t, tV0, tV0 + 0.3))));
+      });
+      // 6, 7 y 8: su ♭, uno detrás de otro (dominó), delante de la cabeza y a su altura (como cualquier alteración)
+      [5, 6, 7].forEach(i => {
+        const n = notas[i], F = N.group(n.g, 'bemol'), xF = n.r.x - (MA.accidentalFlat.adv + 0.22) * SP;
+        N.glyph(F, 'accidentalFlat', xF, n.y, SP);
+        const cF = [xF + MA.accidentalFlat.adv * SP / 2, n.y - 0.53 * SP];
+        opa(F, 0);
+        s.on(t => {
+          const v = win(t, tMal[i], tV0 + 0.35, .25, .35); opa(F, v);
+          if (v > 0) escalaEn(F, cF, t < tMal[i] + 1 ? lerp(1.7, 1, eo(ramp(t, tMal[i], tMal[i] + 0.25))) : lerp(1, 0.55, ease(ramp(t, tV0, tV0 + 0.35))));
+        });
+      });
+      // la marca «mal»: una ✗ roja (escrita) bajo cada armónico estropeado, en el hueco entre los dos pentagramas
+      const YX = 452;
+      [4, 5, 6, 7].forEach(i => {
+        const G = N.group(g); color(G, C.rojo);
+        const X = aspaEscrita(G, notas[i].cx, YX, 13, 5.5), t0 = tMal[i] + (i === 4 ? 0.3 : 0.12);
+        dibuja(s, X.p, t0, 0.24);
+        mostrarEn(s, G, t0, tV0 + 0.35, .06, .35);
+      });
       const ro = fraseG(g, [['un error… ', C.blanco], ['y la cadena se rompe', C.rojo]], CX, 990, { size: 34, peso: 800, anchor: 'middle' });
       aparece(s, ro, tRo, tVes, { dy: 6 });
       const fr = fraseG(g, [['frescos con los ', C.blanco], ['intervalos', C.rosa]], CX, 990, { size: 34, peso: 800, anchor: 'middle' });
@@ -990,7 +1057,11 @@
     });
     const yR = y1 + (n - 1) * paso + 38;
     N.el('rect', { x: CX - 60, y: yR, width: 120, height: 5, rx: 2.5, fill: C.rosa }, g);
-    if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
+    if (TITULO.subSegs) {   // (30-sep-2026) subtítulo por trozos con su tamaño: [[texto, factor], …] (el código 8 5 4 3 3 3 2 de la
+      const G = N.group(g); let x = 0;              //  serie armónica, con los «tres pequeños» más pequeños)
+      TITULO.subSegs.forEach(([tx, k]) => { const t_ = texto(G, tx, x, yR + 74, { size: 38 * (k || 1), peso: 400, fill: '#cbd5e1' }); x += D.medir(t_); });
+      G.setAttribute('transform', `translate(${(CX - x / 2).toFixed(1)},0)`);
+    } else if (TITULO.sub) texto(g, TITULO.sub, CX, yR + 74, { anchor: 'middle', size: 38, peso: 400, fill: '#cbd5e1' });
   }
   function escenaTitulo() {
     const b = F1('TITULO');
