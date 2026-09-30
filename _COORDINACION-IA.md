@@ -60,6 +60,16 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 30-sep 09:40 · Intros didácticas · EN CURSO · correcciones de Iago («Corregir claude» y las de ayer) y PUBLICACIÓN
+  de todos los vídeos para alumnos (Iago: «puedes hacer públicos todos los vídeos»; Nuevas grafías no está en el portal):
+  intros/{acordes,inversion-acordes,indice-acustico,serie-armonica,cadencias-pro,modulacion}/escenas.js ·
+  intros/modos/ (escenas.js, datos.js, tiempos.js, guion.js, modos.mp3: las tres improvisaciones de «¡escúchalos!»
+  montadas con el pipe, enteras, como pedía el AVISO de 4e222e6; se conserva el cambio de 3f8dff8 y el orden de la
+  tabla jónico·dórico·frigio·lidio·mixolidio·eólico·locrio) · intros/dodecafonismo/ (escenas.js, dodecafonismo.mp3) ·
+  intros/acordes-avanzados/ (escenas.js, datos.js, tiempos.js, guion.js, acordes_avanzados.mp3) · intros/transporte/
+  (escenas.js, transporte.mp3) · index.html: solo dentro de los bloques «VÍDEOS DE GRADO ELEMENTAL EN LAS TARJETAS DE
+  REPASO» (ivg-*) y «APUNTES EN LAS FICHAS» (VIDEOS/VERIFICADOS): `prueba: true` → `alumnos: true` (nunca invitados),
+  «Ir a ejercicios» abre los ejercicios de su vídeo, duraciones de Modos y Acordes avanzados. Parto de 4e222e6.
 - 29-sep 23:40 · Fichas y rediseño · HECHO · solo este fichero · AVISO para «Intros didácticas» · vídeo «Modos» (intros/modos,
   EN PRUEBA): Iago ha aprobado las tres improvisaciones de «¡escúchalos!» (Re dórico 8,8 s · Re lidio 8,8 s · Re frigio
   7,0 s) y quiere que las montéis VOSOTROS con vuestro pipe (tiempos.js y datos.js son vuestros): van en lugar de los
