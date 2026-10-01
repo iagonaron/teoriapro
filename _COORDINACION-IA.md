@@ -60,6 +60,9 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 1-oct 09:38 · Fichas y rediseño · EN CURSO · index.html (bloque «FICHAS EN PAPEL», window.PapelFichas): el PDF de la
+  ficha en papel pasa a llevar UN solo ejemplar y el nombre sigue diciendo cuántas copias hacer (Iago: «si un alumno se
+  pasa a papel a mitad de semana, en la copistería pido una más»). Parto de d34940e.
 - 30-sep 20:30 · Intros didácticas · HECHO · commit 462601c (EN CURSO en a91cbe7) · intros/*/*.mp3 (23 audios) e
   intros/*/*_60.mp4 y *_1440.mp4 (12 vídeos): MÁS MARGEN EN EL AUDIO (Iago: «noto un pelín distorsionada mi voz… algo
   más de margen»). Misma mezcla, 2 dB más baja (−18 LUFS), picos a −3,5 dB, filtro suave por debajo de 60 Hz y MP3 a
