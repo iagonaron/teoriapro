@@ -60,9 +60,11 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 3-oct 11:45 · Fichas y rediseño · EN CURSO · index.html (window.PapelFichas), parto de 40d4e3f: el PDF de papel con
-  nombres pasa a llevar UNA sola ficha sin nombre en vez de dos (Iago: «solo quiero una copia a mayores vacía, sin
-  nombre»). No toquéis index.html hasta el HECHO.
+- 3-oct 11:45 · Fichas y rediseño · HECHO · commit c5bef86 (EN CURSO en f869850) · index.html (window.PapelFichas): el
+  PDF de papel con nombres lleva UNA sola ficha sin nombre (antes dos). Iago: «solo quiero una copia a mayores vacía,
+  sin nombre»; si alguien se pasa a papel después de generar la ficha, esa hoja es para él (el Diario móvil lo avisará
+  con «+1» en el icono de papel). Para volver a dos: SIN_NOMBRE = 2 en window.PapelFichas, o git revert c5bef86.
+  Espejo de Dropbox igual que GitHub.
 - 3-oct 11:05 · Fichas y rediseño · HECHO · commit bd04603 (EN CURSO en 5c22d81, parto de 3d7881f) · index.html. (1)
   GENERADOR, ficha en papel (bloque «FICHAS EN PAPEL», window.PapelFichas, fpConstruirPDF y window.__PAPEL_CFG): el
   botón «Guardar el PDF» hace UN PDF con una ficha por cada alumno que va en papel, con su nombre y su grupo escritos,
