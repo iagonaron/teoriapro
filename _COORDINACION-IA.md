@@ -60,12 +60,19 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 3-oct 10:55 · Fichas y rediseño · EN CURSO · index.html, parto de 3d7881f: (1) generador de fichas (bloque «FICHAS
-  EN PAPEL», window.PapelFichas y fpConstruirPDF): el PDF de papel pasa a ser UNO con una ficha por alumno de papel,
-  con su nombre escrito, sus ejercicios de refuerzo al final (etiqueta «REFUERZO ★») y 2 fichas más sin nombre; el
-  contexto se pide a suite_ficha_profe_contexto_v2 (con el de siempre de reserva). (2) Revisión del alumno: ruta nueva
-  ?revision=…&alu=1&papel=1 = la ficha en formato solución para quien la entregó en papel (función
-  suite_ficha_solucion_papel). No toquéis index.html hasta el HECHO.
+- 3-oct 11:05 · Fichas y rediseño · HECHO · commit bd04603 (EN CURSO en 5c22d81, parto de 3d7881f) · index.html. (1)
+  GENERADOR, ficha en papel (bloque «FICHAS EN PAPEL», window.PapelFichas, fpConstruirPDF y window.__PAPEL_CFG): el
+  botón «Guardar el PDF» hace UN PDF con una ficha por cada alumno que va en papel, con su nombre y su grupo escritos,
+  sus ejercicios de refuerzo al final (pestaña «REFUERZO ★» arriba a la derecha de la tarjeta) y 2 fichas más sin
+  nombre; cada ficha empieza en hoja nueva (pensado para imprimir a doble cara). En la lista de refuerzo, los alumnos
+  de papel salen con 📄. El contexto se pide a suite_ficha_profe_contexto_v2 (trae quién va en papel y cuenta también
+  las fichas corregidas en papel); si no existiera, usa el de siempre y el PDF sale como antes (un ejemplar). (2)
+  ALUMNO: ruta nueva ?revision=<ficha>:<cuenta>&alu=1&papel=1 = su ficha «en formato solución» (respuesta correcta de
+  cada ejercicio, la nota y el % que puso Iago en cada uno; solo los ejercicios de refuerzo que traía su hoja); la
+  pide a suite_ficha_solucion_papel. El enlace lo manda la app Fichas en papel al poner la nota. La revisión digital
+  de siempre (?revision=…&alu=1) no cambia (comprobado: sale idéntica). Base de datos: solo funciones NUEVAS (no se ha
+  tocado ninguna de las de antes). Para volver atrás: git revert bd04603. Espejo de Dropbox igual que GitHub (la
+  versión anterior, en APPs/_PARA BORRAR/3-oct-2026-teoria-antes-de-papel-con-nombre/GP-index.html).
 - 1-oct 09:42 · Fichas y rediseño · HECHO · commit 0e18a87 (EN CURSO antes, parto de d34940e) · index.html (bloque «FICHAS EN
   PAPEL», window.PapelFichas): el PDF de la ficha en papel lleva UN solo ejemplar; el nombre sigue diciendo cuántas copias
   hacer («Ficha N · 2 GP · X copias.pdf»). Iago: «si un alumno se pasa a papel a mitad de semana, en la copistería pido
