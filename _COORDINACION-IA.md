@@ -60,6 +60,15 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 3-oct 14:16 · Fichas y rediseño · EN CURSO · index.html (parto de c5bef86): FICHA CORREGIDA EN TARJETAS, la pantalla
+  final de la ficha (al terminarla, en la revisión del alumno —digital y en papel— y en la del profesor desde el
+  Diario): leyenda arriba, % con icono en cada ejercicio (✓ verde 100 · triángulo amarillo 50–99 · triángulo rojo <50)
+  y, en los suspensos, «Hey, soy Iago. Aquí tienes apuntes, vídeo y ejercicios para practicar». Bloque nuevo «FICHA
+  CORREGIDA EN TARJETAS» (window.LmfCorr) justo antes de «FILA DE AYUDA DE LA FICHA». OJO «Apuntes en fichas»: toco
+  vuestro bloque ApxFicha (también corre con ?revision=… y gana ApxFicha.recursos; abrirApuntes/abrirLibro/elegirVideo
+  aceptan un 3.er dato «libre»); lo de la ficha del alumno no cambia. También ?practice= de escalas (baja a su
+  tarjeta), la ficha en papel corregida en negro y rojo, y en la SOLUCIÓN (PDF incluido): la nota impresa del índice
+  acústico en negro y un ejemplo en «Construye una serie» de dodecafonismo.
 - 3-oct 11:45 · Fichas y rediseño · HECHO · commit c5bef86 (EN CURSO en f869850) · index.html (window.PapelFichas): el
   PDF de papel con nombres lleva UNA sola ficha sin nombre (antes dos). Iago: «solo quiero una copia a mayores vacía,
   sin nombre»; si alguien se pasa a papel después de generar la ficha, esa hoja es para él (el Diario móvil lo avisará
