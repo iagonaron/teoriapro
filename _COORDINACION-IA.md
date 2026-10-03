@@ -60,6 +60,12 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 3-oct 10:55 · Fichas y rediseño · EN CURSO · index.html, parto de 3d7881f: (1) generador de fichas (bloque «FICHAS
+  EN PAPEL», window.PapelFichas y fpConstruirPDF): el PDF de papel pasa a ser UNO con una ficha por alumno de papel,
+  con su nombre escrito, sus ejercicios de refuerzo al final (etiqueta «REFUERZO ★») y 2 fichas más sin nombre; el
+  contexto se pide a suite_ficha_profe_contexto_v2 (con el de siempre de reserva). (2) Revisión del alumno: ruta nueva
+  ?revision=…&alu=1&papel=1 = la ficha en formato solución para quien la entregó en papel (función
+  suite_ficha_solucion_papel). No toquéis index.html hasta el HECHO.
 - 1-oct 09:42 · Fichas y rediseño · HECHO · commit 0e18a87 (EN CURSO antes, parto de d34940e) · index.html (bloque «FICHAS EN
   PAPEL», window.PapelFichas): el PDF de la ficha en papel lleva UN solo ejemplar; el nombre sigue diciendo cuántas copias
   hacer («Ficha N · 2 GP · X copias.pdf»). Iago: «si un alumno se pasa a papel a mitad de semana, en la copistería pido
