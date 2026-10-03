@@ -10160,7 +10160,8 @@ function fpPintaIndice(host, spec, resuelto, anchoFijo){
       stave.setContext(ctx).draw();
       var sn=new VF.StaveNote({keys:[notaToKey(q.step,q.oct,q.alter)],duration:"w",clef:q.clef});
       if(q.alter) sn.addModifier(new VF.Accidental(q.alter===1?"#":"b"),0);
-      if(resuelto){ sn.setStyle({fillStyle:'#e11d1d', strokeStyle:'#e11d1d'}); }
+      /* (3-oct-2026, Iago) «negro lo que ya tiene el ejercicio en papel; rojo aquello que se escribe»: la nota viene impresa,
+         así que se queda negra también en la solución (antes salía roja); en rojo va solo el índice */
       var voice=new VF.Voice({num_beats:4,beat_value:4}).setStrict(false);
       voice.addTickables([sn]);
       new VF.Formatter().joinVoices([voice]).format([voice], wC-40);
@@ -11556,6 +11557,10 @@ function pintaAlu(){
 var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', indice:'indiceacustico', tonalidades:'tonalidades', ton_nombre:'tonalidades', ton_armadura:'tonalidades', ton_vecinos:'tonalidades', comp_elegir:'compasespro', comp_rellenar:'compasespro', comp_replicar:'compasespro', seriearmonica:'seriearmonica', dode_construir:'dodecafonismo', dode_completa:'dodecafonismo', dode_identifica:'dodecafonismo', enarmoniapro:'enarmoniapro', modulacion:'modulacion', inversion_int_simples:'inversion', inversion_int_compuestos:'inversion', inversion_aco_identifica:'inversion', inversion_aco_construir:'inversion', transporte_escrito:'transporte', transporte_mental:'transporte', transporte_resumen:'transporte' };
 /* pestaña exacta del pad tras abrirlo */
 var FP_PRACTICE_AFTER={
+  /* (3-oct-2026, Iago) «si el error es escalas mayores, que le lleve a escalas mayores»: se baja a la tarjeta de esa familia */
+  escala_menor:function(){ var c=document.getElementById('cardESC0'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); },
+  escala_mayor:function(){ var c=document.getElementById('cardESC1'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); },
+  escala_otras:function(){ var c=document.getElementById('cardESC2'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); },
   ton_nombre:function(){ var c=document.getElementById('cardTA'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); },
   ton_armadura:function(){ var c=document.getElementById('cardTB'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); },
   ton_vecinos:function(){ var c=document.getElementById('cardTC'); if(c) c.scrollIntoView({behavior:'smooth',block:'start'}); },
@@ -11718,6 +11723,19 @@ function pintaResultado(nota, pcts){
           '<button class="fp-practica fp-practica-sm" data-prac="'+it.key+'" type="button">practica esto, anda ↗</button>'+
         '</div>'
       : '<div style="margin-top:10px"><span style="font-size:13px;color:#e9c96a;font-weight:700">Ey, soy Iago: <b>revisa los apuntes</b> 📖</span></div>');
+    /* (3-oct-2026, Iago) FICHA CORREGIDA EN TARJETAS (la de papel y, desde la tarde, también la digital: «para lo que es el
+       traqueo»): una tarjeta por ejercicio, con el % y su icono arriba a la derecha (✓ verde 100 · triángulo amarillo 50–99 ·
+       triángulo rojo <50) y, en los suspensos, el consejo de Iago abajo a la derecha */
+    if(window.LmfCorr){
+      return '<div class="lmf-ej" data-n="'+(k+1)+'">'+
+          '<div class="lmf-ej-cab">'+
+            '<div class="lmf-ej-tit">'+(k+1)+'. '+it.enun+(it.refuerzo?' <span class="lmf-ref">REFUERZO ★</span>':'')+'</div>'+
+            (anulado?'<span class="lmf-nc">ANULADO · no cuenta'+(ALU.revAlumno?' para la nota':'')+'</span>':(sinPct?'':window.LmfCorr.chip(pct)))+
+          '</div>'+
+          '<div class="fp-corr-host" data-k="'+k+'"></div>'+
+          (ok?'':'<div class="lmf-con"><div class="lmf-con-t" data-key="'+String(it.key||'').replace(/[^\w.-]/g,'')+'"></div></div>')+
+        '</div>';
+    }
     return '<div style="border-top:1px solid rgba(212,175,55,.18);padding:16px 0">'+
         '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">'+
           '<div style="font-size:14px;color:#fbf7ec;font-weight:800">'+(k+1)+'. '+it.enun+'</div>'+
@@ -11733,9 +11751,11 @@ function pintaResultado(nota, pcts){
       '<div id="fpNotaBadge" class="fp-nota-pop'+(nota>=7?' fp-nota-ring':'')+'" style="margin-top:12px;display:inline-block;background:linear-gradient(120deg,'+(aprob?'#e9c96a,#b8860b':'#ff9b9b,#c0392b')+');color:'+(aprob?'#1a1305':'#fff')+';font-weight:900;font-size:20px;padding:12px 28px;border-radius:99px;box-shadow:0 12px 30px rgba(212,175,55,.35)">Puntuación: <span id="fpNotaVal">0,0</span> / 10</div>'+
       /* (22-sep-2026) RECLAMACIONES: enlace discreto bajo la nota que lleva al buzón de abajo */
       (ALU.simulado?'':'<div id="fpReclamaLinea" style="margin-top:10px;color:var(--muted);font-size:12.5px">¿Crees que hay algún ejercicio mal corregido? <button id="fpReclamar" type="button" style="background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.55);color:#e9c96a;border-radius:99px;padding:4px 12px;font-weight:800;font-size:12.5px;cursor:pointer;font-family:inherit">Reclámalo</button></div>')+
-      '<div style="margin-top:12px;color:var(--muted);font-size:13.5px">'+(ALU.papel?'Esta ficha la entregaste en papel. Debajo de cada ejercicio tienes <b>la respuesta correcta</b>'+(pcts.some(function(x){ return x!=null; })?' y, a su derecha, el porcentaje que te puse.':'.'):'Resumen de tus respuestas. Los ejercicios con menos del 50% tienen un enlace para practicar.')+'</div>'+
+      '<div style="margin-top:12px;color:var(--muted);font-size:13.5px">'+(ALU.papel?((ALU.revision && !ALU.revAlumno)?'En cada ejercicio, <b>la respuesta correcta</b>'+(pcts.some(function(x){ return x!=null; })?' y el porcentaje que le pusiste.':'.')
+                     :'En cada ejercicio tienes <b>la respuesta correcta</b>'+(pcts.some(function(x){ return x!=null; })?' y el porcentaje que te puse.':'.'))
+                  :(window.LmfCorr?'Resumen de tus respuestas.':'Resumen de tus respuestas. Los ejercicios con menos del 50% tienen un enlace para practicar.'))+'</div>'+
       '<div style="margin-top:10px;display:flex;gap:16px;justify-content:center;flex-wrap:wrap;font-size:12.5px;font-weight:700">'+
-        (ALU.papel?'':'<span style="color:#22c98a">● lo que hiciste bien</span>'+
+        (ALU.papel?((window.LmfCorr && pcts.some(function(x){ return x!=null; }))?window.LmfCorr.leyenda():''):window.LmfCorr?window.LmfCorr.leyenda(['#22c98a','#ef4444','#3b82f6']):'<span style="color:#22c98a">● lo que hiciste bien</span>'+
         '<span style="color:#e11d1d">● lo que fallaste</span>'+
         '<span style="color:#2f6df6">● la respuesta correcta</span>')+
       '</div>'+
@@ -11758,7 +11778,15 @@ function pintaResultado(nota, pcts){
     c.querySelectorAll('.fp-corr-host').forEach(function(h){
       var it=ALU.items[+h.dataset.k];
       /* (3-oct-2026) ficha en papel: no hay respuestas que corregir; se pinta la SOLUCIÓN tal cual (como en el generador) */
-      if(ALU.papel){ try{ fpPintaEjercicio(h, it.item, true, Math.max(320, (h.clientWidth||540)-22)); }catch(e){} }   /* -22: el relleno de la caja, para que no se corte por la derecha */
+      if(ALU.papel){ try{ fpPintaEjercicio(h, it.item, true, Math.max(320, (h.clientWidth||540)-22)); }catch(e){}   /* -22: el relleno de la caja, para que no se corte por la derecha */
+        /* (3-oct-2026, Iago) «negro lo que ya tiene el ejercicio en papel; rojo aquello que se escribe»: las casillas de los test
+           (verdes) pasan a rojo, y la cadencia lleva escrita su respuesta en rojo, como en el PDF de soluciones */
+        var _LC=window.LmfCorr;
+        if(_LC && _LC.rojo){ try{ _LC.rojo(h); setTimeout(function(){ try{ _LC.rojo(h); }catch(e){} }, 350); }catch(e){} }
+        if(_LC && it.item && it.item._cad && window.CADENCIAS_MOTOR && window.CADENCIAS_MOTOR.pdfInfo && !h.parentElement.querySelector('.lmf-resp')){
+          try{ var _ci=window.CADENCIAS_MOTOR.pdfInfo(it.item), _rr=document.createElement('div'); _rr.className='lmf-resp';
+            _rr.textContent=_ci.label+' · '+_ci.formula+' ('+_ci.key+')'; h.parentElement.insertBefore(_rr, h.nextSibling); }catch(e){} }
+      }
       else { try{ fpMotorDe(it.item).corregirVisual(h, it.item); }catch(e){} }
       // se considera dibujado si el host tiene contenido (no solo por el valor de retorno)
       if(!h.firstChild || !(h.querySelector('svg')||h.textContent.trim())){ h.innerHTML='<div class="fp-vacio">(no se pudo dibujar la corrección)</div>'; }
@@ -11771,6 +11799,11 @@ function pintaResultado(nota, pcts){
   c.querySelectorAll('[data-prac]').forEach(function(b){
     b.addEventListener('click', function(){ fpModalPracticar(b.getAttribute('data-prac')); });
   });
+  /* (3-oct-2026, Iago) ficha corregida: «Hey, soy Iago. Aquí tienes apuntes, vídeo y ejercicios para practicar» */
+  if(window.LmfCorr){
+    c.querySelectorAll('.lmf-con-t').forEach(function(x){ var key=x.getAttribute('data-key');
+      try{ window.LmfCorr.consejo(x, key, fpTienePad(key) ? (location.origin+location.pathname+'?practice='+encodeURIComponent(key)) : null); }catch(e){} });
+  }
   /* WAVE14 · buzón de incidencias v2: plegado, varios ejercicios, abajo del todo */
   var fbB=el('aluFbSend');
   if(fbB && !fbB._fp){ fbB._fp=true;
@@ -11842,6 +11875,20 @@ async function fpModoRevision(rev, sec, alu, papel){
       var ppc=Array.isArray(dp.ejercicios_pct)?dp.ejercicios_pct:null;
       r={ data:{ ok:true, numero:dp.numero, ejercicios_json:dp.ejercicios_json, nota:dp.nota,
                  payload:{ papel:true, canon_id:dp.canon_id, ejercicios:(ppc?ppc.map(function(x){ return { pct:x }; }):null) } }, error:null };
+    } else if(!alu && papel){
+      /* (3-oct-2026, tarde, Iago: «para lo que es el traqueo… ya sea en formato digital como en formato papel») EL PROFESOR
+         abre desde la lupa del Diario la ficha EN PAPEL de un alumno:
+           ?revision=papel:<alumno>&s=…&papel=1&curso=<curso>&n=<número>&pct=<%,%,…>&nota=<nota>
+         La ficha sale de suite_ficha_ver (la del visor del Diario); los % y la nota, los que el Diario acaba de leer de
+         esa nota (van en la dirección: no hace falta ninguna función nueva en la base de datos). */
+      var q2=new URLSearchParams(location.search);
+      var rv=await sb.rpc('suite_ficha_ver',{ p_secreto:sec, p_curso:q2.get('curso'), p_numero:parseInt(q2.get('n'),10) });
+      if(rv&&rv.error) throw rv.error;
+      var dv=rv&&rv.data; if(!dv||dv.ok!==true||!dv.ficha) throw new Error((dv&&dv.error)||'no_disponible');
+      var pcs=String(q2.get('pct')||'').split(',').map(function(x){ return x.trim(); }).filter(function(x){ return x!==''; }).map(Number).filter(function(x){ return isFinite(x); });
+      var nt=parseFloat(String(q2.get('nota')||'').replace(',','.'));
+      r={ data:{ ok:true, numero:dv.ficha.numero, ejercicios_json:dv.ficha.ejercicios, nota:(isFinite(nt)?nt:null),
+                 payload:{ papel:true, canon_id:cuenta, ejercicios:(pcs.length?pcs.map(function(x){ return { pct:x }; }):null) } }, error:null };
     } else {
       r=alu ? await sb.rpc('suite_ficha_revision_alumno',{ p_cuenta_id:cuenta, p_ficha_id:fichaId })
               : await sb.rpc('suite_ficha_revision',{ p_secreto:sec, p_ficha_id:fichaId, p_cuenta_id:cuenta });
@@ -11852,7 +11899,7 @@ async function fpModoRevision(rev, sec, alu, papel){
     var pack=fpExtraerPaquete({ ejercicios_json:d.ejercicios_json });
     if(!pack||!pack.ejercicios.length) throw new Error('ficha_vacia');
     // (16-sep-2026) base + refuerzos de ESTE alumno, en el orden en que los hizo
-    try{ var refs0=(pack.payload&&Array.isArray(pack.payload.refuerzos))?pack.payload.refuerzos:[]; var capRef=Infinity; if(pl.papel){ capRef=Math.max(0,((pl.ejercicios&&pl.ejercicios.length)||0)-pack.ejercicios.length); }   /* (3-oct-2026) en papel: solo los ejercicios de refuerzo que traía SU hoja (los que Iago puntuó de más) */ refs0.forEach(function(r){ if(capRef>0 && ((Array.isArray(r.cuentas)&&r.cuentas.map(String).indexOf(String(cuenta))>=0) || (pl.papel && pl.canon_id && Array.isArray(r.alumnos) && r.alumnos.map(String).indexOf(String(pl.canon_id))>=0))){ capRef--; var rc=clon(r); rc.n=pack.ejercicios.length+1; pack.ejercicios.push(rc); } }); }catch(e){}
+    try{ var refs0=(pack.payload&&Array.isArray(pack.payload.refuerzos))?pack.payload.refuerzos:[]; var capRef=Infinity; if(pl.papel){ capRef=Math.max(0,((pl.ejercicios&&pl.ejercicios.length)||0)-pack.ejercicios.length); }   /* (3-oct-2026) en papel: solo los ejercicios de refuerzo que traía SU hoja (los que Iago puntuó de más) */ refs0.forEach(function(r){ if(capRef>0 && ((Array.isArray(r.cuentas)&&r.cuentas.map(String).indexOf(String(cuenta))>=0) || (pl.papel && pl.canon_id && Array.isArray(r.alumnos) && r.alumnos.map(String).indexOf(String(pl.canon_id))>=0))){ capRef--; var rc=clon(r); rc.n=pack.ejercicios.length+1; rc.refuerzo=true; pack.ejercicios.push(rc); } }); }catch(e){}
     ALU={ simulado:true, revision:true, revAlumno:!!alu, papel:!!pl.papel, cuenta:null, ficha:null,
           numero:(d.numero!=null?d.numero:'—'),
           anulados:(pl.anulados||[]).map(Number),
@@ -11895,7 +11942,10 @@ async function fpModoRevision(rev, sec, alu, papel){
       var escA=function(s){ return String(s==null?'':s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); };
       var anulA=(ALU.anulados||[]).slice().sort(function(a,b){return a-b;});
       var notaTxt=fmt2(d.nota);
-      var hA='<div style="font-size:15px;font-weight:900;color:var(--ink)">'+(pl.papel?'📄 Tu ficha ':'✅ Tu ficha ')+(d.numero!=null?escA(d.numero):'')+(pl.papel?' en papel, corregida':' corregida')+(notaTxt!=null?(' · nota <span style="color:#e9c96a">'+notaTxt+'</span>'):' · sin nota (esta vez no cuenta)')+'</div>';
+      /* (3-oct-2026, tarde, Iago: «creo que eso sobra, porque ya ves la puntuación justo abajo… más al grano») el rótulo
+         «Tu ficha N corregida · nota X» repetía la nota de «Puntuación». Ya solo sale lo que no está en ella: que la ficha
+         no tiene nota, un ejercicio anulado o una reclamación resuelta. Si no hay nada de eso, no hay rótulo. */
+      var hA=(notaTxt!=null)?'':'<div style="font-size:15px;font-weight:900;color:var(--ink)">✅ Tu ficha '+(d.numero!=null?escA(d.numero):'')+' corregida · sin nota (esta vez no cuenta)</div>';
       if(anulA.length) hA+='<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">'+(anulA.length===1?'El ejercicio <b>'+anulA[0]+'</b> está anulado: no cuenta para la nota.':'Los ejercicios <b>'+anulA.join(', ')+'</b> están anulados: no cuentan para la nota.')+'</div>';
       var rcA=(pl.reclamacion&&typeof pl.reclamacion==='object')?pl.reclamacion:null;
       if(rcA && rcA.estado){
@@ -11905,7 +11955,7 @@ async function fpModoRevision(rev, sec, alu, papel){
       var banA=document.createElement('div'); banA.id='fpRevAlu';
       banA.style.cssText='margin:0 0 16px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.55);border-radius:12px;padding:12px 16px;line-height:1.5;text-align:center';
       banA.innerHTML=hA;
-      if(c){ c.insertBefore(banA, c.firstChild);
+      if(c){ if(hA){ if(banA.firstElementChild) banA.firstElementChild.style.marginTop='0'; c.insertBefore(banA, c.firstChild); }
         // el badge muestra la nota registrada con dos decimales (la misma del rótulo)
         try{ var nbA=el('fpNotaBadge'); if(nbA && notaTxt!=null) nbA.innerHTML='Puntuación: <span>'+notaTxt+'</span> / 10'; }catch(e){}
         var volA=document.createElement('div'); volA.style.cssText='text-align:center;margin:22px 0 8px';
@@ -11923,7 +11973,7 @@ async function fpModoRevision(rev, sec, alu, papel){
     var ban=document.createElement('div'); ban.id='fpRevProfe';
     ban.style.cssText='margin:0 0 16px;background:rgba(11,19,32,.86);border:1px solid rgba(255,255,255,.16);border-radius:14px;padding:12px 16px;color:#e8eef5;font-size:13.5px;line-height:1.55;text-align:left';
     ban.innerHTML='<div style="font-size:11px;font-weight:900;letter-spacing:.14em;text-transform:uppercase;color:#ffd678;margin-bottom:3px">Revisión del profesor</div>'+
-      '<div>Ficha '+(d.numero!=null?escR(d.numero):'—')+' · nota registrada: <b>'+String(nota).replace('.',',')+'</b> · abajo, la ficha EXACTA que vio el alumno (sus respuestas en verde/rojo, la solución en azul)</div>'+
+      '<div>Ficha '+(d.numero!=null?escR(d.numero):'—')+' · nota registrada: <b>'+String(nota).replace('.',',')+'</b>'+(pl.papel?' · entregada EN PAPEL':' · abajo, la ficha EXACTA que vio el alumno (sus respuestas en verde/rojo, la solución en azul)')+'</div>'+
       (fbi?('<div style="margin-top:8px;padding-top:8px;border-top:1px solid rgba(255,255,255,.12)">'+fbi.map(function(x){ return '<div style="margin-top:4px"><b style="color:#ffd678">'+(x.n!=null?('Ejercicio '+escR(x.n)):'General')+'</b> · '+escR(x.texto)+'</div>'; }).join('')+'</div>'):'');
     if(c) c.insertBefore(ban, c.firstChild);
     /* (29-sep-2026, Iago) con &ej=N en la dirección (la lupa amarilla de la reclamación en el Diario), la ficha se abre
@@ -12140,7 +12190,7 @@ document.addEventListener('DOMContentLoaded', function(){
     // TIEMPO DE ACTIVIDAD (15-jul): rastreo de trabajo real en la ficha
     try{ if(window.SuiteTiempo && qs.get('cuenta')) window.SuiteTiempo.start(qs.get('cuenta'), 'ficha', qs.get('fichaId')); }catch(e){}
     arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
-  if(qs.get('revision') && qs.get('s')){ fpModoRevision(qs.get('revision'), qs.get('s')); return; }   /* WAVE15 */
+  if(qs.get('revision') && qs.get('s')){ fpModoRevision(qs.get('revision'), qs.get('s'), false, qs.get('papel')==='1'); return; }   /* WAVE15 · (3-oct-2026) + la ficha en papel de un alumno */
   if(qs.get('revision') && qs.get('alu')==='1'){ fpModoRevision(qs.get('revision'), null, true, qs.get('papel')==='1'); return; }   /* (22-sep-2026) revisión del ALUMNO, sin secreto ni sesión */
   var prac=qs.get('practice');
   if(prac){
@@ -13639,10 +13689,28 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
 function fpPintaDodeA(host, spec, resuelto, anchoFijo){
   try{
     var VF=Vex.Flow; host.innerHTML='';
-    var W=anchoFijo||940, H=150;
+    var W=anchoFijo||940, H=(resuelto && window.DODE_PURE) ? 176 : 150;
     var r=new VF.Renderer(host, VF.Renderer.Backends.SVG); r.resize(W,H); var ctx=r.getContext();
     var stave=new VF.Stave(10, 44, W-20); stave.addClef('treble'); stave.setEndBarType(VF.Barline.type.END); stave.setContext(ctx).draw();
     // construcción libre: solo el pentagrama (el enunciado va en el título de la tarjeta)
+    /* (3-oct-2026, Iago) «al final cada ejercicio tiene que tener su solución. En el dodecafonismo yo pondría un ejemplo y
+       que ponga entre paréntesis: este es un ejemplo». En la SOLUCIÓN (PDF de soluciones y ficha en papel corregida) se
+       escribe en rojo una serie válida cualquiera, con ese rótulo. El ejemplo no se guarda con la ficha. */
+    if(resuelto && window.DODE_PURE){
+      var ej=spec.__ejemplo;
+      if(!ej){ ej=window.DODE_PURE.spellSeq(window.DODE_PURE.generaP0()); try{ Object.defineProperty(spec, '__ejemplo', { value:ej, enumerable:false, configurable:true }); }catch(e2){} }
+      var ticks=ej.map(function(n){ var sn=new VF.StaveNote({keys:[n.step.toLowerCase()+'/'+n.octave],duration:'w',clef:'treble'});
+        if(n.acc==='#'||n.acc==='b'||n.acc==='n') sn.addModifier(new VF.Accidental(n.acc),0);
+        try{ sn.setStyle({fillStyle:'#e11d1d',strokeStyle:'#e11d1d'}); }catch(e2){}
+        return sn; });
+      var vz=new VF.Voice({num_beats:12,beat_value:4}).setStrict(false); vz.addTickables(ticks);
+      try{ new VF.Formatter().joinVoices([vz]).format([vz], (W-20)-(stave.getNoteStartX()-10)-24); }catch(e2){}
+      vz.draw(ctx, stave);
+      var svgE=host.querySelector('svg');
+      if(svgE){ var tE=document.createElementNS('http://www.w3.org/2000/svg','text'); tE.setAttribute('x', W-14); tE.setAttribute('y', H-8); tE.setAttribute('text-anchor','end');
+        tE.setAttribute('font-size','13'); tE.setAttribute('font-weight','bold'); tE.setAttribute('font-family','Arial, Helvetica, sans-serif'); tE.setAttribute('fill','#e11d1d'); tE.setAttribute('stroke','none');
+        tE.textContent='(Este es un ejemplo)'; svgE.appendChild(tE); }
+    }
   }catch(e){ host.innerHTML='<div class="fp-vacio">(no se pudo dibujar dodecafonismo A: '+((e&&e.message)||e)+')</div>'; console.warn('[fichaspro] pintaDodeA', e); }
 }
 
@@ -18149,6 +18217,150 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 })();
 </script>
 
+<!-- (3-oct-2026, Iago) FICHA CORREGIDA EN TARJETAS. Nació para la ficha EN PAPEL que abre el alumno desde el portal
+     (?revision=<ficha>:<cuenta>&alu=1&papel=1): «que arriba de todo de la página ponga la leyenda… que cada tarjeta, en
+     la esquina derecha de arriba, tenga el porcentaje de acierto con su icono… y que en los ejercicios con la exclamación
+     roja aparezca abajo a la derecha: hey, soy Iago. Aquí tienes apuntes, vídeo y ejercicios para practicar.» Esa misma
+     tarde, Iago: «esta idea que hemos aplicado solo para los de papel, creo que para los de digital sirve para lo que es
+     el traqueo»: la usa TODA ficha corregida (al terminarla, en su revisión y en la del profesor desde el Diario).
+     Tres estados: ✓ verde = 100 %  ·  triángulo amarillo = 50–99 %  ·  el mismo triángulo en rojo = menos de 50 %.
+     Aquí van los estilos (clases propias lmf-*, como la fila de ayuda de abajo, para que ni la piel ni los estilos de
+     antes las cambien) y LmfCorr: chip(%), leyenda() y consejo(caja, tipo, enlace de práctica). «apuntes» y «vídeo» los
+     pone ApxFicha.recursos (bloque «APUNTES EN LAS FICHAS», más abajo) con sus mismas puertas: si la cuenta no puede
+     abrirlos, la frase sale sin ellos.
+     Para quitarlo: borrar este bloque; la pantalla final vuelve sola a las filas y porcentajes de antes (mira window.LmfCorr). -->
+<style id="lmf-corr-css">
+  .lmf-ej{position:relative;box-sizing:border-box;margin-top:12px;padding:14px 16px 16px;border:1px solid rgba(255,255,255,.18);border-radius:14px;background:rgba(9,13,26,.46);text-align:left}
+  .lmf-ej-cab{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:10px}
+  .lmf-ej-tit{flex:1 1 auto;min-width:0;padding-top:6px;font-size:14px;font-weight:700;line-height:1.35;color:#fff}
+  .lmf-ref{display:inline-block;margin-left:6px;padding:2px 7px;border:1px solid rgba(255,255,255,.55);border-radius:6px;font-size:10.5px;font-weight:800;line-height:1.3;letter-spacing:.07em;color:#fff;white-space:nowrap;vertical-align:1px}
+  .lmf-pc{flex:none;display:inline-flex;align-items:center;gap:6px;box-sizing:border-box;min-height:32px;padding:0 12px 0 9px;border-radius:99px;border:1.5px solid;font-size:14px;font-weight:800;line-height:1;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .lmf-pc b{font-weight:800;color:#fff}
+  .lmf-pc-i{flex:none;display:inline-grid;place-items:center}
+  .lmf-pc-i svg{display:block}
+  .lmf-ok{color:#4ade80}
+  .lmf-av{color:#facc15}
+  .lmf-mal{color:#f87171}
+  .lmf-pc.lmf-ok{background:rgba(34,197,94,.16);border-color:rgba(74,222,128,.6)}
+  .lmf-pc.lmf-av{background:rgba(234,179,8,.16);border-color:rgba(250,204,21,.6)}
+  .lmf-pc.lmf-mal{background:rgba(239,68,68,.2);border-color:rgba(248,113,113,.65)}
+  .lmf-nc{flex:0 1 auto;max-width:62%;box-sizing:border-box;padding:7px 12px;border-radius:99px;background:rgba(255,255,255,.12);color:rgba(255,255,255,.82);font-size:12px;font-weight:800;line-height:1.25;letter-spacing:.04em;text-align:center}
+  /* FICHA EN PAPEL corregida (Iago, 3-oct): «negro lo que ya tiene el ejercicio en papel antes de cubrir; rojo aquello que se
+     escribe». Cada solución va sobre su hoja blanca, como el PDF de soluciones. */
+  .lmf-ej .lmf-hoja{box-sizing:border-box;background:#fff;border-radius:12px;padding:10px 12px;color:#16203a;overflow-x:auto}
+  .lmf-ej .lmf-hoja svg.penta{box-shadow:none !important}
+  .lmf-ej .fp-corr-host{overflow-x:auto}
+  .lmf-resp{margin-top:8px;font-size:14px;font-weight:800;line-height:1.35;color:#f87171}
+  .lmf-sr{position:absolute;width:1px;height:1px;margin:-1px;padding:0;overflow:hidden;clip:rect(0 0 0 0);white-space:nowrap;border:0}
+  .lmf-ley-i{display:inline-flex;align-items:center;gap:6px;font-size:12.5px;font-weight:700;line-height:1.3;color:rgba(255,255,255,.9)}
+  .lmf-ley-fila{flex:0 0 100%;display:flex;flex-wrap:wrap;justify-content:center;gap:8px 16px}
+  .lmf-ley-fila + .lmf-ley-fila{margin-top:-6px}
+  .lmf-punto{flex:none;display:inline-block;width:10px;height:10px;border-radius:50%}
+  .lmf-con{display:flex;justify-content:flex-end;margin-top:12px}
+  .lmf-con-t{max-width:100%;text-align:right;font-size:13.5px;font-weight:600;line-height:2.6;color:rgba(255,255,255,.88)}
+  .lmf-con-yo{font-weight:800;color:#fff}
+  .lmf-con-l{display:inline-flex;align-items:center;gap:6px;vertical-align:middle;box-sizing:border-box;min-height:32px;margin:0 1px;padding:0 12px;border-radius:99px;
+    border:1.5px solid #ec4899;background:rgba(236,72,153,.18);color:#fff;font-family:inherit;font-size:13.5px;font-weight:800;line-height:1;letter-spacing:0;
+    text-decoration:none;text-transform:none;cursor:pointer;box-shadow:none;-webkit-appearance:none;appearance:none;transition:background .15s,border-color .15s}
+  .lmf-con-l:hover{background:rgba(236,72,153,.34);border-color:#f472b6}
+  .lmf-con-l:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .lmf-con-l svg{flex:none;display:block}
+  @media (max-width:520px){ .lmf-ej{padding:12px 12px 14px} .lmf-con-t{font-size:13px} .lmf-con-l{min-height:34px} }
+  @media (prefers-reduced-motion:reduce){ .lmf-con-l{transition:none} }
+</style>
+<script>
+window.LmfCorr=(function(){
+  'use strict';
+  var CHECK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="m5 12 5 5 9-10"/></svg>';
+  /* la señal de alerta de los portales (el triángulo de los morosos) */
+  var ALERTA='<svg viewBox="0 0 24 24" width="17" height="17" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 3l10 18H2z"/><path d="M12 10v5M12 18v.5"/></svg>';
+  var ICO={
+    apuntes:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C5.5 4.3 8.5 4.3 12 6c3.5-1.7 6.5-1.7 9-.5v13c-2.5-1.2-5.5-1.2-9 .5-3.5-1.7-6.5-1.7-9-.5z"/><path d="M12 6v13.5"/></svg>',
+    video:'<svg viewBox="0 0 12 12" width="11" height="11" aria-hidden="true"><path d="M2.2 1.1v9.8L10.6 6z" fill="currentColor"/></svg>',
+    ejercicios:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4Z"/></svg>',
+    portal:'<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="m15.6 8.4-2.1 5.1-5.1 2.1 2.1-5.1z"/></svg>'
+  };
+  var NOMBRE={ ok:'Ejercicio perfecto', av:'Aprobado, pero con errores', mal:'Ejercicio suspenso' };
+  /* 100 = perfecto · 50–99 = aprobado con errores · menos de 50 = suspenso */
+  function estado(p){ p=+p; return p>=100 ? 'ok' : (p>=50 ? 'av' : 'mal'); }
+  function icono(e){ return e==='ok' ? CHECK : ALERTA; }
+  function chip(p){
+    p=Math.round(+p); if(!isFinite(p)) return '';
+    var e=estado(p);
+    return '<span class="lmf-pc lmf-'+e+'" data-estado="'+e+'" title="'+NOMBRE[e]+'"><span class="lmf-pc-i">'+icono(e)+'</span><b>'+p+'%</b><span class="lmf-sr"> · '+NOMBRE[e]+'</span></span>';
+  }
+  /* la leyenda de los iconos y, si se dan los tres colores (verde, rojo, azul), debajo la de la corrección digital: el punto
+     de color y el texto en blanco, para que se lea sobre cualquier fondo */
+  function leyenda(colores){
+    var h='<span class="lmf-ley-fila">'+['ok','av','mal'].map(function(e){ return '<span class="lmf-ley-i" data-estado="'+e+'"><span class="lmf-pc-i lmf-'+e+'">'+icono(e)+'</span>'+NOMBRE[e]+'</span>'; }).join('')+'</span>';
+    if(colores && colores.length===3){
+      h+='<span class="lmf-ley-fila">'+[[colores[0],'lo que hiciste bien'],[colores[1],'lo que fallaste'],[colores[2],'la respuesta correcta']].map(function(x){
+        return '<span class="lmf-ley-i lmf-ley-color"><i class="lmf-punto" style="background:'+x[0]+'"></i>'+x[1]+'</span>'; }).join('')+'</span>';
+    }
+    return h;
+  }
+  /* FICHA EN PAPEL: lo que se escribe, en ROJO. Los dibujos de solución ya salen así (son los del PDF); aquí se pasan a
+     rojo las marcas que algún motor pinta en verde (la casilla correcta de los test y de las cadencias) y la línea de
+     respuesta del transporte mental. */
+  var ROJO='#d11d1d';
+  function esVerde(c){
+    var m=/^#([0-9a-f]{3}|[0-9a-f]{6})$/i.exec(String(c||'').trim()), r, g, b;
+    if(m){ var h=m[1]; if(h.length===3) h=h[0]+h[0]+h[1]+h[1]+h[2]+h[2]; r=parseInt(h.slice(0,2),16); g=parseInt(h.slice(2,4),16); b=parseInt(h.slice(4,6),16); }
+    else { m=/^rgba?\(\s*(\d+)[\s,]+(\d+)[\s,]+(\d+)(?:[\s,\/]+([\d.]+))?/i.exec(String(c||'')); if(!m) return false; if(m[4]!=null && +m[4]===0) return false; r=+m[1]; g=+m[2]; b=+m[3]; }
+    return g>=90 && (g-r)>=45 && (g-b)>=25;
+  }
+  function rojo(host){
+    if(!host) return;
+    try{
+      [].forEach.call(host.querySelectorAll('*'), function(el){
+        ['stroke','fill'].forEach(function(a){ var v=el.getAttribute && el.getAttribute(a); if(v && esVerde(v)) el.setAttribute(a, ROJO); });
+        var cs=getComputedStyle(el);
+        if(esVerde(cs.color)) el.style.setProperty('color', ROJO, 'important');
+        if(parseFloat(cs.borderTopWidth)>0 && esVerde(cs.borderTopColor)) el.style.setProperty('border-color', ROJO, 'important');
+        if(el.namespaceURI==='http://www.w3.org/2000/svg'){ if(esVerde(cs.fill)) el.style.setProperty('fill', ROJO, 'important'); if(esVerde(cs.stroke)) el.style.setProperty('stroke', ROJO, 'important'); }
+        if(!el.children.length && /^Nueva tonalidad:\s*[^_\s]/.test(el.textContent||'')){ if(el.namespaceURI==='http://www.w3.org/2000/svg'){ el.setAttribute('fill', ROJO); el.setAttribute('stroke', 'none'); } else el.style.setProperty('color', ROJO, 'important'); }
+      });
+    }catch(e){}
+  }
+  function enlace(it){
+    var a;
+    if(it.href){ a=document.createElement('a'); a.href=it.href; a.target='_blank'; a.rel='noopener'; }
+    else { a=document.createElement('button'); a.type='button'; a.addEventListener('click', function(ev){ ev.preventDefault(); try{ it.fn(a); }catch(e){ console.warn('[ficha corregida]', e); } }); }
+    a.className='lmf-con-l'; a.setAttribute('data-que', it.que);
+    a.innerHTML=(ICO[it.que]||'')+'<span>'+it.t+'</span>';
+    if(it.aria) a.setAttribute('aria-label', it.aria);
+    return a;
+  }
+  function frase(caja, L){
+    caja.textContent='';
+    var yo=document.createElement('span'); yo.className='lmf-con-yo'; yo.textContent='Hey, soy Iago.'; caja.appendChild(yo);
+    if(!L.length){ caja.appendChild(document.createTextNode(' Repasa este ejercicio con tus apuntes.')); return; }
+    caja.appendChild(document.createTextNode(' Aquí tienes '));
+    L.forEach(function(it, i){
+      if(i>0) caja.appendChild(document.createTextNode(i===L.length-1 ? ' y ' : ', '));
+      caja.appendChild(enlace(it));
+    });
+    caja.appendChild(document.createTextNode(' para practicar.'));
+  }
+  /* caja: el hueco de abajo a la derecha de la tarjeta · key: el tipo de ejercicio · hrefEj: los ejercicios libres de
+     ESE tipo (?practice=<tipo>), o null si ese tipo no tiene */
+  function consejo(caja, key, hrefEj){
+    if(!caja) return;
+    function pinta(rec){
+      var L=[];
+      if(rec && rec.apuntes) L.push({ que:'apuntes', t:'apuntes', fn:rec.apuntes, aria:'Abrir los apuntes de este ejercicio' });
+      if(rec && rec.video) L.push({ que:'video', t:(rec.videos>1 ? 'vídeos' : 'vídeo'), fn:rec.video, aria:(rec.videos>1 ? 'Ver los vídeos de este tema' : 'Ver el vídeo de este tema') });
+      if(hrefEj) L.push({ que:'ejercicios', t:'ejercicios', href:hrefEj, aria:'Ejercicios libres de este tipo (se abren en otra pestaña)' });
+      if(rec && rec.portal && rec.portal.url) L.push({ que:'portal', t:'portal interactivo', href:rec.portal.url, aria:'Abrir el portal interactivo de '+rec.portal.nombre+' (en otra pestaña)' });
+      frase(caja, L);
+    }
+    pinta(null);   /* de entrada, lo que no depende de la cuenta; los apuntes y el vídeo llegan al saber quién es */
+    try{ if(window.ApxFicha && typeof window.ApxFicha.recursos==='function') window.ApxFicha.recursos(key, pinta); }catch(e){}
+  }
+  return { estado:estado, chip:chip, leyenda:leyenda, consejo:consejo, rojo:rojo };
+})();
+</script>
+
 <!-- (29-sep-2026, Iago) FILA DE AYUDA DE LA FICHA: «No lo sé hacer / tengo dudas» (texto) y hasta 3 botones con contorno
      rosa (Apuntes · Vídeo · Practicar ejercicios sueltos; en los test de GP, «Ver portal interactivo»). Clases propias
      (lmf-*) para que ni la piel ni los estilos de antes las cambien. También: la ventanita para elegir vídeo y el visor
@@ -18209,7 +18421,11 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 <script>
 (function(){
   'use strict';
-  if(!window.APX || !new URLSearchParams(location.search).get('fichaId')) return;   /* solo en la ficha del alumno */
+  /* (3-oct-2026, Iago) también en la FICHA CORREGIDA que se abre después (?revision=…: la del alumno, digital o en
+     papel, y la del profesor desde el Diario). Allí no hay fila de ayuda que decorar: solo se usa ApxFicha.recursos
+     (más abajo) para el consejo «Hey, soy Iago» de los ejercicios suspensos. */
+  var _qsF=new URLSearchParams(location.search);
+  if(!window.APX || !(_qsF.get('fichaId') || _qsF.get('revision'))) return;   /* solo en la ficha del alumno (o en una ficha corregida) */
 
   /* ---- lo propio de GP ---- */
   /* tipo de ejercicio → temas (el mismo reparto que las tarjetas del bloque VER APUNTES de arriba); el 3.er dato es
@@ -18390,11 +18606,33 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
      validada y, mientras soloTester, cuenta de prueba. (29-sep-2026) «Vídeo»: cualquier cuenta validada (los vídeos EN
      PRUEBA, solo las cuentas de prueba). ---- */
   var ok=null, pend=null;   /* ok: null = todavía preguntando · {apuntes, video, tester} */
+  var colaRec=[];           /* (3-oct-2026) ApxFicha.recursos pedidos antes de saber quién es la cuenta */
   window.ApxFicha={ pinta:function(cont, key){
     if(!cont) return;
     if(ok===null){ pend={c:cont, k:key}; return; }
     decora(cont, key);
   } };
+  /* (3-oct-2026, Iago) FICHA CORREGIDA: «hey, soy Iago. Aquí tienes apuntes, vídeo y ejercicios para practicar». La ficha
+     corregida (LmfCorr.consejo) pregunta aquí qué puede abrir ESTA cuenta para ese tipo de ejercicio, con las puertas de
+     siempre: apuntes (o, en los test de GP, el Libro y el portal interactivo) y vídeos. cb recibe
+     { apuntes: función o null, video: función o null, videos: cuántos, portal: {nombre, url} o null }.
+     Desde ahí se abren «libres» (3.er dato a true): sin la ventanita «¿Necesitas mirar los apuntes?» ni el minuto de
+     espera, que son para no copiar la ficha mientras se hace; esta ya está entregada y corregida. */
+  function recursosDe(key){
+    var g=ok.apuntes ? grupo(key) : null, libro=(ok.apuntes && !g) ? libroDe(key) : null, portal=ok.apuntes ? portalDe(key) : null, vids=videosDe(key);
+    return { apuntes: g ? function(b){ css(); abrirApuntes(g, b, true); } : (libro ? function(b){ css(); abrirLibro(libro, b, true); } : null),
+             video: vids.length ? function(b){ if(vids.length===1) abrirVideo(vids[0].src, b); else elegirVideo(vids, b, true); } : null,
+             videos: vids.length, portal: portal || null };
+  }
+  window.ApxFicha.recursos=function(key, cb){
+    if(typeof cb!=='function') return;
+    if(ok===null){ colaRec.push([key, cb]); return; }
+    try{ cb(recursosDe(key)); }catch(e){ console.warn('[apuntes ficha]', e); }
+  };
+  if(_qsF.get('revision') && _qsF.get('alu')==='1'){   /* la cuenta del enlace de SU ficha corregida vale igual que ?cuenta= en el enlace de una ficha */
+    try{ var _cuF=String(_qsF.get('revision')||'').split(':')[1]||'';
+      if(/^[0-9a-f-]{36}$/i.test(_cuF)) localStorage.setItem('apx_cuenta_'+((window.APX_CFG && window.APX_CFG.tema==='gp') ? 'gp' : 'ge'), _cuF); }catch(e){}
+  }
   try{
     window.APX.comprobar(function(info){
       var solo=!(window.APX_CFG && window.APX_CFG.soloTester===false);
@@ -18402,6 +18640,8 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       ok={ apuntes: val && (te || !solo), video: val, tester: te };
       var p=pend; pend=null;
       if(p && document.body.contains(p.c)) decora(p.c, p.k);
+      var cr=colaRec; colaRec=[];   /* (3-oct-2026) */
+      cr.forEach(function(x){ try{ x[1](recursosDe(x[0])); }catch(e){ console.warn('[apuntes ficha]', e); } });
     });
   }catch(e){ ok={ apuntes:false, video:false, tester:false }; }
 
@@ -18492,8 +18732,9 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     }
   }, true);
 
-  function abrirApuntes(g, b){
+  function abrirApuntes(g, b, libre){
     if(abierto) return;
+    if(libre){ abrirApuntesYa(g, b, true); return; }   /* (3-oct-2026) desde una ficha ya corregida: directos, sin ventanita ni minuto */
     confirmar(b, function(){ abrirApuntesYa(g, b); });   /* (28-sep-2026, Iago) primero la ventanita */
   }
 
@@ -18533,13 +18774,13 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 
   /* los apuntes, en el visor de siempre (misma pestaña). (28-sep-2026, Iago) Sin ✕; «‹ Volver» bloqueado ESPERA_MS
      con cuenta atrás (Esc y «atrás» tampoco cierran mientras tanto); después, «‹ Volver a la ficha». */
-  function abrirApuntesYa(g, b){
+  function abrirApuntesYa(g, b, libre){
     if(abierto) return;
     var antes=[].slice.call(document.body.children);
     try{ window.APX.abrir({nombre:g.nombre, temas:g.temas}, g.idx, b); }catch(e){ console.warn('[apuntes ficha]', e); return; }
     var nuevos=[].filter.call(document.body.children, function(n){ return antes.indexOf(n)<0; });
     if(!nuevos.length) return;
-    var ov=nuevos[0], estado=history.state, hasta=Date.now()+ESPERA_MS, reloj=null, ultimo=-1;
+    var ov=nuevos[0], estado=history.state, hasta=Date.now()+(libre ? 0 : ESPERA_MS), reloj=null, ultimo=-1;
     var vol=ov.querySelector('.apx-volver');
     function bloqueado(){ return Date.now()<hasta; }
     ov.classList.add('apxf-en-ficha');
@@ -18608,14 +18849,14 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
   }
 
   /* (29-sep-2026) varios vídeos del tema: ventanita para elegir (la misma estética que «¿Necesitas mirar los apuntes?») */
-  function elegirVideo(vids, b){
+  function elegirVideo(vids, b, libre){
     if(abierto) return;
     css();
     var f=document.createElement('div'); f.className='apxf-conf lmf-elige';
     f.setAttribute('role','dialog'); f.setAttribute('aria-modal','true'); f.setAttribute('aria-label','Elige un vídeo');
     f.style.setProperty('--apxf-acc', '#ec4899'); f.style.setProperty('--apxf-ink', '#fff');
     f.innerHTML='<div class="apxf-conf-caja"><h2 class="apxf-conf-t">Vídeos · '+escH(vids.tema)+'</h2><div class="lmf-vids"></div>'+
-      '<div class="apxf-conf-bot" style="grid-template-columns:1fr"><button type="button" class="apxf-conf-no">Seguir con la ficha</button></div></div>';
+      '<div class="apxf-conf-bot" style="grid-template-columns:1fr"><button type="button" class="apxf-conf-no">'+(libre ? 'Volver a la ficha' : 'Seguir con la ficha')+'</button></div></div>';
     var lista=f.querySelector('.lmf-vids');
     function cierra(abre){ if(!abierto || abierto.nodos[0]!==f) return; f.remove(); if(abre) suelta(); else alCerrar(); }
     vids.forEach(function(v){
@@ -18656,11 +18897,12 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       .then(function(r){ if(!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
       .then(function(j){ var p=j && j[0] && j[0].storage_path; if(!p) throw new Error('el libro no está subido en el Diario'); _rutaLibro[curso]=p; return p; });
   }
-  function abrirLibro(L, b){
+  function abrirLibro(L, b, libre){
     if(abierto) return;
+    if(libre){ abrirLibroYa(L, b, true); return; }   /* (3-oct-2026) desde una ficha ya corregida: directo */
     confirmar(b, function(){ abrirLibroYa(L, b); });
   }
-  function abrirLibroYa(L, b){
+  function abrirLibroYa(L, b, libre){
     if(abierto) return;
     css();
     var ov=document.createElement('div'); ov.className='lmf-libro';
@@ -18669,7 +18911,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       '<div class="lmf-libro-tit">'+escH(L.nombre)+'<small>Libro 2º GP · unidad '+L.unidad+' · págs. '+L.p[0]+'–'+L.p[1]+'</small></div></div>'+
       '<div class="lmf-libro-pags"><div class="lmf-libro-msg">Cargando los apuntes…</div></div>';
     var tok='lmfl'+Date.now(), estado={lmfl:tok}, ovAntes=document.documentElement.style.overflow;
-    var hasta=Date.now()+ESPERA_MS, reloj=null, ultimo=-1, vol=ov.querySelector('.lmf-libro-volver');
+    var hasta=Date.now()+(libre ? 0 : ESPERA_MS), reloj=null, ultimo=-1, vol=ov.querySelector('.lmf-libro-volver');
     function bloqueado(){ return Date.now()<hasta; }
     function pinta(){
       if(!document.body.contains(ov)){ clearInterval(reloj); return; }
