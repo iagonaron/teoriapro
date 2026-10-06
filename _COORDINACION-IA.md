@@ -60,9 +60,13 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 6-oct 17:40 · Intros didácticas · EN CURSO · intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4 (copia de
-  teoriaathome): con bemoles, solo el penúltimo cambia a rosa (lo pidió Iago). Nada más: no toca index.html. Parto de
-  a336f1d.
+- 6-oct 17:45 · Intros didácticas · HECHO · commit 53531f7 (EN CURSO en e639a39, parto de a336f1d) ·
+  intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4, COPIA TAL CUAL de teoriaathome d698ff6: con bemoles,
+  solo el penúltimo cambia a rosa y los demás se quedan en blanco, como en los sostenidos (antes se atenuaban y
+  quedaban con el mismo brillo que el rosa); una flecha bajo «penúltimo» lo señala. Igual en el resumen (3:52) y en
+  «mira la armadura» (4:07). Vídeo regrabado con el mismo audio y los mismos tiempos; no toca index.html. El detalle,
+  en el _COORDINACION-IA.md de teoriaathome. Para volver: git revert 53531f7, o subir los dos ficheros de APPs/_PARA
+  BORRAR/6-oct-2026-indica-la-tonalidad-antes-de-solo-el-penultimo/. Espejo de Dropbox igual que GitHub.
 - 6-oct 11:00 · Fichas y rediseño · HECHO · commit 3f34e30 (EN CURSO en 281234b) · index.html, tres cosas que pidió
   Iago. (1) APUNTES PARA TODOS: APX_CFG soloTester:false. «Ver apuntes» sale a toda cuenta VALIDADA (invitados y
   pendientes, no) en las tarjetas, en la fila de ayuda de la ficha (en los test: el Libro de 2º GP y «Ver portal
