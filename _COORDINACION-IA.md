@@ -60,6 +60,11 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 6-oct 10:45 · Fichas y rediseño · EN CURSO · index.html (parto de 3514f37), tres cosas que pidió Iago hoy: (1)
+  APUNTES PARA TODOS: APX_CFG soloTester pasa a false (cuentas validadas; invitados y pendientes siguen sin verlos).
+  (2) GENERADOR DEL PROFESOR: «Limpiar ficha» sale de la cabecera de «Revisar ficha» y va dentro del contador flotante
+  (#fpFloat), con un segundo toque para confirmar. (3) FICHA DEL ALUMNO, fila «No lo sé hacer / tengo dudas»: los test
+  cuyo tema tiene vídeo (1.2, 2.3, 3.2, 8.x y 9.x) suman «Vídeo».
 - 6-oct 09:20 · Fichas y rediseño · HECHO · commit 3514f37 (EN CURSO en f695e96, parto de 65b43e9) · index.html. PANEL
   DEL PROFESOR: los botones del final del generador de fichas quedan iguales que en elemental (teoriaathome,
   .pp-actions / .pp-btn): mismo orden y textos —«▶ Previsualizar como alumno», «Generar PDF (alumno + solución)»,
