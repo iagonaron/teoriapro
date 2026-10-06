@@ -60,6 +60,9 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 6-oct 17:40 · Intros didácticas · EN CURSO · intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4 (copia de
+  teoriaathome): con bemoles, solo el penúltimo cambia a rosa (lo pidió Iago). Nada más: no toca index.html. Parto de
+  a336f1d.
 - 6-oct 11:00 · Fichas y rediseño · HECHO · commit 3f34e30 (EN CURSO en 281234b) · index.html, tres cosas que pidió
   Iago. (1) APUNTES PARA TODOS: APX_CFG soloTester:false. «Ver apuntes» sale a toda cuenta VALIDADA (invitados y
   pendientes, no) en las tarjetas, en la fila de ayuda de la ficha (en los test: el Libro de 2º GP y «Ver portal
