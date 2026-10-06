@@ -9698,8 +9698,21 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-mini:hover{background:rgba(212,175,55,.22)}
   .fp-mini.rojo{border-color:rgba(255,110,110,.5);color:#ffb4b4;background:rgba(255,80,80,.08)}
   .fp-vacio{font-size:13.5px;color:var(--muted2);font-style:italic;padding:8px 2px}
-  .fp-pie{margin-top:22px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
-  .fp-valor{font-size:12.5px;color:var(--muted2)}
+  /* (6-oct-2026, Iago) BOTONES DEL FINAL DEL GENERADOR, IGUALES QUE EN ELEMENTAL (allí .pp-actions / .pp-btn): raya encima,
+     el mismo orden (previsualizar · PDF · enviar: la acción principal, la última), los mismos textos y la misma forma
+     (14 px en negrita, relleno de 10×16, esquinas de 11 px, 10 px de separación). Cada generador conserva su color: aquí
+     el dorado, liso. «Limpiar ficha» sube a la cabecera de «Revisar ficha» (.fp-cab), como «Regenerar toda la ficha» en
+     elemental. La regla .fp-enviar de abajo sigue igual: es la de los botones del alumno («Siguiente», «Enviar al profesor»). */
+  .fp-pie{margin-top:22px;border-top:1px solid rgba(212,175,55,.35);padding-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+  .fp-valor{font-size:12.5px;color:var(--muted2);flex:1 1 100%}
+  .fp-b{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(212,175,55,.45);background:rgba(212,175,55,.1);
+    color:var(--ink);border-radius:11px;padding:10px 16px;font-weight:800;cursor:pointer;font-size:14px}
+  .fp-b:hover{border-color:var(--gold-soft)}
+  .fp-b.primary{background:var(--gold);border-color:transparent;color:#1a1305}
+  .fp-b.primary:not(:disabled):hover{background:var(--gold-soft)}
+  .fp-b:disabled{opacity:.4;cursor:default}
+  .fp-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 10px}
+  .fp-cab h3{margin:0}
   .fp-enviar{border:0;border-radius:14px;padding:15px 26px;font:900 16px inherit;cursor:pointer;color:#1a1305;
     background:linear-gradient(120deg,#e9c96a,#d4af37 55%,#b8860b);box-shadow:0 10px 30px rgba(212,175,55,.35);
     transition:transform .12s ease}
@@ -9844,14 +9857,19 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
       <div class="lbl">en la ficha</div>
     </div>
     <section class="fp-sec">
-      <h3>Revisar ficha · <span id="fpCount">0</span>/5 ejercicios <small style="font-weight:600;color:var(--muted2)">(objetivo 5 · tope 10)</small></h3>
+      <!-- (6-oct-2026, Iago) «Limpiar ficha» aquí arriba, junto a la lista que vacía (antes iba con los botones del final) -->
+      <div class="fp-cab">
+        <h3>Revisar ficha · <span id="fpCount">0</span>/5 ejercicios <small style="font-weight:600;color:var(--muted2)">(objetivo 5 · tope 10)</small></h3>
+        <button class="fp-mini" id="fpLimpiar" type="button">🧹 Limpiar ficha</button>
+      </div>
       <div class="fp-lista" id="fpLista"><div class="fp-vacio">Aún no hay ejercicios: añade del catálogo.</div></div>
     </section>
+    <!-- (6-oct-2026, Iago) los botones del final, iguales que en elemental: previsualizar · PDF · enviar (la principal, la última).
+         Para volver a lo de antes: restaurar este bloque, la cabecera de «Revisar ficha» y las reglas .fp-pie / .fp-valor. -->
     <div class="fp-pie">
-      <button class="fp-enviar" id="fpEnviar" type="button">📨 Preparar envío a alumnos</button>
-      <button class="fp-mini" id="fpPdf" type="button" style="padding:13px 18px;font-size:14.5px">🖨 Generar PDF (ZIP: alumno + solución)</button>
-      <button class="fp-mini" id="fpSimular" type="button" style="padding:13px 18px;font-size:14.5px">▶ Previsualizar como alumno</button>
-      <button class="fp-mini" id="fpLimpiar" type="button" style="padding:13px 18px;font-size:14.5px">🧹 Limpiar ficha</button>
+      <button class="fp-b" id="fpSimular" type="button">▶ Previsualizar como alumno</button>
+      <button class="fp-b" id="fpPdf" type="button">Generar PDF (alumno + solución)</button>
+      <button class="fp-b primary" id="fpEnviar" type="button">Preparar envío a alumnos</button>
       <span class="fp-valor" id="fpValor"></span>
     </div>
     <div class="fp-status" id="fpStatus"></div>
@@ -10032,7 +10050,7 @@ function pintaLista(){
   var v=el('fpValor');
   if(FP.ejercicios.length){
     var val=Math.round((10/FP.ejercicios.length)*100)/100;
-    v.textContent='Puntuación: sobre 10 · cada ejercicio vale '+val+' puntos.';
+    v.textContent='Puntuación: sobre 10 · cada ejercicio vale '+String(val).replace('.',',')+' puntos.';   /* (6-oct-2026) coma decimal */
   } else v.textContent='';
   if(!FP.ejercicios.length){
     host.innerHTML='<div class="fp-vacio">Aún no hay ejercicios: añade del catálogo.</div>';
