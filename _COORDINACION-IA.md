@@ -60,6 +60,10 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 6-oct 09:10 · Fichas y rediseño · EN CURSO · index.html (parto de 65b43e9) · PANEL DEL PROFESOR: los botones del
+  final del generador de fichas, iguales que en elemental (orden, textos y forma). Toco solo las reglas .fp-pie /
+  .fp-valor (y añado .fp-b y .fp-cab), la cabecera de la sección «Revisar ficha» (a donde sube «Limpiar ficha»), la
+  fila de botones y el texto de la puntuación. La ficha del alumno no se toca.
 - 3-oct 14:30 · Fichas y rediseño · HECHO · commit 65b43e9 (EN CURSO en d5613e6, parto de c5bef86) · index.html. FICHA
   CORREGIDA EN TARJETAS: la pantalla final de la ficha (al terminarla, en ?revision=…&alu=1 —digital y &papel=1— y en
   la revisión del profesor ?revision=…&s=…) pinta una tarjeta por ejercicio con el % y su icono arriba a la derecha (✓
