@@ -60,10 +60,16 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 6-oct 09:10 · Fichas y rediseño · EN CURSO · index.html (parto de 65b43e9) · PANEL DEL PROFESOR: los botones del
-  final del generador de fichas, iguales que en elemental (orden, textos y forma). Toco solo las reglas .fp-pie /
-  .fp-valor (y añado .fp-b y .fp-cab), la cabecera de la sección «Revisar ficha» (a donde sube «Limpiar ficha»), la
-  fila de botones y el texto de la puntuación. La ficha del alumno no se toca.
+- 6-oct 09:20 · Fichas y rediseño · HECHO · commit 3514f37 (EN CURSO en f695e96, parto de 65b43e9) · index.html. PANEL
+  DEL PROFESOR: los botones del final del generador de fichas quedan iguales que en elemental (teoriaathome,
+  .pp-actions / .pp-btn): mismo orden y textos —«▶ Previsualizar como alumno», «Generar PDF (alumno + solución)»,
+  «Preparar envío a alumnos», la principal la última— y la misma forma (raya encima, 14 px en negrita, relleno 10×16,
+  esquinas de 11 px, 10 px de separación); el dorado se queda, liso. Clases nuevas .fp-b / .fp-b.primary (la fila
+  .fp-pie) y .fp-cab (cabecera de «Revisar ficha», a donde sube «🧹 Limpiar ficha»). Los id no cambian (fpSimular,
+  fpPdf, fpEnviar, fpLimpiar, fpValor). La regla .fp-enviar NO se toca: la siguen usando los botones del alumno
+  («Siguiente», «Enviar al profesor»). «Puntuación… vale 2,5 puntos», con coma. Si se cambia la fila del final en un
+  generador, cambiarla igual en el otro. Espejo de Dropbox al día; nota: APPs/LMATHOME GP (github
+  lmpro)/LEEME-6-oct-2026-generador-botones-del-final-iguales.txt (la misma en la carpeta de GE).
 - 3-oct 14:30 · Fichas y rediseño · HECHO · commit 65b43e9 (EN CURSO en d5613e6, parto de c5bef86) · index.html. FICHA
   CORREGIDA EN TARJETAS: la pantalla final de la ficha (al terminarla, en ?revision=…&alu=1 —digital y &papel=1— y en
   la revisión del profesor ?revision=…&s=…) pinta una tarjeta por ejercicio con el % y su icono arriba a la derecha (✓
