@@ -9625,6 +9625,18 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-float.full .n b::after{content:' ✓';font-size:18px}
   .fp-float.over .n b{color:#ffb86b}
   @media(max-width:620px){ .fp-float{right:12px;bottom:12px;padding:9px 13px;min-width:84px} .fp-float .n{font-size:22px} }
+  /* (6-oct-2026, Iago) «Limpiar ficha, quiero que esté cerca de donde está el crafteo»: el botón va DENTRO del contador
+     flotante, que acompaña al catálogo mientras se eligen los ejercicios (y sigue a la vista al revisar la ficha). Solo
+     aparece cuando hay algo que limpiar y pide un segundo toque (.seguro), para que un toque sin querer no vacíe la ficha.
+     Para volver a lo de antes: quitar el botón del contador, estas reglas y lo marcado «(6-oct-2026)» en pintaLista() y
+     en engancha(); el botón estaba en la cabecera de «Revisar ficha» como <button class="fp-mini" id="fpLimpiar">. */
+  .fp-float-x{display:block;width:calc(100% + 20px);box-sizing:border-box;margin:10px -10px 0;border:1px solid rgba(212,175,55,.5);background:rgba(212,175,55,.12);
+    color:#f3e6bd;border-radius:9px;padding:7px 4px;font-family:inherit;font-size:11.5px;font-weight:800;line-height:1.25;white-space:nowrap;cursor:pointer}
+  .fp-float-x[hidden]{display:none}
+  .fp-float-x:hover{background:rgba(212,175,55,.24)}
+  .fp-float-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
+  .fp-float-x.seguro{border-color:rgba(255,110,110,.7);background:rgba(255,80,80,.16);color:#ffc9c9}
+  @media(max-width:620px){ .fp-float-x{width:calc(100% + 14px);margin:7px -7px 0;padding:6px 3px;font-size:11px} }
   .fp-cat{display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
   @media(min-width:920px){ .fp-cat{grid-template-columns:1.65fr 1fr} }
   .fp-col-pro,.fp-col-rep{display:flex;flex-direction:column;gap:13px;min-width:0}
@@ -9701,8 +9713,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   /* (6-oct-2026, Iago) BOTONES DEL FINAL DEL GENERADOR, IGUALES QUE EN ELEMENTAL (allí .pp-actions / .pp-btn): raya encima,
      el mismo orden (previsualizar · PDF · enviar: la acción principal, la última), los mismos textos y la misma forma
      (14 px en negrita, relleno de 10×16, esquinas de 11 px, 10 px de separación). Cada generador conserva su color: aquí
-     el dorado, liso. «Limpiar ficha» sube a la cabecera de «Revisar ficha» (.fp-cab), como «Regenerar toda la ficha» en
-     elemental. La regla .fp-enviar de abajo sigue igual: es la de los botones del alumno («Siguiente», «Enviar al profesor»). */
+     el dorado, liso. «Limpiar ficha» salió de esta fila: desde esa tarde va con el contador flotante (.fp-float-x, arriba).
+     La regla .fp-enviar de abajo sigue igual: es la de los botones del alumno («Siguiente», «Enviar al profesor»). */
   .fp-pie{margin-top:22px;border-top:1px solid rgba(212,175,55,.35);padding-top:18px;display:flex;align-items:center;gap:10px;flex-wrap:wrap}
   .fp-valor{font-size:12.5px;color:var(--muted2);flex:1 1 100%}
   .fp-b{display:inline-flex;align-items:center;gap:7px;border:1px solid rgba(212,175,55,.45);background:rgba(212,175,55,.1);
@@ -9711,8 +9723,6 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-b.primary{background:var(--gold);border-color:transparent;color:#1a1305}
   .fp-b.primary:not(:disabled):hover{background:var(--gold-soft)}
   .fp-b:disabled{opacity:.4;cursor:default}
-  .fp-cab{display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;margin:0 0 10px}
-  .fp-cab h3{margin:0}
   .fp-enviar{border:0;border-radius:14px;padding:15px 26px;font:900 16px inherit;cursor:pointer;color:#1a1305;
     background:linear-gradient(120deg,#e9c96a,#d4af37 55%,#b8860b);box-shadow:0 10px 30px rgba(212,175,55,.35);
     transition:transform .12s ease}
@@ -9855,13 +9865,11 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     <div class="fp-float" id="fpFloat" title="Ejercicios en la ficha">
       <div class="n"><b id="fpFloatN">0</b><span>/5</span></div>
       <div class="lbl">en la ficha</div>
+      <!-- (6-oct-2026, Iago) «Limpiar ficha, quiero que esté cerca de donde está el crafteo»: con el contador, siempre a mano -->
+      <button class="fp-float-x" id="fpLimpiar" type="button" title="Vaciar la ficha y empezar de cero" hidden>🧹 Limpiar ficha</button>
     </div>
     <section class="fp-sec">
-      <!-- (6-oct-2026, Iago) «Limpiar ficha» aquí arriba, junto a la lista que vacía (antes iba con los botones del final) -->
-      <div class="fp-cab">
-        <h3>Revisar ficha · <span id="fpCount">0</span>/5 ejercicios <small style="font-weight:600;color:var(--muted2)">(objetivo 5 · tope 10)</small></h3>
-        <button class="fp-mini" id="fpLimpiar" type="button">🧹 Limpiar ficha</button>
-      </div>
+      <h3>Revisar ficha · <span id="fpCount">0</span>/5 ejercicios <small style="font-weight:600;color:var(--muted2)">(objetivo 5 · tope 10)</small></h3>
       <div class="fp-lista" id="fpLista"><div class="fp-vacio">Aún no hay ejercicios: añade del catálogo.</div></div>
     </section>
     <!-- (6-oct-2026, Iago) los botones del final, iguales que en elemental: previsualizar · PDF · enviar (la principal, la última).
@@ -10047,6 +10055,8 @@ function pintaLista(){
   var ff=el('fpFloatN'); if(ff) ff.textContent=FP.ejercicios.length;
   // (Iago 16-sep-2026) objetivo 5 ejercicios: VERDE justo en 5; por encima, ámbar (se puede seguir hasta 10)
   var fbox=el('fpFloat'); if(fbox){ fbox.classList.toggle('full', FP.ejercicios.length===5); fbox.classList.toggle('over', FP.ejercicios.length>5); }
+  /* (6-oct-2026) «Limpiar ficha» del contador: solo con algo en la ficha, y siempre de vuelta a su estado normal */
+  var blx=el('fpLimpiar'); if(blx){ blx.hidden=!FP.ejercicios.length; if(blx._arm){ clearTimeout(blx._arm); blx._arm=null; } blx.classList.remove('seguro'); blx.textContent='🧹 Limpiar ficha'; }
   var v=el('fpValor');
   if(FP.ejercicios.length){
     var val=Math.round((10/FP.ejercicios.length)*100)/100;
@@ -12238,6 +12248,10 @@ try{
     var bs=el('fpSimular'); if(bs && !bs._fp){ bs._fp=true; bs.addEventListener('click', fpSimularAlumno); }
     var bl=el('fpLimpiar'); if(bl && !bl._fp){ bl._fp=true; bl.addEventListener('click', function(){
       if(!FP.ejercicios.length){ status('ⓘ La ficha ya está vacía.','info'); return; }
+      /* (6-oct-2026) el botón flota junto al catálogo: el primer toque pregunta y el segundo (en 4 s) vacía */
+      if(!bl._arm){ bl.classList.add('seguro'); bl.innerHTML='¿Seguro?<br>Pulsa otra vez';
+        bl._arm=setTimeout(function(){ bl._arm=null; bl.classList.remove('seguro'); bl.textContent='🧹 Limpiar ficha'; }, 4000); return; }
+      clearTimeout(bl._arm); bl._arm=null;
       FP.ejercicios=[]; pintaLista(); status('✓ Ficha vaciada: puedes componer una nueva.','ok');
     }); }
   };
@@ -18196,7 +18210,14 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 <!-- (26-sep-2026, Iago) VER APUNTES: tarjetas doradas → Apuntes de teoría 2GP (su apartado exacto);
      tarjetas de repaso → Kit salvavidas 4GE en dorado. Solo alumnos con cuenta validada (de momento,
      solo la cuenta Protester, para revisarlos). Para quitarlo: borrar este bloque. -->
-<script>window.APX_CFG={tema:'gp', soloTester:true};</script>
+<!-- (6-oct-2026, Iago) APUNTES PARA TODOS: «en las tarjetas donde están los ejercicios libres, que arriba a la derecha haya
+     vídeos y que arriba a la izquierda haya apuntes. Si es así, sí, sí que lo quiero». soloTester pasa de true a false:
+     «Ver apuntes» sale a todo alumno con cuenta VALIDADA (nunca a invitados ni a cuentas pendientes), en las tarjetas, en
+     la fila de ayuda de cada ejercicio de la ficha («No lo sé hacer / tengo dudas» · Apuntes · Vídeo · Practicar; en los
+     test, el Libro de 2º GP y «Ver portal interactivo»), en las tarjetas «APUNTES» de dentro de los vídeos y en el
+     consejo de la ficha corregida.
+     Para volver a dejarlos solo a la cuenta Protester: poner soloTester:true. -->
+<script>window.APX_CFG={tema:'gp', soloTester:false};</script>
 <!-- (27-sep-2026, Iago) apuntes con las respuestas de Iago (motor nuevo + kit + 2GP con la página nueva «gp-cadencias»):
      «?v=2» para que ningún navegador mezcle un fichero viejo de su caché con los nuevos. Si se vuelven a cambiar
      apuntes*.js, subir el número. -->
@@ -18547,7 +18568,10 @@ window.LmfCorr=(function(){
     escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas',
     tonalidades:'tonalidades', ton_nombre:'tonalidades', ton_armadura:'tonalidades', ton_vecinos:'tonalidades',
     acordes_id:'acordes', acordes_build:'acordes', inversion_aco_identifica:'invacordes', inversion_aco_construir:'invacordes', enarmoniapro:'enarmoniapro',
-    indice:'indiceacustico', modos:'modos', seriearmonica:'seriearmonica', dode_construir:'dodecafonismo', dode_completa:'dodecafonismo', dode_identifica:'dodecafonismo', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', modulacion:'modulacion', transporte_escrito:'transporte', transporte_mental:'transporte', transporte_resumen:'transporte' };   /* (29-sep-2026, Intros didácticas) temas nuevos */
+    indice:'indiceacustico', modos:'modos', seriearmonica:'seriearmonica', dode_construir:'dodecafonismo', dode_completa:'dodecafonismo', dode_identifica:'dodecafonismo', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', modulacion:'modulacion', transporte_escrito:'transporte', transporte_mental:'transporte', transporte_resumen:'transporte',   /* (29-sep-2026, Intros didácticas) temas nuevos */
+    /* (6-oct-2026, Iago) «en cada ejercicio… las tres referencias: apuntes, vídeos y ejercicios para practicar»: los test
+       cuyo tema tiene vídeo (los mismos que ya abrían sus apuntes web, salvo el 2.2). Para quitarlo: borrar esta línea. */
+    test_1_2:'compasespro', test_2_3:'seriearmonica', test_3_2:'dodecafonismo', test_8_1:'modulacion', test_8_2:'modulacion', test_8_3:'modulacion', test_9_1:'transporte', test_9_2:'transporte' };
   var PRIMERO={ ton_nombre:'intros/indica-la-tonalidad/index.html', ton_armadura:'intros/indica-la-armadura/index.html',
     ton_vecinos:'intros/tonalidades-vecinas/index.html', inversion_int_simples:'intros/inversion-intervalos/index.html',
     inversion_int_compuestos:'intros/inversion-compuestos/index.html', escala_menor:'intros/escalas-menores/index.html',
