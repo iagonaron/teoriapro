@@ -60,11 +60,20 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 6-oct 10:45 · Fichas y rediseño · EN CURSO · index.html (parto de 3514f37), tres cosas que pidió Iago hoy: (1)
-  APUNTES PARA TODOS: APX_CFG soloTester pasa a false (cuentas validadas; invitados y pendientes siguen sin verlos).
-  (2) GENERADOR DEL PROFESOR: «Limpiar ficha» sale de la cabecera de «Revisar ficha» y va dentro del contador flotante
-  (#fpFloat), con un segundo toque para confirmar. (3) FICHA DEL ALUMNO, fila «No lo sé hacer / tengo dudas»: los test
-  cuyo tema tiene vídeo (1.2, 2.3, 3.2, 8.x y 9.x) suman «Vídeo».
+- 6-oct 11:00 · Fichas y rediseño · HECHO · commit 3f34e30 (EN CURSO en 281234b) · index.html, tres cosas que pidió
+  Iago. (1) APUNTES PARA TODOS: APX_CFG soloTester:false. «Ver apuntes» sale a toda cuenta VALIDADA (invitados y
+  pendientes, no) en las tarjetas, en la fila de ayuda de la ficha (en los test: el Libro de 2º GP y «Ver portal
+  interactivo»), en las tarjetas «APUNTES» de dentro de los vídeos y en el consejo de la ficha corregida. Para volver:
+  soloTester:true. (2) GENERADOR DEL PROFESOR: «Limpiar ficha» (#fpLimpiar) sale de la cabecera de «Revisar ficha»
+  (que vuelve a ser solo el h3; se quitan .fp-cab) y va DENTRO del contador flotante #fpFloat (clase .fp-float-x):
+  solo se ve con algo en la ficha y pide un segundo toque en 4 s («¿Seguro? Pulsa otra vez», clase .seguro);
+  pintaLista() lo enseña, lo esconde y lo devuelve a su estado normal. Este generador ya empezaba vacío: no guarda
+  nada entre visitas. (3) FICHA DEL ALUMNO, fila «No lo sé hacer / tengo dudas»: los test cuyo tema tiene vídeo (1.2,
+  2.3, 3.2, 8.1, 8.2, 8.3, 9.1 y 9.2) suman «Vídeo» (una línea más en TEMA_VIDEO del bloque «APUNTES EN LAS FICHAS»).
+  Queda así: 31 tipos con Apuntes · Vídeo · Practicar; 7 test con Apuntes · Vídeo · Portal; el 1.2 con Apuntes ·
+  Vídeo; 10 test con Apuntes · Portal (no hay vídeo de su tema); Blues, solo Apuntes. Recorrido de una ficha entera
+  (34 tipos, con recargas) igual que la referencia del 27-sep. Espejo de Dropbox igual que GitHub. Nota: APPs/LMATHOME
+  GP (github lmpro)/LEEME-6-oct-2026-entregada-apuntes-para-todos-y-limpiar-ficha.txt.
 - 6-oct 09:20 · Fichas y rediseño · HECHO · commit 3514f37 (EN CURSO en f695e96, parto de 65b43e9) · index.html. PANEL
   DEL PROFESOR: los botones del final del generador de fichas quedan iguales que en elemental (teoriaathome,
   .pp-actions / .pp-btn): mismo orden y textos —«▶ Previsualizar como alumno», «Generar PDF (alumno + solución)»,
