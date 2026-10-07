@@ -59,6 +59,32 @@ Object.assign(window.APX_TEMAS, {
     ]
   },
 
+  /* ============ FONÓGRAFO · U1, p. 4 entera (PDF 7) ============ */
+  /* (7-oct-2026, Iago: «me gusta más cómo lo has planteado en grado elemental… hiciste una versión digital con la misma
+     información pero poniendo la estética y adecuándolo al medio. ¿Es eso posible con GP? Sin riesgos por favor»)
+     El apartado FONÓGRAFO de la unidad 1 y nada más (hasta hoy, «Apuntes» del test 1.1 abría el PDF con la unidad entera:
+     págs. 7–9). TEXTO LITERAL del libro, sin cambiar una palabra: los guiones de lista pegados a la palabra (el tercero,
+     en negrita, como en el papel), «spotify» en minúscula, «ésta» con tilde y «Alexandro Moreschi» van como él los
+     escribió. Las negritas son las suyas; esa página no tiene cursivas ni figuras («Busca una foto mientras lees esto»).
+     Se ve desde el visor del Libro: bloque «LIBRO 2º GP → VERSIÓN DIGITAL», al final de este fichero.
+     Para quitarlo: borrar este tema y su línea de APX_LIBRO (vuelve a salir el PDF, como antes). */
+  'gp-fonografo': {
+    titulo:'Fonógrafo', corto:'Fonógrafo', fuente:'Apuntes de teoría 2GP · Unidad 1 · p. 4',
+    bloques:[
+      {p:'Si pregunto de qué te suena Thomas Edison se te vendrá a la mente que es el inventor de la bombilla. Pues este crack en el 1877 presentó también el fonógrafo: el primer aparato capaz de grabar y reproducir sonido. Busca una foto mientras lees esto. Mentalidad curiosa.'},
+      {p:'El funcionamiento, aunque rudimentario, es bastante sorprendente. Tiene tres partes principales:'},
+      {p:'-<b>Un cono</b> que servirá de micrófono en el modo grabación y de resonador en el modo reproducción. Todo un invento multifunción, el iPhone del momento.'},
+      {p:'-<b>Una aguja</b> que servirá para transmitir y leer la información.'},
+      {p:'<b>-Un cilindro de cera</b> que será el elemento a reproducir. El equivalente a la cinta, el disco, vinilo… Lo sé, hoy en día pagas spotify y no piensas en nada de esto, pero tus padres controlan fijo.'},
+      {p:'Entonces, el funcionamiento es el siguiente:'},
+      {p:'<b>En modo grabación</b> el sonido es captado por el cono. La aguja que está conectada a él vibra naturalmente y, en contacto con la débil cera, le va dejando un surco mientras esta gira.'},
+      {p:'Lo loco de esto es que en el <b>modo reproducción</b> es justo al revés: el cilindro de cera (ya todo tatuado) transmite estas irregularidades a la aguja y ésta lo lleva al cono, que amplifica esa vibración.'},
+      {p:'¡El tema es que suena lo mismo que grabaste! La calidad no es nada del otro mundo… los cilindros, además de poca capacidad de almacenamiento, se desgastan con cada uso. ¡Pero ni tan mal! Tenemos nueva forma de almacenar el sonido. Han cambiado las reglas del juego.'},
+      {p:'Si tuviésemos este sistema unos años antes podríamos escuchar grabaciones directas de gente como Beethoven, Mozart o Bach. ¿Te imaginas las implicaciones que eso tendría? Conservar la fuente primaria. No habría dudas de cómo habría que interpretar, de cómo sonaba realmente la música en su contexto de creación.'},
+      {p:'Sea como fuere, tenemos alguna anécdota curiosa que podemos documentar gracias al fonógrafo. Te voy a contar la historia del pobre Alexandro Moreschi.'}
+    ]
+  },
+
   /* ============ 3 · COMPASES EXTRAÑOS · U1, p. 5 (PDF 8 @10%) → p. 6 (PDF 9 @68%) ============ */
   'gp-compases': {
     titulo:'Compases extraños', corto:'Compases extraños', fuente:'Apuntes de teoría 2GP · Unidad 1 · p. 5–6',
@@ -769,3 +795,120 @@ Object.assign(window.APX_TEMAS, {
   });
 })();
 
+/* ---- LIBRO 2º GP → VERSIÓN DIGITAL (no viene de gp/*.js: vive solo aquí) ---- */
+/* (7-oct-2026, Iago: «en la pregunta de fonógrafo tipo test le di a ver apuntes y me sale el PDF de los apuntes… sale más
+   información de la que buscaba ya que me ha puesto ahí toda la unidad. Me gusta más cómo lo has planteado en grado
+   elemental… una versión digital con la misma información pero poniendo la estética y adecuándolo al medio. ¿Es eso
+   posible con GP? Sin riesgos por favor»)
+   QUÉ HACE. El «Apuntes» de un test que no tiene apuntes web abre el Libro 2º GP en PDF con las páginas de TODA su
+   unidad (visor .lmf-libro de index.html, función abrirLibroYa). Cuando ese visor se abre para un apartado que ya está
+   pasado a digital (APX_LIBRO: el nombre que pone el visor → su tema de APX_TEMAS), aquí se le pone DELANTE ese tema,
+   con el mismo aspecto que el visor de apuntes (el del Kit de elemental), y dos pestañas: el apartado y «Unidad
+   completa en PDF», que enseña las páginas de siempre.
+   SIN RIESGOS. index.html no se toca y el visor sigue siendo el suyo: la ventanita «¿Necesitas mirar los apuntes?», el
+   minuto de «‹ Volver», Esc, «atrás» y la carga del PDF (que sigue cargándose debajo) funcionan igual. Lo que no esté en
+   APX_LIBRO abre el PDF exactamente como hoy; y si aquí falla cualquier cosa, también.
+   · Pasar otro apartado a digital: su tema en APX_TEMAS (arriba) y una línea más en APX_LIBRO.
+   · Volver a lo de antes: borrar la línea de APX_LIBRO (ese apartado) o este bloque entero (todos). */
+window.APX_LIBRO = window.APX_LIBRO || {};
+window.APX_LIBRO['Fonógrafo'] = 'gp-fonografo';   /* test 1.1 · unidad 1 (el PDF enseña las págs. 7–9; el apartado es la p. 4 impresa) */
+(function(){
+  'use strict';
+  if(window.__apxLibro || !window.MutationObserver || !document.body) return;
+  window.__apxLibro = true;
+  /* la letra, la raya y el cristal del visor de apuntes (apuntes.js: FONT, PAL.line, PAL.vidrio) */
+  var FONT='"Helvetica Neue",Helvetica,Arial,system-ui,sans-serif', LINEA='rgba(255,255,255,.12)', VIDRIO='rgba(11,19,32,.72)';
+  var ICO_LIBRO='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 5.5C5.5 4.3 8.5 4.3 12 6c3.5-1.7 6.5-1.7 9-.5v13c-2.5-1.2-5.5-1.2-9 .5-3.5-1.7-6.5-1.7-9-.5z"/><path d="M12 6v13.5"/></svg>';
+  function esc(s){ return String(s==null?'':s).replace(/[&<>"]/g,function(c){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]; }); }
+
+  /* Solo lo que hace falta para encajar el tema en el visor del Libro; la hoja, los títulos, las pestañas y el fondo se
+     pintan con las clases del visor de apuntes (.apx-*, hoja #apx-css), para que se vea igual que en elemental.
+     .apxl = visor con versión digital · .apxl-dig = se está viendo la versión digital (sin ella: el PDF, como hoy). */
+  function css(){
+    if(document.getElementById('apxl-css')) return;
+    var s=document.createElement('style'); s.id='apxl-css';
+    s.textContent=
+    '.lmf-libro .apxl-fondo,.lmf-libro .apxl-tits,.lmf-libro .apxl-hueco,.lmf-libro .apxl-capa{display:none}'+
+    '.lmf-libro .apxl-barra *,.lmf-libro .apxl-capa *,.lmf-libro .apxl-tits *{box-sizing:border-box}'+
+    /* las dos pestañas, debajo de la barra del visor (en las dos vistas); la raya de la barra pasa a estar debajo de ellas */
+    '.lmf-libro.apxl>.lmf-libro-top{border-bottom-color:transparent}'+
+    '.lmf-libro .apxl-barra{flex:none;position:relative;z-index:3;background:#0d1526;border-bottom:1px solid '+LINEA+'}'+
+    /* VISTA DIGITAL: foto con velo, barra de cristal con el rótulo de grado y hoja de cristal, como el visor de apuntes.
+       Las páginas del PDF siguen en su sitio (misma anchura: se pintan igual que hoy), debajo y sin verse. */
+    '.lmf-libro.apxl-dig{display:grid;grid-template-columns:100%;grid-template-rows:auto auto minmax(0,1fr);background:#0b1320}'+
+    '.lmf-libro.apxl-dig>.apxl-fondo{display:block}'+
+    '.lmf-libro.apxl-dig>.lmf-libro-top{grid-row:1;position:relative;z-index:3;gap:12px;padding:10px max(16px,calc(50% - 484px));border-bottom:0;background:'+VIDRIO+';-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);font-family:'+FONT+'}'+
+    '.lmf-libro.apxl-dig>.apxl-barra{grid-row:2;background:'+VIDRIO+';-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px)}'+
+    '.lmf-libro.apxl-dig>.lmf-libro-pags{grid-row:3;grid-column:1;visibility:hidden}'+
+    '.lmf-libro.apxl-dig>.apxl-capa{display:block;grid-row:3;grid-column:1;position:relative;z-index:1;overflow:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;color:#fff;font-family:'+FONT+';line-height:1.5}'+
+    '.lmf-libro.apxl-dig .lmf-libro-tit{display:none}'+
+    '.lmf-libro.apxl-dig .apxl-tits{display:block}'+
+    '.lmf-libro.apxl-dig .apxl-hueco{display:block;flex:none;width:40px}'+
+    '.lmf-libro.apxl-dig .lmf-libro-volver{display:inline-flex;align-items:center;gap:6px;min-height:0;padding:8px 13px;border:1px solid '+LINEA+';border-radius:12px;background:rgba(255,255,255,.06);font:700 13px '+FONT+'}'+
+    '.lmf-libro.apxl-dig .lmf-libro-volver:not(:disabled):hover,.lmf-libro.apxl-dig .lmf-libro-volver:focus-visible{border-color:#ec4899;outline:none}'+
+    '@media(max-width:700px){.lmf-libro.apxl-dig>.lmf-libro-top{gap:8px;padding:8px 10px}.lmf-libro.apxl-dig .lmf-libro-volver{padding:8px 10px}}';
+    document.head.appendChild(s);
+  }
+  /* La hoja del visor de apuntes (#apx-css) la pone el motor al abrir el visor o al montar los botones de las tarjetas, y
+     en la ficha puede no haberlo hecho todavía. Se le pide: montar() sin tarjetas solo pone esa hoja, y pasa por la
+     misma puerta de cuenta que el botón «Apuntes». Si la hoja no llega (2,5 s), no hay versión digital: el PDF, como hoy. */
+  function conEstilos(sigue){
+    function hay(){ return !!document.getElementById('apx-css'); }
+    if(hay()){ sigue(); return; }
+    try{ window.APX.montar([], {}); }catch(e){}
+    var n=0; (function espera(){ if(hay()){ sigue(); return; } if(n++<25) setTimeout(espera, 100); })();
+  }
+
+  function monta(ov){
+    if(!ov || ov.nodeType!==1 || !ov.classList || !ov.classList.contains('lmf-libro') || ov.classList.contains('apxl')) return;
+    var m=/^Apuntes: (.+) · Libro 2º GP$/.exec(ov.getAttribute('aria-label')||''), nombre=m ? m[1] : '';
+    var L=window.APX_LIBRO||{}, id=(nombre && Object.prototype.hasOwnProperty.call(L, nombre)) ? L[nombre] : null;
+    var T=id ? (window.APX_TEMAS||{})[id] : null;
+    var top=ov.querySelector('.lmf-libro-top'), pags=ov.querySelector('.lmf-libro-pags');
+    if(!T || !top || !pags || !window.APX || typeof window.APX._B!=='function') return;   /* sin versión digital: el PDF, como hoy */
+    conEstilos(function(){
+      if(!document.body.contains(ov) || ov.classList.contains('apxl')) return;
+      var puestos=[];
+      function pon(padre, clase, html, antes){ var n=document.createElement('div'); n.className=clase; n.innerHTML=html; padre.insertBefore(n, antes||null); puestos.push(n); return n; }
+      try{
+        /* el tema, pintado por el motor de apuntes igual que en su visor (título, bloques y pie con la fuente) */
+        var hoja='<h1 class="apx-titulo">'+T.titulo+'</h1>'+(T.bloques||[]).map(window.APX._B).join('')+'<div class="apx-fuente">'+(T.fuente||'')+'</div>';
+        css();
+        pon(ov, 'apx-fondo apxl-fondo', '', ov.firstChild).setAttribute('aria-hidden','true');
+        pon(top, 'apx-tits apxl-tits', '<div class="apx-grado">'+esc((window.APX.PAL||{}).gradoTxt||'Grado profesional')+'</div>'+
+          '<div class="apx-h2" title="Apuntes">'+ICO_LIBRO+'<span>'+esc(nombre)+'</span><span class="apx-home">at home</span></div>');
+        pon(top, 'apxl-hueco', '').setAttribute('aria-hidden','true');   /* el hueco de la ✕ del visor de apuntes: mismo centrado */
+        var barra=pon(ov, 'apxl-barra', '<div class="apx-tabs" role="tablist">'+
+          '<button type="button" class="apx-tab" role="tab" data-ver="dig">'+esc(T.corto||T.titulo)+'</button>'+
+          '<button type="button" class="apx-tab" role="tab" data-ver="pdf">Unidad completa en PDF</button></div>', pags);
+        var capa=pon(ov, 'apxl-capa', '<div class="apx-body">'+hoja+'</div>', pags);
+        var tabs=[].slice.call(barra.querySelectorAll('.apx-tab'));
+        /* pentagramas del tema (si los tiene): los dibuja el motor, como en su visor */
+        var conPentas=!!capa.querySelector('.apx-svg'), rz=null;
+        function pentas(){ if(!conPentas) return; try{ window.APX._pinta(); }catch(e){} }
+        function ver(que){
+          var dig=(que!=='pdf');
+          if(dig) ov.classList.add('apxl-dig'); else ov.classList.remove('apxl-dig');
+          tabs.forEach(function(t){ var on=((t.getAttribute('data-ver')==='pdf')!==dig); if(on) t.classList.add('on'); else t.classList.remove('on'); t.setAttribute('aria-selected', on?'true':'false'); });
+          if(dig){ capa.scrollTop=0; pentas(); }
+        }
+        barra.addEventListener('click', function(ev){ var t=(ev.target && ev.target.closest) ? ev.target.closest('.apx-tab') : null; if(t) ver(t.getAttribute('data-ver')); });
+        if(conPentas) window.addEventListener('resize', function alResize(){
+          if(!document.body.contains(ov)){ window.removeEventListener('resize', alResize); return; }
+          clearTimeout(rz); rz=setTimeout(function(){ if(ov.classList.contains('apxl-dig')) pentas(); }, 180);
+        });
+        ov.classList.add('apxl');
+        ver('dig');
+      }catch(e){
+        /* algo ha fallado: fuera lo puesto y el visor se queda con el PDF, como hoy */
+        puestos.forEach(function(n){ if(n.parentNode) n.parentNode.removeChild(n); });
+        ov.classList.remove('apxl'); ov.classList.remove('apxl-dig');
+        try{ console.warn('[apuntes 2GP] versión digital', e); }catch(e2){}
+      }
+    });
+  }
+  /* el visor del Libro se añade al <body> al abrirlo: se le ve llegar (solo hijos directos del body) */
+  new MutationObserver(function(ms){
+    for(var i=0;i<ms.length;i++){ var a=ms[i].addedNodes; for(var j=0;j<a.length;j++){ try{ monta(a[j]); }catch(e){} } }
+  }).observe(document.body, {childList:true});
+})();
