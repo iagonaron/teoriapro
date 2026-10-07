@@ -60,6 +60,10 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 7-oct 22:55 · Fichas y rediseño · EN CURSO (parto de 95dc6b9) · dos ficheros. index.html: SOLO la generación de casos de
+  cinco motores (ACORDES_MOTOR, INDICE_MOTOR, ENARM_MOTOR, INV_INT, ACORD) y la tarjeta de práctica «Tonalidad → armadura»
+  (nuevoTB): que un ejercicio no traiga dos casos iguales. apuntes-2gp.js: el apartado «Fonógrafo» de la unidad 1 en
+  versión digital (tema gp-fonografo + bloque «LIBRO 2º GP → VERSIÓN DIGITAL»). No toca pintado, corrección ni estilos.
 - 7-oct 22:10 · Fichas y rediseño · HECHO · commit 7f2c09d (EN CURSO en e2c3a1e, parto de 5074f0c) · index.html, tres cosas
   que pidió Iago en el ejercicio «Replica el compás» de las fichas (COMP_REPLICAR_MOTOR). (1) NÚMEROS BLANCOS CON LA PIEL:
   la piel convierte el papel crema de las casillas en cristal oscuro pero dejaba la tinta en marino. El el() del motor
