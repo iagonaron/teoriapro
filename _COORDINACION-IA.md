@@ -60,11 +60,26 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 7-oct 22:55 · Fichas y rediseño · EN CURSO (parto de 95dc6b9) · dos ficheros. index.html: SOLO la generación de casos de
-  cinco motores (ACORDES_MOTOR, INDICE_MOTOR, ENARM_MOTOR, INV_INT, ACORD) y la tarjeta de práctica «Tonalidad → armadura»
-  (nuevoTB): que un ejercicio no traiga dos casos iguales. apuntes-2gp.js: el apartado «Fonógrafo» de la unidad 1 en
-  versión digital (tema gp-fonografo + bloque «LIBRO 2º GP → VERSIÓN DIGITAL»). No toca pintado, corrección ni estilos.
-- 7-oct 22:10 · Fichas y rediseño · HECHO · commit 7f2c09d (EN CURSO en e2c3a1e, parto de 5074f0c) · index.html, tres cosas
+- 7-oct 22:18 · Fichas y rediseño · HECHO · commit aaa1090 (EN CURSO en 35e9e88, parto de 95dc6b9) · dos ficheros, dos encargos
+  de Iago. (A) index.html · «me gustaría que el generador sepa evitar repetir dos casos iguales en un ejercicio»: SOLO la
+  generación de casos. ACORDES_MOTOR (generarUno recibe yaEstan: mismo tipo, otra fundamental), INDICE_MOTOR.generar (no
+  dos notas en la misma clave y la misma línea o espacio), ENARM_MOTOR.generar e INV_INT.generar (el 2.º caso ≠ el 1.º),
+  ACORD.generar (no el mismo acorde en la misma inversión) y la tarjeta de PRÁCTICA «Tonalidad → armadura» (nuevoTB: las
+  4 tonalidades, distintas; es copia de la de elemental y tenía su mismo fallo). Si el caso recién sorteado ya está, se
+  vuelve a tirar (con tope); si no hay coincidencia, el ejercicio sale idéntico al de antes. Misma forma de los datos;
+  las fichas ya enviadas no cambian. Medido con 2.000 ejercicios por tipo: los repetidos pasan a 0. (B) apuntes-2gp.js ·
+  «en la pregunta de fonógrafo… me ha puesto ahí toda la unidad. Me gusta más cómo lo has planteado en grado elemental…
+  ¿Es eso posible con GP? Sin riesgos»: tema nuevo `gp-fonografo` en APX_TEMAS (el apartado FONÓGRAFO de la unidad 1,
+  p. 4 del libro: TEXTO LITERAL, 11 párrafos, sin corregir ni una errata) y, al final del fichero, el bloque «LIBRO 2º GP
+  → VERSIÓN DIGITAL»: `APX_LIBRO` (nombre que pone el visor del Libro → tema) + un MutationObserver de <body> que, cuando
+  index.html abre su visor `.lmf-libro` con el rótulo «Apuntes: Fonógrafo · Libro 2º GP», le pone DELANTE el tema (pintado
+  por el motor de apuntes) y dos pestañas: «Fonógrafo» · «Unidad completa en PDF» (el PDF de siempre). index.html NO se
+  toca para esto: la ventanita, el minuto de «Volver», Esc y la carga del PDF siguen igual. DEPENDE de estos nombres de
+  index.html: `.lmf-libro`, `.lmf-libro-top`, `.lmf-libro-pags` y el rótulo «Apuntes: … · Libro 2º GP»; si se cambian,
+  deja de salir la versión digital y queda el PDF, como antes. Pasar otro apartado a digital = su tema en APX_TEMAS y una
+  línea en APX_LIBRO. Para volver: git revert aaa1090, o subir los ficheros de APPs/_PARA BORRAR/7-oct-2026-noche-teoria-
+  antes-del-generador-sin-repetidos/gp/. Espejo de Dropbox igual que GitHub.
+- 7-oct 21:56 · Fichas y rediseño · HECHO · commit 7f2c09d (EN CURSO en e2c3a1e, parto de 5074f0c) · index.html, tres cosas
   que pidió Iago en el ejercicio «Replica el compás» de las fichas (COMP_REPLICAR_MOTOR). (1) NÚMEROS BLANCOS CON LA PIEL:
   la piel convierte el papel crema de las casillas en cristal oscuro pero dejaba la tinta en marino. El el() del motor
   admite un 4.º dato (clase) y los números, rotulitos y casillas «de papel» llevan clases cmprep-*; cuatro reglas
