@@ -60,6 +60,10 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 7-oct 21:55 · Fichas y rediseño · EN CURSO (parto de 5074f0c) · index.html, SOLO el ejercicio «Replica el compás» de las
+  fichas (COMP_REPLICAR_MOTOR) y cuatro reglas en la hoja de la ficha del alumno: con la piel, los números del compás en
+  blanco (salían marino sobre cristal oscuro) y la ventana de construir el compás por encima de todo (el botón «Apuntes»
+  quedaba encima; en el móvil tapaba «Cancelar» y «Usar este compás»). No toca generadores, ni la piel, ni nada más.
 - 6-oct 17:45 · Intros didácticas · HECHO · commit 53531f7 (EN CURSO en e639a39, parto de a336f1d) ·
   intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4, COPIA TAL CUAL de teoriaathome d698ff6: con bemoles,
   solo el penúltimo cambia a rosa y los demás se quedan en blanco, como en los sostenidos (antes se atenuaban y
