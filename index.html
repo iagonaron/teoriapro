@@ -9809,6 +9809,19 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-intro-go:hover{filter:brightness(1.06)}
   /* en la FICHA no hay autocorrección de transporte */
   #aluHost #teCorregir, #aluHost #tmCorregir, #aluHost #teResult, #aluHost #tmResult{display:none !important}
+  /* (7-oct-2026, Iago: «no se ve bien el compás al ser negro sobre fondo oscuro. Pásalo a números blancos»)
+     «REPLICA EL COMPÁS» CON LA PIEL. La piel (piel/apps/teoria.js) convierte el papel crema de las casillas en
+     cristal oscuro, pero la tinta oscura de los números la deja en azul marino: marino sobre oscuro. Aquí, SOLO con
+     la piel (html.lm-piel): números en blanco; rotulitos («compás de partida», «Tu compás», «Objetivo») en el blanco
+     suave de los demás rótulos; el compás objetivo de la ventana, en el rosa claro de la piel (antes fucsia oscuro);
+     y el cristal de la casilla se fija aquí también, para que el blanco tenga SIEMPRE fondo oscuro aunque el
+     repintado de la piel tarde o falle. SIN piel estas reglas no actúan: tinta sobre crema, como siempre.
+     Las clases cmprep-* las pone COMP_REPLICAR_MOTOR (4.º dato de su el()). Para volver a lo de antes: borrar
+     estas cuatro reglas (las clases, sin ellas, no hacen nada). */
+  html.lm-piel .cmprep-papel{background:rgba(255,255,255,.1) !important}
+  html.lm-piel .cmprep-num{color:#fff !important}
+  html.lm-piel .cmprep-rot{color:rgba(255,255,255,.6) !important}
+  html.lm-piel .cmprep-obj{color:#ec4899 !important}
   @media (prefers-reduced-motion: reduce){ .fp-intro-chip,.fp-intro-go{animation:none !important;opacity:1 !important} }
   /* ===== FICHA ALUMNO · animaciones (calco del elemental, en oro) ===== */
   @keyframes fpSimEnter{ 0%{opacity:0; transform:translateY(20px) scale(.965)} 55%{opacity:1; transform:translateY(-3px) scale(1.006)} 100%{opacity:1; transform:none} }
@@ -12693,7 +12706,11 @@ function fpPintaTonNombre(host, spec, resuelto, anchoFijo){
     return items;
   }
   /* símbolos de compás (HTML, para lo interactivo) */
-  function tsHtml(numHtml, denHtml, cls){ return '<span class="cmpts '+(cls||'')+'" style="display:inline-flex;flex-direction:column;align-items:center;line-height:1;vertical-align:middle;font-weight:800"><span>'+numHtml+'</span><span style="border-top:1.4px solid currentColor;padding-top:1px">'+denHtml+'</span></span>'; }
+  /* (7-oct-2026, Iago: «los compases no tienen línea entre numerador y denominador, eh? no deben tenerla… las fracciones
+     pequeñitas sí, pero los compases como tal, no») El denominador ya NO lleva raya encima: un compás se escribe con un
+     número sobre otro, sin línea. Las fracciones pequeñas (½ ¼ ¾) son su propio signo y siguen igual. Para volver a lo
+     de antes: style="border-top:1.4px solid currentColor;padding-top:1px" en el segundo <span>. */
+  function tsHtml(numHtml, denHtml, cls){ return '<span class="cmpts '+(cls||'')+'" style="display:inline-flex;flex-direction:column;align-items:center;line-height:1;vertical-align:middle;font-weight:800"><span>'+numHtml+'</span><span style="padding-top:2px">'+denHtml+'</span></span>'; }
   function disparHtml(s){ return tsHtml(String(s.n), String(s.d)); }
   function mixtoHtml(spec){ return '<span style="display:inline-flex;align-items:center;gap:3px">'+spec.terms.map(function(t){return tsHtml(String(t.num),String(t.den));}).join('<span style="font-weight:800">+</span>')+'</span>'; }
   function decimalHtml(spec){ return tsHtml(String(spec.int)+'’'+spec.frac.dec, String(spec.den)); }
@@ -13151,8 +13168,11 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
   var FORMS4=[['mixto','Mixto'],['decimal','Decimal'],['fracPlus','Fraccionario +'],['fracMinus','Fraccionario −']];
   // paleta (colores de compases.html)
   var CL={line:'#3a2c10',panel:'#1a1305',panel2:'#221908',gold1:'#d4af37',gold2:'#b8860b',soft:'#e9c96a',ink:'#fbf7ec',muted:'#d8caa6',muted2:'#a8966a',paper:'#f1ead9',paper2:'#faf5ea',pedge:'#d8cdb2',inkd:'#2a1f0c'};
-  function el(t,css,txt){ var d=document.createElement(t); if(css)d.style.cssText=css; if(txt!=null)d.textContent=txt; return d; }
-  function bigSpec(form,spec,color){ var s=el('span','font-size:30px;font-weight:800;color:'+(color||CL.inkd)); s.innerHTML=P().specHtml(form,spec); return s; }
+  /* (7-oct-2026, Iago: «pásalo a números blancos») cls = clase opcional (cmprep-*): con ella, las reglas
+     html.lm-piel .cmprep-* de la hoja de la ficha visten estos elementos SOLO con la piel puesta · para volver a lo
+     de antes basta borrar esas reglas */
+  function el(t,css,txt,cls){ var d=document.createElement(t); if(css)d.style.cssText=css; if(txt!=null)d.textContent=txt; if(cls)d.className=cls; return d; }
+  function bigSpec(form,spec,color){ var s=el('span','font-size:30px;font-weight:800;color:'+(color||CL.inkd),null,color?'cmprep-obj':'cmprep-num'); s.innerHTML=P().specHtml(form,spec); return s; }
   function stepEl(get,set,min,max,onCh){
     var w=el('span','display:inline-flex;align-items:center;border:1px solid '+CL.line+';border-radius:11px;overflow:hidden;background:'+CL.panel);
     function btn(t,dv){ var b=el('button','width:38px;height:42px;border:none;background:transparent;color:'+CL.soft+';font-size:21px;cursor:pointer;line-height:1'); b.type='button'; b.textContent=t; b.onclick=function(){ set(Math.max(min,Math.min(max,get()+dv))); v.textContent=get(); onCh&&onCh(); }; return b; }
@@ -13182,19 +13202,19 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
     var grid=el('div','display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:10px'); wrap.appendChild(grid);
     // celda dado
     var fd=el('div','display:flex;flex-direction:column;gap:5px'); fd.appendChild(zt('Dado'));
-    var cd=el('div','position:relative;border:1px solid '+CL.gold1+';border-radius:16px;background:linear-gradient(180deg,'+CL.paper2+','+CL.paper+');min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px');
-    var dst=el('div','font-size:28px;font-weight:800;color:'+CL.inkd); dst.innerHTML=P().specHtml('dispar', g.dispar); cd.appendChild(dst);
-    cd.appendChild(el('div','font-size:10px;color:#8a7a52;font-weight:700','compás de partida')); fd.appendChild(cd); grid.appendChild(fd);
+    var cd=el('div','position:relative;border:1px solid '+CL.gold1+';border-radius:16px;background:linear-gradient(180deg,'+CL.paper2+','+CL.paper+');min-height:120px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;padding:8px',null,'cmprep-papel');
+    var dst=el('div','font-size:28px;font-weight:800;color:'+CL.inkd,null,'cmprep-num'); dst.innerHTML=P().specHtml('dispar', g.dispar); cd.appendChild(dst);
+    cd.appendChild(el('div','font-size:10px;color:#8a7a52;font-weight:700','compás de partida','cmprep-rot')); fd.appendChild(cd); grid.appendChild(fd);
     // 4 celdas construibles
     FORMS4.forEach(function(f){
       var col=el('div','display:flex;flex-direction:column;gap:5px'); col.appendChild(zt(f[1]));
       var cell=el('button','position:relative;border:1px solid '+CL.line+';border-radius:16px;background:linear-gradient(180deg,'+CL.panel2+','+CL.panel+');min-height:120px;cursor:pointer;display:flex;align-items:center;justify-content:center;padding:8px;width:100%'); cell.type='button';
       function paint(){
         cell.innerHTML='';
-        if(g[f[0]]){ cell.style.background='linear-gradient(180deg,'+CL.paper2+','+CL.paper+')'; cell.style.borderColor=CL.pedge;
-          var sp=el('span','font-size:28px;font-weight:800;color:'+CL.inkd); sp.innerHTML=P().specHtml(f[0], g[f[0]]); cell.appendChild(sp);
+        if(g[f[0]]){ cell.classList.add('cmprep-papel'); cell.style.background='linear-gradient(180deg,'+CL.paper2+','+CL.paper+')'; cell.style.borderColor=CL.pedge;
+          var sp=el('span','font-size:28px;font-weight:800;color:'+CL.inkd,null,'cmprep-num'); sp.innerHTML=P().specHtml(f[0], g[f[0]]); cell.appendChild(sp);
           cell.appendChild(el('span','position:absolute;top:7px;right:10px;font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:#9c8b63','editar'));
-        } else { cell.style.background='linear-gradient(180deg,'+CL.panel2+','+CL.panel+')'; cell.style.borderColor=CL.line;
+        } else { cell.classList.remove('cmprep-papel'); cell.style.background='linear-gradient(180deg,'+CL.panel2+','+CL.panel+')'; cell.style.borderColor=CL.line;
           var ph=el('span','display:flex;flex-direction:column;align-items:center;gap:8px;color:'+CL.muted2+';font-size:12px');
           ph.appendChild(el('span','width:30px;height:30px;border:1.5px dashed '+CL.muted2+';border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:19px;color:'+CL.soft,'+'));
           ph.appendChild(el('span',null,'Pulsa para construir')); cell.appendChild(ph);
@@ -13206,10 +13226,40 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
     });
     g.__foot=el('div','text-align:center;margin-top:12px;font-size:12px;color:'+CL.muted2+';font-weight:700'); wrap.appendChild(g.__foot); updFoot(g);
     // modal (oculto)
-    var modal=el('div','position:fixed;inset:0;background:rgba(8,5,1,.55);display:none;align-items:center;justify-content:center;z-index:100050;padding:18px'); host.appendChild(modal); g.__modal=modal;
-    modal.addEventListener('click', function(e){ if(e.target===modal) modal.style.display='none'; });
+    /* (7-oct-2026, Iago: «abajo sale lo de apuntes por encima de la ventana, debería estar en segundo plano junto a
+       los otros botones») La ventana ya NO cuelga de la tarjeta del ejercicio (host). Con la piel, la tarjeta
+       (.fp-alu-card) lleva backdrop-filter: atrapa dentro el position:fixed y el z-index de la ventana, y el botón
+       «Apuntes» (position:relative, fuera de la tarjeta) se pintaba encima —en el móvil tapaba «Usar este compás»—.
+       Ahora se crea aquí SIN colgar: showModal() la cuelga de <body> mientras está abierta y closeModal() la
+       descuelga al cerrar, así que no queda ninguna ventana suelta por la página. Para volver a lo de antes:
+       host.appendChild(modal) en la línea de abajo, y display='flex' / display='none' en vez de showModal() /
+       closeModal(). */
+    closeModal();   /* si el ejercicio se vuelve a pintar con una ventana abierta, se cierra */
+    var modal=el('div','position:fixed;inset:0;background:rgba(8,5,1,.55);display:none;align-items:center;justify-content:center;z-index:100050;padding:18px',null,'cmprep-modal'); g.__modal=modal; modal.__cmpWrap=wrap;
+    modal.addEventListener('click', function(e){ if(e.target===modal) closeModal(modal); });
+    /* el «tap» de los botones de la ficha lo pone un listener de #view-fichapro (pintaAlu); la ventana ya no está
+       dentro de esa vista, así que lo repite ella (mismas condiciones: solo si ese listener existe y el ejercicio
+       está en la vista) */
+    modal.addEventListener('pointerdown', function(ev){ try{ var vf=document.getElementById('view-fichapro'); if(vf && vf._sfxTap && vf.contains(wrap) && ev.target.closest && ev.target.closest('button')) window.SFX.tap(); }catch(e){} }, true);
   }
   function updFoot(g){ if(!g.__foot) return; var n=FORMS4.filter(function(f){return !!g[f[0]];}).length; g.__foot.textContent='Construidas: '+n+' de 4'; }
+  /* (7-oct-2026, Iago: «debería estar en segundo plano junto a los otros botones») abrir y cerrar la ventana: cuelga
+     de <body> solo mientras está abierta (el porqué, en montarEn) */
+  var MODAL_ABIERTA=null;   // la ventana abierta en este momento (como mucho una)
+  function closeModal(modal){
+    modal=modal||MODAL_ABIERTA; if(!modal) return;
+    modal.style.display='none';
+    if(modal.__vig){ try{ modal.__vig.disconnect(); }catch(e){} modal.__vig=null; }
+    if(modal.parentNode) modal.parentNode.removeChild(modal);
+    if(MODAL_ABIERTA===modal) MODAL_ABIERTA=null;
+  }
+  function showModal(modal){
+    if(MODAL_ABIERTA && MODAL_ABIERTA!==modal) closeModal(MODAL_ABIERTA);
+    document.body.appendChild(modal); modal.style.display='flex'; MODAL_ABIERTA=modal;
+    /* sin ventanas huérfanas: si el ejercicio deja de estar en pantalla (se repinta, se pasa a otro, se entrega la
+       ficha, se sale de la simulación…) la ventana se cierra sola */
+    try{ if(!modal.__vig && window.MutationObserver){ modal.__vig=new MutationObserver(function(){ if(!document.body.contains(modal.__cmpWrap)) closeModal(modal); }); modal.__vig.observe(document.body,{childList:true,subtree:true}); } }catch(e){}
+  }
   function openModal(g, form, title, repaintCell){
     var modal=g.__modal; if(!modal) return;
     var work=g[form]? clone(g[form]) : defWork(form);
@@ -13217,12 +13267,12 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
     var box=el('div','background:linear-gradient(180deg,#2b2009,'+CL.panel+');border:1px solid '+CL.line+';border-radius:20px;max-width:560px;width:100%;padding:22px;max-height:92vh;overflow:auto;box-shadow:0 18px 50px rgba(0,0,0,.5)'); modal.appendChild(box);
     var head=el('div','display:flex;align-items:center;justify-content:space-between;gap:12px');
     head.appendChild(el('h3','margin:0;font-size:19px;font-weight:900;color:'+CL.ink, 'Compás '+(form==='mixto'?'mixto':form==='decimal'?'decimal':'fraccionario '+(form==='fracPlus'?'de suma (+)':'de resta (−)'))));
-    var x=el('button','border:none;background:transparent;color:'+CL.muted+';font-size:22px;cursor:pointer','×'); x.type='button'; x.onclick=function(){ modal.style.display='none'; }; head.appendChild(x);
+    var x=el('button','border:none;background:transparent;color:'+CL.muted+';font-size:22px;cursor:pointer','×'); x.type='button'; x.onclick=function(){ closeModal(modal); }; head.appendChild(x);
     box.appendChild(head);
     var subT={mixto:'Suma de dos términos con denominadores distintos. En cada uno: numerador arriba, denominador (la figura) abajo.',decimal:'El numerador lleva decimales. La cifra hace referencia a la figura del pulso (el denominador).',fracPlus:'Un compás base al que se le suma una fracción del pulso. La fracción va a la derecha del numerador, como superíndice.',fracMinus:'Un compás base al que se le resta una fracción del pulso. La fracción va a la derecha del numerador, como superíndice.'};
     box.appendChild(el('div','margin:4px 0 16px;color:'+CL.muted+';font-size:12.5px', subT[form]));
     var body=el('div'); box.appendChild(body);
-    var prev=el('div','border:1px solid '+CL.pedge+';border-radius:14px;background:linear-gradient(180deg,'+CL.paper2+','+CL.paper+');padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px');
+    var prev=el('div','border:1px solid '+CL.pedge+';border-radius:14px;background:linear-gradient(180deg,'+CL.paper2+','+CL.paper+');padding:14px 16px;display:flex;align-items:center;justify-content:space-between;gap:14px;flex-wrap:wrap;margin-top:16px',null,'cmprep-papel');
     var err=el('div','color:#e08b7a;font-size:12px;min-height:14px;margin-top:8px;text-align:center');
     function refresh(){
       body.innerHTML='';
@@ -13260,18 +13310,18 @@ function fpPintaCompRellenar(host, spec, resuelto, anchoFijo){
       }
       // preview
       prev.innerHTML='';
-      var pv=el('div','display:flex;align-items:center;gap:14px'); pv.appendChild(bigSpec(form, work)); pv.appendChild(el('div','font-size:12px;color:#5f5538','Tu compás')); prev.appendChild(pv);
-      var tg=el('div','font-size:12px;color:#7a6e4d;text-align:right'); tg.appendChild(el('div',null,'Objetivo'));
+      var pv=el('div','display:flex;align-items:center;gap:14px'); pv.appendChild(bigSpec(form, work)); pv.appendChild(el('div','font-size:12px;color:#5f5538','Tu compás','cmprep-rot')); prev.appendChild(pv);
+      var tg=el('div','font-size:12px;color:#7a6e4d;text-align:right',null,'cmprep-rot'); tg.appendChild(el('div',null,'Objetivo'));
       var tgs=el('div','margin-top:3px'); tgs.appendChild(bigSpec('dispar', g.dispar, CL.gold2)); tg.appendChild(tgs); prev.appendChild(tg);
     }
     refresh();
     box.appendChild(prev); box.appendChild(err);
     var foot=el('div','display:flex;gap:10px;justify-content:flex-end;margin-top:14px');
-    var bc=el('button','border:1px solid '+CL.line+';background:rgba(255,255,255,.06);color:'+CL.ink+';border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer','Cancelar'); bc.type='button'; bc.onclick=function(){ modal.style.display='none'; };
+    var bc=el('button','border:1px solid '+CL.line+';background:rgba(255,255,255,.06);color:'+CL.ink+';border-radius:10px;padding:10px 16px;font-weight:800;cursor:pointer','Cancelar'); bc.type='button'; bc.onclick=function(){ closeModal(modal); };
     var bu=el('button','border:0;background:linear-gradient(120deg,'+CL.gold1+','+CL.gold2+');color:#1a1305;border-radius:10px;padding:10px 18px;font-weight:900;cursor:pointer','Usar este compás'); bu.type='button';
-    bu.onclick=function(){ var msg=structuralOk(form, work); if(msg){ err.textContent=msg; return; } g[form]=clone(work); repaintCell&&repaintCell(); updFoot(g); modal.style.display='none'; };
+    bu.onclick=function(){ var msg=structuralOk(form, work); if(msg){ err.textContent=msg; return; } g[form]=clone(work); repaintCell&&repaintCell(); updFoot(g); closeModal(modal); };
     foot.appendChild(bc); foot.appendChild(bu); box.appendChild(foot);
-    modal.style.display='flex';
+    showModal(modal);
   }
   function puntua(g){ try{ var ok=0; FORMS4.forEach(function(f){ if(okForm(g,f[0])) ok++; }); return ok/4; }catch(e){ return 0; } }
   function corregirVisual(host, g){
