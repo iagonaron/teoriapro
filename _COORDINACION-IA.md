@@ -60,10 +60,23 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 7-oct 21:55 · Fichas y rediseño · EN CURSO (parto de 5074f0c) · index.html, SOLO el ejercicio «Replica el compás» de las
-  fichas (COMP_REPLICAR_MOTOR) y cuatro reglas en la hoja de la ficha del alumno: con la piel, los números del compás en
-  blanco (salían marino sobre cristal oscuro) y la ventana de construir el compás por encima de todo (el botón «Apuntes»
-  quedaba encima; en el móvil tapaba «Cancelar» y «Usar este compás»). No toca generadores, ni la piel, ni nada más.
+- 7-oct 22:10 · Fichas y rediseño · HECHO · commit 7f2c09d (EN CURSO en e2c3a1e, parto de 5074f0c) · index.html, tres cosas
+  que pidió Iago en el ejercicio «Replica el compás» de las fichas (COMP_REPLICAR_MOTOR). (1) NÚMEROS BLANCOS CON LA PIEL:
+  la piel convierte el papel crema de las casillas en cristal oscuro pero dejaba la tinta en marino. El el() del motor
+  admite un 4.º dato (clase) y los números, rotulitos y casillas «de papel» llevan clases cmprep-*; cuatro reglas
+  `html.lm-piel .cmprep-*` (en el <style> de la ficha del alumno, tras `#aluHost #teCorregir…`) los ponen en blanco. Sin
+  piel no actúan. Para volver: borrar esas cuatro reglas. OJO si se arregla mapear() en piel/apps/teoria.js o esas
+  casillas dejan de ser cristal: entonces sobran. (2) LA VENTANA DE CONSTRUIR EL COMPÁS, POR ENCIMA DE TODO: ya no cuelga
+  de la tarjeta (con la piel, .fp-alu-card lleva backdrop-filter y atrapaba el position:fixed: el botón «Apuntes» quedaba
+  encima y en el móvil tapaba «Cancelar» y «Usar este compás»). showModal() la cuelga de <body> mientras está abierta y
+  closeModal() la descuelga; un MutationObserver la cierra si el ejercicio deja de estar en pantalla. Para volver:
+  host.appendChild(modal) en montarEn y display flex/none en vez de showModal()/closeModal(). (3) COMPASES SIN RAYA:
+  tsHtml() (el dibujo de todos los compases interactivos del módulo de compases: elegir, rellenar, replicar y sus
+  correcciones) ya no pone `border-top` sobre el denominador; las fracciones pequeñas (½ ¼ ¾) siguen igual. No toca
+  generadores ni la piel. Para volver a todo lo de antes: git revert 7f2c09d, o subir el index.html de APPs/_PARA
+  BORRAR/7-oct-2026-noche-teoriapro-antes-de-replica-el-compas/. Espejo de Dropbox igual que GitHub. PENDIENTE (visto al
+  auditar el contraste con la piel, sin tocar): en «Serie armónica» los botones ♭ y ♯ no se ven (blanco sobre blanco), y
+  en comp_rellenar («Regla…») y transporte_escrito («Cómo se puntúa…») hay gris #6b7390 sobre oscuro.
 - 6-oct 17:45 · Intros didácticas · HECHO · commit 53531f7 (EN CURSO en e639a39, parto de a336f1d) ·
   intros/indica-la-tonalidad/escenas.js e indica_tonalidad_60.mp4, COPIA TAL CUAL de teoriaathome d698ff6: con bemoles,
   solo el penúltimo cambia a rosa y los demás se quedan en blanco, como en los sostenidos (antes se atenuaban y
