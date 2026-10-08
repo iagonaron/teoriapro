@@ -18609,9 +18609,11 @@ window.LmfCorr=(function(){
     inversion_int_simples:G('Inversión · repaso',INV,'inv-simples'), inversion_int_compuestos:G('Inversión · repaso',INV,'inv-comp'),
     inversion_aco_identifica:G('Inversión · repaso',INV,'inv-acordes'), inversion_aco_construir:G('Inversión · repaso',INV,'inv-acordes'),
     enarmoniapro:G('Enarmonías · repaso',['enarmonias']),
-    /* tests: solo los tramos que tienen tema en los apuntes web (2.2: solo la parte de timbre). Los demás
-       (1.1 Fonógrafo, 2.1, 3.1, 3.3, 4.x, 5.x) se quedan con «¿Dudas? Revisa los apuntes 📖» */
-    test_1_2:COMP, test_2_2:SERIE, test_2_3:SERIE, test_3_2:DODE,
+    /* tests: solo los tramos que tienen tema en los apuntes web. Los demás (1.1 Fonógrafo, 2.1, 2.2, 3.1, 3.3, 4.x, 5.x)
+       se quedan con «¿Dudas? Revisa los apuntes 📖» (el Libro; desde el 7-8 oct, con su apartado en digital delante).
+       (8-oct-2026, Iago: «el test 2.2 lo que tiene que abrir son los apuntes de la unidad 2 referente a cualidades del
+       sonido… que ahí abra PDF clásico») el 2.2 ya no va a «Serie armónica» (no trae Altura): abre el PDF de la unidad 2. */
+    test_1_2:COMP, test_2_3:SERIE, test_3_2:DODE,
     test_8_1:MODU, test_8_2:MODU, test_8_3:MODU, test_9_1:TRAN, test_9_2:TRAN
   };
   function esTest(k){ return /^test_/.test(String(k||'')); }   /* tipo test: 2 preguntas · 3 opciones */
@@ -18700,7 +18702,7 @@ window.LmfCorr=(function(){
      · VER PORTAL INTERACTIVO → el portal de ese tema (los del medallero del portal GP), en una pestaña nueva.
      Con la misma puerta que «Apuntes» (hoy, solo Protester). */
   var UNIDAD_PAGS={ 1:[7,9], 2:[10,13], 3:[14,17], 4:[18,21], 5:[22,30], 8:[37,40], 9:[41,45] };
-  var TEMA_TEST={ '1.1':'Fonógrafo', '1.2':'Compases poco habituales', '2.1':'Cualidades del sonido', '2.2':'Cualidades del sonido',
+  var TEMA_TEST={ '1.1':'Fonógrafo', '1.2':'Compases poco habituales', '2.1':'Cualidades del sonido', '2.2':'Altura y timbre',
     '2.3':'Serie armónica', '3.1':'Atonalidad', '3.2':'Dodecafonismo y serialismo', '3.3':'Música estocástica', '4.1':'Magnetófono',
     '4.2':'Música concreta', '4.3':'Nuevas grafías', '5.1':'El blues', '5.2':'Grupos de valoración especial', '8.1':'Modulación',
     '8.2':'Modulación diatónica', '8.3':'Otras modulaciones', '9.1':'Transporte', '9.2':'Transporte' };

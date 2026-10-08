@@ -137,6 +137,12 @@ Object.assign(window.APX_TEMAS, {
       {p:'Antes de lanzarnos a definir, conviene que reflexionemos sobre su opuesto, el cual nos resulta más familiar.'},
       {p:'Trata de definir <b>Tonalidad</b> (mejor a lápiz jeje):'},     /* en el papel, aquí va un recuadro para escribir */
       {p:'Ahora, toma nota de nuestra definición oficial de <b>Atonalidad</b>:'},   /* ídem */
+      /* (8-oct-2026, Iago: «Busco una definición oficial de atonalidad, a lo mejor está en la parte interactiva que ya tenía
+         prehecha. Voy a sacarlo de ahí por ser coherente») las dos definiciones del Taller de Atonalidad
+         (iagonaron.github.io/atonalidad/ → «Revelar las definiciones»), tal cual, con el término en negrita delante (como
+         «Mixtos.» en Compases extraños). Va también la de Tonalidad porque la de Atonalidad habla de «ese centro». */
+      {p:'<b>Tonalidad.</b> Sistema en el que unos grados pesan más que otros y funcionan como centro de gravedad: principalmente la tónica, y tras ella la dominante, la subdominante y la mediante (los grados del arpegio). De ahí nacen la tensión y el reposo, y por eso una frase «pide» terminar en un sitio concreto y no en otro.'},
+      {p:'<b>Atonalidad.</b> Música que renuncia deliberadamente a ese centro. No hay tónica ni grados privilegiados y, por tanto, no hay tensión ni reposo: ningún sonido pide resolver en otro. Todo sonido tiene la misma jerarquía.'},
       {p:'Veamos formas de trabajar con la atonalidad.'},
       {h:'Aleatoriedad'},
       {p:'Incluir factores aleatorios propicia, como es lógico, el desorden. La aleatoriedad puede estar presente en dos momentos: durante la <b>creación</b> y/o durante la <b>interpretación</b>.'},

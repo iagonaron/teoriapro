@@ -60,6 +60,14 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 8-oct 15:23 · Fichas y rediseño · HECHO · en este mismo commit (sin EN CURSO previo: dos cambios pequeños;
+  comprobado antes que el último commit seguía siendo ae1bb98). Iago (8-oct, tarde): (1) index.html · «el test 2.2 lo
+  que tiene que abrir son los apuntes de la unidad 2… que ahí abra PDF clásico»: test_2_2 sale de MAPA (ya no abre
+  «Serie armónica», que no trae Altura) y TEMA_TEST['2.2'] pasa a 'Altura y timbre' (antes 'Cualidades del sonido'),
+  para que el puente de apuntes-2gp.js no le ponga delante la versión digital del 2.1: abre el Libro, unidad 2, págs.
+  10–13, tal cual. (2) apuntes-2gp.js · gp-atonalidad: tras «toma nota de nuestra definición oficial de Atonalidad»,
+  las definiciones de Tonalidad y Atonalidad del Taller de Atonalidad (iagonaron.github.io/atonalidad, «Revelar las
+  definiciones»), tal cual. Pruebas: 154 ✓ (ordenador y móvil, con piel).
 - 8-oct 10:21 · Fichas y rediseño · HECHO · en el commit anterior (carpeta NUEVA apuntes-img/, 11 figuras del libro en
   PNG gris) y en este (index.html, apuntes-2gp.js y este registro); sin EN CURSO previo (comprobado antes que el
   último commit seguía siendo 854e875 y lo vivo, index 6d6eb54d y apuntes 0a4c2cc9). Iago (8-oct, «sí a todo»): (1)
