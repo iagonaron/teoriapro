@@ -60,6 +60,19 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 8-oct 10:21 · Fichas y rediseño · HECHO · en el commit anterior (carpeta NUEVA apuntes-img/, 11 figuras del libro en
+  PNG gris) y en este (index.html, apuntes-2gp.js y este registro); sin EN CURSO previo (comprobado antes que el
+  último commit seguía siendo 854e875 y lo vivo, index 6d6eb54d y apuntes 0a4c2cc9). Iago (8-oct, «sí a todo»): (1)
+  index.html: dos ejercicios del MISMO tipo en una ficha no comparten caso (al añadir y al ↻; marca
+  fpGeneraSinRepetir; si la ficha no repite tipo, nada cambia; no toca refuerzos, práctica libre ni «Replica el
+  compás»). Pruebas en el fichero real: humo 247 ✓; 50 tipos × 600 fichas, 280 ✓ (casos compartidos → 0 %); regenerar,
+  329 ✓. (2) apuntes-2gp.js: el «Apuntes» de los test 2.1, 3.1, 3.3, 4.1, 4.2, 4.3, 5.1 y 5.2 abre ya su apartado del
+  libro en DIGITAL, como el del Fonógrafo (temas gp-cualidades, gp-atonalidad, gp-estocastica, gp-magnetofono,
+  gp-concreta, gp-grafias, gp-blues y gp-gve, con su línea de APX_LIBRO), con la pestaña «Unidad completa en PDF» al
+  lado. Ningún test abre ya el PDF entero de la unidad sin pasar por la versión digital. Texto del libro con las
+  erratas corregidas (Iago dijo que sí), también en el Fonógrafo («Spotify», «Alessandro Moreschi»). Las láminas de
+  Nuevas grafías que son de OTROS libros no se ponen (derechos): siguen en el PDF. Pruebas: 148 ✓ en ordenador y móvil
+  con la piel.
 - 7-oct 22:18 · Fichas y rediseño · HECHO · commit aaa1090 (EN CURSO en 35e9e88, parto de 95dc6b9) · dos ficheros, dos encargos
   de Iago. (A) index.html · «me gustaría que el generador sepa evitar repetir dos casos iguales en un ejercicio»: SOLO la
   generación de casos. ACORDES_MOTOR (generarUno recibe yaEstan: mismo tipo, otra fundamental), INDICE_MOTOR.generar (no

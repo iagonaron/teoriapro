@@ -10646,6 +10646,42 @@ function fpGenera(key){
   if(key && key.indexOf('ex_')===0){ return window.generarEx?window.generarEx(key):null; }
   return null;
 }
+/* (7-oct-2026, Iago: «que el generador sepa evitar repetir dos casos iguales en un ejercicio») OPCIONAL · ENTRE DOS
+   EJERCICIOS DEL MISMO TIPO DE LA FICHA. fpCasosDe() = los casos de un ejercicio (compases, preguntas, parejas…; si el
+   tipo tiene un solo caso, el ejercicio entero), con el mismo criterio que dentro de un ejercicio. fpGeneraSinRepetir()
+   genera un ejercicio y, si comparte algún caso con otro del mismo tipo que ya está en la ficha (menos el de la posición
+   «salvo», que es el que se está regenerando), lo vuelve a generar hasta 100 veces más (en esta app generar no cuesta
+   nada) y se queda con el que menos comparte. Para quitarlo: que anadir() y regenerar() vuelvan a llamar a fpGenera(key). */
+function fpCasosDe(sp){
+  if(!sp) return [];
+  try{
+    var nk=function(n){ return n ? (n.step+(n.alter||0)) : ''; };
+    if(sp._aco && sp.subs) return sp.subs.map(function(s){ return s.tipo+'~'+nk(s.notas[0]); });
+    if(sp._iv && sp.subs) return sp.subs.map(function(s){ return [s.n1, s.n2||s._n2cat].map(function(n){ return nk(n)+'/'+n.octave; }).sort().join('~'); });
+    if(sp._ia && sp.notas) return sp.notas.map(function(n){ return n.clef+'~'+n.step+n.oct; });
+    if(sp._test && sp.qs) return sp.qs.map(function(q){ return q.q; });
+    if(sp._acoInv && sp.items) return sp.items.map(function(a){ return a.tipo+'~'+nk(a.root)+'~'+a.inv; });
+    if(sp._enarm && sp.items) return sp.items.map(function(i){ return JSON.stringify(i.dada); }).concat(['ton~'+sp.ton.dada.nom]);
+    if(sp._rell && sp.subs) return sp.subs.map(function(s){ return s.target.n+'/'+s.target.d; });   /* el compás (en la forma que sea) */
+    if(sp._cel && sp.subs) return sp.subs.map(function(s){ return 'dur'+s.bars[0].reduce(function(a,i){ return a+(({q:4,'8':2,'16':1})[i.dur]||0)*(i.dotted?1.5:1); },0); });   /* el compás correcto = lo que dura el ritmo */
+    if(sp._cad && sp.gen) return [sp.gen.type+'~'+sp.gen.mode+'~'+sp.gen.keyName+'~'+JSON.stringify((sp.gen.events||[]).map(function(e){ return e.midi; }))];   /* la cadencia = sus acordes (no su «seed» ni su tempo) */
+    var l=sp.subs || (sp.pares && sp.pares.map(function(p){ return p.dada; }));
+    if(Array.isArray(l)) return l.map(function(c){ return JSON.stringify(c); });
+    return [JSON.stringify(sp)];
+  }catch(e){ return []; }
+}
+function fpGeneraSinRepetir(key, salvo){
+  var ya={}, hay=false;
+  FP.ejercicios.forEach(function(e,k){ if(k!==salvo && e.key===key && !(e.spec && e.spec._examen)){ fpCasosDe(e.spec).forEach(function(c){ ya[c]=1; hay=true; }); } });
+  var mejor=null, mejorN=1e9;
+  for(var q=0;q<101;q++){
+    var it=fpGenera(key); if(!it){ if(!mejor) mejor=it; break; }
+    var n=hay ? fpCasosDe(clon(it)).filter(function(c){ return ya[c]; }).length : 0;
+    if(n<mejorN){ mejor=it; mejorN=n; }
+    if(n===0) break;
+  }
+  return mejor;
+}
 function fpLabelDe(key){
   var t=CATALOGO.find(function(x){return x.key===key;});
   return (t && t.label) || 'Ejercicio';
@@ -10653,7 +10689,7 @@ function fpLabelDe(key){
 function anadir(key){
   if(FP.enviado){ status('La ficha ya se envió: crea una nueva desde el Diario.', 'err'); return; }
   if(FP.ejercicios.length>=FP.MAX){ status('Máximo '+FP.MAX+' ejercicios por ficha.', 'err'); return; }
-  var it=fpGenera(key);
+  var it=fpGeneraSinRepetir(key, -1);   /* (7-oct-2026) opcional: sin repetir caso entre ejercicios del mismo tipo */
   if(!it){ status('El motor de este tipo no está disponible.', 'err'); return; }
   FP.ejercicios.push({ key:key, label:fpLabelDe(key), spec:clon(it) });
   status('','');
@@ -10664,7 +10700,7 @@ function regenerar(i){
   if(e.spec && e.spec._examen) return;
   var firma=function(sp){ return sp ? ((sp._mode||sp.tipo||'')+'·'+((sp.tonica&&sp.tonica.nom)||'')) : ''; };
   var prev=firma(e.spec), it=null, n=0;
-  do{ it=fpGenera(e.key); n++; }while(it && firma(it)===prev && n<30);
+  do{ it=fpGeneraSinRepetir(e.key, i); n++; }while(it && firma(it)===prev && n<30);   /* (7-oct-2026) opcional: ídem */
   if(it){ e.spec=clon(it); pintaLista(); }
 }
 function previsualizar(i){

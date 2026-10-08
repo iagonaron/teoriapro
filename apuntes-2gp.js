@@ -64,8 +64,9 @@ Object.assign(window.APX_TEMAS, {
      información pero poniendo la estética y adecuándolo al medio. ¿Es eso posible con GP? Sin riesgos por favor»)
      El apartado FONÓGRAFO de la unidad 1 y nada más (hasta hoy, «Apuntes» del test 1.1 abría el PDF con la unidad entera:
      págs. 7–9). TEXTO LITERAL del libro, sin cambiar una palabra: los guiones de lista pegados a la palabra (el tercero,
-     en negrita, como en el papel), «spotify» en minúscula, «ésta» con tilde y «Alexandro Moreschi» van como él los
-     escribió. Las negritas son las suyas; esa página no tiene cursivas ni figuras («Busca una foto mientras lees esto»).
+     en negrita, como en el papel), «ésta» con tilde va como él lo escribió (8-oct-2026, Iago dijo que sí: corregidas dos
+     erratas del libro, «spotify» → «Spotify» y «Alexandro Moreschi» → «Alessandro Moreschi»). Las negritas son las
+     suyas; esa página no tiene cursivas ni figuras («Busca una foto mientras lees esto»).
      Se ve desde el visor del Libro: bloque «LIBRO 2º GP → VERSIÓN DIGITAL», al final de este fichero.
      Para quitarlo: borrar este tema y su línea de APX_LIBRO (vuelve a salir el PDF, como antes). */
   'gp-fonografo': {
@@ -75,13 +76,192 @@ Object.assign(window.APX_TEMAS, {
       {p:'El funcionamiento, aunque rudimentario, es bastante sorprendente. Tiene tres partes principales:'},
       {p:'-<b>Un cono</b> que servirá de micrófono en el modo grabación y de resonador en el modo reproducción. Todo un invento multifunción, el iPhone del momento.'},
       {p:'-<b>Una aguja</b> que servirá para transmitir y leer la información.'},
-      {p:'<b>-Un cilindro de cera</b> que será el elemento a reproducir. El equivalente a la cinta, el disco, vinilo… Lo sé, hoy en día pagas spotify y no piensas en nada de esto, pero tus padres controlan fijo.'},
+      {p:'<b>-Un cilindro de cera</b> que será el elemento a reproducir. El equivalente a la cinta, el disco, vinilo… Lo sé, hoy en día pagas Spotify y no piensas en nada de esto, pero tus padres controlan fijo.'},
       {p:'Entonces, el funcionamiento es el siguiente:'},
       {p:'<b>En modo grabación</b> el sonido es captado por el cono. La aguja que está conectada a él vibra naturalmente y, en contacto con la débil cera, le va dejando un surco mientras esta gira.'},
       {p:'Lo loco de esto es que en el <b>modo reproducción</b> es justo al revés: el cilindro de cera (ya todo tatuado) transmite estas irregularidades a la aguja y ésta lo lleva al cono, que amplifica esa vibración.'},
       {p:'¡El tema es que suena lo mismo que grabaste! La calidad no es nada del otro mundo… los cilindros, además de poca capacidad de almacenamiento, se desgastan con cada uso. ¡Pero ni tan mal! Tenemos nueva forma de almacenar el sonido. Han cambiado las reglas del juego.'},
       {p:'Si tuviésemos este sistema unos años antes podríamos escuchar grabaciones directas de gente como Beethoven, Mozart o Bach. ¿Te imaginas las implicaciones que eso tendría? Conservar la fuente primaria. No habría dudas de cómo habría que interpretar, de cómo sonaba realmente la música en su contexto de creación.'},
-      {p:'Sea como fuere, tenemos alguna anécdota curiosa que podemos documentar gracias al fonógrafo. Te voy a contar la historia del pobre Alexandro Moreschi.'}
+      {p:'Sea como fuere, tenemos alguna anécdota curiosa que podemos documentar gracias al fonógrafo. Te voy a contar la historia del pobre Alessandro Moreschi.'}
+    ]
+  },
+
+  /* ============ APARTADOS DEL LIBRO EN DIGITAL · LOTE 1 (8-oct-2026) ============ */
+  /* (8-oct-2026, Iago: «sí a todo» → seguir pasando a digital los apartados del libro que aún abrían el PDF de la unidad
+     entera). Igual que el Fonógrafo: TEXTO DEL LIBRO (negritas, cursivas y subrayados los suyos), con las erratas
+     corregidas (8-oct-2026, Iago: «Sí, todas»): dB (no «Db»), «4′33″», «propicia», «el análisis», «se les otorga»,
+     «¿Se te ocurren…?», «¿Conoces…?», «Sequenza III», «dependiendo de dónde», «50 ms», «etc.)», «nuevo…». Los recuadros para escribir del papel no se ponen (en la web no se escribe): queda su
+     pregunta, tal cual. Se ven desde el visor del Libro (bloque «LIBRO 2º GP → VERSIÓN DIGITAL», al final de este fichero).
+     Para quitar uno: borrar su tema y su línea de APX_LIBRO (vuelve a salir el PDF, como antes). */
+
+  /* ---- test 2.1 · U2, p. 7 (PDF 10) y p. 8 hasta la tabla (PDF 11 @0–68 %) ---- */
+  'gp-cualidades': {
+    titulo:'Cualidades del sonido', corto:'Cualidades del sonido', fuente:'Apuntes de teoría 2GP · Unidad 2 · p. 7–8',
+    bloques:[
+      {p:'Seguro que sobre este tema ya tienes una idea con lo que viste en el instituto.'},
+      {p:'Vamos a partir de ahí y ampliar un poco el concepto. De ahora en adelante te voy a tratar como potencial ingenier@ de sonido.'},
+      {h:'Duración'},
+      {p:'Literalmente es el tiempo que percibimos un sonido, pero no necesariamente coincide con el tiempo de emisión. Me explico: el sonido es una vibración que se propaga en forma de ondas mecánicas <u>a través de un medio</u>. Un medio, por ejemplo, como el aire.'},
+      {p:'Por eso el sonido suele durar algo (o mucho) más dependiendo de dónde se emita. Por ejemplo: si el sonido rebota (como una pelota) contra las paredes de una estancia grande, donde además los materiales son duros (imagínate las paredes de una iglesia), se produce la <b>reflexión.</b> Si esta reflexión es <u>inferior a 50 ms lo percibimos como <i>Reverb</i></u> (una prolongación del sonido, una cola). Si aumentamos mucho las distancias (imagínate ahora un alpinista alzando la voz entre dos montañas) y la reflexión <u>es superior a 50 ms lo percibimos como <i>Eco</i></u> (una repetición del sonido, distinguible del inicial).'},
+      {p:'Si quieres montarte un setup de creador de contenido y quieres que en tu habitación el sonido sea seco y nítido, colocarás en la pared materiales absorbentes (como cortinas, paneles acústicos…) para que el sonido (como la pelota) rebote lo mínimo. <u>Es relativamente barato</u>.', i:true},
+      {p:'Hablamos hasta aquí del sonido rebotando, pero éste también tiene la capacidad de atravesar los materiales en la medida de que éstos se lo permiten. A este fenómeno se le conoce como <b>refracción.</b> Ejemplo: escuchas cantar (mal) a tu vecino de al lado.'},
+      {p:'Si quieres montarte un setup y quieres evitar ruidos de fuera y a la vez que tú no molestes a los vecinos has de recubrir las paredes con materiales aislantes (como la lana de roca o fibra de vidrio) y colocar un nuevo tabique por encima. <u>Es relativamente caro</u>. Y no he hablado de las ventanas ni las puertas…', i:true},
+      {p:'Y es que el sonido tiende a colarse por los puntos débiles (como el agua en un recipiente de plástico con un agujero en la base), a trasladarse y replicarse por superficies minúsculas (como el típico juego de los vasos y el cordón) o incluso a girar esquinas de una calle. Esta propiedad que convierte el sonido en poco menos que un <i>ninja</i> se le llama <b>difracción.</b>'},
+      {h:'Intensidad'},
+      {p:'Es el nivel de presión sonora. En la notación clásica no encontramos formas demasiado precisas para representarlo: <i>forte, piano…</i> son referencias relativas ¿estás de acuerdo?, probablemente son diferentes a los niveles de intensidad que se escucharían en la época.'},
+      {p:'Como ingenieros de sonido es bueno que dispongamos de una unidad de medida objetiva, en este caso usaremos los <b>Decibelios</b> (dB)'},
+      {p:'Os muestro una tabla con ejemplos de medidas de dB con <i>un sonómetro a la distancia de un metro de la fuente de sonido</i>. Sólo como curiosidad, no hay que memorizar esto.'},
+      {tabla:{ alin:['left','left'], filas:[
+        ['<b>0 dB</b>','El vacío, inexistente en la tierra. Ocurre en el espacio.'],
+        ['<b>10 dB</b>','Lo que consideramos como silencio absoluto.'],
+        ['<b>20 dB</b>','Biblioteca'],
+        ['<b>40 dB</b>','Conversación'],
+        ['<b>55 dB</b>','Bar'],
+        ['<b>70 dB</b>','Aspiradora'],
+        ['<b>80 dB</b>','Tren'],
+        ['<b>90 dB</b>','Ruido fuerte tráfico (motor revolucionado, claxon)'],
+        ['<b>100 dB</b>','Taladro'],
+        ['<b>110 dB</b>','Altavoces concierto de Rock'],
+        ['<b>120 dB</b>','Turbina de un avión'],
+        ['<b>130 dB</b>','Propulsor de un cohete'],
+        ['<b>140 dB</b>','Umbral del dolor']
+      ]}},
+      {p:'<b>¿Conoces a John Cage y su obra 4′33″?</b> Charlemos un poco de su concepto.'}
+    ]
+  },
+
+  /* ---- test 3.1 · U3, p. 11 (PDF 14) y p. 12 hasta «Serialismo» (PDF 15 @0–23 %) ---- */
+  'gp-atonalidad': {
+    titulo:'Atonalidad', corto:'Atonalidad', fuente:'Apuntes de teoría 2GP · Unidad 3 · p. 11–12',
+    bloques:[
+      {p:'Antes de lanzarnos a definir, conviene que reflexionemos sobre su opuesto, el cual nos resulta más familiar.'},
+      {p:'Trata de definir <b>Tonalidad</b> (mejor a lápiz jeje):'},     /* en el papel, aquí va un recuadro para escribir */
+      {p:'Ahora, toma nota de nuestra definición oficial de <b>Atonalidad</b>:'},   /* ídem */
+      {p:'Veamos formas de trabajar con la atonalidad.'},
+      {h:'Aleatoriedad'},
+      {p:'Incluir factores aleatorios propicia, como es lógico, el desorden. La aleatoriedad puede estar presente en dos momentos: durante la <b>creación</b> y/o durante la <b>interpretación</b>.'},
+      {p:'En el momento de la <b>creación</b> el compositor introduce elementos random mientras está tomando decisiones compositivas. Por ejemplo: lanza unos dados y cada número tiene asignado un sonido. <i>La interpretación será siempre igual</i>.'},
+      {p:'¿Se te ocurren más ejemplos de aleatoriedad?'},           /* en el papel, recuadro para escribir */
+      {p:'Ejemplo curioso: <i>Catcerto</i>.'},
+      {p:'Vamos a incluir aquí también la <b>Música Estocástica</b> (la mencionaremos al final de esta unidad).', i:true},
+      {p:'En el momento de la <b>interpretación</b>, es el intérprete el que tiene que seguir indicaciones de la obra para ir construyéndola. Por ejemplo: <i>Imaginary Landscape N.4 (Radio)</i>.'},
+      {h:'Composición libre'},
+      {p:'Otra forma de componer de forma atonal es simplemente que el compositor tome decisiones particulares en obras particulares. Aquí no hay mucho que explicar, simplemente escapa de lo tonal y lo hace sin seguir ni elementos aleatorios ni tampoco reglas claras como veremos en el siguiente tipo.'},
+      {p:'Un ejemplo turbio: <i>Sequenza III, de Luciano Berio</i>.'}
+    ]
+  },
+
+  /* ---- test 3.3 · U3, p. 14 «Música estocástica» (PDF 17 @65–86 %) ---- */
+  'gp-estocastica': {
+    titulo:'Música estocástica', corto:'Música estocástica', fuente:'Apuntes de teoría 2GP · Unidad 3 · p. 14',
+    bloques:[
+      {p:'Está basada en procesos matemáticos de probabilidad y el análisis. Se parte de datos y se les otorga una correspondencia con parámetros musicales. Un ejemplo tonto: tomas una piedra del suelo y la analizas científicamente (composición, peso, temperatura, densidad…) A cada uno de esos datos le corresponderán elementos musicales como altura, intensidad, etc. Tiene sentido incluirla en música <u>atonal aleatoria de creación</u>, pues la naturaleza de esa piedra definirá buena parte de los resultados compositivos.'},
+      {p:'Ya os dije que este año íbamos a ver cosas bien frikis.'},
+      {p:'<i>Metástasis. Iannis Xenakis.</i>'}
+    ]
+  },
+
+  /* ---- test 4.1 · U4, p. 15 «Magnetófono» (PDF 18) ---- */
+  'gp-magnetofono': {
+    titulo:'Magnetófono', corto:'Magnetófono', fuente:'Apuntes de teoría 2GP · Unidad 4 · p. 15',
+    bloques:[
+      {p:'Es un nuevo sistema de grabación totalmente diferente al que vimos con el fonógrafo y sus evoluciones (discos de vinilo, etc.). Nace en Alemania en los años 30 y se comercializa en los 50. Graba y reproduce sonido mediante la magnetización de una cinta.'},
+      {p:'¿Cómo es esto? ¿te das cuenta de las cintas de cassette? La propia cinta es aparentemente un simple plástico, pero tiene <u>unas pequeñas partículas metálicas</u> impregnadas (que le dan ese brillo característico) <u>con carga magnética.</u> Los magnetófonos fueron los primeros en usar este sistema:'},
+      {pasos:[
+        {n:'1', t:'La cinta magnética pasa por un cabezal (electroimán con una bobina):'},
+        {n:'2', t:'El imán capta las variaciones en el campo magnético de la cinta e induce la corriente eléctrica en la bobina. Es una réplica analógica de la onda sonora original.'},
+        {n:'3', t:'Finalmente, se envía al ampli+altavoz, que convierte la señal eléctrica en vibraciones acústicas (el sonido que oímos).'}
+      ]},
+      {p:'Ahora que tenemos el contexto y una idea de cómo funciona, vamos a ver un <b>video,</b> toma nota de las novedades/mejoras que aportó el magnetófono con respecto al fonógrafo.'},
+      /* en el papel, la tabla está VACÍA: es para apuntar lo del vídeo */
+      {tabla:{ cab:['Fonógrafo','Magnetófono'], alin:['left','left'], filas:[['&nbsp;','&nbsp;'],['&nbsp;','&nbsp;'],['&nbsp;','&nbsp;']] }}
+    ]
+  },
+
+  /* ---- test 4.2 · U4, p. 16 «Música concreta» (PDF 19 @0–36 %) ---- */
+  'gp-concreta': {
+    titulo:'Música concreta', corto:'Música concreta', fuente:'Apuntes de teoría 2GP · Unidad 4 · p. 16',
+    bloques:[
+      {p:'Cuando tenemos un juguete nuevo… nos apetece jugar con él.'},
+      {p:'Cuando salió Siri le pedíamos que nos contase chistes.'},
+      {p:'Cuando ChatGPT sacó el modo imágenes todos publicamos en redes la versión Ghibli de nuestras fotos…'},
+      {p:'…y cuando se popularizó el magnetófono, hicimos la música concreta.'},
+      {p:'Consiste en realizar grabaciones y manipular esos audios: cortar, pegar la cinta (literalmente cortar y literalmente pegar… lo veremos ahora en un <b><i>vídeo</i></b>) rebobinar, acelerar y decelerar… y más cosas curiosas. Esos sonidos manipulados y combinados constituyen lo que conocemos como música concreta.'}
+    ]
+  },
+
+  /* ============ APARTADOS DEL LIBRO EN DIGITAL · LOTE 2 (8-oct-2026) ============ */
+  /* Igual que el lote 1. Las figuras son las del libro (partituras de Iago sacadas del PDF, en grises, 1400 px de ancho
+     como mucho), en la carpeta apuntes-img/. Las tres láminas de Nuevas grafías NO se ponen: son escaneos de otros libros
+     (derechos); siguen en la pestaña «Unidad completa en PDF». Erratas corregidas (Iago, 8-oct): «porque», «¿lo ves?»,
+     «también llamadas», «tiene ese compás». */
+
+  /* ---- test 4.3 · U4, p. 16 desde «Nuevas grafías» (PDF 19 @41 %) y p. 17 hasta las láminas (PDF 20 @0–25 %) ---- */
+  'gp-grafias': {
+    titulo:'Nuevas grafías', corto:'Nuevas grafías', fuente:'Apuntes de teoría 2GP · Unidad 4 · p. 16–17',
+    bloques:[
+      {p:'Cambiando totalmente de tema. Mira estos tres compases:'},
+      {img:{src:'apuntes-img/gp-grafias-1.png', alt:'Tres compases con el mismo ritmo: a), b) y c)', w:760}},
+      {p:'Los tres tienen el mismo ritmo, ¿estamos de acuerdo?'},
+      {p:'Hazme un favor, indica en qué compás está escrito cada uno.'},
+      {p:'Estoy seguro de que para el a) y el b) no tienes dudas. Eso es porque la propia figuración te da la pista de cómo se agrupan los pulsos, ¿lo ves?'},
+      {p:'Esto es en lo que ha consistido la <i>Notación Tradicional</i>, en agrupar las figuras por pulsos. Esa es su prioridad. Así el intérprete podrá tener claro visualmente en qué lugar se encuentra. Es tremendamente efectivo para ese fin.'},
+      {p:'Fíjate cómo los pulsos se ven claramente en los dos primeros casos:'},
+      {img:{src:'apuntes-img/gp-grafias-2.png', alt:'Los casos a) en 3/4 y b) en 6/8, con una raya en cada pulso', w:760}},
+      {p:'El caso c) representa a las <i>Nuevas Grafías,</i> también llamadas <i>Escritura Moderna</i>. No es relevante el compás que esté indicado. Lo que busca es <b>reducir la escritura a la mínima expresión gráfica</b>. <u>Notación minimalista</u>.'},
+      {p:'Ha sido un ejemplo muy básico, voy a mostrarte lo que algunos libros nos enseñan:'},
+      {nota:'Esas láminas (Ligaduras, Puntillos y Barrado) son de otros libros: están en «Unidad completa en PDF».'}
+    ]
+  },
+
+  /* ---- test 5.1 · U5, p. 19–22 «El blues» (PDF 22–25) ---- */
+  'gp-blues': {
+    titulo:'El blues', corto:'El blues', fuente:'Apuntes de teoría 2GP · Unidad 5 · p. 19–22',
+    bloques:[
+      {p:'Cambiamos totalmente el rumbo. Si en el primer trimestre exploramos rincones de la música “académica” ahora toca enfrentar el siglo XX pero desde el ángulo de la música popular, moderna. Y todo parte del Blues.'},
+      {p:'Imagina esto: personas expulsadas de África, vendidas como esclavos a familias americanas, trabajando en campos de algodón, cantando para sobrellevar el sufrimiento. De esos cantos de trabajo (<b><i>temática</i></b>), herencia espiritual/religiosa (<b><i>estilo responsorial*</i></b>) y ritmos africanos (<b><i>swing*</i></b>)… nace el blues.'},
+      {p:'El Blues es también un canto de resistencia. Y poco a poco va evolucionando con <u>influencia de distintas culturas</u>: las características <b><i>africanas</i></b> ya mencionadas se mezclan con el espectáculo <b><i>estadounidense</i></b> de bares, vaudeville, tabernas, show… El blues se sube al escenario y empieza a tener forma de canción: verso, estribillo, respuestas musicales. Y ojo, que también hay influencia <b><i>europea</i></b>: escalas*, armonías, estructura*… ¡no salió de la nada! Es una mezcla brutal entre la expresividad africana, el show yankee y la técnica europea.'},
+      {p:'*<i>¿Swing?</i>'},
+      /* la figura del libro, redibujada: dos corcheas = negra y corchea en tresillo */
+      {penta:{ tit:'con swing', maxW:300, c:[
+        {n:[q('f/4',{d:'8'}), q('f/4',{d:'8'})], bm:[[0,1]], w:2},
+        {n:[q('f/4'), q('f/4',{d:'8'})], tup:[{de:0, a:1, num:3, ocupa:2}], fin:'|.', w:2.4}
+      ]}},
+      {p:'*<i>¿Estilo responsorial?</i> Uno canta algo, los demás responden.'},
+      {p:'*<i>¿Qué escala?</i> <u>El modo mixolidio</u>, no hay duda. Con el tiempo integraron variantes y otras sonoridades, pero las raíces son claras.'},
+      {p:'*<i>¿Qué estructura?</i> Tres frases, 12 compases. Con la siguiente estructura armónica.'},
+      {tabla:{ clase:'apx-doce', alin:['center','center','center','center'], filas:[
+        ['<b>I<small>7</small></b>','<b>I<small>7</small></b>','<b>I<small>7</small></b>','<b>I<small>7</small></b>'],
+        ['<b>IV<small>7</small></b>','<b>IV<small>7</small></b>','<b>I<small>7</small></b>','<b>I<small>7</small></b>'],
+        ['<b>V<small>7</small></b>','<b>IV<small>7</small></b>','<b>I<small>7</small></b>','<b>V<small>7</small></b>']
+      ]}},
+      {p:'Contrastando con la música clásica (donde la tendencia apuntaba a la sobreindicación por parte del compositor y el intérprete como un reproductor), <u>el blues retoma de los antiguos el valor de la <b><i>improvisación</i></b>.</u>'},
+      {p:'De ahí salen leyendas como Bessie Smith, Robert Johnson o Muddy Waters… y más adelante, el rock, pop, el soul y hasta el hip hop tienen al blues como abuelo.'},
+      {p:'<b>PROYECTO.</b> <i>Improvisa con tu instrumento sobre una base de Blues en Sol. A continuación proponemos un tema sencillo. En la última clase de la unidad cada uno de vosotros será solista y los demás acompañaremos. Dará 3 vueltas a la estructura. TEMA-SOLO-TEMA.</i>'},
+      {img:{src:'apuntes-img/gp-blues-tema-sol.png', alt:'Tema de blues en Sol (G7, C7, D7) y las escalas de Sol, Do y Re mixolidio', w:820}},
+      {p:'*<i>Versión transportada para instrumentos en Sib:</i>'},
+      {img:{src:'apuntes-img/gp-blues-tema-sib.png', alt:'El tema, transportado para instrumentos en Si bemol', w:820}},
+      {p:'<i>*Versión transportada para instrumentos en Mib:</i>'},
+      {img:{src:'apuntes-img/gp-blues-tema-mib.png', alt:'El tema, transportado para instrumentos en Mi bemol', w:820}}
+    ]
+  },
+
+  /* ---- test 5.2 · complementario de ritmo, p. 24–25 «GVE en varios pulsos, el método» (PDF 27–28) ---- */
+  'gp-gve': {
+    titulo:'GVE en varios pulsos, el método', corto:'GVE en varios pulsos', fuente:'Apuntes de teoría 2GP · Complementario a ritmo · p. 24–25',
+    bloques:[
+      {p:'El reto central de ritmo en este segundo trimestre son los <u>grupos de valoración especial en varios pulsos</u>. Debemos conocer la estrategia para resolverlos de forma clara y precisa. Cuando lo domines ya podrás ser flexible con tu instrumento si la interpretación lo requiere.'},
+      {p:'Explicaré los pasos y después los iremos aplicando a varios ejemplos que nos encontraremos en el libro.'},
+      {pasos:[
+        {n:'1', t:'Establece un compás <i>Modelo</i>. Ej: <b>Cinquillo en 3 Pulsos.</b>', dentro:{img:{src:'apuntes-img/gp-gve-1.png', alt:'Modelo: un cinquillo (notas desde Do) en un compás de 3 pulsos', w:760}}},
+        {n:'2', t:'Haz un <i>Borrador</i> en el que haya tantos grupos de esa valoración especial (cinquillo) como pulsos tiene ese compás (3).', dentro:{img:{src:'apuntes-img/gp-gve-2.png', alt:'Borrador: tres cinquillos', w:760}}},
+        {n:'3', t:'Añade las cabezas y cambia el nombre de la nota cada tantas notas como pulsos (3).', dentro:{img:{src:'apuntes-img/gp-gve-3.png', alt:'Borrador: cambio de nombre de la nota cada tres notas', w:760}}},
+        {n:'4', t:'Traza líneas cada pulso.', dentro:{img:{src:'apuntes-img/gp-gve-4.png', alt:'Borrador: una raya en la primera nota de cada cinquillo', w:760}}},
+        {n:'5', t:'Vuelve a tu compás <i>Modelo</i> y coloca tus líneas en proporción a los nombres de las notas.', dentro:{img:{src:'apuntes-img/gp-gve-5.png', alt:'Modelo con las rayas: justo en el Do, antes del Mi y después del Fa', w:760}}}
+      ]},
+      {p:'PD: ahora que ya razonaste el Cinquillo en Tres Pulsos, cada vez que te encuentres uno no es necesario que lo vuelvas a hacer. Basta con que tengas la estructura y la apliques directamente.'},
+      {img:{src:'apuntes-img/gp-gve-6.png', alt:'Estructura del cinquillo en tres pulsos', w:760}},
+      {p:'Ahora nos toca ver ejemplos en clase. No te saltes ningún paso y asegúrate de tener al final de cada ejemplo su estructura para poder <i>copypastearla</i> después.'}
     ]
   },
 
@@ -812,6 +992,16 @@ Object.assign(window.APX_TEMAS, {
    · Volver a lo de antes: borrar la línea de APX_LIBRO (ese apartado) o este bloque entero (todos). */
 window.APX_LIBRO = window.APX_LIBRO || {};
 window.APX_LIBRO['Fonógrafo'] = 'gp-fonografo';   /* test 1.1 · unidad 1 (el PDF enseña las págs. 7–9; el apartado es la p. 4 impresa) */
+/* (8-oct-2026) LOTE 1: cinco apartados más (el nombre es el que pone el visor del Libro para ese test) */
+window.APX_LIBRO['Cualidades del sonido'] = 'gp-cualidades';   /* test 2.1 · unidad 2 (el 2.2 va a «Serie armónica» por su mapa, no por aquí) */
+window.APX_LIBRO['Atonalidad'] = 'gp-atonalidad';              /* test 3.1 · unidad 3 */
+window.APX_LIBRO['Música estocástica'] = 'gp-estocastica';     /* test 3.3 · unidad 3 */
+window.APX_LIBRO['Magnetófono'] = 'gp-magnetofono';            /* test 4.1 · unidad 4 */
+window.APX_LIBRO['Música concreta'] = 'gp-concreta';           /* test 4.2 · unidad 4 */
+/* (8-oct-2026) LOTE 2: los tres que quedaban */
+window.APX_LIBRO['Nuevas grafías'] = 'gp-grafias';             /* test 4.3 · unidad 4 */
+window.APX_LIBRO['El blues'] = 'gp-blues';                     /* test 5.1 · unidad 5 */
+window.APX_LIBRO['Grupos de valoración especial'] = 'gp-gve';  /* test 5.2 · unidad 5 (complementario de ritmo) */
 (function(){
   'use strict';
   if(window.__apxLibro || !window.MutationObserver || !document.body) return;
