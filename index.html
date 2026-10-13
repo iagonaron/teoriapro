@@ -3690,13 +3690,18 @@ function buildACOIdControls(ans, e, i){
   // rueda de nombre: Do arriba ... Si, guion abajo. Empieza mostrando Do.
   const NOTAS_INV=NOTAS_ES.slice().reverse();   // Si, La, Sol, Fa, Mi, Re, Do
   const nItems=NOTAS_INV.concat(['—']);         // guion abajo; ENCIMA Do, Re, Mi...
-  const startN=nItems.length-1; // guion seleccionado por defecto (al final)
+  /* (13-oct-2026, Iago) BUG «hacíamos bien los acordes y al corregir decía "fundamental incorrecta"»: al colocar o
+     borrar una nota en los compases de CONSTRUIR se vuelve a pintar toda la fila de respuestas (renderACO), y aquí las
+     ruedas de IDENTIFICAR se montaban otra vez desde el guion con selNota=null; el tipo sí quedaba guardado. Por eso
+     salía «fundamental incorrecta · tipo correcto». Ahora se montan con lo ya elegido (nota, ♯/♭ y tipo).
+     Antes: startN=nItems.length-1, e.selNota=null tras crear la rueda y startT siempre en el guion. */
+  const startN=e.selNota? NOTAS_INV.indexOf(e.selNota) : nItems.length-1; // guion si aún no hay nota
   const wNapi=makeWheel(wN, nItems, startN, (idx)=>{
     const v=nItems[idx]; e.selNota = (v==='—')?null:v; e.selAlt='';
     repaintACONota(e,wNapi,accRow);
   });
   e._wN=wNapi;
-  e.selNota=null; // por defecto sin nota (guion)
+  repaintACONota(e,wNapi,accRow);   /* (13-oct-2026) la nota elegida, con su ♯/♭ y el botón encendido */
   accRow.querySelectorAll('.aco-acc').forEach(b=>b.addEventListener('click',()=>{
     if(!e.selNota) return;
     e.selAlt=(e.selAlt===b.dataset.a)?'':b.dataset.a;
@@ -3704,7 +3709,7 @@ function buildACOIdControls(ans, e, i){
   }));
   // rueda de tipo (guion en medio); orden ya visual: arriba Aum/PM, abajo Pm/Dis
   const tItems=acoTipoItems();
-  const startT=tItems.indexOf('—');
+  const startT=(e.selTipo && tItems.indexOf(e.selTipo)>=0)? tItems.indexOf(e.selTipo) : tItems.indexOf('—');   /* (13-oct-2026) el tipo elegido se conserva */
   const wTapi=makeWheel(wT, tItems, startT, (idx)=>{
     const v=tItems[idx]; e.selTipo = (v==='—')?null:v;
   });

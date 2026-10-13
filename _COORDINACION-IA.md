@@ -60,6 +60,17 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 13-oct 17:10 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
+  fichero; comprobado antes que el último commit seguía siendo b8a0b08). Iago (13-oct) lo vio en GE (teoriaathome);
+  aquí, «Acordes» básico de práctica tenía el mismo fallo. Causa: al colocar o borrar una nota en los compases de
+  CONSTRUIR, renderACO repinta la fila de respuestas y buildACOIdControls volvía a montar las ruedas de IDENTIFICAR
+  desde el guion con e.selNota=null (e.selTipo sí se conservaba), así que salía «fundamental incorrecta · tipo
+  correcto» aunque estuviera bien. Ahora las monta con lo ya elegido: la nota (startN), su ♯/♭ (repaintACONota) y el
+  tipo (startT). Solo esa función; cada cambio lleva su comentario «(13-oct-2026, Iago)» con cómo era antes. La ficha
+  de GP (ACORDES_MOTOR: en identificar solo se elige el tipo, con botones) no tiene rueda de fundamental y no cambia.
+  Banco con el fichero real: 9 ✓ en ordenador, móvil y táctil (antes 3 ✗). Para volver: git revert de este commit, o
+  subir el index.html de APPs/_PARA BORRAR/13-oct-2026-teoria-antes-de-acordes-fundamental/gp/. Espejo de Dropbox
+  igual que GitHub.
 - 8-oct 15:23 · Fichas y rediseño · HECHO · en este mismo commit (sin EN CURSO previo: dos cambios pequeños;
   comprobado antes que el último commit seguía siendo ae1bb98). Iago (8-oct, tarde): (1) index.html · «el test 2.2 lo
   que tiene que abrir son los apuntes de la unidad 2… que ahí abra PDF clásico»: test_2_2 sale de MAPA (ya no abre
