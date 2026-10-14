@@ -72,7 +72,10 @@
     return N.el('path', { d, fill: o.fill || 'none', stroke: o.stroke || 'currentColor', 'stroke-width': o.w || 4,
       'stroke-linecap': 'round', 'stroke-linejoin': 'round', pathLength: 1, 'stroke-dasharray': '1 1', 'stroke-dashoffset': 0 }, parent);
   }
-  const trazoK = (p, k) => p.setAttribute('stroke-dashoffset', (1 - clamp(k)).toFixed(4));
+  // (14-oct-2026, Iago: «un puntito rosa… hay una flecha que desemboca en ese punto, pero se ha pintado antes de tiempo») mientras el
+  // trazo está sin empezar (k = 0) va oculto: si no, el remate redondo del guion siguiente asoma como un punto al final del camino.
+  // Para quitarlo: dejar solo el setAttribute.
+  const trazoK = (p, k) => { p.setAttribute('stroke-dashoffset', (1 - clamp(k)).toFixed(4)); p.style.visibility = clamp(k) > 0 ? '' : 'hidden'; };
   function dibuja(s, paths, t0, dur) { s.on(t => { const k = ramp(t, t0, t0 + dur); paths.forEach((p, i) => trazoK(p, clamp(k * paths.length - i))); }); }
 
   // ---------------------------------------------------------------- música: nombres y pentagramas

@@ -60,6 +60,14 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 14-oct 17:17 · Escape room «Atonalidad» (Cowork) · HECHO (sin EN CURSO aparte: va en este mismo commit, junto a un solo fichero
+  de intros/; comprobado justo antes que main seguía en 1f11cda). VÍDEO DE DODECAFONISMO: fuera el puntito rosa del «REPASO
+  FINAL». Iago (14-oct): «en el medio hay como un puntito rosa, como un píxel… posteriormente hay una flecha que desemboca en ese
+  punto. Pero se ha pintado antes de tiempo». Era el remate redondo de la flecha del «0» (la que lleva el número de la última nota
+  de R0 al hueco de la etiqueta): con el trazo aún sin dibujar (pathLength 1, dasharray «1 1»), la punta redonda del guion
+  siguiente asomaba al final del camino desde que empieza la escena. Arreglo en intros/dodecafonismo/escenas.js, en `trazoK`:
+  el trazo va oculto mientras su progreso es 0 (sirve para todos los trazos de ese vídeo). Nada más cambia. Deshacer: volver a
+  subir intros/dodecafonismo/escenas.js del commit 1f11cda.
 - 14-oct 09:19 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
   fichero; el relevo comprueba que index.html y este registro son los del último commit). Iago (14-oct): «¿eso también vela
   por las fichas de teoría?» → «sí, las dos cosas». SENTRY en la teoría y en las fichas, como en el ritmo: bloque al principio
