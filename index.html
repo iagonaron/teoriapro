@@ -11830,6 +11830,8 @@ function pintaResultado(nota, pcts){
             '<div class="lmf-ej-tit">'+(k+1)+'. '+it.enun+(it.refuerzo?' <span class="lmf-ref">REFUERZO ★</span>':'')+'</div>'+
             (anulado?'<span class="lmf-nc">ANULADO · no cuenta'+(ALU.revAlumno?' para la nota':'')+'</span>':(sinPct?'':window.LmfCorr.chip(pct)))+
           '</div>'+
+          /* (14-oct-2026, Iago) marca de la reclamación aceptada en este ejercicio (payload.ajustes). Para quitarlo: borrar esta línea. */
+          ((ALU.__antes&&ALU.__antes[k])?(function(a){ var t=a.tipo==='bueno'?'dado por bueno':a.tipo==='apartados'?('+'+(a.apartados||1)+' apartado'+((a.apartados||1)>1?'s':'')):'nota puesta a mano'; return '<div class="lmf-recl" style="margin:-2px 0 10px;font-size:12px;font-weight:800;color:#8be3ae">✔ Reclamación aceptada: '+t+' (antes '+Math.round((a.pct||0)*100)+' %)</div>'; })(ALU.__antes[k]):'')+
           '<div class="fp-corr-host" data-k="'+k+'"></div>'+
           (ok?'':'<div class="lmf-con"><div class="lmf-con-t" data-key="'+String(it.key||'').replace(/[^\w.-]/g,'')+'"></div></div>')+
         '</div>';
@@ -12016,6 +12018,14 @@ async function fpModoRevision(rev, sec, alu, papel){
       if(pj!=null && isFinite(+pj)){ var v2=+pj; return v2>1.0001? v2/100 : v2; }
       try{ return fpMotorDe(it.item).puntua(it.item); }catch(e){ return 0; }
     });
+    /* (14-oct-2026, Iago) RECLAMACIONES POR EJERCICIO Y POR APARTADO: si aceptó una reclamación dando por bueno el ejercicio,
+       uno o más apartados o un % a mano, la entrega trae payload.ajustes {n: {pct 0-1, tipo, apartados}}: ese % manda sobre
+       el que sacó (nunca lo baja) y el ejercicio lleva su marca (ALU.__antes, en pintaResultado). Para quitarlo: borrar este bloque. */
+    ALU.__antes={};
+    try{ var _aj=(pl.ajustes&&typeof pl.ajustes==='object'&&!pl.papel)?pl.ajustes:null;
+      if(_aj) pcts=pcts.map(function(p,k){ var it=ALU.items[k], a=_aj[String(it&&it.n!=null?it.n:k+1)];
+        if(a && a.pct!=null && isFinite(+a.pct) && p!=null){ var nv=Math.max(+a.pct, p); if(nv>p+1e-9){ ALU.__antes[k]={ pct:p, tipo:a.tipo, apartados:a.apartados }; return nv; } }
+        return p; }); }catch(e){}
     var nota=(d.nota!=null && isFinite(+d.nota)) ? Math.round((+d.nota)*10)/10
              : Math.round((pcts.reduce(function(a,b){return a+b;},0)*10/Math.max(1,pcts.length))*10)/10;
     wrap.innerHTML=aluHtmlBase();
@@ -12048,7 +12058,7 @@ async function fpModoRevision(rev, sec, alu, papel){
       var rcA=(pl.reclamacion&&typeof pl.reclamacion==='object')?pl.reclamacion:null;
       if(rcA && rcA.estado){
         var okA=(rcA.estado==='aceptada'), aA=fmt2(rcA.nota_antes), dA=fmt2(rcA.nota_despues);
-        hA+='<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">'+(okA?'✔':'✖')+' Reclamación <b style="color:'+(okA?'#8be3ae':'#ffb4b4')+'">'+(okA?'aceptada':'denegada')+'</b>'+(rcA.n!=null?(' (ej. '+escA(rcA.n)+')'):'')+((aA!=null&&dA!=null)?(' · nota '+aA+' → '+dA):'')+(rcA.mensaje?('<div style="margin-top:3px;font-style:italic;opacity:.85">«'+escA(rcA.mensaje)+'»</div>'):'')+'</div>';
+        hA+='<div style="margin-top:6px;font-size:12.5px;color:var(--muted)">'+(okA?'✔':'✖')+' Reclamación <b style="color:'+(okA?'#8be3ae':'#ffb4b4')+'">'+(okA?'aceptada':'denegada')+'</b>'+((Array.isArray(rcA.ns)&&rcA.ns.length)?(' (ej. '+escA(rcA.ns.join(', '))+')'):(rcA.n!=null?(' (ej. '+escA(rcA.n)+')'):''))+((aA!=null&&dA!=null)?(' · nota '+aA+' → '+dA):'')+(rcA.mensaje?('<div style="margin-top:3px;font-style:italic;opacity:.85">«'+escA(rcA.mensaje)+'»</div>'):'')+'</div>';
       }
       var banA=document.createElement('div'); banA.id='fpRevAlu';
       banA.style.cssText='margin:0 0 16px;background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.55);border-radius:12px;padding:12px 16px;line-height:1.5;text-align:center';
