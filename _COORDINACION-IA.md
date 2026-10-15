@@ -60,6 +60,15 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 15-oct 18:58 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
+  fichero; el relevo comprueba que index.html y este registro son los del último commit). COMPASES EXTRAÑOS, «RODEA EL
+  COMPÁS CORRECTO»: las figuras ya no se salen de su compás. Iago (15-oct): «algunas figuraciones están a caballo entre dos
+  compases… en la ficha 5, un corchete en el primer compás asalta el segundo. Hay que pintarlo bien en el interior.» Era
+  `drawRhythmCtx` (núcleo CMP_PURE, lo usan el ejercicio en pantalla y el papel): repartía el ancho sin contar la clave de
+  sol, que se come el principio del primer compás, y ajustaba las notas a «ancho − 22»; las del primer compás acababan
+  encima de la barra. Ahora el ancho de la clave se suma aparte al primer compás y las notas de cada compás se reparten
+  solo en su hueco real (getNoteStartX → getNoteEndX, con 18 px de margen). Solo cambia esa función. Deshacer: volver a
+  subir index.html del commit anterior a este.
 - 14-oct 17:17 · Escape room «Atonalidad» (Cowork) · HECHO (sin EN CURSO aparte: va en este mismo commit, junto a un solo fichero
   de intros/; comprobado justo antes que main seguía en 1f11cda). VÍDEO DE DODECAFONISMO: fuera el puntito rosa del «REPASO
   FINAL». Iago (14-oct): «en el medio hay como un puntito rosa, como un píxel… posteriormente hay una flecha que desemboca en ese

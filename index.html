@@ -12845,9 +12845,17 @@ function fpPintaTonNombre(host, spec, resuelto, anchoFijo){
     var sa=(opts.spaceAbove!=null?opts.spaceAbove:1.5);   // líneas de margen SOBRE el pentagrama (def. VF=4, demasiado)
     var weights=bars.map(function(b){ return Math.max(1.4, b.length); });
     var wsum=weights.reduce(function(a,c){return a+c;},0), x=x0;
+    /* (15-oct-2026, Iago: «en la ficha 5, un corchete del primer compás asalta el segundo… hay que pintarlo bien en el
+       interior») La clave ocupa el principio del primer compás: su ancho se le suma aparte (no le quita sitio a sus notas)
+       y, más abajo, las notas de cada compás se reparten solo en su hueco real, de la clave (o el inicio) a la barra. */
+    var extra=0;
+    if(opts.clef){ try{ var s0=new VF.Stave(0,0,300), s1=new VF.Stave(0,0,300); s1.addClef('treble', opts.clefSize||'default');
+      try{ s0.setBegBarType(VF.Barline.type.NONE); s1.setBegBarType(VF.Barline.type.NONE); }catch(e2){}
+      extra=Math.max(0, s1.getNoteStartX()-s0.getNoteStartX()); }catch(e){ extra=0; } }
+    var area=Math.max(60, totalW-extra);
     bars.forEach(function(items, bi){
       var last=(bi===bars.length-1);
-      var wBar= last ? (x0+totalW - x) : Math.max(60, Math.round(totalW*weights[bi]/wsum));
+      var wBar= last ? (x0+totalW - x) : Math.max(60, Math.round(area*weights[bi]/wsum)) + (bi===0 ? extra : 0);
       var stave=new VF.Stave(x, y0, wBar, {space_above_staff_ln:sa, space_below_staff_ln:0});
       if(bi===0 && opts.clef){ try{ stave.addClef('treble', opts.clefSize||'default'); }catch(e){} }
       try{ stave.setBegBarType(VF.Barline.type.NONE); }catch(e){}
@@ -12859,7 +12867,8 @@ function fpPintaTonNombre(host, spec, resuelto, anchoFijo){
         var beams=[], run=[]; function flush(){ if(run.length>=2) beams.push(new VF.Beam(run.slice())); run=[]; }
         items.forEach(function(it,i){ var bm=!it.rest && (it.dur==='8'||it.dur==='16'||it.dur==='32'||it.dur==='64'); if(bm) run.push(notes[i]); else flush(); });
         flush();
-        try{ new VF.Formatter().joinVoices([voice]).format([voice], Math.max(50, wBar-22)); }catch(e){}
+        var hueco=Math.max(40, stave.getNoteEndX()-stave.getNoteStartX()-18);   /* (15-oct-2026) solo su hueco: nada se sale del compás */
+        try{ new VF.Formatter().joinVoices([voice]).format([voice], hueco); }catch(e){}
         voice.draw(ctx, stave);
         beams.forEach(function(b){ try{ b.setContext(ctx).draw(); }catch(e){} });
       }
