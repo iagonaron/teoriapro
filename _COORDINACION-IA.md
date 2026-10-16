@@ -60,6 +60,10 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 16-oct 18:28 · Intros didácticas (desde la conversación del Magnetófono) · EN CURSO · parto de e9c69ac · solo
+  intros/inversion-acordes/escenas.js. Iago (16-oct): en el vídeo «Inversión de acordes», el acorde ordenado DENTRO DEL
+  PARÉNTESIS con cabezas pequeñas, rellenas y en cursiva («como de borrador», como en las fichas); el acorde oficial sigue
+  en redondas; sin tocar el audio ni el esquema del vídeo. El mismo cambio, en teoriaathome.
 - 15-oct 18:58 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
   fichero; el relevo comprueba que index.html y este registro son los del último commit). COMPASES EXTRAÑOS, «RODEA EL
   COMPÁS CORRECTO»: las figuras ya no se salen de su compás. Iago (15-oct): «algunas figuraciones están a caballo entre dos
