@@ -60,10 +60,17 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 16-oct 18:28 · Intros didácticas (desde la conversación del Magnetófono) · EN CURSO · parto de e9c69ac · solo
-  intros/inversion-acordes/escenas.js. Iago (16-oct): en el vídeo «Inversión de acordes», el acorde ordenado DENTRO DEL
-  PARÉNTESIS con cabezas pequeñas, rellenas y en cursiva («como de borrador», como en las fichas); el acorde oficial sigue
-  en redondas; sin tocar el audio ni el esquema del vídeo. El mismo cambio, en teoriaathome.
+- 16-oct 18:28 · Intros didácticas (desde la conversación del Magnetófono) · HECHO · commit 66e8e72 (EN CURSO en e4bb5d3,
+  parto de e9c69ac) · solo intros/inversion-acordes/escenas.js. Iago (16-oct): en el vídeo «Inversión de acordes», «las
+  cabezas de las notas que hay dentro del gran paréntesis sean con la estética esta como de borrador. Las del acorde oficial,
+  que sigan siendo redondas»; sin tocar el audio ni el esquema. Función nueva acordeBorrador(): cabeza negra de Bravura al 73 %
+  (la proporción de las fichas: 4,4 frente a 6), alteraciones y líneas adicionales a la misma escala, centrada donde iba la
+  redonda (mismo cx y w), así que llaves, pastillas 3M/5J, el arco y los textos no se mueven. Se usa en los tres acordes del
+  paréntesis (escenaOrdena, escenaEjercicio1 y escenaEjercicio2), marcados «(16-oct-2026, Iago)». Banco: 13 momentos
+  renderizados antes/después, solo cambian esos tres acordes (0 píxeles en el resto) y sin errores. El mismo cambio, en
+  teoriaathome (commit 52fd572). Para volver: git revert de 66e8e72, o subir el escenas.js de APPs/_PARA BORRAR/16-oct-2026-
+  inversion-acordes-antes-de-cabezas-de-borrador/gp/, o cambiar «acordeBorrador(» por «acorde(» en esas tres escenas.
+  Espejo de Dropbox igual que GitHub.
 - 15-oct 18:58 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo
   fichero; el relevo comprueba que index.html y este registro son los del último commit). COMPASES EXTRAÑOS, «RODEA EL
   COMPÁS CORRECTO»: las figuras ya no se salen de su compás. Iago (15-oct): «algunas figuraciones están a caballo entre dos
