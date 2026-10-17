@@ -11539,7 +11539,7 @@ function fpSimularAlumno(){
   ov.scrollTop=0;
 }
 function progGuardar(){
-  if(!ALU || ALU.entregada || ALU.simulado) return;   /* la simulación no guarda progreso */
+  if(!ALU || ALU.entregada || ALU.simulado || ALU.repaso) return;   /* la simulación (y el repaso, 17-oct-2026) no guardan progreso */
   /* (27-sep-2026, Iago) FIX fichas: punto de control completo (respuestaProgDe, con _estado) y
      hechos = ejercicios ya pasados (el índice más alto alcanzado, que se actualiza al navegar) */
   ALU.maxI=Math.max(ALU.maxI|0, ALU.i|0);
@@ -11678,6 +11678,16 @@ function fpRevelarNota(nota){
     span.textContent=(nota*e2).toFixed(1).replace('.',',');
     if(p<1) requestAnimationFrame(step); else setFin(); })();
 }
+/* (17-oct-2026, Iago) REPASO: «antes de empezar, que le diga que esa ficha no va a ser evaluada, porque ya es una ficha
+   pasada, simplemente son ejercicios, y la nota que le ponga al final no va a llegarme a mí» */
+function fpAvisoRepaso(){
+  var n=(ALU&&ALU.numero!=null)?(' '+ALU.numero):'';
+  return '<div class="fp-intro-sub" style="border:1px solid rgba(212,175,55,.55);background:rgba(212,175,55,.10);border-radius:12px;padding:14px 16px;color:#f3e4b0;line-height:1.6">'+
+    '<b style="color:#e9c96a">Esta ficha no se evalúa.</b> Es una ficha pasada: son solo ejercicios para repasar. '+
+    'La nota que te salga al corregirla <b>no le llega a Iago</b> y tu nota de la Ficha'+n+' no cambia.'+
+    '<div style="margin-top:8px;font-size:13px;color:#c9b978">Puedes hacerla una vez. Si sales a mitad no se guarda, pero podrás empezarla otra vez desde la campana.</div>'+
+  '</div>';
+}
 /* --------- INTRO de la ficha (alumno y simulación) --------- */
 function fpIntroFicha(){
   var v=el('view-fichapro');
@@ -11687,11 +11697,11 @@ function fpIntroFicha(){
   var chips=uniq.slice(0,12).map(function(l,i){ return '<span class="fp-intro-chip" style="animation-delay:'+(0.18+i*0.07).toFixed(2)+'s">'+l+'</span>'; }).join('');
   wrap.innerHTML=
     '<div class="fp-intro-card fp-sim-enter">'+
-      '<div class="fp-intro-eyebrow">Ficha '+(ALU.numero!=null?('nº '+ALU.numero):'')+' · Grado Profesional</div>'+
-      '<div class="fp-intro-title">'+ALU.items.length+' ejercicio'+(ALU.items.length===1?'':'s')+' te esperan</div>'+
-      '<div class="fp-intro-sub">Tu progreso se guarda en cada paso y puedes volver atrás cuando quieras. Puedes dejar la ficha a medias y retomarla en otro momento. La corrección llega al final, con tu nota.</div>'+
+      '<div class="fp-intro-eyebrow">Ficha '+(ALU.numero!=null?('nº '+ALU.numero):'')+' · '+(ALU.repaso?'Repaso':'Grado Profesional')+'</div>'+
+      '<div class="fp-intro-title">'+(ALU.repaso?'Repaso · ':'')+ALU.items.length+' ejercicio'+(ALU.items.length===1?'':'s')+(ALU.repaso?'':' te esperan')+'</div>'+
+      (ALU.repaso?fpAvisoRepaso():'<div class="fp-intro-sub">Tu progreso se guarda en cada paso y puedes volver atrás cuando quieras. Puedes dejar la ficha a medias y retomarla en otro momento. La corrección llega al final, con tu nota.</div>')+
       '<div class="fp-intro-chips">'+chips+'</div>'+
-      '<button id="fpIntroGo" class="fp-intro-go" type="button">▶ Empezar</button>'+
+      '<button id="fpIntroGo" class="fp-intro-go" type="button">'+(ALU.repaso?'▶ Empezar el repaso':'▶ Empezar')+'</button>'+
     '</div>';
   var b=el('fpIntroGo');
   if(b) b.onclick=function(){ try{ SFX.next(); }catch(e){} ALU.__introDone=true; wrap.innerHTML=''; pintaAlu(); fpCartelEj(ALU.i+1); };
@@ -11703,7 +11713,7 @@ function aluHtmlBase(){
     'style="cursor:default;text-decoration:none;color:inherit">'+
     '<h1><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span> '+
     '</h1>'+
-    '<span class="brand-inline">Ficha '+(ALU.numero!=null?ALU.numero:'')+' · Grado Profesional</span></a></header>'+
+    '<span class="brand-inline">Ficha '+(ALU.numero!=null?ALU.numero:'')+' · '+(ALU.repaso?'Repaso · no cuenta':'Grado Profesional')+'</span></a></header>'+
     '<div class="fp-alu-prog"><div class="fp-alu-progfill" id="aluProgFill"></div></div>'+
     '<div id="aluCuerpo"></div>';
 }
@@ -11735,7 +11745,7 @@ function pintaAlu(){
       (i>0?'<button class="fp-mini" id="aluPrev" type="button">‹ Anterior</button>':'<span></span>')+
       (i<N-1
         ? '<button class="fp-enviar" id="aluNext" type="button" style="padding:12px 22px;font-size:15px">Siguiente ›</button>'
-        : '<button class="fp-enviar" id="aluFin" type="button" style="padding:12px 22px;font-size:15px">📨 Enviar al profesor y ver puntuación</button>')+
+        : '<button class="fp-enviar" id="aluFin" type="button" style="padding:12px 22px;font-size:15px">'+(ALU.repaso?'✓ Corregir y ver mi nota':'📨 Enviar al profesor y ver puntuación')+'</button>')+
     '</div>'+
     '<div class="fp-status" id="fpStatus" style="text-align:center"></div>';
   try{ fpMotorDe(it.item).montarEn(el('aluHost'), it.item); }
@@ -11864,7 +11874,7 @@ function entregarFicha(){
     fpRevelarNota(nota);
     // (6-ago Iago) ficha «puntúa opcional»: el alumno elige si su nota cuenta
     // (por defecto, enviar). La entrega llega igual; solo cambia la nota.
-    if(ALU.opcional && !ALU.revision){ fpEleccionOpcional(nota, pcts); }
+    if(ALU.opcional && !ALU.revision && !ALU.repaso){ fpEleccionOpcional(nota, pcts); }
     else { fpEnviarNota(nota, pcts); }
   });
 }
@@ -11883,7 +11893,22 @@ function fpEleccionOpcional(nota, pcts){
     fpEnviarNota(nota, pcts, np);
   };
 }
+/* (17-oct-2026, Iago) REPASO: la nota se guarda aparte (suite_ficha_repasos) y NO llega a Iago ni al Diario */
+function fpEnviarRepaso(nota, pcts){
+  var pinta=function(msg,tipo){ var s2=el('aluEnvEstado'); if(s2){ s2.textContent=msg; s2.className='fp-status '+(tipo||''); } };
+  var fin=function(){ pinta('✓ Repaso terminado. Esta nota no cuenta: no le llega a Iago.','ok'); };
+  var sb=fpSb(); if(!sb){ fin(); return; }
+  pinta('Guardando tu repaso…','info');
+  var payload={ nota:nota, escala:10, origin:'teoria_pro_repaso', ficha_id:ALU.ficha, numero:(ALU.numero!=null?ALU.numero:undefined),
+    tiempo_seg:(window.SuiteTiempo&&window.SuiteTiempo.activo()?window.SuiteTiempo.total():undefined),
+    ejercicios:ALU.items.map(function(it,k){ return { n:it.n, key:it.key, label:it.label, pct:Math.round((pcts[k]||0)*100)/100 }; }),
+    respuestas:ALU.items.map(respuestaDe) };
+  sb.rpc('suite_ficha_repaso_entregar', { p_cuenta_id:ALU.cuenta, p_ficha_id:ALU.ficha, p_nota:nota, p_payload:payload })
+    .then(function(r){ if(r && r.error) throw r.error; fin(); })
+    .catch(function(e){ console.warn('[fichaspro] repaso', e); fin(); });
+}
 function fpEnviarNota(nota, pcts, noPuntua){
+  if(ALU && ALU.repaso){ fpEnviarRepaso(nota, pcts); return; }   /* (17-oct-2026) */
   if(ALU && ALU.simulado){
     var _s3=el('aluEnvEstado');
     if(_s3){ _s3.textContent='\u24d8 Simulaci\u00f3n: la nota NO se env\u00eda (solo pruebas del profesor).'; _s3.className='fp-status info'; }
@@ -11969,10 +11994,11 @@ function pintaResultado(nota, pcts){
   }).join('');
   c.innerHTML=
     '<div style="text-align:center;margin-top:4px">'+
-      '<div style="font-size:28px;font-weight:900;color:#fbf7ec">¡Ficha terminada! ✨</div>'+
+      '<div style="font-size:28px;font-weight:900;color:#fbf7ec">'+(ALU.repaso?'¡Repaso terminado! ✨':'¡Ficha terminada! ✨')+'</div>'+
+      (ALU.repaso?'<div style="margin-top:6px;color:#c9b978;font-size:13.5px;font-weight:700">Repaso · esta nota no cuenta</div>':'')+
       '<div id="fpNotaBadge" class="fp-nota-pop'+(nota>=7?' fp-nota-ring':'')+'" style="margin-top:12px;display:inline-block;background:linear-gradient(120deg,'+(aprob?'#e9c96a,#b8860b':'#ff9b9b,#c0392b')+');color:'+(aprob?'#1a1305':'#fff')+';font-weight:900;font-size:20px;padding:12px 28px;border-radius:99px;box-shadow:0 12px 30px rgba(212,175,55,.35)">Puntuación: <span id="fpNotaVal">0,0</span> / 10</div>'+
       /* (22-sep-2026) RECLAMACIONES: enlace discreto bajo la nota que lleva al buzón de abajo */
-      (ALU.simulado?'':'<div id="fpReclamaLinea" style="margin-top:10px;color:var(--muted);font-size:12.5px">¿Crees que hay algún ejercicio mal corregido? <button id="fpReclamar" type="button" style="background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.55);color:#e9c96a;border-radius:99px;padding:4px 12px;font-weight:800;font-size:12.5px;cursor:pointer;font-family:inherit">Reclámalo</button></div>')+
+      ((ALU.simulado||ALU.repaso)?'':'<div id="fpReclamaLinea" style="margin-top:10px;color:var(--muted);font-size:12.5px">¿Crees que hay algún ejercicio mal corregido? <button id="fpReclamar" type="button" style="background:rgba(212,175,55,.12);border:1px solid rgba(212,175,55,.55);color:#e9c96a;border-radius:99px;padding:4px 12px;font-weight:800;font-size:12.5px;cursor:pointer;font-family:inherit">Reclámalo</button></div>')+
       '<div style="margin-top:12px;color:var(--muted);font-size:13.5px">'+(ALU.papel?((ALU.revision && !ALU.revAlumno)?'En cada ejercicio, <b>la respuesta correcta</b>'+(pcts.some(function(x){ return x!=null; })?' y el porcentaje que le pusiste.':'.')
                      :'En cada ejercicio tienes <b>la respuesta correcta</b>'+(pcts.some(function(x){ return x!=null; })?' y el porcentaje que te puse.':'.'))
                   :(window.LmfCorr?'Resumen de tus respuestas.':'Resumen de tus respuestas. Los ejercicios con menos del 50% tienen un enlace para practicar.'))+'</div>'+
@@ -11984,7 +12010,7 @@ function pintaResultado(nota, pcts){
       '<div class="fp-status" id="aluEnvEstado" style="margin:14px auto 0;max-width:560px"></div>'+
     '</div>'+
     '<div style="margin-top:8px">'+filas+'</div>'+
-    (ALU.simulado?'':(
+    ((ALU.simulado||ALU.repaso)?'':(
     '<details id="aluFbBox" style="margin:26px auto 8px;max-width:680px;background:rgba(255,255,255,.04);border:1px solid rgba(212,175,55,.3);border-radius:14px;padding:12px 16px">'+
       '<summary style="cursor:pointer;font-weight:800;color:#e9c96a;font-size:14px;list-style-position:inside">💬 ¿Crees que algún ejercicio está mal corregido o tuviste algún problema con la ficha?</summary>'+
       '<div style="color:var(--muted);font-size:12.5px;margin-top:8px">Deja aquí tu comentario y me encargo de solucionarlo. Si hay un problema con el ejercicio, te lo marca mal y no ha sido culpa tuya, lo eliminaré y tu nota se recalculará sin él. ¡Gracias por la comprensión!</div>'+
@@ -12287,13 +12313,16 @@ function fpModalSalir(){
   var card=document.createElement('div');
   card.style.cssText='background:linear-gradient(160deg,#221908,#160f04);border:1px solid rgba(212,175,55,.5);border-radius:18px;max-width:470px;width:100%;padding:26px 26px 22px;box-shadow:0 26px 80px #00000070;color:#fbf7ec;font-family:inherit';
   card.innerHTML=
-    '<div style="font-size:19px;font-weight:900;color:#e9c96a">¿Salir de la ficha?</div>'+
+    ((ALU&&ALU.repaso)
+      ? '<div style="font-size:19px;font-weight:900;color:#e9c96a">¿Salir del repaso?</div>'+
+        '<div style="margin-top:10px;font-size:14px;line-height:1.6;color:#d8caa6">Si sales ahora, <b>el repaso no se guarda</b>, pero podrás empezarlo otra vez desde la campana del portal.</div>'
+      : '<div style="font-size:19px;font-weight:900;color:#e9c96a">¿Salir de la ficha?</div>'+
     '<div style="margin-top:10px;font-size:14px;line-height:1.6;color:#d8caa6">Tranquilo: <b>tu progreso queda guardado</b> y puedes retomar la ficha en otro momento desde la campana del portal, justo donde la dejaste.'+avanceTxt+'</div>'+
     '<div style="margin-top:12px;font-size:13.5px;line-height:1.6;color:#c9b978">Eso sí: <b>el profesor no recibirá tu ficha hasta que la completes y la envíes</b>.</div>'+
-    plazoHTML+
+    plazoHTML)+
     '<div style="display:flex;gap:10px;justify-content:flex-end;margin-top:22px;flex-wrap:wrap">'+
-      '<button id="fpSalirSi" type="button" style="border:1px solid rgba(212,175,55,.5);background:rgba(212,175,55,.08);color:#f3e4b0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer">Guardar y salir</button>'+
-      '<button id="fpSalirNo" type="button" style="border:0;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer">Seguir con la ficha</button>'+
+      '<button id="fpSalirSi" type="button" style="border:1px solid rgba(212,175,55,.5);background:rgba(212,175,55,.08);color:#f3e4b0;border-radius:9px;padding:10px 16px;font-weight:700;cursor:pointer">'+((ALU&&ALU.repaso)?'Salir':'Guardar y salir')+'</button>'+
+      '<button id="fpSalirNo" type="button" style="border:0;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border-radius:9px;padding:10px 18px;font-weight:800;cursor:pointer">'+((ALU&&ALU.repaso)?'Seguir con el repaso':'Seguir con la ficha')+'</button>'+
     '</div>';
   ov.appendChild(card); document.body.appendChild(ov);
   var cerrar=function(){ try{ document.body.removeChild(ov); }catch(e){} };
@@ -12333,7 +12362,9 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
       var pzPrev=window.__FP_PLAZO||{};
       if(pzFin||pzGra) window.__FP_PLAZO={ fin:(pzFin||pzPrev.fin||null), gracia:(pzGra||pzPrev.gracia||null) };
     }catch(e){}
-    ALU={ cuenta:cuenta, ficha:fichaId,
+    /* (17-oct-2026, Iago) REPASO: un enlace de repaso que ya no tiene repaso abierto no abre la ficha normal */
+    if(new URLSearchParams(location.search).get('repaso')==='1' && !data.repaso) throw new Error('repaso_hecho');
+    ALU={ cuenta:cuenta, ficha:fichaId, repaso:!!data.repaso,   /* (17-oct-2026) repaso de una ficha ya entregada: no cuenta */
           numero:(pack.numero!=null?pack.numero:(nFallback||null)),
           anulados:(pack.anulados||[]).map(Number),   /* WAVE12 */
           opcional:!!pack.opcional,   /* (6-ago) ficha «puntúa opcional» */
@@ -12345,7 +12376,7 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
     try{ fpAnadirRefuerzos(ALU, pack, cuenta); }catch(e){ console.warn('[fichaspro] refuerzos', e); }
     msg('Buscando progreso guardado…');
     try{
-      var prog=await progLeer(cuenta, fichaId);
+      var prog=ALU.repaso?null:await progLeer(cuenta, fichaId);   /* (17-oct-2026) el repaso empieza de cero */
       if(prog && Array.isArray(prog.respuestas) && (prog.total|0)===ALU.items.length){
         prog.respuestas.forEach(function(rr,k){ if(ALU.items[k]) aplicaRespuesta(ALU.items[k], rr); });
         if(prog.i>=0 && prog.i<ALU.items.length) ALU.i=prog.i|0;
@@ -12357,7 +12388,7 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
     if(ALU.i===0) fpIntroFicha(); else pintaAlu();
   }catch(e){
     var c=(e&&e.message)||'error';
-    var mp={ ya_entregada:'Ya entregaste esta ficha. ¡Buen trabajo!',
+    var mp={ ya_entregada:'Ya entregaste esta ficha. ¡Buen trabajo!', repaso_hecho:'Ya hiciste el repaso de esta ficha. ¡Buen trabajo!',
              fuera_de_plazo:'El plazo de esta ficha ya venció.',
              caducada:'Esta ficha ya caducó.',
              no_encontrada:'No encuentro esta ficha (¿el enlace es antiguo?).',
@@ -12365,7 +12396,7 @@ async function arrancarAlumno(fichaId, cuenta, nFallback){
              sin_supabase:'No se pudo conectar: revisa tu internet y recarga.' };
     v.querySelector('.fp-wrap').innerHTML=
       '<div style="max-width:560px;margin:14vh auto 0;text-align:center">'+
-      '<div style="font-size:48px">'+(mp[c]&&c==='ya_entregada'?'🏅':'😕')+'</div>'+
+      '<div style="font-size:48px">'+(mp[c]&&(c==='ya_entregada'||c==='repaso_hecho')?'🏅':'😕')+'</div>'+
       '<h2 class="fp-titulo" style="margin-top:10px">'+(mp[c]||'No se pudo abrir la ficha')+'</h2>'+
       (mp[c]?'':'<p style="color:var(--muted)">('+c+') Inténtalo de nuevo o avisa a Iago.</p>')+'</div>';
     console.warn('[fichaspro] abrir', e);
@@ -12418,7 +12449,7 @@ document.addEventListener('DOMContentLoaded', function(){
     // para que la ventana de "salir a mitad" recuerde la fecha de entrega.
     window.__FP_PLAZO={ fin:qs.get('fin')||null, gracia:qs.get('gracia')||null };
     // TIEMPO DE ACTIVIDAD (15-jul): rastreo de trabajo real en la ficha
-    try{ if(window.SuiteTiempo && qs.get('cuenta')) window.SuiteTiempo.start(qs.get('cuenta'), 'ficha', qs.get('fichaId')); }catch(e){}
+    try{ if(window.SuiteTiempo && qs.get('cuenta') && qs.get('repaso')!=='1') window.SuiteTiempo.start(qs.get('cuenta'), 'ficha', qs.get('fichaId')); }catch(e){}   /* (17-oct-2026) el repaso no cuenta tiempo */
     arrancarAlumno(qs.get('fichaId'), qs.get('cuenta'), qs.get('n')); return; }
   if(qs.get('revision') && qs.get('s')){ fpModoRevision(qs.get('revision'), qs.get('s'), false, qs.get('papel')==='1'); return; }   /* WAVE15 · (3-oct-2026) + la ficha en papel de un alumno */
   if(qs.get('revision') && qs.get('alu')==='1'){ fpModoRevision(qs.get('revision'), null, true, qs.get('papel')==='1'); return; }   /* (22-sep-2026) revisión del ALUMNO, sin secreto ni sesión */
