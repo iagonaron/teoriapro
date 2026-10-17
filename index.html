@@ -19966,5 +19966,60 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
   ['mousemove', 'pointerdown', 'keydown', 'touchstart'].forEach(function(t){ document.addEventListener(t, mueve, { passive: true }); });
 })();
 </script>
+<!-- (17-oct-2026, Iago) QUÉ HACE EN TEORÍA PRO, para la campana del Diario («Actividad de los alumnos» · Por libre): «quiero que
+     me diga qué tipo de ejercicios hizo, cuánto tiempo estuvo en cada uno». El latido de la piel (piel/latido.js) lee lo que pone
+     aquí (data-lm-ejercicio, en <i id="lm-que">) y lo apunta cada minuto: «<tarjeta>|ej» (sus ejercicios), «|ap» (sus apuntes) y
+     «|vi» (su vídeo), con el data-path de su tarjeta (modos, indiceacustico, compasespro…). En la portada (la cuadrícula de
+     tarjetas) no pone nada: el menú no es practicar y ese rato no cuenta (como en Teoría at home). Compases extraños y
+     Modulación son páginas aparte (compases.html, modulacion.html): llevan su propia marca fija. Para quitarlo: borrar este
+     bloque (el latido vuelve a apuntar la vista que se ve, como antes: «portal»). -->
+<script>
+(function(){
+  'use strict';
+  try { if (new URLSearchParams(location.search).get('fichaId')) return; } catch (e) {}   /* en las fichas no hay latido */
+  var VISTA = { 'view-cadencias': 'cadencias', 'view-indice': 'indiceacustico', 'view-modos': 'modos', 'view-serie': 'seriearmonica',
+    'view-dodecafonismo': 'dodecafonismo', 'view-acordes': 'acordespro', 'view-transporte': 'transporte', 'view-intervalos': 'intervalos',
+    'view-acordesbasico': 'acordes', 'view-inversion': 'inversion', 'view-escalas': 'escalas', 'view-tonalidades': 'tonalidades',
+    'view-enarmonia': 'enarmoniapro' };
+  /* el nombre del grupo de «Ver apuntes» (sin tildes ni « · repaso») → su tarjeta */
+  var APUNTES = { 'cadencias': 'cadencias', 'indice acustico': 'indiceacustico', 'modos': 'modos', 'compases extranos': 'compasespro',
+    'compases': 'compasespro', 'serie armonica': 'seriearmonica', 'dodecafonismo': 'dodecafonismo', 'acordes avanzado': 'acordespro',
+    'acordes avanzados': 'acordespro', 'modulacion': 'modulacion', 'transporte': 'transporte', 'intervalos': 'intervalos',
+    'acordes': 'acordes', 'inversion': 'inversion', 'escalas': 'escalas', 'tonalidades': 'tonalidades', 'enarmonias': 'enarmoniapro' };
+  function norm(s){
+    s = String(s || ''); try { s = s.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {}
+    return s.toLowerCase().replace(/\s*·\s*repaso\s*$/, '').replace(/\s+/g, ' ').trim();
+  }
+  var ultima = '';   /* la última tarjeta que se tocó (sus ejercicios, sus apuntes o su ▶) */
+  function toca(ev){
+    var c = ev.target && ev.target.closest && ev.target.closest('.home-grid .mode-card[data-path]');
+    if (c) ultima = c.getAttribute('data-path') || ultima;
+  }
+  document.addEventListener('pointerdown', toca, true);
+  document.addEventListener('keydown', function(ev){ if (ev.key === 'Enter' || ev.key === ' ') toca(ev); }, true);
+  function que(){
+    /* 1) los apuntes (van por encima de todo) */
+    var ap = document.getElementById('apx-ov');
+    if (ap) {
+      var nom = norm(String(ap.getAttribute('aria-label') || '').replace(/^Apuntes de\s*/i, ''));
+      return (APUNTES[nom] || ultima || nom.replace(/[^a-z0-9]+/g, '').slice(0, 24) || 'apuntes') + '|ap';
+    }
+    /* 2) un vídeo abierto en su tarjeta (bloques ivf-* e ivg-*): la tarjeta se queda escondida debajo */
+    if (document.querySelector('.ivf-caja, .ivg-caja')) {
+      var cs = document.querySelectorAll('.home-grid .mode-card[data-path]'), p = '';
+      for (var i = 0; i < cs.length; i++) { if (cs[i].style.visibility === 'hidden') { p = cs[i].getAttribute('data-path'); break; } }
+      return (p || ultima || 'video') + '|vi';
+    }
+    /* 3) los ejercicios de un apartado (su vista, con la portada escondida) */
+    for (var v in VISTA) { var el = document.getElementById(v); if (el && el.offsetParent !== null) return VISTA[v] + '|ej'; }
+    return '';   /* la portada, «Próximamente» o nada a la vista: no cuenta */
+  }
+  var m = document.createElement('i'); m.id = 'lm-que'; m.hidden = true; m.setAttribute('data-lm-ejercicio', '');
+  (document.body || document.documentElement).appendChild(m);
+  function pon(){ var k = ''; try { k = que(); } catch (e) {} if (m.getAttribute('data-lm-ejercicio') !== k) m.setAttribute('data-lm-ejercicio', k); }
+  pon(); setInterval(pon, 1000);
+  window.LMQue = { que: que };   /* (para el banco de pruebas) */
+})();
+</script>
 </body>
 </html>
