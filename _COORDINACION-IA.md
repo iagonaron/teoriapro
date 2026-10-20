@@ -60,11 +60,13 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 20-oct 04:27 · Blues (Cowork; encargo de Iago para su clase de hoy) · EN CURSO · parto de 38a3899 · solo
+- 20-oct 04:27 · Blues (Cowork; encargo de Iago para su clase de hoy) · HECHO · commit 1a8eb91 (EN CURSO en 7c40cd5, parto de 38a3899) · solo
   intros/serie-armonica/escenas.js: (1) el cartel del principio («VÍDEO · Cualidades del sonido», sin enlace) pasa a
   «VÍDEO · Acústica» y se puede pulsar: abre LA CABAÑA (https://acustica.gp.lmathome.es/prueba.html) en pestaña nueva y
   para el vídeo; la narración no cambia. (2) Ejemplo de Mi 2: mismo margen tras la clave que antes de la barra final
   (XS = 481 + i·148; antes 590 + i·142: mucho hueco tras la clave y el Mi 5 pegado al final).
+  Probado antes de subir (capturas de los dos momentos, antes/después). Copia de antes: APPs/_PARA BORRAR/
+  20-oct-2026-teoriapro-serie-armonica-antes/escenas.js. Para deshacer: git revert 1a8eb91. Espejo de Dropbox igual que GitHub.
 - 16-oct 18:28 · Intros didácticas (desde la conversación del Magnetófono) · HECHO · commit 66e8e72 (EN CURSO en e4bb5d3,
   parto de e9c69ac) · solo intros/inversion-acordes/escenas.js. Iago (16-oct): en el vídeo «Inversión de acordes», «las
   cabezas de las notas que hay dentro del gran paréntesis sean con la estética esta como de borrador. Las del acorde oficial,
