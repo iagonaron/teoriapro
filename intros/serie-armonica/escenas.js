@@ -468,6 +468,27 @@
     g.addEventListener('mouseleave', () => { g.style.filter = ''; });
     return g;
   }
+  /** (20-oct-2026, Iago) Cartel que remite a un PORTAL por su dirección (la cabaña de Acústica): se puede pulsar, lo abre en una
+   *  pestaña nueva y para este vídeo. Dentro de la ficha el vídeo va en un marco sin ventanas emergentes: se abre desde el portal
+   *  (mismo origen). Para quitarlo: borrar esta función y el «else if (o.url)» de tarjetaEnlace. */
+  function enlaceUrl(g, url) {
+    g.style.cursor = 'pointer';
+    g.setAttribute('role', 'link'); g.setAttribute('tabindex', '0');
+    g.setAttribute('aria-label', 'Abrir en una pestaña nueva');
+    const abre = ev => {
+      ev.stopPropagation(); ev.preventDefault();
+      let w = null;
+      try { w = window.open(url, '_blank'); } catch (e) { }
+      if (!w) { try { if (window.parent && window.parent !== window) w = window.parent.open(url, '_blank'); } catch (e) { } }
+      if (w) { try { w.opener = null; } catch (e) { } }
+      try { if (document.body.classList.contains('sonando')) document.getElementById('botonPausa').click(); } catch (e) { }
+    };
+    g.addEventListener('click', abre);
+    g.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') abre(e); });
+    g.addEventListener('mouseenter', () => { g.style.filter = 'brightness(1.25)'; });
+    g.addEventListener('mouseleave', () => { g.style.filter = ''; });
+    return g;
+  }
   /** Pequeño icono «abrir en pestaña nueva» (↗ en un cuadrado) para ponerlo en la esquina de esas tarjetas. */
   function icoAbrir(parent, x, y, sz) {
     sz = sz || 26;
@@ -525,7 +546,7 @@
     if (o.enlace !== false) { const ia = icoAbrir(V, w - 40, 14, 26); color(ia, C.rosa); }   // enlace:false → misma tarjeta, sin ↗ ni clic
     const x0 = o.centro ? x - w / 2 : x, y0 = o.centro ? y - h / 2 : y;
     V.setAttribute('transform', `translate(${x0.toFixed(1)},${y0.toFixed(1)})`);
-    if (o.enlace !== false) { if (esApu) enlaceApuntes(V, o.temas || [], o.nombre || o.titulo); else if (o.slug) enlaceVideo(V, o.slug); }
+    if (o.enlace !== false) { if (esApu) enlaceApuntes(V, o.temas || [], o.nombre || o.titulo); else if (o.slug) enlaceVideo(V, o.slug); else if (o.url) enlaceUrl(V, o.url); }
     V._w = w; V._h = h; V._cx = x0 + w / 2; V._cy = y0 + h / 2;
     const E = N.group(parent, 'tarjetaEnlaceCaja'); E.appendChild(V);    // envoltorio: para pop/aparece sin pisar el translate
     E._w = w; E._h = h; E._cx = V._cx; E._cy = V._cy;
@@ -646,7 +667,8 @@
     { n: 'E4', cl: 'sol', nom: 'Mi4', int: '3M' }, { n: 'G#4', cl: 'sol', nom: 'Sol♯4', int: '3ªm' }, { n: 'B4', cl: 'sol', nom: 'Si4', int: '3ªm' },
     { n: 'D5', cl: 'sol', nom: 'Re5', int: '2M' }, { n: 'E5', cl: 'sol', nom: 'Mi5' },
   ];
-  const XS = i => 590 + i * 142;          // columna de cada armónico
+  const XS = i => 481 + i * 148;          // columna de cada armónico · (20-oct-2026, Iago) mismo margen tras la clave que antes de
+                                           // la barra final (antes 590 + i * 142: mucho hueco tras la clave y el Mi 5 pegado). Para quitarlo: volver a 590 + i * 142
   /** Sistema de piano con los 8 armónicos (cada uno en su grupo, en currentColor). */
   function serieEnSistema(g, yS) {
     const sis = sistema(g, 300, yS, 1340);
@@ -695,7 +717,9 @@
     const a = F0('A1') - 0.2, b = F0('A2') - 0.25;
     escena('cualidades', a, b, (s, g) => {
       const fin = b - 0.3;
-      const kv = tarjetaEnlace(g, CX, 250, { tipo: 'video', titulo: 'Cualidades del sonido', enlace: false, centro: true });
+      // (20-oct-2026, Iago) la narración no cambia, pero el cartel dice «Acústica» y abre LA CABAÑA (el portal oficial de Acústica).
+      // Para quitarlo: volver a { tipo: 'video', titulo: 'Cualidades del sonido', enlace: false, centro: true }
+      const kv = tarjetaEnlace(g, CX, 250, { tipo: 'video', titulo: 'Acústica', url: 'https://acustica.gp.lmathome.es/prueba.html', centro: true });
       pop(s, kv, Wd('A1', 'cualidades') - 0.3, fin, CX, 250);
       const ec = fraseG(g, [['antes, échale un ojo', C.suave]], CX, 360, { size: 30, peso: 700, italic: true, anchor: 'middle' });
       aparece(s, ec, Wd('A1', 'recomiendo') - 0.2, fin, { dy: 6 });
