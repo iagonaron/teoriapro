@@ -11911,7 +11911,7 @@ function fpEleccionOpcional(nota, pcts){
 /* (17-oct-2026, Iago) REPASO: la nota se guarda aparte (suite_ficha_repasos) y NO llega a Iago ni al Diario */
 function fpEnviarRepaso(nota, pcts){
   var pinta=function(msg,tipo){ var s2=el('aluEnvEstado'); if(s2){ s2.textContent=msg; s2.className='fp-status '+(tipo||''); } };
-  var fin=function(){ pinta('✓ Repaso terminado. Esta nota no cuenta: no le llega a Iago.','ok'); };
+  var fin=function(){ pinta('✓ Repaso terminado. Esta nota no cuenta: no le llega a Iago.','ok'); fpMostrarVolver(true); };
   var sb=fpSb(); if(!sb){ fin(); return; }
   pinta('Guardando tu repaso…','info');
   var payload={ nota:nota, escala:10, origin:'teoria_pro_repaso', ficha_id:ALU.ficha, numero:(ALU.numero!=null?ALU.numero:undefined),
@@ -11921,6 +11921,18 @@ function fpEnviarRepaso(nota, pcts){
   sb.rpc('suite_ficha_repaso_entregar', { p_cuenta_id:ALU.cuenta, p_ficha_id:ALU.ficha, p_nota:nota, p_payload:payload })
     .then(function(r){ if(r && r.error) throw r.error; fin(); })
     .catch(function(e){ console.warn('[fichaspro] repaso', e); fin(); });
+}
+/* (20-oct-2026) «Entendido» al terminar la ficha: aparece cuando la entrega está resuelta; si no se pudo enviar, avisa */
+function fpMostrarVolver(entregada){
+  try{
+    var vb=el('fpVolverPortal'), av=el('fpAvisoTareas');
+    if(av) av.style.display='';
+    if(!vb) return;
+    if(entregada===false){ vb.textContent='Salir (tu nota NO se ha enviado)'; vb.style.background='linear-gradient(90deg,#ffb4c8,#ff8fb0)'; vb.style.color='#3a0d1c'; }
+    else { vb.textContent='Entendido'; vb.style.background='linear-gradient(120deg,#e9c96a,#b8860b)'; vb.style.color='#1a1305'; }
+    vb.style.display='block';
+    if(!vb._w){ vb._w=true; vb.onclick=function(){ fpSalirAlPortal(); }; }
+  }catch(e){}
 }
 function fpEnviarNota(nota, pcts, noPuntua){
   if(ALU && ALU.repaso){ fpEnviarRepaso(nota, pcts); return; }   /* (17-oct-2026) */
@@ -11942,7 +11954,7 @@ function fpEnviarNota(nota, pcts, noPuntua){
   };
   var sb=fpSb();
   var pinta=function(msg,tipo){ var s2=el('aluEnvEstado'); if(s2){ s2.textContent=msg; s2.className='fp-status '+(tipo||''); } };
-  if(!sb){ pinta('⚠ Sin conexión: la nota NO se envió. Recarga con internet.', 'err'); return; }
+  if(!sb){ pinta('⚠ Sin conexión: la nota NO se envió. Recarga con internet.', 'err'); fpMostrarVolver(false); return; }
   pinta('Enviando tu nota a Iago…','info');
   sb.rpc('suite_ficha_entregar', { p_cuenta_id:ALU.cuenta, p_ficha_id:ALU.ficha, p_nota:nota, p_payload:payload })
     .then(function(r){
@@ -11951,6 +11963,7 @@ function fpEnviarNota(nota, pcts, noPuntua){
       if(d && d.ok===false) throw new Error(d.error||'error');
       pinta(noPuntua===true?'✓ Ficha entregada sin nota: esta vez no cuenta.':'✓ Nota enviada a Iago.','ok');
       progBorrar();
+      fpMostrarVolver(true);
     })
     .catch(function(e){
       var c=(e&&e.message)||'red';
@@ -11959,6 +11972,7 @@ function fpEnviarNota(nota, pcts, noPuntua){
                no_validado:'Tu cuenta no está validada; la nota no se ha guardado.' };
       pinta(mp[c]?('ⓘ '+mp[c]):('⚠ NO se pudo enviar la nota ('+c+'). Tu ficha está corregida, pero Iago aún no la tiene.'),
             c==='ya_entregada'?'info':'err');
+      fpMostrarVolver(!!mp[c]);
       console.warn('[fichaspro] entregar', e);
       /* (Iago 15-sep-2026) botón de reintento: antes un fallo de red dejaba la nota sin enviar y sin salida */
       if(!mp[c]){ try{ var s3=el('aluEnvEstado'); if(s3 && !s3.querySelector('#fpReintentar')){
@@ -12023,6 +12037,11 @@ function pintaResultado(nota, pcts){
         '<span style="color:#2f6df6">● la respuesta correcta</span>')+
       '</div>'+
       '<div class="fp-status" id="aluEnvEstado" style="margin:14px auto 0;max-width:560px"></div>'+
+      /* (20-oct-2026, Iago: «al final de la ficha de grado profesional también quiero que haya un botón que ponga entendido
+         y que la función es que le lleve de vuelta al portal») como en GE: nace oculto y sale cuando la entrega está resuelta
+         (fpMostrarVolver). Para quitarlo: borrar estas dos líneas. */
+      (ALU.simulado?'':'<div id="fpAvisoTareas" style="display:none;margin:22px auto 0;max-width:560px;color:var(--muted);font-size:14px;font-weight:700">No te olvides de hacer el resto de tareas que tienes pendientes.</div>'+
+      '<button id="fpVolverPortal" type="button" style="margin:12px auto 0;display:none;background:linear-gradient(120deg,#e9c96a,#b8860b);color:#1a1305;border:0;border-radius:12px;padding:12px 26px;font-weight:900;font-size:15px;cursor:pointer;font-family:inherit;box-shadow:0 10px 26px rgba(212,175,55,.3)">Entendido</button>')+
     '</div>'+
     '<div style="margin-top:8px">'+filas+'</div>'+
     ((ALU.simulado||ALU.repaso)?'':(
