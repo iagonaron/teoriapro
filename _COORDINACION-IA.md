@@ -60,6 +60,8 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 20-oct 11:20 · Fichas y rediseño · EN CURSO (parto de 8ff8ac2) · solo index.html · al terminar la ficha, como en GE: «No te
+  olvides de hacer el resto de tareas…» y el botón «Entendido», que lleva de vuelta al portal.
 - 20-oct 10:26 · Fichas y rediseño · HECHO · commit 15ef491 (EN CURSO en d4e5593, parto de f80cca7; index.html de 38a3899) ·
   solo index.html (+65 −48) · SERIE ARMÓNICA (ficha, ejercicios libres y el ejercicio de la vista). (1) En la ficha, el mapa
   «continuo» de WAVE12 PROMEDIABA las alturas que estaban en las dos claves (Si3…Do5) y caían entre los pentagramas: un Re4
