@@ -60,8 +60,14 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 20-oct 11:20 · Fichas y rediseño · EN CURSO (parto de 8ff8ac2) · solo index.html · al terminar la ficha, como en GE: «No te
-  olvides de hacer el resto de tareas…» y el botón «Entendido», que lleva de vuelta al portal.
+- 20-oct 11:24 · Fichas y rediseño · HECHO · commit 0f56012 (EN CURSO en 269b021, parto de 8ff8ac2) · solo index.html (+21 −2) ·
+  al terminar la ficha (alumno de verdad, también el repaso; no en la simulación del profesor), como en GE: «No te olvides
+  de hacer el resto de tareas que tienes pendientes» y el botón «Entendido» (dorado; rosa con la piel), que lleva al portal con
+  las notificaciones abiertas (fpSalirAlPortal). Nace oculto y sale cuando la entrega está resuelta (enviada, ya entregada,
+  fuera de plazo, sin validar); si falla la red, «Salir (tu nota NO se ha enviado)» en rosa (fpMostrarVolver). Banco 40/40 con
+  el flujo real del alumno (abrir, corregir, entregar). Iago: «al final de la ficha de grado profesional también quiero que haya
+  un botón que ponga entendido y que la función es que le lleve de vuelta al portal». Copia de antes: APPs/_PARA BORRAR/
+  20-oct-2026-antes-del-boton-Entendido-GP/index.html. Para deshacer: git revert 0f56012.
 - 20-oct 10:26 · Fichas y rediseño · HECHO · commit 15ef491 (EN CURSO en d4e5593, parto de f80cca7; index.html de 38a3899) ·
   solo index.html (+65 −48) · SERIE ARMÓNICA (ficha, ejercicios libres y el ejercicio de la vista). (1) En la ficha, el mapa
   «continuo» de WAVE12 PROMEDIABA las alturas que estaban en las dos claves (Si3…Do5) y caían entre los pentagramas: un Re4
