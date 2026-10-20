@@ -60,6 +60,17 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 20-oct 19:25 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit;
+  parto de e0d4fce, index.html de 0f56012) · solo index.html (+21 −1) · MODOS POR NOTAS NETAS. Iago: «ya sea que pones la
+  armadura que se espera y la alteración que lo arregla… como el caso de que… añadiendo una alteración o quitándola, las notas
+  netas resultantes es correcto». En los modos (familia 'modo') vale, además de lo de antes, cualquier escritura cuyas notas
+  resultantes (armadura + accidentales: nota, octava y alteración) sean las de la solución (Fa dórico con 3 ♭ en vez de 4 ♭ + Re ♮).
+  Función nueva modoNetasOk (junto a corregirESCVar), usada en MODOS_MOTOR.puntua, corregirESCVar y dibujarEscCorr; las escalas
+  mayores, menores, pentatónicas, etc., igual. En la ficha corregida: todo en verde y «Armadura: ✓ 3 ♭ (la de referencia: 4 ♭)».
+  Banco con las 42 respuestas distintas que hay entregadas (157 ejercicios de modos): con el código de antes, el % guardado en
+  todas; con el nuevo, suben 20 (notas netas bien) y las otras 137 igual. Las notas ya puestas las arregla un SQL que pega Iago
+  (LMATHOME GP/PENDIENTE-20-oct-2026-modos-notas-netas). Copia de antes: APPs/_PARA BORRAR/20-oct-2026-antes-de-los-modos-por-
+  notas-netas/index.html. Para quitarlo: MODOS_NETAS = false. Para deshacer: git revert de este commit.
 - 20-oct 11:24 · Fichas y rediseño · HECHO · commit 0f56012 (EN CURSO en 269b021, parto de 8ff8ac2) · solo index.html (+21 −2) ·
   al terminar la ficha (alumno de verdad, también el repaso; no en la simulación del profesor), como en GE: «No te olvides
   de hacer el resto de tareas que tienes pendientes» y el botón «Entendido» (dorado; rosa con la piel), que lleva al portal con

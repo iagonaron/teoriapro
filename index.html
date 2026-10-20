@@ -6652,6 +6652,20 @@ function applyArmToNotes(i){
     else if(n._touched!==true){ n.alter=a; }
   });
 }
+/* (20-oct-2026, Iago) MODOS POR NOTAS NETAS: en un modo vale cualquier escritura cuyas notas resultantes (armadura +
+   accidentales) sean las del modo, aunque la armadura no sea la de referencia (Fa dórico con 3 ♭ en vez de Fa menor + Re ♮).
+   Lo usan MODOS_MOTOR.puntua, corregirESCVar y dibujarEscCorr. Para quitarlo: MODOS_NETAS = false. */
+var MODOS_NETAS = true;
+function modoNetasOk(e){
+  try{
+    if(!MODOS_NETAS || !e || String(e.familia||'')!=='modo') return false;
+    var sol=e.notasSol||[], got=(e.userSeq||[]).filter(function(n){ return !n._opt; });
+    if(!sol.length || got.length!==sol.length) return false;
+    for(var k=0;k<sol.length;k++){ var s=sol[k], u=got[k];
+      if(!u || u.step!==s.step || u.octave!==s.octave || (u.alter||0)!==(s.alter||0)) return false; }
+    return true;
+  }catch(err){ return false; }
+}
 function corregirESCVar(e,i,cell){
   const tag=cell.querySelector('.sol');
   // hexátona y cromática se corrigen por ALTURA (acepta enarmonías); el resto por grafía
@@ -6691,7 +6705,7 @@ function corregirESCVar(e,i,cell){
   }
   // armadura: se evalúa en precolocadas y en pentatónica
   const pre = (e._precolocada===true) || (e._conArmadura===true);
-  const armOk = pre ? ((e.userArm||0)===e.fifths) : true;
+  const armOk = pre ? (((e.userArm||0)===e.fifths) || (notasOk && modoNetasOk(e))) : true;   /* (20-oct-2026) modos: notas netas */
   const ok = notasOk && armOk;
   cell.classList.remove('ok','bad'); cell.classList.add(ok?'ok':'bad');
   // guardar estado para dibujar la solución en azul en el pentagrama si hay fallo
@@ -7199,6 +7213,7 @@ window.MODOS_MOTOR = {
         var acierta = u2 && u2.step===s2.step && u2.octave===s2.octave && (u2.alter||0)===(s2.alter||0);
         if(!acierta){ notasOkP=false; break; }
       }
+      if(!(armOkP && notasOkP) && modoNetasOk(e)) return 1;   /* (20-oct-2026) modos: notas netas */
       return (armOkP && notasOkP) ? 1 : 0;
     }catch(err){ console.warn('[MODOS_MOTOR] puntua', err); return 0; }
   },
@@ -7250,6 +7265,7 @@ function dibujarEscCorr(host, e){
     // precolocada (modos/mayor/menor): armadura + accidentales (grado+octava fijos)
     if((e.userArm||0)!==fifths) todoOk=false;
     else for(var t=0;t<sol.length;t++){ var s0=sol[t],a0=armAlterFor(s0.step,fifths); if((s0.alter||0)!==a0){ var u0=alumno[t]; if(!(u0&&u0.step===s0.step&&u0.octave===s0.octave&&(u0.alter||0)===(s0.alter||0))){ todoOk=false; break; } } }
+    if(!todoOk && modoNetasOk(e)) todoOk=true;   /* (20-oct-2026) modos: notas netas */
   } else {
     // pentatónica/hexátona/cromática: alumno coloca por altura -> comparar por
     // CLASE DE ALTURA (la octava se da por buena) + armadura si la lleva.
@@ -7321,6 +7337,10 @@ function dibujarEscCorr(host, e){
     var et=document.createElement('span'); et.className='esc-arm-et'; et.textContent='Armadura:'; et.style.color='#fbf3df'; et.style.textShadow='none'; armDiv.appendChild(et);
     var armOk=((e.userArm||0)===fifths);
     if(armOk){ var sp=document.createElement('span'); sp.textContent='✓ '+fmt(fifths); sp.style.color=COR_OK; armDiv.appendChild(sp); }
+    else if(precol && todoOk && modoNetasOk(e)){   /* (20-oct-2026) modos: otra armadura, las mismas notas */
+      var spN=document.createElement('span'); spN.textContent='✓ '+fmt(e.userArm||0); spN.style.color=COR_OK; armDiv.appendChild(spN);
+      var spR=document.createElement('span'); spR.className='esc-arm-ref'; spR.textContent='(la de referencia: '+fmt(fifths)+')'; spR.style.color='#b39a5f'; spR.style.fontWeight='600'; spR.style.fontSize='13px'; armDiv.appendChild(spR);
+    }
     else { var t1=document.createElement('span'); t1.textContent='✗ '+((e.userArm||0)===0?'(sin poner)':fmt(e.userArm||0)); t1.style.color=COR_BAD; armDiv.appendChild(t1); var a1=document.createElement('span'); a1.textContent='→'; a1.style.color='#b39a5f'; armDiv.appendChild(a1); var c2=document.createElement('span'); c2.textContent=fmt(fifths); c2.style.color=COR_AZUL_TXT; armDiv.appendChild(c2); }
     host.appendChild(armDiv);
   }
