@@ -8370,7 +8370,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
       var cx=x+wC/2;
       comp.push({x0:x,wC:wC,cx:cx,topStave:top,botStave:bot});
       if(it){
-        var clef=(it.midi<60)?'bass':'treble';
+        var clef=(it.clef==='bass'||it.clef==='treble')?it.clef:((it.midi<60)?'bass':'treble');   /* (20-oct-2026) la clave en la que la puso el alumno */
         var stave=(clef==='bass')?bot:top;
         var sn=new VF.StaveNote({keys:[keyOf(it)], duration:'w', clef:clef});
         if(it.alter) sn.addModifier(new VF.Accidental(accOf(it.alter)), 0);
@@ -8395,7 +8395,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     // construir mapas de altura (una sola vez por render) usando el primer compás como referencia
     GEO={ W:W, H:H, topY:topY, botY:botY, comp:comp,
           ymapTop:buildYMapFor(comp[0].topStave, midi('C',4,0)-1, midi('C',7,0)),
-          ymapBot:buildYMapFor(comp[0].botStave, midi('C',2,0)-1, midi('C',5,0)) };
+          ymapBot:buildYMapFor(comp[0].botStave, midi('C',2,0)-1, midi('E',4,0)) };   /* (20-oct-2026, Iago) clave de Fa hasta el Mi4 (antes Do5) */
     // conectores de intervalo: línea entre cada nota y la siguiente, con la cifra en medio
     if(opts.showIntervals && svg) drawIntervalConnectors(svg, items);
     try{ if(window.SERIE_PURE) window.SERIE_PURE.lastGEO=GEO; }catch(e){}   // geometría para reutilizar en la FICHA
@@ -8403,7 +8403,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   function drawIntervalConnectors(svg, items){
     var SVGNS='http://www.w3.org/2000/svg';
     function ptOf(it){
-      var yr=yRealOf(it.step,it.octave); if(!yr) return null;
+      var yr=yDe(GEO,it.step,it.octave,clefDe(it)); if(!yr) return null;
       var ci=it.h-1; var c=GEO.comp[ci]; if(!c) return null;
       return {x:c.cx, y:yr.y};
     }
@@ -8444,7 +8444,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
       var n=bSeq[i];
       if(!n){ items.push(null); continue; }
       var m=midi(n.step,n.octave,n.alter);
-      var it={step:n.step,octave:n.octave,alter:n.alter,midi:m,h:i+2,interval:INTERV[i+1],_user:true};
+      var it={step:n.step,octave:n.octave,alter:n.alter,midi:m,h:i+2,interval:INTERV[i+1],_user:true,clef:n.clef};
       if(n._mark) it._mark=n._mark;
       if(!corregido && selB===i) it._sel=true;
       items.push(it);
@@ -8478,20 +8478,40 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     var mid=(tBot+bTop)/2;
     return py<mid?'top':'bot';
   }
+  /* (20-oct-2026, Iago: «en la clave de Fa, después del La3, me pega un salto muy grande… quiero poder subir hasta el Do4,
+     incluso al Re4 o al Mi4, y luego ya Si3 en clave de Sol y para arriba» · «si el alumno lo marca en clave de Fa, que
+     aparezca dibujado en clave de Fa») UN SOLO MAPA con las dos claves: Fa hasta el Mi4 y Sol desde el Si3; cada altura
+     recuerda su clave. Las claves del mapa no se repiten («D4» en Sol, «D4_f» en Fa). */
+  function ymapDos(geo){ if(!geo) return {}; if(geo._dos) return geo._dos;
+    var m={}, k, t=geo.ymapTop||{}, b=geo.ymapBot||{};
+    for(k in b) m[k+'_f']={step:b[k].step,octave:b[k].octave,y:b[k].y,clef:'bass',_k:k+'_f'};
+    for(k in t) m[k]={step:t[k].step,octave:t[k].octave,y:t[k].y,clef:'treble',_k:k};
+    geo._dos=m; return m; }
+  /* altura (y) de una nota en SU clave; sin clave guardada, la de siempre (por debajo del Do4, Fa) */
+  function clefDe(n){ return (n && (n.clef==='bass'||n.clef==='treble')) ? n.clef : ((midi(n.step,n.octave,n.alter||0)<60)?'bass':'treble'); }
+  function yDe(geo, step, octave, clef){ if(!geo) return null; var kt=step+octave, t=geo.ymapTop||{}, b=geo.ymapBot||{};
+    if(clef==='bass' && b[kt]) return {y:b[kt].y,which:'bot'};
+    if(clef==='treble' && t[kt]) return {y:t[kt].y,which:'top'};
+    if(t[kt]) return {y:t[kt].y,which:'top'}; if(b[kt]) return {y:b[kt].y,which:'bot'}; return null; }
+  /* x de la nota de un compás (las redondas van a la izquierda del compás, no en el centro): ahí va el texto de la solución */
+  function xNotaEn(svg, geo, ci){ var c=geo&&geo.comp[ci]; if(!c) return null; var xs=[];
+    try{ svg.querySelectorAll('.vf-stavenote').forEach(function(n){ try{ var h=n.querySelector('.vf-notehead')||n, bb=h.getBBox(); xs.push(bb.x+bb.width/2); }catch(e){} }); }catch(e){}
+    var en=xs.filter(function(x){ return x>=c.x0 && x<c.x0+c.wC; }); if(en.length) return en[0];
+    var off=[]; geo.comp.forEach(function(k,i){ if(i===0) return; xs.forEach(function(x){ if(x>=k.x0 && x<k.x0+k.wC) off.push(x-k.x0); }); });
+    if(off.length){ off.sort(function(a,b){return a-b;}); return c.x0+off[Math.floor(off.length/2)]; }
+    return c.cx; }
   function nearestByY(my, which){
-    var map=(which==='bot')?GEO.ymapBot:GEO.ymapTop;
+    var map=ymapDos(GEO);   /* (20-oct-2026) antes: el mapa de una sola clave, según la mitad del sistema */
     /* R5 10-jul-2026 · histéresis de arrastre (nota actual en el host scoreSB) */
     var host=document.getElementById('scoreSB');
     var curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
     var o=window.gnPick(map, my, curKey, 0.90); if(!o) return null;
-    if(host) host._gnLastNat=o.step+o.octave;
+    if(host) host._gnLastNat=o._k||(o.step+o.octave);
     return o;
   }
   function yRealOf(step,octave){
     var kt=step+octave;
-    if(GEO.ymapTop[kt]) return {y:GEO.ymapTop[kt].y,which:'top'};
-    if(GEO.ymapBot[kt]) return {y:GEO.ymapBot[kt].y,which:'bot'};
-    return null;
+    return yDe(GEO, step, octave, arguments[2]);   /* (20-oct-2026) en su clave (3.er argumento) */
   }
   // índice del próximo armónico a escribir (primer hueco libre 0..6); o -1 si completa
   function nextSlot(){ for(var i=0;i<7;i++){ if(!bSeq[i]) return i; } return -1; }
@@ -8525,8 +8545,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     var slot=nextSlot();
     if(slot<0){ host.style.cursor='default'; clearGhost(); return; }
     if(ci!==slot+1){ host.style.cursor='default'; clearGhost(); return; }
-    var which=clefEn(p.y);
-    var nat=nearestByY(p.y, which); if(!nat){ clearGhost(); return; }
+    var nat=nearestByY(p.y); if(!nat){ clearGhost(); return; }
+    var which=(nat.clef==='bass')?'bot':'top';   /* (20-oct-2026) la clave la decide la altura elegida */
     host.style.cursor='pointer';
     showGhost(host, GEO.comp[slot+1].cx, nat, which);
   }
@@ -8576,10 +8596,9 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     // colocar en el próximo hueco libre
     var slot=nextSlot(); if(slot<0){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
     if(ci!==slot+1){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 */
-    var which=clefEn(p.y);
-    var nat=nearestByY(p.y, which); if(!nat){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 */
+    var nat=nearestByY(p.y); if(!nat){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 */
     // alteración heredada: si una aparición anterior de la misma letra/octava llevaba alteración, partir de natural igualmente (el alumno la ajusta)
-    bSeq[slot]={step:nat.step,octave:nat.octave,alter:0};
+    bSeq[slot]={step:nat.step,octave:nat.octave,alter:0,clef:nat.clef};   /* (20-oct-2026) y en qué clave la puso */
     serieUndoPush({slot:slot, prev:null});        /* GN-UNIF 8-jul-2026 */
     selB=slot;
     renderScoreB();
@@ -8612,7 +8631,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     (function(i){
       var n=bSeq[i]; if(!n) return;
       var c=GEO.comp[i+1]; if(!c) return;
-      var yr=yRealOf(n.step,n.octave); if(!yr) return;
+      var yr=yRealOf(n.step,n.octave,clefDe(n)); if(!yr) return;
       GN_UNIF.delXAt(host,svg,'gn-serie',c.cx,yr.y,16,function(){
         if(corregido||!bSeq[i]) return;
         serieUndoPush({slot:i, prev:bSeq[i]});
@@ -8653,7 +8672,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     corregido=true; selB=null;
     for(var i=0;i<7;i++){
       var sol=serie[i+1], n=bSeq[i];
-      var ok = n && (n.step===sol.step && n.octave===sol.octave && n.alter===sol.alter);
+      var ok = !!n && midi(n.step,n.octave,n.alter)===sol.midi;   /* (20-oct-2026, Iago) cuenta el SONIDO: la clave da igual y la enarmonía vale (Do = Si♯) */
       if(n){ n._mark = ok?'ok':'bad'; }
     }
     renderScoreB();
@@ -8661,7 +8680,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     var host=document.getElementById('scoreSB');
     setTimeout(function(){ drawSolutionOverlay(host); }, 0);
     // resumen
-    var aciertos=0; for(var j=0;j<7;j++){ var s=serie[j+1], m=bSeq[j]; if(m&&m.step===s.step&&m.octave===s.octave&&m.alter===s.alter) aciertos++; }
+    var aciertos=0; for(var j=0;j<7;j++){ var s=serie[j+1], m=bSeq[j]; if(m&&midi(m.step,m.octave,m.alter)===s.midi) aciertos++; }
     var fb=document.getElementById('serieFeedB');
     if(!fb){ fb=document.createElement('div'); fb.id='serieFeedB'; fb.style.cssText='margin-top:10px;font-size:13px;font-weight:700';
       var card=document.getElementById('cardSB'); if(card) card.appendChild(fb); }
@@ -8677,20 +8696,16 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     // (las notas del alumno ya están coloreadas; mostramos la solución correcta en texto)
     for(var i=0;i<7;i++){
       var sol=serie[i+1], n=bSeq[i];
-      var bien = n && n.step===sol.step && n.octave===sol.octave && n.alter===sol.alter;
+      var bien = !!n && midi(n.step,n.octave,n.alter)===sol.midi;
       if(bien) continue;
       var c=GEO.comp[i+1]; if(!c) continue;
-      var lbl=document.createElement('div');
-      lbl.className='serie-solbadge';
-      lbl.textContent=nom(sol)+(sol.octave);
-      lbl.style.cssText='position:absolute;z-index:7;font-size:11px;font-weight:800;color:#2f6df6;'+
-        'transform:translateX(-50%);white-space:nowrap';
+      /* (20-oct-2026) como texto DENTRO del pentagrama (siempre bajo su compás); antes un <div> con la posición de pantalla */
       try{
-        var pt=svg.createSVGPoint(); pt.x=c.cx; pt.y=GEO.botY+108;
-        var sp=pt.matrixTransform(svg.getScreenCTM());
-        var hr=host.getBoundingClientRect();
-        lbl.style.left=(sp.x-hr.left)+'px'; lbl.style.top=(sp.y-hr.top)+'px';
-        host.appendChild(lbl);
+        var tx=document.createElementNS('http://www.w3.org/2000/svg','text');
+        tx.setAttribute('x',xNotaEn(svg,GEO,i+1)); tx.setAttribute('y',GEO.botY+119); tx.setAttribute('text-anchor','middle');
+        tx.setAttribute('font-family','Arial, Helvetica, sans-serif'); tx.setAttribute('font-size','12'); tx.setAttribute('font-weight','800'); tx.setAttribute('fill','#2f6df6');
+        tx.setAttribute('class','serie-solbadge'); tx.textContent=nom(sol)+(sol.octave);
+        svg.appendChild(tx);
       }catch(e){}
     }
   }
@@ -8754,7 +8769,7 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   window.serieInit=serieInit;
   window.serieCompute=serieFromFund;
   /* piezas puras reutilizables por el motor de FICHAS de serie armónica */
-  window.SERIE_PURE={ serieFromFund:serieFromFund, drawGrand:drawGrand, FUNDS:FUNDS, nom:nom, keyOf:keyOf, accOf:accOf, midi:midi };
+  window.SERIE_PURE={ serieFromFund:serieFromFund, drawGrand:drawGrand, FUNDS:FUNDS, nom:nom, keyOf:keyOf, accOf:accOf, midi:midi, ymapDos:ymapDos, yDe:yDe, clefDe:clefDe, xNotaEn:xNotaEn };
   window.serieNuevoTodo=serieNuevoTodo;
   window.serieCorregirB=corregirB;
   window.serieListen=serieListen;
@@ -13626,7 +13641,7 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     var items=[{step:serie[0].step,octave:serie[0].octave,alter:serie[0].alter,midi:serie[0].midi,h:1,interval:serie[0].interval,fund:true}];
     for(var i=0;i<7;i++){ var n=g.bSeq[i];
       if(!n){ items.push(null); continue; }
-      var it={step:n.step,octave:n.octave,alter:n.alter,midi:midi(n.step,n.octave,n.alter),h:i+2,interval:serie[i+1].interval,_user:true};
+      var it={step:n.step,octave:n.octave,alter:n.alter,midi:midi(n.step,n.octave,n.alter),h:i+2,interval:serie[i+1].interval,_user:true,clef:n.clef};
       if(n._mark) it._mark=n._mark; if(!g.__corr && g.__sel===i) it._sel=true; items.push(it);
     }
     return items;
@@ -13652,7 +13667,7 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     (function(i){
       var n=g.bSeq[i]; if(!n) return;
       var c=g.__geo.comp[i+1]; if(!c) return;
-      var yr=yRealOf(g,n.step,n.octave); if(!yr) return;
+      var yr=yRealOf(g,n.step,n.octave,SP().clefDe(n)); if(!yr) return;
       GN_UNIF.delXAt(host,svg,'gn-serieF',c.cx,yr.y,16,function(){
         if(g.__corr||!g.bSeq[i]) return;
         gnPushSF(g,{slot:i, prev:g.bSeq[i]});
@@ -13680,17 +13695,17 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
   function ymapAll(g){
     var geo=g.__geo; if(!geo) return {};
     if(geo._all) return geo._all;
-    var m={}, k, t=geo.ymapTop||{}, b=geo.ymapBot||{};
-    for(k in b) m[k]={step:b[k].step,octave:b[k].octave,y:b[k].y};
-    for(k in t){ if(m[k]) m[k]={step:t[k].step,octave:t[k].octave,y:(t[k].y+m[k].y)/2}; else m[k]={step:t[k].step,octave:t[k].octave,y:t[k].y}; }
-    geo._all=m; return m;
+    /* (20-oct-2026, Iago: «quería poner un Re4 y al pulsar me marca la nota Do5») las alturas que había en las dos claves
+       se PROMEDIABAN y caían entre los pentagramas. Ahora: Fa hasta el Mi4 y Sol desde el Si3, cada una en su sitio y con su
+       clave (SERIE_PURE.ymapDos). Antes: un mapa por nombre de nota con la media de las dos alturas. */
+    geo._all=SP().ymapDos(geo); return geo._all;
   }
   function nearestByY(g,my,which){ var map=ymapAll(g);
     /* R5 10-jul-2026 · histéresis de arrastre (nota actual en g.__host) */
     var host=g.__host, curKey=(host&&host._gnLastNat!=null)?host._gnLastNat:null;
     var o=window.gnPick(map, my, curKey, 0.90); if(!o) return null;
-    if(host) host._gnLastNat=o.step+o.octave; return o; }
-  function yRealOf(g,step,octave){ var kt=step+octave; if(g.__geo.ymapTop[kt]) return {y:g.__geo.ymapTop[kt].y}; if(g.__geo.ymapBot[kt]) return {y:g.__geo.ymapBot[kt].y}; return null; }
+    if(host) host._gnLastNat=o._k||(o.step+o.octave); return o; }
+  function yRealOf(g,step,octave,clef){ return SP().yDe(g.__geo,step,octave,clef); }   /* (20-oct-2026) en su clave */
   function nextSlot(g){ for(var i=0;i<7;i++){ if(!g.bSeq[i]) return i; } return -1; }
   function wireGhost(g){ var host=g.__host;
     host.onmousemove=function(ev){ if(host._touchHandled) return; onHover(g,ev); };
@@ -13708,7 +13723,7 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     var slot=nextSlot(g); if(slot<0){ host.style.cursor='default'; clearGhost(g); return; }
     if(ci!==slot+1){ host.style.cursor='default'; clearGhost(g); return; }
     var nat=nearestByY(g,p.y,null); if(!nat){ clearGhost(g); return; }
-    var which=clefEn(g,nat.y);   /* WAVE12: la clave se decide por la ALTURA elegida (solo para las líneas adicionales) */
+    var which=(nat.clef==='bass')?'bot':(nat.clef==='treble'?'top':clefEn(g,nat.y));   /* (20-oct-2026) la clave de la altura elegida · WAVE12: la clave se decide por la ALTURA elegida (solo para las líneas adicionales) */
     host.style.cursor='pointer'; showGhost(g, g.__geo.comp[slot+1].cx, nat, which);
   }
   function ghostEl(g){ var el=g.__host.querySelector('.serieF-ghost'); if(!el){ el=document.createElement('div'); el.className='serieF-ghost'; el.style.cssText='position:absolute;pointer-events:none;z-index:6;width:13px;height:11px;border:2px solid #d4af37;border-radius:50%;box-sizing:border-box;background:rgba(212,175,55,.12)'; g.__host.appendChild(el); } return el; }
@@ -13730,13 +13745,13 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     var slot=nextSlot(g); if(slot<0){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
     if(ci!==slot+1){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 */
     var nat=nearestByY(g,p.y,null); if(!nat){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* WAVE12: mapa continuo */
-    g.bSeq[slot]={step:nat.step,octave:nat.octave,alter:0}; gnPushSF(g,{slot:slot, prev:null}); g.__sel=slot; render(g);   /* GN-UNIF 8-jul-2026 */
+    g.bSeq[slot]={step:nat.step,octave:nat.octave,alter:0,clef:nat.clef}; gnPushSF(g,{slot:slot, prev:null}); g.__sel=slot; render(g);   /* GN-UNIF 8-jul-2026 */
   }
   /* ---- toolbar de alteraciones ---- */
   function updToolbar(g){ var tb=g.__tb; if(!tb) return; var active=(!g.__corr && g.__sel!=null && g.bSeq[g.__sel]); var alt=active?g.bSeq[g.__sel].alter:0;
     tb.style.opacity=active?'1':'.4';
     tb.querySelectorAll('[data-a]').forEach(function(b){ var a=b.dataset.a, on=(a==='b'&&alt===-1)||(a==='n'&&alt===0)||(a==='#'&&alt===1);
-      b.style.background=(active&&on)?'linear-gradient(135deg,#d4af37,#b8860b)':'rgba(233,201,106,.04)'; b.style.color=(active&&on)?'#1a1407':'#d8caa6'; }); }
+      b.style.background=(active&&on)?'linear-gradient(135deg,#d4af37,#b8860b)':'rgba(233,201,106,.04)'; b.style.color=(active&&on)?'#1a1407':'#1f2740'; }); }   /* (20-oct-2026, Iago: «no se lee… blanco amarillento») tinta oscura; antes #d8caa6 */
   function toolbarClick(g,a){ if(g.__corr || g.__sel==null || !g.bSeq[g.__sel]) return; var n=g.bSeq[g.__sel];
     if(a==='b') n.alter=Math.max(-2,n.alter-1); else if(a==='#') n.alter=Math.min(2,n.alter+1); else if(a==='n') n.alter=0; render(g); }
   function montarEn(host, g){
@@ -13748,12 +13763,12 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
     var tb=document.createElement('div'); tb.style.cssText='display:flex;align-items:center;gap:10px;margin-top:8px;padding:8px 12px;border:1px solid #e7d9a8;border-radius:10px;background:#faf6ea'; wrap.appendChild(tb); g.__tb=tb;
     tb.appendChild(mkLabel('Alteración de la nota seleccionada:'));
     ['b','n','#'].forEach(function(a){ var b=document.createElement('button'); b.type='button'; b.dataset.a=a; b.textContent=a==='b'?'♭':a==='n'?'♮':'♯';
-      b.style.cssText='width:38px;height:38px;border:1px solid #cbb98a;border-radius:8px;background:rgba(233,201,106,.04);color:#d8caa6;font-size:16px;cursor:pointer'; b.onclick=function(){ toolbarClick(g,a); }; tb.appendChild(b); });
+      b.style.cssText='width:38px;height:38px;border:1px solid #cbb98a;border-radius:8px;background:rgba(233,201,106,.04);color:#1f2740;font-size:16px;cursor:pointer'; b.onclick=function(){ toolbarClick(g,a); }; tb.appendChild(b); });
     if(window.GN_UNIF){ g.__gnUndoBtn=GN_UNIF.undoBtn(null, function(){ gnUndoSF(g); }, true); g.__gnUndoBtn.style.marginLeft='auto'; tb.appendChild(g.__gnUndoBtn); }   /* GN-UNIF 8-jul-2026 */
     render(g);
   }
   function mkLabel(t){ var d=document.createElement('span'); d.style.cssText='font-size:12px;font-weight:800;color:#7a6a3a'; d.textContent=t; return d; }
-  function puntua(g){ try{ var serie=serieOf(g), ok=0; for(var i=0;i<7;i++){ var s=serie[i+1], n=g.bSeq[i]; if(n&&n.step===s.step&&n.octave===s.octave&&n.alter===s.alter) ok++; } return ok/7; }catch(e){ return 0; } }
+  function puntua(g){ try{ var serie=serieOf(g), ok=0; for(var i=0;i<7;i++){ var s=serie[i+1], n=g.bSeq[i]; if(n&&midi(n.step,n.octave,n.alter)===s.midi) ok++; } return ok/7;   /* (20-oct-2026, Iago) cuenta el sonido: clave y enarmonía dan igual */ }catch(e){ return 0; } }
   function corregirVisual(host, g){
     try{
       if(!g) return 0;
@@ -13761,17 +13776,19 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
         host.innerHTML=''; g.__corr=true; g.__sel=null;
         var wrap=document.createElement('div'); wrap.style.cssText='background:#f3f5ff;border:1px solid #dfe3f4;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
         var serie=serieOf(g), ok=0;
-        for(var i=0;i<7;i++){ var s=serie[i+1], n=g.bSeq[i]; var good=n&&n.step===s.step&&n.octave===s.octave&&n.alter===s.alter; if(good) ok++; if(n) n._mark=good?'ok':'bad'; }
+        for(var i=0;i<7;i++){ var s=serie[i+1], n=g.bSeq[i]; var good=!!n&&midi(n.step,n.octave,n.alter)===s.midi; if(good) ok++; if(n) n._mark=good?'ok':'bad'; }
         var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:6px'; cap.innerHTML='Serie de <b style="color:#b8860b">'+nom(serie[0])+serie[0].octave+'</b>'; wrap.appendChild(cap);
         var score=document.createElement('div'); score.style.cssText='position:relative'; wrap.appendChild(score); g.__host=score;
         render(g);
         // solución en azul para huecos vacíos o erróneos, como texto bajo cada compás
         var geo=g.__geo, svg=score.querySelector('svg');
-        if(geo && svg){ for(var j=0;j<7;j++){ var sol=serie[j+1], nn=g.bSeq[j]; var bien=nn&&nn.step===sol.step&&nn.octave===sol.octave&&nn.alter===sol.alter; if(bien) continue;
-          var c=geo.comp[j+1]; if(!c) continue; var lbl=document.createElement('div'); lbl.textContent=nom(sol)+sol.octave;
-          lbl.style.cssText='position:absolute;z-index:7;font-size:11px;font-weight:800;color:#2f6df6;transform:translateX(-50%);white-space:nowrap';
-          try{ var pt=svg.createSVGPoint(); pt.x=c.cx; pt.y=geo.botY+96; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=score.getBoundingClientRect();
-            lbl.style.left=(sp.x-hr.left)+'px'; lbl.style.top=(sp.y-hr.top)+'px'; score.appendChild(lbl); }catch(e){} } }
+        if(geo && svg){ for(var j=0;j<7;j++){ var sol=serie[j+1], nn=g.bSeq[j]; var bien=!!nn&&midi(nn.step,nn.octave,nn.alter)===sol.midi; if(bien) continue;
+          var c=geo.comp[j+1]; if(!c) continue;
+          /* (20-oct-2026) la solución, como texto DENTRO del pentagrama: siempre bajo su compás aunque el dibujo se escale
+             (antes un <div> colocado con la posición de pantalla de ese momento, que podía quedar corrido) */
+          try{ var tx=document.createElementNS('http://www.w3.org/2000/svg','text'); tx.setAttribute('x',SP().xNotaEn(svg,geo,j+1)); tx.setAttribute('y',geo.botY+107); tx.setAttribute('text-anchor','middle');
+            tx.setAttribute('font-family','Arial, Helvetica, sans-serif'); tx.setAttribute('font-size','12'); tx.setAttribute('font-weight','800'); tx.setAttribute('fill','#2f6df6');
+            tx.setAttribute('class','serie-solbadge'); tx.textContent=nom(sol)+sol.octave; svg.appendChild(tx); }catch(e){} } }
         var t=document.createElement('div'); t.style.cssText='text-align:center;margin-top:10px;font-size:12.5px;font-weight:800;color:'+(ok===7?'#22c98a':'#8a6d1a'); t.textContent='Armónicos correctos: '+ok+'/7'+(ok<7?' · la solución va en azul':''); wrap.appendChild(t);
       }
       return puntua(g);
