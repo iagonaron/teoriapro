@@ -60,6 +60,10 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 20-oct 10:22 · Fichas y rediseño · EN CURSO (parto de f80cca7; index.html igual que en 38a3899) · solo index.html ·
+  SERIE ARMÓNICA (ficha, ejercicios libres y el ejercicio de la vista): clave de Fa hasta el Mi4 y de Sol desde el Si3; en la
+  ficha la cabeza va donde se pulsa (antes un Re4 caía como Do5); cada nota recuerda su clave; al corregir cuenta el sonido
+  (la clave y la enarmonía dan igual) y los botones ♭ ♮ ♯ de la ficha se leen. Encargo de Iago para su clase de hoy.
 - 20-oct 04:27 · Blues (Cowork; encargo de Iago para su clase de hoy) · HECHO · commit 1a8eb91 (EN CURSO en 7c40cd5, parto de 38a3899) · solo
   intros/serie-armonica/escenas.js: (1) el cartel del principio («VÍDEO · Cualidades del sonido», sin enlace) pasa a
   «VÍDEO · Acústica» y se puede pulsar: abre LA CABAÑA (https://acustica.gp.lmathome.es/prueba.html) en pestaña nueva y
