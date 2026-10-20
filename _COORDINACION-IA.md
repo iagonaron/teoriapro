@@ -60,10 +60,19 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 20-oct 10:22 · Fichas y rediseño · EN CURSO (parto de f80cca7; index.html igual que en 38a3899) · solo index.html ·
-  SERIE ARMÓNICA (ficha, ejercicios libres y el ejercicio de la vista): clave de Fa hasta el Mi4 y de Sol desde el Si3; en la
-  ficha la cabeza va donde se pulsa (antes un Re4 caía como Do5); cada nota recuerda su clave; al corregir cuenta el sonido
-  (la clave y la enarmonía dan igual) y los botones ♭ ♮ ♯ de la ficha se leen. Encargo de Iago para su clase de hoy.
+- 20-oct 10:26 · Fichas y rediseño · HECHO · commit 15ef491 (EN CURSO en d4e5593, parto de f80cca7; index.html de 38a3899) ·
+  solo index.html (+65 −48) · SERIE ARMÓNICA (ficha, ejercicios libres y el ejercicio de la vista). (1) En la ficha, el mapa
+  «continuo» de WAVE12 PROMEDIABA las alturas que estaban en las dos claves (Si3…Do5) y caían entre los pentagramas: un Re4
+  pulsado en clave de Sol se escribía como Do5 y al subir del La3 en Fa salía una nota con muchas líneas. Ahora un solo mapa
+  (SERIE_PURE.ymapDos) con Fa hasta el Mi4 y Sol desde el Si3, cada altura en su sitio y con su clave. (2) Cada nota guarda
+  la clave en la que se puso (bSeq[i].clef) y se dibuja en ella (drawGrand: it.clef; sin clave, la regla de siempre <Do4 = Fa).
+  (3) Al corregir cuenta el SONIDO (midi): Re4 en Fa = Re4 en Sol y la enarmonía vale (Do = Si♯). (4) Ficha: ♭ ♮ ♯ sin
+  seleccionar en tinta oscura (#1f2740; antes #d8caa6, blanco sobre blanco). (5) La solución en azul, texto dentro del SVG
+  bajo su nota (antes un <div> con la posición de pantalla). Banco 35/35 con clics de ratón de verdad, con y sin piel.
+  Iago: «quería poner un Re4 y al pulsar me marca la nota Do5» · «quiero poder subir mínimo hasta el Do4 en la clave de Fa,
+  incluso al Re4 o al Mi4» · «si el alumno lo marca en clave de Fa, que aparezca dibujado en clave de Fa… que no dé error» ·
+  «si en vez de un si sostenido pone un do, también lo daría por bueno». Copia de antes: APPs/_PARA BORRAR/
+  20-oct-2026-antes-serie-armonica-GP/index.html. Para deshacer: git revert 15ef491. Espejo de Dropbox igual que GitHub.
 - 20-oct 04:27 · Blues (Cowork; encargo de Iago para su clase de hoy) · HECHO · commit 1a8eb91 (EN CURSO en 7c40cd5, parto de 38a3899) · solo
   intros/serie-armonica/escenas.js: (1) el cartel del principio («VÍDEO · Cualidades del sonido», sin enlace) pasa a
   «VÍDEO · Acústica» y se puede pulsar: abre LA CABAÑA (https://acustica.gp.lmathome.es/prueba.html) en pestaña nueva y
