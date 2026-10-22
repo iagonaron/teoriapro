@@ -9815,6 +9815,23 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
   .fp-float-x:focus-visible{outline:2px solid #fff;outline-offset:2px}
   .fp-float-x.seguro{border-color:rgba(255,110,110,.7);background:rgba(255,80,80,.16);color:#ffc9c9}
   @media(max-width:620px){ .fp-float-x{width:calc(100% + 14px);margin:7px -7px 0;padding:6px 3px;font-size:11px} }
+  /* (22-oct-2026, Iago: «un resumen de los títulos de ejercicios que he ido añadiendo… como si estuviese sumando cosas a un carrito
+     de la compra») encima del número, la lista de la ficha en su orden (como «Revisar ficha»): tocar un título lleva a ese
+     ejercicio; ✕ lo quita. En el móvil, solo el contador. Para quitarlo: #fpCarro, estas reglas y fpPintaCarro. */
+  .fp-float.con-carro{width:200px;min-width:0;padding:10px 11px 12px}
+  .fp-carro{max-height:min(46vh,340px);overflow:auto;margin:0 0 10px;padding:0 0 9px;border-bottom:1px solid rgba(212,175,55,.28);text-align:left}
+  .fp-carro[hidden]{display:none}
+  .fp-carro-it{display:flex;align-items:center;gap:7px;padding:3px 0}
+  .fp-carro-it .i{flex:none;width:19px;height:19px;border-radius:5px;background:rgba(212,175,55,.18);color:#e9c96a;font-size:11px;font-weight:900;display:inline-flex;align-items:center;justify-content:center}
+  .fp-carro-it .t{flex:1;min-width:0;margin:0;padding:0;border:0;background:none;color:#f3e6bd;font-family:inherit;font-size:12.5px;font-weight:600;line-height:1.3;text-align:left;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;cursor:pointer}
+  .fp-carro-it .t:hover{color:#fff;text-decoration:underline}
+  .fp-carro-it .x{flex:none;width:20px;height:20px;margin:0;padding:0;border-radius:5px;border:1px solid rgba(255,110,110,.38);background:transparent;color:#ff9b9b;font-family:inherit;font-size:11px;line-height:1;cursor:pointer}
+  .fp-carro-it .x:hover{background:rgba(255,80,80,.16)}
+  .fp-ej.fp-ej-destello{outline:2px solid #e9c96a;outline-offset:3px}
+  .fp-float.carro-plegable .n,.fp-float.carro-plegable .lbl{cursor:pointer}   /* tocar el número pliega o despliega la lista */
+  .fp-float.carro-plegable.con-carro .lbl::after{content:' ▾'}
+  .fp-float.carro-plegable:not(.con-carro) .lbl::after{content:' ▴'}
+  @media(max-width:620px){ .fp-float.con-carro{width:auto;min-width:84px;padding:9px 13px} .fp-carro{display:none!important} .fp-float .lbl::after{content:none!important} }
   .fp-cat{display:grid;grid-template-columns:1fr;gap:24px;align-items:start}
   @media(min-width:920px){ .fp-cat{grid-template-columns:1.65fr 1fr} }
   .fp-col-pro,.fp-col-rep{display:flex;flex-direction:column;gap:13px;min-width:0}
@@ -10054,6 +10071,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
       <div class="fp-cat" id="fpCat"></div>
     </section>
     <div class="fp-float" id="fpFloat" title="Ejercicios en la ficha">
+      <!-- (22-oct-2026, Iago) «como si estuviese sumando cosas a un carrito de la compra»: lo que hay en la ficha (fpPintaCarro) -->
+      <div class="fp-carro" id="fpCarro" hidden></div>
       <div class="n"><b id="fpFloatN">0</b><span>/5</span></div>
       <div class="lbl">en la ficha</div>
       <!-- (6-oct-2026, Iago) «Limpiar ficha, quiero que esté cerca de donde está el crafteo»: con el contador, siempre a mano -->
@@ -10243,12 +10262,41 @@ function pintaCat(){
 
   host.appendChild(colP); host.appendChild(colR);
 }
+/* (22-oct-2026, Iago: «que pueda ver las que he ido cargando») EL CARRITO del contador flotante: los ejercicios de la ficha en
+   su orden; tocar un título lleva a ese ejercicio en «Revisar ficha» (con un destello); ✕ lo quita (salvo ya enviada). */
+function fpCarroPlegado(){ try{ return localStorage.getItem('fp_carro_plegado')==='1'; }catch(e){ return false; } }
+function fpPintaCarro(){
+  var c=el('fpCarro'), box=el('fpFloat'); if(!c) return;
+  var n=FP.ejercicios.length, pleg=fpCarroPlegado();
+  c.hidden=!n || pleg; if(box){ box.classList.toggle('con-carro', !!n && !pleg); box.classList.toggle('carro-plegable', !!n); }
+  if(box && !box._carro){ box._carro=1;   /* tocar el número (o «en la ficha») pliega o despliega la lista; se recuerda en este aparato */
+    [box.querySelector('.n'), box.querySelector('.lbl')].forEach(function(z){ if(!z) return; z.title='Mostrar u ocultar la lista';
+      z.addEventListener('click', function(){ if(!FP.ejercicios.length) return; try{ localStorage.setItem('fp_carro_plegado', fpCarroPlegado()?'0':'1'); }catch(e){} fpPintaCarro(); }); }); }
+  if(!n){ c.innerHTML=''; return; }
+  c.innerHTML=FP.ejercicios.map(function(e,i){
+    var t=fpEsc(e.label||'Ejercicio');
+    return '<div class="fp-carro-it"><span class="i">'+(i+1)+'</span>'+
+      '<button type="button" class="t" data-i="'+i+'" title="'+t+' · ver en la ficha">'+t+'</button>'+
+      (FP.enviado?'':'<button type="button" class="x" data-i="'+i+'" title="Quitar de la ficha" aria-label="Quitar '+t+'">✕</button>')+'</div>';
+  }).join('');
+  c.querySelectorAll('.t').forEach(function(b){ b.addEventListener('click', function(){
+    var filas=Array.prototype.filter.call(el('fpLista').children, function(x){ return x.classList.contains('fp-ej'); });
+    var r=filas[+b.dataset.i]; if(!r) return;
+    try{ r.scrollIntoView({ behavior:'smooth', block:'start' }); }catch(eS){ r.scrollIntoView(); }
+    r.classList.add('fp-ej-destello'); setTimeout(function(){ r.classList.remove('fp-ej-destello'); }, 1500);
+  }); });
+  c.querySelectorAll('.x').forEach(function(b){ b.addEventListener('click', function(){
+    if(FP.enviado) return; FP.ejercicios.splice(+b.dataset.i, 1); pintaLista();
+  }); });
+  c.scrollTop=c.scrollHeight;   /* lo último añadido, a la vista */
+}
 function pintaLista(){
   var host=el('fpLista'); host.innerHTML='';
   el('fpCount').textContent=FP.ejercicios.length;
   var ff=el('fpFloatN'); if(ff) ff.textContent=FP.ejercicios.length;
   // (Iago 16-sep-2026) objetivo 5 ejercicios: VERDE justo en 5; por encima, ámbar (se puede seguir hasta 10)
   var fbox=el('fpFloat'); if(fbox){ fbox.classList.toggle('full', FP.ejercicios.length===5); fbox.classList.toggle('over', FP.ejercicios.length>5); }
+  try{ fpPintaCarro(); }catch(eC){ console.warn('[fichaspro] carrito', eC); }   /* (22-oct-2026) */
   /* (6-oct-2026) «Limpiar ficha» del contador: solo con algo en la ficha, y siempre de vuelta a su estado normal */
   var blx=el('fpLimpiar'); if(blx){ blx.hidden=!FP.ejercicios.length; if(blx._arm){ clearTimeout(blx._arm); blx._arm=null; } blx.classList.remove('seguro'); blx.textContent='🧹 Limpiar ficha'; }
   var v=el('fpValor');

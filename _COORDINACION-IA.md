@@ -75,6 +75,17 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 22-oct 12:30 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit;
+  esperé al HECHO de «C1 · 4 Sabores» y parto de su 98e5f82, con los tests 7.1 y 7.2) · solo index.html (+48) · GENERADOR DE
+  FICHAS: EL CARRITO DEL CONTADOR FLOTANTE. Iago: «hay una ventanita flotante que pone cuántos ejercicios llevo… me gustaría que
+  ahí estuviese una especie de resumen de los títulos de ejercicios que he ido añadiendo… como si estuviese sumando cosas a un
+  carrito de la compra». Dentro de #fpFloat, encima del número, #fpCarro con los ejercicios de la ficha en su orden (como
+  «Revisar ficha»): tocar un título lleva a ese ejercicio (con destello, .fp-ej-destello); ✕ lo quita (no si ya se envió). Tocar
+  el número (o «en la ficha ▾/▴») pliega o despliega la lista; se recuerda en el aparato (localStorage fp_carro_plegado). Caja
+  de 200 px con lista; vacía, la de siempre (114×71); en el móvil (≤620 px), solo el contador. Lo pinta fpPintaCarro() desde
+  pintaLista(). En elemental (teoriaathome) no hace falta: su «Ficha de esta semana» (la cesta que acompaña el scroll) ya lista
+  los tipos añadidos. Copia de antes: APPs/_PARA BORRAR/22-oct-2026-antes-carrito-del-generador/index.html. Para quitarlo:
+  #fpCarro, las reglas .fp-carro y fpPintaCarro (y su llamada). Para deshacer: git revert de este commit.
 - 22-oct 12:25 · C1 · 4 Sabores · HECHO · en este mismo commit, junto a index.html (EN CURSO en 0f0e797; parto de 04ccb49) ·
   solo index.html (+44 −0) · TIPO TEST AFROLATIN (unidad 7, Géneros afrolatinos). Iago (22-oct): preguntas tipo test del Latin
   en dos bloques, sin preguntas de escuchar, y «me parecen bien, son muchísimas… dejar algunas para las fichas… y otras para
