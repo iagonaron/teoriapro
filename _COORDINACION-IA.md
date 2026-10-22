@@ -59,7 +59,24 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   la primera en el menú de «Tonalidades» (4 vídeos, como en GE; 29-sep) y también la abre el cartel «▶ La tonalidad»
   de los vídeos de escalas.
 
+- (22-oct, Fichas y rediseño) NORMA DEL TIPO TEST (si añades o cambias preguntas tipo test, p. ej. las del Latin): el
+  generador no repite una pregunta ni en la misma ficha ni en la siguiente (ver el registro del 22-oct 11:50). (1) Las
+  preguntas nuevas van en BANCO, bloque «TIPO TEST · preguntas por unidad», con el formato de siempre { q:'enunciado',
+  op:['CORRECTA','distractor','distractor'] }, y si es un tramo nuevo, su tarjeta en CATALOGO ({ key:'test_7_1',
+  tramo:'7.1', …, test:true }): la norma las cubre sola. (2) La norma reconoce cada pregunta por su ENUNCIADO (q): que
+  sea único. Si varias preguntas comparten enunciado (p. ej. «¿Qué género suena?» con audios distintos), diferéncialo en
+  el texto o avisa a «Fichas y rediseño». Cambiar el texto de una pregunta que ya salió hace que cuente como nueva. (3)
+  No toques FP_TEST_NORMA, fpGeneraTest, fpTestCargarUsadas, fpTestAviso ni el 2.º parámetro de
+  TEST_MOTOR.generar(tramo, pen) (si cambias generar, conserva cómo ordena por coste). (4) Un formato nuevo con otro
+  motor (no TEST_MOTOR) solo entra en la norma si su ejercicio lleva _test:true y qs:[{q:…}] y se genera con
+  fpGenera(key, pen) eligiendo por coste; si no, avisa. (5) Lo de las fichas enviadas lo da
+  suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
+
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 22-oct 12:05 · Fichas y rediseño · HECHO · solo este fichero · Iago pegó el SQL de la norma del tipo test:
+  suite_ficha_test_usadas(p_token) ya está en Supabase y comprobada (solo lectura, la puede llamar el generador; con un
+  envío que no existe responde «no_encontrada»). Desde ahora el generador ya no repite preguntas de la ficha anterior.
+  Añadida arriba, en «Dependencias», la nota para quien añada preguntas tipo test (el Latin).
 - 22-oct 11:50 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (EN CURSO en 0875918; parto de 9e638f0) ·
   solo index.html (+85 −11) · NORMA DEL TIPO TEST: NINGUNA PREGUNTA REPETIDA NI EN LA MISMA FICHA NI EN LA SIGUIENTE. Iago: «si
   yo meto dos preguntas tipo test sobre acústica 2.1, que ninguna de las preguntas salga repetida… cuando le dé a generar ficha,
