@@ -60,6 +60,12 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 22-oct 11:35 · Fichas y rediseño · EN CURSO · solo index.html · NORMA DE NO REPETIR PREGUNTAS TIPO TEST. Iago: «que ninguna de
+  las preguntas salga repetida… dentro de una misma ficha… y la semana siguiente lo quiero evitar». Toco el motor del tipo test
+  (TEST_MOTOR.generar: elegir las preguntas con preferencia), fpGeneraSinRepetir / regenerar / el refuerzo (fpAsegurarRefuerzo y
+  su 🔁) y la carga del contexto del generador (una función nueva de Supabase, solo lectura, con lo que salió en las fichas ya
+  enviadas del curso). NO toco BANCO (las preguntas): si otra conversación añade o cambia preguntas o tramos (p. ej. las del
+  Latin), la norma los cubre sola; subid encima de la última versión.
 - 20-oct 19:25 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit;
   parto de e0d4fce, index.html de 0f56012) · solo index.html (+21 −1) · MODOS POR NOTAS NETAS. Iago: «ya sea que pones la
   armadura que se espera y la alteración que lo arregla… como el caso de que… añadiendo una alteración o quitándola, las notas
