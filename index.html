@@ -10260,7 +10260,7 @@ function pintaLista(){
       var row=document.createElement('div'); row.className='fp-ej';
       row.innerHTML='<div class="fp-ej-n">'+(i+1)+'</div>'+
         '<div><div class="fp-ej-tipo">'+e.label+'</div>'+
-        '<div class="fp-ej-enun">'+fpEnun(e)+'</div></div>'+
+        '<div class="fp-ej-enun">'+fpEnun(e)+'</div>'+fpTestAvisoHtml(fpTestAviso(e.spec, i, -1, false))+'</div>'+   /* (22-oct-2026) */
         '<div class="fp-ej-btns">'+
           '<button class="fp-mini" data-a="re" data-i="'+i+'" type="button" title="Regenerar variante">🔁</button>'+
           '<button class="fp-mini rojo" data-a="x" data-i="'+i+'" type="button" title="Quitar">✕</button>'+
@@ -10759,8 +10759,8 @@ function fpMotorDe(spec){
 }
 window.__fpMotorDe=fpMotorDe;   /* hook de verificación */
 // mapa key -> cómo generar
-function fpGenera(key){
-  if(key.indexOf('test_')===0){ var ct=CATALOGO.find(function(x){return x.key===key;}); return (window.TEST_MOTOR&&ct)?window.TEST_MOTOR.generar(ct.tramo):null; }
+function fpGenera(key, pen){   /* (22-oct-2026) pen: solo el tipo test (norma de no repetir) */
+  if(key.indexOf('test_')===0){ var ct=CATALOGO.find(function(x){return x.key===key;}); return (window.TEST_MOTOR&&ct)?window.TEST_MOTOR.generar(ct.tramo, pen):null; }
   var M=window.MODOS_MOTOR;
   if(key==='modos')        return M?M.nuevo():null;
   if(key==='escala_mayor') return M?M.nuevoEscala('mayor'):null;
@@ -10832,7 +10832,69 @@ function fpCasosDe(sp){
     return [JSON.stringify(sp)];
   }catch(e){ return []; }
 }
+/* (22-oct-2026, Iago: «si yo meto dos preguntas tipo test sobre acústica 2.1, que ninguna de las preguntas salga repetida. Pero
+   es que además, cuando le dé a generar ficha… que se baneen… al menos durante la siguiente semana… Así que sea una norma»)
+   NORMA DEL TIPO TEST. Coste de repetir una pregunta (por su texto, en cualquier tramo): 1000 si ya está en esta ficha; 100 si
+   salió en la ficha anterior del curso (o en una enviada en los últimos 9 días); de 8 a 1 si salió antes (más antigua, menos);
+   0 si nunca salió. Se eligen las que menos cuestan: primero las nuevas, luego las más antiguas; si el banco no da para más,
+   repite lo menos malo y el ejercicio lo avisa con ⚠. Lo de las fichas enviadas lo da suite_ficha_test_usadas (solo lectura;
+   sin ella, solo la norma dentro de la ficha). El refuerzo sigue la misma norma y, si choca con la ficha, se rehace él (la
+   ficha manda). Para quitarlo: FP_TEST_NORMA=false. */
+var FP_TEST_NORMA=true;
+function fpEsTest(key){ return /^test_/.test(String(key||'')); }
+async function fpTestCargarUsadas(sb){
+  FP.testUsadas=null; FP.testUltima=null;
+  if(!FP_TEST_NORMA || !sb || !FP.token) return;
+  var r=await sb.rpc('suite_ficha_test_usadas', { p_token:FP.token });
+  var d=r&&r.data; if(!d || d.ok!==true || !Array.isArray(d.usadas)) return;   /* sin la función (SQL sin pegar): solo dentro de la ficha */
+  var fichas=[], vista={};
+  d.usadas.forEach(function(u){ var k=u.numero+'|'+u.enviada_en; if(!vista[k]){ vista[k]=1; fichas.push({ k:k, t:Date.parse(u.enviada_en)||0, numero:u.numero }); } });
+  fichas.sort(function(a,b){ return b.t-a.t; });
+  var rango={}; fichas.forEach(function(f,i){ rango[f.k]=i+1; });
+  var m=Object.create(null), ahora=Date.now();
+  d.usadas.forEach(function(u){ if(!u || !u.q) return; var k=u.numero+'|'+u.enviada_en, r=rango[k]||99, dias=(ahora-(Date.parse(u.enviada_en)||0))/864e5;
+    var c=(r===1 || dias<=9) ? 100 : Math.max(1, 10-Math.min(r,9));
+    if(!(u.q in m) || c>m[u.q]) m[u.q]=c; });
+  FP.testUsadas=m; FP.testUltima=fichas.length ? fichas[0].numero : null;
+}
+function fpTestEnFicha(salvo, refSalvo, conRef){   /* textos de las preguntas tipo test que ya están en la ficha */
+  var ya=Object.create(null);
+  FP.ejercicios.forEach(function(e,k){ if(k!==salvo && e.spec && e.spec._test) (e.spec.qs||[]).forEach(function(q){ ya[q.q]=1; }); });
+  if(conRef) (FP.refuerzo||[]).forEach(function(e,k){ if(k!==refSalvo && e.spec && e.spec._test) (e.spec.qs||[]).forEach(function(q){ ya[q.q]=1; }); });
+  return ya;
+}
+function fpTestCoste(ya, actual){
+  var u=FP.testUsadas||Object.create(null), act=Object.create(null);
+  ((actual && actual.qs) || []).forEach(function(q){ act[q.q]=1; });   /* 🔁: mejor otras (si las hay igual de buenas) */
+  return function(q){ return (ya[q]?1000:0) + ((q in u)?u[q]:0) + (act[q]?50:0); };
+}
+/* un ejercicio tipo test con la norma · salvo: el ejercicio de la ficha que se rehace (-1 ninguno) · refSalvo/conRef: en el refuerzo */
+function fpGeneraTest(key, salvo, refSalvo, conRef, actual){
+  return fpGenera(key, fpTestCoste(fpTestEnFicha(salvo, refSalvo, conRef), actual));
+}
+/* el aviso de un ejercicio tipo test que no ha podido cumplir la norma (el banco no da para más) */
+function fpTestAviso(spec, salvo, refSalvo, conRef){
+  if(!FP_TEST_NORMA || !(spec && spec._test && spec.qs)) return '';
+  var ya=fpTestEnFicha(salvo, refSalvo, conRef), u=FP.testUsadas||Object.create(null), nF=0, nA=0;
+  spec.qs.forEach(function(q){ if(ya[q.q]) nF++; else if((q.q in u) && u[q.q]>=100) nA++; });
+  var b=window.BANCO_TEST && window.BANCO_TEST[spec.tramo], nb=b && b.preguntas ? b.preguntas.length : 0;
+  if(nF) return nF+(nF>1?' preguntas se repiten':' pregunta se repite')+' en esta ficha: el banco '+spec.tramo+' tiene '+nb+' y no da para más';
+  if(nA) return nA+(nA>1?' preguntas ya salieron':' pregunta ya salió')+' la semana pasada'+(FP.testUltima!=null?' (Ficha '+FP.testUltima+')':'')+': el banco '+spec.tramo+' tiene '+nb+' y no da para más';
+  return '';
+}
+function fpTestAvisoHtml(t){ return t ? '<div class="fp-ej-aviso" style="margin-top:4px;font-size:12px;font-weight:700;color:#e0b060">⚠ '+fpEsc(t)+'</div>' : ''; }
+/* la ficha manda: el refuerzo tipo test que comparte alguna pregunta con la ficha (o con otro refuerzo) se rehace */
+function fpTestAjustaRefuerzo(){
+  if(!FP_TEST_NORMA || !FP.refuerzo) return;
+  FP.refuerzo.forEach(function(e,k){
+    if(!(e && e.spec && e.spec._test)) return;
+    var ya=fpTestEnFicha(-1, k, true);
+    if(!(e.spec.qs||[]).some(function(q){ return ya[q.q]; })) return;
+    var it=fpGeneraTest(e.key, -1, k, true, null); if(it) e.spec=clon(it);
+  });
+}
 function fpGeneraSinRepetir(key, salvo){
+  if(FP_TEST_NORMA && fpEsTest(key)){ var e0=FP.ejercicios[salvo]; return fpGeneraTest(key, salvo, -1, false, e0 && e0.spec); }   /* (22-oct-2026) */
   var ya={}, hay=false;
   FP.ejercicios.forEach(function(e,k){ if(k!==salvo && e.key===key && !(e.spec && e.spec._examen)){ fpCasosDe(e.spec).forEach(function(c){ ya[c]=1; hay=true; }); } });
   var mejor=null, mejorN=1e9;
@@ -10854,6 +10916,7 @@ function anadir(key){
   var it=fpGeneraSinRepetir(key, -1);   /* (7-oct-2026) opcional: sin repetir caso entre ejercicios del mismo tipo */
   if(!it){ status('El motor de este tipo no está disponible.', 'err'); return; }
   FP.ejercicios.push({ key:key, label:fpLabelDe(key), spec:clon(it) });
+  try{ fpTestAjustaRefuerzo(); }catch(eT){}   /* (22-oct-2026) norma del tipo test */
   status('','');
   pintaLista();
 }
@@ -10862,8 +10925,9 @@ function regenerar(i){
   if(e.spec && e.spec._examen) return;
   var firma=function(sp){ return sp ? ((sp._mode||sp.tipo||'')+'·'+((sp.tonica&&sp.tonica.nom)||'')) : ''; };
   var prev=firma(e.spec), it=null, n=0;
-  do{ it=fpGeneraSinRepetir(e.key, i); n++; }while(it && firma(it)===prev && n<30);   /* (7-oct-2026) opcional: ídem */
-  if(it){ e.spec=clon(it); pintaLista(); }
+  if(FP_TEST_NORMA && fpEsTest(e.key)) it=fpGeneraSinRepetir(e.key, i);   /* (22-oct-2026) tipo test: con la norma, una vez basta */
+  else do{ it=fpGeneraSinRepetir(e.key, i); n++; }while(it && firma(it)===prev && n<30);   /* (7-oct-2026) opcional: ídem */
+  if(it){ e.spec=clon(it); try{ fpTestAjustaRefuerzo(); }catch(eT){} pintaLista(); }
 }
 function previsualizar(i){
   var e=FP.ejercicios[i]; if(!e) return;
@@ -11362,6 +11426,7 @@ function abrirPanel(numero, token, opcional){
   if(FP.token){ (async function(){ try{
     var n=0; while(!(window.supabase && window.supabase.createClient) && n<80){ await new Promise(function(r){setTimeout(r,100);}); n++; }
     var sb=fpSb(); if(!sb) return;
+    try{ await fpTestCargarUsadas(sb); if(FP.ejercicios.length) pintaLista(); }catch(eT){ console.warn('[fichaspro] tipo test usadas', eT); }   /* (22-oct-2026) */
     /* (3-oct-2026) contexto v2: además, los alumnos de PAPEL (refuerzo con sus deslizadores y lista para el PDF con
        nombres). Si la base aún no tiene la función nueva, se usa la de siempre. */
     var r=await sb.rpc('suite_ficha_profe_contexto_v2', { p_token:FP.token });
@@ -11377,8 +11442,9 @@ function fpCtxTitulo(t){ if(!t) return ''; var nf=FP.ctx&&FP.ctx.ultima?('Ficha 
 function fpAsegurarRefuerzo(){
   if(!FP.ctx||!Array.isArray(FP.ctx.refuerzo)) return;
   if(FP.refuerzo) return;
-  FP.refuerzo=FP.ctx.refuerzo.map(function(r){ var it=fpGenera(r.key); if(!it) return null;
-    return { key:r.key, label:fpLabelDe(r.key)||r.label||r.key, alumnos:r.alumnos||[], spec:clon(it), refuerzo:true }; }).filter(Boolean);
+  FP.refuerzo=[];   /* (22-oct-2026) uno a uno: el tipo test, con la norma (sin chocar con la ficha ni con el refuerzo ya hecho) */
+  FP.ctx.refuerzo.forEach(function(r){ var it=(FP_TEST_NORMA && fpEsTest(r.key)) ? fpGeneraTest(r.key, -1, -1, true, null) : fpGenera(r.key); if(!it) return;
+    FP.refuerzo.push({ key:r.key, label:fpLabelDe(r.key)||r.label||r.key, alumnos:r.alumnos||[], spec:clon(it), refuerzo:true }); });
 }
 /* (Iago 16-sep-2026) HISTORIAL por tipo: «d / N fichas» (digitales enviadas por key + en papel por el texto del PDF). */
 var FP_PAPEL_RE={
@@ -11418,7 +11484,7 @@ function pintaRefuerzo(host){
     var row=document.createElement('div'); row.className='fp-ej fp-ej-ref';
     row.innerHTML='<div class="fp-ej-n">★</div>'+
       '<div><div class="fp-ej-tipo">'+e.label+'</div>'+
-      '<div class="fp-ej-enun">'+fpEnun(e)+'</div>'+
+      '<div class="fp-ej-enun">'+fpEnun(e)+'</div>'+fpTestAvisoHtml(fpTestAviso(e.spec, -1, i, true))+   /* (22-oct-2026) */
       '<div class="fp-ref-al"><span class="fp-ref-lbl">Para:</span>'+e.alumnos.map(function(a){ return '<span class="fp-ref-chip'+(a.papel?' fp-ref-papel':'')+'" title="'+fpEsc(a.ficha||'')+' · '+fpEsc(a.pct)+' %'+(a.papel?' · va en papel':'')+'">'+(a.papel?'📄 ':'')+fpEsc(a.nombre)+'</span>'; }).join('')+'</div></div>'+
       '<div class="fp-ej-btns">'+
         '<button class="fp-mini" data-a="re" data-i="'+i+'" type="button" title="Regenerar variante">🔁</button>'+
@@ -11436,7 +11502,9 @@ function pintaRefuerzo(host){
       var i=+b.dataset.i, a=b.dataset.a; var e=FP.refuerzo[i]; if(!e) return;
       if(a==='x'){ FP.refuerzo.splice(i,1); pintaLista(); }
       else { var firma=function(sp){ return sp ? ((sp._mode||sp.tipo||'')+'·'+((sp.tonica&&sp.tonica.nom)||'')) : ''; };
-             var prev=firma(e.spec), it=null, n=0; do{ it=fpGenera(e.key); n++; }while(it && firma(it)===prev && n<30);
+             var prev=firma(e.spec), it=null, n=0;
+             if(FP_TEST_NORMA && fpEsTest(e.key)) it=fpGeneraTest(e.key, -1, i, true, e.spec);   /* (22-oct-2026) norma del tipo test */
+             else do{ it=fpGenera(e.key); n++; }while(it && firma(it)===prev && n<30);
              if(it){ e.spec=clon(it); pintaLista(); } }
     });
   });
@@ -14652,9 +14720,15 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
 
   function shuffle(a){ a=a.slice(); for(var i=a.length-1;i>0;i--){ var j=Math.floor(Math.random()*(i+1)); var t=a[i]; a[i]=a[j]; a[j]=t; } return a; }
 
-  function generar(tramo){
+  /* (22-oct-2026, Iago: «que ninguna de las preguntas salga repetida… y la semana siguiente lo quiero evitar») generar(tramo,
+     pen): si llega pen(texto) = lo que «cuesta» repetir cada pregunta (ver FP_TEST_NORMA en el generador de fichas), se
+     eligen las 2 que menos cuestan, a suertes entre las que cuestan lo mismo. Sin pen (prácticas, simulaciones), como siempre. */
+  function generar(tramo, pen){
     var T=BANCO[tramo]; if(!T) return null;
-    var idx=shuffle(T.preguntas.map(function(_,i){return i;})).slice(0, Math.min(2, T.preguntas.length));
+    var orden=shuffle(T.preguntas.map(function(_,i){return i;}));
+    if(typeof pen==='function'){ var cuesta={}; orden.forEach(function(i){ cuesta[i]=+pen(T.preguntas[i].q)||0; });
+      orden=orden.map(function(i,k){ return { i:i, k:k }; }).sort(function(a,b){ return (cuesta[a.i]-cuesta[b.i]) || (a.k-b.k); }).map(function(o){ return o.i; }); }
+    var idx=orden.slice(0, Math.min(2, T.preguntas.length));
     var qs=idx.map(function(i){
       var p=T.preguntas[i];
       var order=shuffle([0,1,2]);

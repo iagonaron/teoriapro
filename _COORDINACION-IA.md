@@ -60,12 +60,22 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   de los vídeos de escalas.
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 22-oct 11:35 · Fichas y rediseño · EN CURSO · solo index.html · NORMA DE NO REPETIR PREGUNTAS TIPO TEST. Iago: «que ninguna de
-  las preguntas salga repetida… dentro de una misma ficha… y la semana siguiente lo quiero evitar». Toco el motor del tipo test
-  (TEST_MOTOR.generar: elegir las preguntas con preferencia), fpGeneraSinRepetir / regenerar / el refuerzo (fpAsegurarRefuerzo y
-  su 🔁) y la carga del contexto del generador (una función nueva de Supabase, solo lectura, con lo que salió en las fichas ya
-  enviadas del curso). NO toco BANCO (las preguntas): si otra conversación añade o cambia preguntas o tramos (p. ej. las del
-  Latin), la norma los cubre sola; subid encima de la última versión.
+- 22-oct 11:50 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (EN CURSO en 0875918; parto de 9e638f0) ·
+  solo index.html (+85 −11) · NORMA DEL TIPO TEST: NINGUNA PREGUNTA REPETIDA NI EN LA MISMA FICHA NI EN LA SIGUIENTE. Iago: «si
+  yo meto dos preguntas tipo test sobre acústica 2.1, que ninguna de las preguntas salga repetida… cuando le dé a generar ficha,
+  que se baneen… al menos durante la siguiente semana… Así que sea una norma». Cada pregunta (por su texto, de cualquier tramo)
+  tiene un coste: 1000 si ya está en esta ficha; 100 si salió en la ficha anterior del curso (o en una enviada en los últimos 9
+  días); de 8 a 1 si salió antes (más antigua, menos); 0 si nunca salió. TEST_MOTOR.generar(tramo, pen) elige las 2 que menos
+  cuestan (a suertes entre iguales; sin pen, como siempre). fpGeneraSinRepetir / regenerar (🔁: mejor otras) / el refuerzo (nace
+  con la norma; si la ficha le quita sus preguntas, se rehace él: la ficha manda) usan fpGeneraTest. Si el banco no da para más,
+  repite lo menos malo y el ejercicio lo avisa con ⚠ en la lista del generador. Lo de las fichas enviadas lo da la función nueva
+  suite_ficha_test_usadas(p_token) (solo lectura; SQL que pega Iago:
+  DIARIO PROFESOR (netlify diariodeiagocmus)/SQL-BD/PEGAR-22-oct-2026--teoria-pro-tipo-test-sin-repetir.sql); sin ella, solo la
+  norma dentro de la ficha. NO toca BANCO: las preguntas y tramos nuevos (p. ej. los del Latin) entran solos en la norma. La
+  ficha que viaja a Supabase no cambia (ni campos nuevos). Banco con las fichas 3–6 de verdad: antes, 21 preguntas de la ficha
+  anterior que se podían evitar en 10 fichas; ahora 0, y 0 dentro de la ficha. Copia de antes:
+  APPs/_PARA BORRAR/22-oct-2026-antes-tipo-test-sin-repetir/index.html. Para quitarlo: FP_TEST_NORMA=false. Para deshacer: git
+  revert de este commit.
 - 20-oct 19:25 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit;
   parto de e0d4fce, index.html de 0f56012) · solo index.html (+21 −1) · MODOS POR NOTAS NETAS. Iago: «ya sea que pones la
   armadura que se espera y la alteración que lo arregla… como el caso de que… añadiendo una alteración o quitándola, las notas
