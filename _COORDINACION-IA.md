@@ -75,8 +75,18 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
-- 22-oct 12:15 · C1 · 4 Sabores · EN CURSO · parto de 04ccb49 · voy a tocar solo index.html (BANCO: tramos '7.1' y '7.2';
-  CATALOGO: test_7_1 y test_7_2) y este fichero · TIPO TEST AFROLATIN de la unidad 7.
+- 22-oct 12:25 · C1 · 4 Sabores · HECHO · en este mismo commit, junto a index.html (EN CURSO en 0f0e797; parto de 04ccb49) ·
+  solo index.html (+44 −0) · TIPO TEST AFROLATIN (unidad 7, Géneros afrolatinos). Iago (22-oct): preguntas tipo test del Latin
+  en dos bloques, sin preguntas de escuchar, y «me parecen bien, son muchísimas… dejar algunas para las fichas… y otras para
+  ese portal abreviado». BANCO: '7.1' = Afrolatin I (cumbia, merengue, bolero, bachata · 15 preguntas) y '7.2' = Afrolatin II
+  (samba, bossa nova, salsa, mambo, kizomba · 18), detrás de '5.2'; CATALOGO: test_7_1 y test_7_2 (u:7, verdes, detrás de
+  test_5_2). Formato de siempre { q, op:[CORRECTA, d, d] } y enunciados únicos en todo BANCO (135, ninguno repetido): la
+  norma de no repetir las cubre sola; no toco TEST_MOTOR ni nada de la norma. Sin libro ni portal AfroLatin todavía: NO añado
+  la unidad 7 a UNIDAD_PAGS / TEMA_TEST / PORTAL_UNIDAD (en estos test no salen «Apuntes» ni «Ver portal» hasta que exista).
+  Las otras 28 preguntas van al test del portal AfroLatin. Probado en local: TEST_MOTOR.generar('7.1') y ('7.2') dan 2
+  preguntas de 3 opciones; los mismos errores de consola que antes (solo CDN sin red). Copia de antes: APPs/_PARA BORRAR/
+  22-oct-2026-antes-test-afrolatin/index.html. Para quitarlo: borra '7.1'/'7.2' de BANCO y test_7_1/test_7_2 de CATALOGO.
+  Para deshacer: git revert de este commit.
 - 22-oct 12:05 · Fichas y rediseño · HECHO · solo este fichero · Iago pegó el SQL de la norma del tipo test:
   suite_ficha_test_usadas(p_token) ya está en Supabase y comprobada (solo lectura, la puede llamar el generador; con un
   envío que no existe responde «no_encontrada»). Desde ahora el generador ya no repite preguntas de la ficha anterior.

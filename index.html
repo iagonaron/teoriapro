@@ -10152,6 +10152,9 @@ var CATALOGO=[
   { key:'test_4_3', tramo:'4.3', label:'Test 4.3 · Nuevas grafías',            estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_5_1', tramo:'5.1', label:'Test 5.1 · El Blues',                  estado:'activo', col:'pro', u:5, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_5_2', tramo:'5.2', label:'Test 5.2 · GVE en varios pulsos',      estado:'activo', col:'pro', u:5, test:true, desc:'2 preguntas · 3 opciones' },
+  /* (22-oct-2026, Iago) tipo test Afrolatin (unidad 7). Para quitarlo: borra estas dos líneas y '7.1'/'7.2' de BANCO. */
+  { key:'test_7_1', tramo:'7.1', label:'Test 7.1 · Afrolatin I (cumbia, merengue, bolero, bachata)', estado:'activo', col:'pro', u:7, test:true, desc:'2 preguntas · 3 opciones' },
+  { key:'test_7_2', tramo:'7.2', label:'Test 7.2 · Afrolatin II (samba, bossa, salsa, mambo, kizomba)', estado:'activo', col:'pro', u:7, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_8_1', tramo:'8.1', label:'Test 8.1 · Modulación (general)',      estado:'activo', col:'pro', u:8, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_8_2', tramo:'8.2', label:'Test 8.2 · Modulación diatónica',      estado:'activo', col:'pro', u:8, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_8_3', tramo:'8.3', label:'Test 8.3 · Otras modulaciones',        estado:'activo', col:'pro', u:8, test:true, desc:'2 preguntas · 3 opciones' },
@@ -14676,6 +14679,47 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       { q:'El primer paso del método es…', op:['Establecer un compás modelo','Trazar las líneas de pulso','Colocar las cabezas de nota'] },
       { q:'Al hacer el borrador se ponen tantos grupos de la valoración especial como…', op:['Pulsos tiene el compás','Notas tiene el grupo','Compases hay en la obra'] },
       { q:'Una vez razonado un grupo (p. ej. cinquillo en 3 pulsos)…', op:['Basta guardar su estructura y aplicarla después','Hay que rehacerlo cada vez','Se descarta y se usa otro'] }
+    ]},
+    /* (22-oct-2026, Iago) TIPO TEST AFROLATIN (unidad 7, Géneros afrolatinos): 7.1 = sabores 1+2 del portal AfroLatin
+       (cumbia, merengue, bolero, bachata) y 7.2 = sabores 3+4 (samba, bossa nova, salsa, mambo, kizomba). Solo texto, nada
+       de escuchar (eso ya está en el examen ex_afro). Son las preguntas «para fichas»; las demás van al test del portal
+       AfroLatin. Para quitarlo: borra '7.1' y '7.2' de BANCO y test_7_1 / test_7_2 de CATALOGO. */
+    '7.1': { titulo:'Afrolatin I · cumbia, merengue, bolero y bachata', preguntas:[
+      { q:'¿En qué país nació la cumbia?', op:['Colombia', 'Cuba', 'República Dominicana'] },
+      { q:'Las «gaitas» de los indígenas colombianos eran…', op:['Flautas de caña', 'Gaitas de fole, como las gallegas', 'Tambores de piel'] },
+      { q:'En la cumbia, ¿qué dibujo hace la guacharaca en cada tiempo?', op:['Una larga y dos cortas', 'Dos largas', 'Cuatro cortas iguales'] },
+      { q:'¿Qué instrumento «canta sin palabras» por encima en la cumbia de hoy?', op:['El acordeón', 'La trompeta', 'El violín'] },
+      { q:'¿Dónde nació el merengue?', op:['En el Cibao (República Dominicana)', 'En La Habana (Cuba)', 'En Cartagena de Indias (Colombia)'] },
+      { q:'¿Qué instrumento hace en el merengue el mismo dibujo que la guacharaca en la cumbia?', op:['La güira', 'La tambora', 'El bajo'] },
+      { q:'Los instrumentos del merengue de campo eran…', op:['Acordeón, tambora y güira', 'Piano, saxos y trompetas', 'Guitarra, bongó y maracas'] },
+      { q:'¿Quién declaró el merengue patrimonio de la humanidad?', op:['La UNESCO', 'El Consejo de Europa', 'La OEA'] },
+      { q:'¿En qué ciudad nació el bolero?', op:['Santiago de Cuba', 'La Habana', 'Ciudad de México'] },
+      { q:'En el bolero, las maracas tocan corcheas tranquilas y, de vez en cuando…', op:['Un tresillo de semicorcheas', 'Un redoble largo', 'Un compás de silencio'] },
+      { q:'¿A qué país viajó el bolero, donde lo cantaron los tríos de guitarras?', op:['México', 'España', 'Argentina'] },
+      { q:'¿Dónde nació la bachata?', op:['En los barrios de Santo Domingo (República Dominicana)', 'En Santiago de Cuba', 'En Nueva York'] },
+      { q:'En la bachata, al llegar al estribillo la güira…', op:['Se queda quieta, en negras', 'Pasa a semicorcheas', 'Se calla'] },
+      { q:'La guitarra traviesa que puntea e improvisa en la bachata se llama…', op:['La diabla', 'La rítmica', 'El tres'] },
+      { q:'La bachata es «nieta» del…', op:['Bolero', 'Merengue', 'Mambo'] }
+    ]},
+    '7.2': { titulo:'Afrolatin II · samba, bossa nova, salsa, mambo y kizomba', preguntas:[
+      { q:'¿En qué ciudad está el carnaval de samba más famoso del mundo?', op:['Río de Janeiro', 'Lisboa', 'Buenos Aires'] },
+      { q:'En la samba, los surdos son…', op:['Dos tambores grandes que hablan entre ellos', 'Dos campanas de metal', 'Dos silbatos'] },
+      { q:'El agogô es…', op:['Dos campanas de metal que saltan entre dos notas', 'Un tambor grave', 'Una flauta de caña'] },
+      { q:'¿Qué quiere decir «bossa nova»?', op:['«La nueva onda»', '«La samba triste»', '«El baile nuevo»'] },
+      { q:'¿Quiénes se inventaron la bossa nova?', op:['Tom Jobim y João Gilberto', 'Pérez Prado y Tito Puente', 'Richie Ray y Bobby Cruz'] },
+      { q:'Los acordes de la bossa nova llevan…', op:['Séptimas y novenas, como en el jazz', 'Solo tríadas mayores', 'Quintas al aire'] },
+      { q:'¿Dónde nació la salsa?', op:['En los barrios latinos de Nueva York', 'En La Habana', 'En San Juan de Puerto Rico'] },
+      { q:'¿Por qué se llama «salsa»?', op:['Porque es una mezcla, como una salsa de cocina', 'Por un río de Cuba', 'Por el apellido de un músico'] },
+      { q:'En el estribillo de la salsa, el timbalero se pasa al…', op:['Cencerro', 'Bongó', 'Güiro'] },
+      { q:'En la estrofa de la salsa, el conguero…', op:['Solo usa una conga', 'Usa las dos', 'Toca el cencerro'] },
+      { q:'El bajo de la salsa empuja tanto porque…', op:['Nunca toca en el uno', 'Toca semicorcheas', 'Va siempre con el bombo'] },
+      { q:'Al principio, el «mambo» era…', op:['La parte final y más caliente del danzón', 'Un baile de pareja de Angola', 'Un tipo de tambor'] },
+      { q:'¿A qué país se llevó Pérez Prado el mambo para ponerlo de moda?', op:['México', 'España', 'Brasil'] },
+      { q:'Tres pistas para reconocer el mambo:', op:['Vientos, mucho flow… ¡y el grito!', 'Güira, bongó y guitarra diabla', 'Surdos, apito y agogô'] },
+      { q:'¿De qué país es la kizomba?', op:['Angola', 'Brasil', 'Cuba'] },
+      { q:'La kizomba lleva el mismo dibujo que el reggaetón (el dembow), pero…', op:['Acariciado, en vez de golpeado', 'Mucho más rápido', 'Sin bajo'] },
+      { q:'El abuelo de la kizomba es el semba, la palabra que dio nombre a…', op:['La samba brasileña', 'La salsa', 'La cumbia'] },
+      { q:'¿Cómo se baila la kizomba?', op:['En pareja, muy juntos, escuchando a la otra persona', 'En rueda, con velas en la mano', 'En fila, sin tocarse'] }
     ]},
     '8.1': { titulo:'Modulación (general)', preguntas:[
       { q:'Modular consiste en…', op:['Viajar de una tonalidad a otra','Cambiar de compás','Cambiar de instrumento'] },
