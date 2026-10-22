@@ -25,6 +25,8 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   la estética nueva solo para las cuentas Tester/Protester (una línea «LM piel» tras `<meta charset>`).
 - «Apuntes en fichas»: botones «APUNTES» / «VER VÍDEO» en la ficha del alumno (27-sep). Lo preparó otra
   conversación y lo publica el coordinador.
+- «C1 · 4 Sabores · Coordinadora»: portal AfroLatin (unidad 7, Géneros afrolatinos) y su tipo test 7.1 / 7.2 en
+  BANCO y CATALOGO (22-oct).
 - (otras conversaciones: añadid aquí vuestro nombre y de qué os ocupáis)
 
 ## Dependencias (léelo si cambias la estética o el HTML de las tarjetas)
@@ -73,6 +75,8 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 22-oct 12:15 · C1 · 4 Sabores · EN CURSO · parto de 04ccb49 · voy a tocar solo index.html (BANCO: tramos '7.1' y '7.2';
+  CATALOGO: test_7_1 y test_7_2) y este fichero · TIPO TEST AFROLATIN de la unidad 7.
 - 22-oct 12:05 · Fichas y rediseño · HECHO · solo este fichero · Iago pegó el SQL de la norma del tipo test:
   suite_ficha_test_usadas(p_token) ya está en Supabase y comprobada (solo lectura, la puede llamar el generador; con un
   envío que no existe responde «no_encontrada»). Desde ahora el generador ya no repite preguntas de la ficha anterior.
