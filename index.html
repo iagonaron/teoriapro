@@ -11928,7 +11928,9 @@ function pintaAlu(){
   var bp=el('aluPrev'), bn=el('aluNext'), bf=el('aluFin');
   if(bp) bp.addEventListener('click', function(){ try{ SFX.back(); }catch(e){} ALU.__dir='prev'; ALU.i--; progGuardar(); pintaAlu(); window.scrollTo(0,0); });
   if(bn) bn.addEventListener('click', function(){ try{ SFX.next(); }catch(e){} ALU.__dir='next'; ALU.i++; progGuardar(); pintaAlu(); window.scrollTo(0,0); fpCartelEj(ALU.i+1); });
-  if(bf) bf.addEventListener('click', entregarFicha);
+  if(bf) bf.addEventListener('click', function(){   /* (22-oct-2026, Iago) antes de enviar una ficha que cuenta: ¿seguro? */
+    if(ALU && !ALU.entregada && !ALU.repaso && !ALU.simulado && !ALU.revision) fpConfirmarEnvio(entregarFicha); else entregarFicha();
+  });
   /* tap sutil en el resto de botones del ejercicio (una sola vez por vista) */
   var _vf=el('view-fichapro');
   if(_vf && !_vf._sfxTap){ _vf._sfxTap=true;
@@ -12006,6 +12008,42 @@ function fpModalPracticar(key){
   card.querySelector('#fpMpCancel').onclick=cerrar;
   ov.addEventListener('click', function(e){ if(e.target===ov) cerrar(); });
   card.querySelector('#fpMpOk').addEventListener('click', function(){ setTimeout(cerrar, 60); });   /* WAVE12: el <a> navega solo (tablet-safe); aquí solo cerramos */
+}
+/* (22-oct-2026, Iago: «en el botón del último ejercicio, al terminar ficha, aparezca una ventana emergente que ponga: ¿estás
+   seguro de que quieres enviar la ficha? Esta opción no se deshará») una alumna, pulsando deprisa, entregó sin querer y se quedó
+   con un suspenso. Antes de enviar una ficha que cuenta, esta ventana (la misma estética que «Vamos a practicar esto»).
+   «Sí, enviar» tarda 1,2 s en poder pulsarse, por si se viene pulsando rápido; «Repasar antes», Esc o tocar fuera vuelven a la
+   ficha tal cual. Para quitarla: en pintaAlu, el clic de #aluFin directo a entregarFicha. */
+function fpConfirmarEnvio(siguiente){
+  if(el('fpEnvOv')) return;
+  var ov=document.createElement('div'); ov.id='fpEnvOv';
+  ov.setAttribute('role','dialog'); ov.setAttribute('aria-modal','true'); ov.setAttribute('aria-labelledby','fpEnvTit');
+  ov.style.cssText='position:fixed;inset:0;background:rgba(3,5,12,.66);-webkit-backdrop-filter:blur(4px);backdrop-filter:blur(4px);z-index:100001;display:flex;align-items:center;justify-content:center;padding:16px;box-sizing:border-box';
+  var card=document.createElement('div');
+  card.style.cssText='background:#0d1222;color:#fff;border:1px solid rgba(236,72,153,.6);border-radius:16px;max-width:460px;width:100%;box-sizing:border-box;padding:24px 24px 20px;box-shadow:0 26px 80px rgba(0,0,0,.55);font-family:inherit;text-align:left';
+  card.innerHTML=
+    '<div style="display:flex;align-items:center;gap:12px;margin-bottom:12px">'+
+      '<span aria-hidden="true" style="flex:none;width:40px;height:40px;box-sizing:border-box;border-radius:10px;background:rgba(236,72,153,.16);border:1px solid rgba(236,72,153,.6);color:#f9a8d4;display:grid;place-items:center"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 2 11 13"/><path d="M22 2 15 22l-4-9-9-4z"/></svg></span>'+
+      '<div id="fpEnvTit" style="font-size:20px;font-weight:800;line-height:1.2;color:#fff">¿Seguro que quieres enviar la ficha?</div>'+
+    '</div>'+
+    '<div style="font-size:15px;line-height:1.55;color:rgba(255,255,255,.86)">'+
+      'Esto <b>no se puede deshacer</b>: en cuanto la envíes, Iago recibe tu nota y ya no podrás cambiar ninguna respuesta.'+
+      '<br><br>Si tienes alguna duda, vuelve y repasa los ejercicios con <b>‹ Anterior</b>.'+
+    '</div>'+
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:20px">'+
+      '<button id="fpEnvNo" type="button" style="min-height:44px;box-sizing:border-box;border-radius:12px;font-family:inherit;font-size:14px;border:1px solid rgba(255,255,255,.38);background:transparent;color:#fff;font-weight:700;cursor:pointer">Repasar antes</button>'+
+      '<button id="fpEnvSi" type="button" disabled style="min-height:44px;box-sizing:border-box;border-radius:12px;font-family:inherit;font-size:14px;border:0;background:#ec4899;color:#fff;font-weight:800;opacity:.45;cursor:default;transition:opacity .2s">Sí, enviar</button>'+
+    '</div>';
+  ov.appendChild(card); document.body.appendChild(ov);
+  var si=card.querySelector('#fpEnvSi'), no=card.querySelector('#fpEnvNo');
+  var tecla=function(e){ if(e.key==='Escape'||e.key==='Esc') cerrar(); };
+  var cerrar=function(){ document.removeEventListener('keydown', tecla); try{ document.body.removeChild(ov); }catch(e){} };
+  document.addEventListener('keydown', tecla);
+  no.onclick=cerrar;
+  ov.addEventListener('click', function(e){ if(e.target===ov) cerrar(); });
+  setTimeout(function(){ si.disabled=false; si.style.opacity='1'; si.style.cursor='pointer'; }, 1200);   /* por si se viene pulsando deprisa */
+  si.onclick=function(){ if(si.disabled) return; cerrar(); siguiente(); };
+  try{ no.focus({ preventScroll:true }); }catch(e){}
 }
 function entregarFicha(){
   if(!ALU || ALU.entregada) return;

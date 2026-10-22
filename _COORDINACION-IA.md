@@ -75,6 +75,17 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 22-oct 18:30 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit; main
+  comprobado justo antes, parto de 5b6ae18) · solo index.html · ALUMNO: «¿SEGURO QUE QUIERES ENVIAR LA FICHA?». Iago: «tengo una
+  alumna que… se pasa los ejercicios rápido y sin querer le dio… acabó y entregó una ficha con un suspenso… en el botón del
+  último ejercicio, al terminar ficha, aparezca una ventana emergente que ponga: ¿estás seguro de que quieres enviar la ficha?
+  Esta opción no se deshará». En el último ejercicio, «📨 Enviar al profesor y ver puntuación» abre fpConfirmarEnvio (la estética
+  de «Vamos a practicar esto»): «Repasar antes», Esc o tocar fuera vuelven a la ficha tal cual; «Sí, enviar» está desactivado
+  1,2 s (por si se viene pulsando deprisa) y luego llama a entregarFicha() como siempre. No sale en el repaso (ALU.repaso), en
+  la simulación del profesor (ALU.simulado) ni en la revisión. Banco 19/19 (alumno 1512 y 390, repaso; con la versión de antes,
+  la ficha se entrega al primer toque). Copia de antes:
+  APPs/_PARA BORRAR/22-oct-2026-antes-confirmar-envio-ficha/teoriapro-index.html. Para quitarlo: en pintaAlu, el clic de #aluFin
+  directo a entregarFicha. Para deshacer: git revert de este commit.
 - 22-oct 12:30 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit;
   esperé al HECHO de «C1 · 4 Sabores» y parto de su 98e5f82, con los tests 7.1 y 7.2) · solo index.html (+48) · GENERADOR DE
   FICHAS: EL CARRITO DEL CONTADOR FLOTANTE. Iago: «hay una ventanita flotante que pone cuántos ejercicios llevo… me gustaría que
