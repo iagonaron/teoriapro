@@ -75,6 +75,10 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 1-nov 23:15 · C1 · Modulación · HECHO · en este mismo commit, junto a modulacion.html (parto de 883a409) · Iago pidió que el ejercicio
+  obligue a definir antes las armaduras de A y de B con un selector (Paso 0). Las casillas quedan bloqueadas hasta acertar las dos; si falla,
+  aviso y vuelve a elegir. Bloque marcado «(1-nov-2026, Iago) PASO 0 OBLIGATORIO» (CSS + #armRow + JS «PASO 0 · armaduras»).
+  DESHACER: volver modulacion.html a 883a409.
 - 1-nov 21:25 · C1 · Modulación · HECHO · en este mismo commit, junto a modulacion.html (sin EN CURSO previo: un solo
   fichero; parto de 541996d) · Iago pidió que el ejercicio también tenga 8 casillas. Ahora sale al azar de 7 u 8; en los
   de 8, la casilla que se añade va tras el puente y es el IV de la tonalidad B (… puente · IV · V7 · I), como en la intro

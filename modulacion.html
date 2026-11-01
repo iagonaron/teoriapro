@@ -161,6 +161,19 @@
     animation:nebulaShift 22s ease-in-out infinite alternate}
   @media (prefers-reduced-motion: reduce){ .slot.magic::after{animation:none} }
   .slot.magic > *{position:relative;z-index:1}
+  /* (1-nov-2026, Iago) PASO 0 OBLIGATORIO: elegir la armadura de A y de B antes de rellenar casillas.
+     Para quitarlo: borrar este bloque CSS, el <div id="armRow"> y el bloque JS «PASO 0 · armaduras». */
+  .arm-row{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 14px}
+  .arm-box{flex:1 1 300px;display:flex;flex-direction:column;gap:7px;border:1px dashed rgba(212,175,55,.5);border-radius:12px;padding:10px 12px;background:rgba(212,175,55,.05)}
+  .arm-box .arm-lab{font-size:12px;font-weight:800;color:var(--gold-soft);letter-spacing:.02em}
+  .arm-box .arm-lab small{font-weight:600;color:var(--muted2)}
+  .arm-box .arm-btns{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
+  .arm-box .arm-btns .pill{min-width:34px;padding:6px 8px}
+  .arm-box .arm-ok{font-size:13px;font-weight:800;color:#bff3df;min-height:16px}
+  .arm-box.ok{border-style:solid;border-color:var(--green);background:var(--green-soft)}
+  .arm-box.ok .arm-btns{display:none}
+  .arm-box.mal{animation:edShake .32s ease;border-color:var(--red)}
+  .slot.bloq{opacity:.45;cursor:not-allowed}
   .slot.magic > .cif, .slot.magic > .verdict{position:absolute}   /* (1-nov-2026) el cifrado y el «correcto» de la casilla 5 se montaban sobre el nombre. Para quitarlo: borrar esta línea */
   .slot.magic .spark{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:16px;color:var(--gold2);filter:drop-shadow(0 0 5px rgba(212,175,55,.8));animation:sparkFloat 3s ease-in-out infinite;z-index:2}
   @keyframes sparkFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-6deg)}50%{transform:translateX(-50%) translateY(-3px) rotate(6deg)}}
@@ -370,6 +383,10 @@
       </div>
     </div>
 
+    <div class="arm-row" id="armRow">
+      <div class="arm-box" data-k="A"><span class="arm-lab">Paso 0 · Armadura de la tonalidad A <small>(la de la casilla 1)</small></span><div class="arm-btns"></div><span class="arm-ok"></span></div>
+      <div class="arm-box" data-k="B"><span class="arm-lab">Armadura de la tonalidad B <small>(la de la última casilla)</small></span><div class="arm-btns"></div><span class="arm-ok"></span></div>
+    </div>
     <span class="magic-cap">✦ la casilla 5 es la puerta entre las dos tonalidades ✦</span>
 
     <!-- nota a evitar, flotando sobre la casilla 5 (solo pista) -->
@@ -601,6 +618,7 @@ function nuevo(){
   userSlots[0]=clone(EX.sol[0].acc[0]);
   userSlots[EX.n-1]=clone(EX.sol[EX.n-1].acc[0]);
   $('modulCard').style.setProperty('--n', EX.n);
+  ARM={A:{n:null,t:null,ok:false},B:{n:null,t:null,ok:false}}; renderArm();
   selSlot=null; corrected=false;
   $('editor').classList.remove('show'); $('editor').innerHTML='';
   $('solution').classList.remove('show');
@@ -659,6 +677,9 @@ function renderSlots(){
       const v=verdictFor(i);
       b.classList.add(v.cls);
       const vd=document.createElement('span'); vd.className='verdict'; vd.textContent=v.label; b.appendChild(vd);
+    } else if(!def.fixed && !armListo()){
+      b.classList.add('bloq');
+      b.addEventListener('click',()=>{ const m=$('resultMsg'); m.className='result-msg warn'; m.textContent='Primero, el paso 0: elige la armadura de las dos tonalidades.'; });
     } else if(!def.fixed){
       b.addEventListener('click',()=>selectSlot(i));
     }
@@ -855,6 +876,7 @@ function verdictFor(i){
 
 function corregir(){
   if(corrected) return;
+  if(!armListo()){ const m=$('resultMsg'); m.className='result-msg warn'; m.textContent='Primero, el paso 0: elige la armadura de las dos tonalidades.'; return; }
   // si hay un editor abierto a medias, no dejar corregir
   if(selSlot!=null && !edComplete() && !userSlots[selSlot]){ flashIncompleta(); return; }
   if(selSlot!=null && edComplete()) commitEdToSlot(selSlot);
@@ -930,6 +952,32 @@ function evitarTexto(){
     const gb=NOMBRE[n.letter]+accGlyph(n.b);
     return ga===gb ? ga : ga+'/'+gb;
   }).join(', ');
+}
+
+/* ---- PASO 0 · armaduras (1-nov-2026, Iago): obligatorio antes de rellenar casillas ---- */
+let ARM={A:{n:null,t:null,ok:false},B:{n:null,t:null,ok:false}};
+function armListo(){ return ARM.A.ok && ARM.B.ok; }
+function sigNotasTxt(sig){ if(!sig) return ''; const L=sig>0?SHARP_ORDER:FLAT_ORDER; return L.slice(0,Math.abs(sig)).map(l=>NOMBRE[l].toLowerCase()+(sig>0?'♯':'♭')).join(', '); }
+function renderArm(){
+  ['A','B'].forEach(K=>{
+    const box=document.querySelector('#armRow .arm-box[data-k="'+K+'"]'); if(!box) return;
+    const S=ARM[K], host=box.querySelector('.arm-btns'); host.innerHTML='';
+    box.classList.toggle('ok',S.ok);
+    const sig=K==='A'?EX.keyA.sig:EX.keyB.sig;
+    box.querySelector('.arm-ok').textContent=S.ok?('✓ '+sigLabel(sig)+(sig?' ('+sigNotasTxt(sig)+')':'')):'';
+    [0,1,2,3,4,5,6,7].forEach(n=>{ const x=document.createElement('button'); x.className='pill'+(S.n===n?' on':''); x.textContent=n; x.addEventListener('click',()=>{ S.n=n; if(n===0) S.t=null; compruebaArm(K); }); host.appendChild(x); });
+    const sep=document.createElement('span'); sep.className='ed-sep'; host.appendChild(sep);
+    [['♯',1],['♭',-1]].forEach(([g,v])=>{ const x=document.createElement('button'); x.className='pill acc'+(S.t===v?' on':''); x.textContent=g; x.addEventListener('click',()=>{ S.t=v; compruebaArm(K); }); host.appendChild(x); });
+  });
+}
+function compruebaArm(K){
+  const S=ARM[K]; renderArm();
+  if(S.n==null || (S.n>0 && S.t==null)) return;
+  const sig=S.n===0?0:S.n*S.t, real=K==='A'?EX.keyA.sig:EX.keyB.sig;
+  const box=document.querySelector('#armRow .arm-box[data-k="'+K+'"]'), m=$('resultMsg');
+  if(sig===real){ S.ok=true; m.className='result-msg'; m.textContent=''; renderArm(); if(armListo()) renderSlots(); }
+  else { ARM[K]={n:null,t:null,ok:false}; renderArm(); box.classList.remove('mal'); void box.offsetWidth; box.classList.add('mal');
+    m.className='result-msg warn'; m.textContent='Esa armadura no es la de la tonalidad '+K+'. Mira el acorde de la casilla '+(K==='A'?'1':EX.n)+' y vuelve a probar.'; }
 }
 
 /* ---- wiring ---- */
