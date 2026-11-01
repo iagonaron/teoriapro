@@ -75,6 +75,12 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 1-nov 21:25 · C1 · Modulación · HECHO · en este mismo commit, junto a modulacion.html (sin EN CURSO previo: un solo
+  fichero; parto de 541996d) · Iago pidió que el ejercicio también tenga 8 casillas. Ahora sale al azar de 7 u 8; en los
+  de 8, la casilla que se añade va tras el puente y es el IV de la tonalidad B (… puente · IV · V7 · I), como en la intro
+  en vídeo. Bloque marcado «(1-nov-2026, Iago)» en generarEjercicio; rejillas con la variable CSS --n. Arreglo extra: el
+  cifrado y el «correcto» de la casilla 5 se montaban sobre el nombre (una línea CSS marcada). DESHACER: volver
+  modulacion.html a 541996d. No toco index.html.
 - 22-oct 18:30 · Fichas y rediseño · HECHO · en este mismo commit, junto a index.html (sin EN CURSO previo: un solo commit; main
   comprobado justo antes, parto de 5b6ae18) · solo index.html · ALUMNO: «¿SEGURO QUE QUIERES ENVIAR LA FICHA?». Iago: «tengo una
   alumna que… se pasa los ejercicios rápido y sin querer le dio… acabó y entregó una ficha con un suspenso… en el botón del

@@ -100,7 +100,7 @@
   .keyflow .arrow{display:block;font-size:20px;color:#cfe0ff;margin-top:2px}
 
   /* nota a evitar sobre la casilla 5 (pista) */
-  .evita-row{display:none;grid-template-columns:repeat(7,1fr);gap:11px;margin-bottom:8px}
+  .evita-row{display:none;grid-template-columns:repeat(var(--n,7),1fr);gap:11px;margin-bottom:8px}
   .evita-row.show{display:grid;animation:edIn .2s ease}
   .evita-bubble{grid-column:5;justify-self:center;text-align:center;font-size:12px;font-weight:800;color:#cfe0ff;
     background:rgba(91,157,255,.16);border:1px solid var(--blue);border-radius:10px;padding:6px 10px;line-height:1.25;position:relative;white-space:nowrap}
@@ -112,7 +112,7 @@
   /* dos líneas de grados (pista) */
   .grado-lines{display:none;flex-direction:column;gap:30px;margin-top:14px;padding-bottom:30px}
   .grado-lines.show{display:flex;animation:edIn .2s ease}
-  .grado-line{display:grid;grid-template-columns:repeat(7,1fr);gap:11px;align-items:start}
+  .grado-line{display:grid;grid-template-columns:repeat(var(--n,7),1fr);gap:11px;align-items:start}
   @media(max-width:900px){ .grado-line{grid-template-columns:repeat(4,1fr)} }
   @media(max-width:560px){ .grado-line{grid-template-columns:repeat(2,1fr)} }
   .grado-cell{position:relative;text-align:center;font-size:16px;font-weight:800;color:#9bc2ff;font-variant-numeric:tabular-nums;min-height:22px}
@@ -121,7 +121,7 @@
   .grado-bracket .gb-tag{position:absolute;top:9px;left:50%;transform:translateX(-50%);background:rgba(91,157,255,.18);border:1px solid var(--blue);color:#cfe0ff;font-size:11px;font-weight:800;padding:2px 11px;border-radius:999px;white-space:nowrap}
 
   /* fila de casillas — cuadradas, papel blanco */
-  .slots{display:grid;grid-template-columns:repeat(7,1fr);gap:11px;margin:20px 0 4px}
+  .slots{display:grid;grid-template-columns:repeat(var(--n,7),1fr);gap:11px;margin:20px 0 4px}
   @media(max-width:900px){ .slots{grid-template-columns:repeat(4,1fr)} }
   @media(max-width:560px){ .slots{grid-template-columns:repeat(2,1fr)} }
   .slot-cell{display:flex;flex-direction:column;gap:6px}
@@ -161,6 +161,7 @@
     animation:nebulaShift 22s ease-in-out infinite alternate}
   @media (prefers-reduced-motion: reduce){ .slot.magic::after{animation:none} }
   .slot.magic > *{position:relative;z-index:1}
+  .slot.magic > .cif, .slot.magic > .verdict{position:absolute}   /* (1-nov-2026) el cifrado y el «correcto» de la casilla 5 se montaban sobre el nombre. Para quitarlo: borrar esta línea */
   .slot.magic .spark{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:16px;color:var(--gold2);filter:drop-shadow(0 0 5px rgba(212,175,55,.8));animation:sparkFloat 3s ease-in-out infinite;z-index:2}
   @keyframes sparkFloat{0%,100%{transform:translateX(-50%) translateY(0) rotate(-6deg)}50%{transform:translateX(-50%) translateY(-3px) rotate(6deg)}}
   .slot.magic.sel{box-shadow:0 0 0 3px rgba(212,175,55,.5),0 0 24px rgba(212,175,55,.4)}
@@ -205,7 +206,7 @@
   .solution{margin-top:10px;border:1px solid rgba(91,157,255,.4);border-radius:14px;padding:16px 16px 18px;background:rgba(91,157,255,.05);display:none}
   .solution.show{display:block;animation:edIn .2s ease}
   .solution h4{margin:0 0 12px;font-size:12px;letter-spacing:.13em;text-transform:uppercase;color:#cfe0ff;font-weight:800}
-  .sol-slots{display:grid;grid-template-columns:repeat(7,1fr);gap:9px}
+  .sol-slots{display:grid;grid-template-columns:repeat(var(--n,7),1fr);gap:9px}
   @media(max-width:900px){ .sol-slots{grid-template-columns:repeat(4,1fr)} }
   @media(max-width:560px){ .sol-slots{grid-template-columns:repeat(2,1fr)} }
   .sol-slot{position:relative;border:1px solid rgba(91,157,255,.25);border-radius:12px;background:rgba(91,157,255,.04);aspect-ratio:1/1;padding:8px;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;text-align:center;opacity:.3}
@@ -376,7 +377,7 @@
 
     <div class="slots" id="slots"></div>
 
-    <!-- dos líneas de grados (solo pista): línea A cubre 1-4, línea B cubre 6-7 -->
+    <!-- dos líneas de grados (solo pista): línea A cubre 1-4, línea B cubre 6-7 (o 6-8 en los de 8 casillas) -->
     <div class="grado-lines" id="gradoLines">
       <div class="grado-line gl-a" id="glA"></div>
       <div class="grado-line gl-b" id="glB"></div>
@@ -523,7 +524,11 @@ function notasAEvitar(keyA,keyB){
 }
 
 /* ---- generación de un ejercicio ---- */
-function generarEjercicio(){
+/* (1-nov-2026, Iago) ejercicios de 7 u 8 casillas, al azar. En los de 8, la casilla que se añade va
+   justo después del puente y es el IV de la tonalidad B: … puente · IV · V7 · I (como en la intro en vídeo).
+   Para quitarlo: en generarEjercicio, n = 7 siempre. */
+function generarEjercicio(nCas){
+  const n = nCas===7||nCas===8 ? nCas : (Math.random()<.5 ? 7 : 8);
   // pares válidos
   const candidatos=[];
   ALL_KEYS.forEach(A=>{
@@ -542,7 +547,7 @@ function generarEjercicio(){
   const ta=diatonicTriads(A,true), tb=diatonicTriads(B,true);
   const triadaA=g=>ta[g], triadaB=g=>tb[g];
 
-  // estructura fija: 1:I_A 2:IV_A 3:V7_A 4:I_A 5:puente 6:V7_B 7:I_B
+  // estructura fija: 1:I_A 2:IV_A 3:V7_A 4:I_A 5:puente 6:V7_B 7:I_B   (con 8: … 5:puente 6:IV_B 7:V7_B 8:I_B)
   // dominantes => modo forzado Mayor + 7ª (por definición)
   function acorde(tri, seventh, forceMajor){
     const modo = forceMajor? 'M' : tri.modo;
@@ -554,6 +559,7 @@ function generarEjercicio(){
   const IA2=acorde(triadaA(0),false,false);
   const V7B=acorde(triadaB(4),true,true);
   const IB=acorde(triadaB(0),false,false);
+  const IVB=acorde(triadaB(3),false,false);
 
   // soluciones aceptables por casilla (lista de acordes válidos)
   const sol=[];
@@ -563,16 +569,17 @@ function generarEjercicio(){
   sol[3]={fixed:false, acc:[IA2]};                 // I de A
   // casilla 5: cualquiera de los puentes comunes
   sol[4]={fixed:false, magic:true, acc: elegido.comunes.map(c=>({root:c.root, modo:c.modo, seventh:false, grado:c.gradoA, _bridge:c}))};
-  sol[5]={fixed:false, acc:[V7B]};                 // V7 de B
-  sol[6]={fixed:true, acc:[IB]};
+  if(n===8) sol.push({fixed:false, acc:[IVB]});   // (8 casillas) IV de B, tras el puente
+  sol.push({fixed:false, acc:[V7B]});              // V7 de B
+  sol.push({fixed:true, acc:[IB]});                // I de B
 
   return {
-    keyA:A, keyB:B,
+    n, keyA:A, keyB:B,
     triadsA:ta, triadsB:tb,
     comunes:elegido.comunes,
     evitar:notasAEvitar(A,B),
     sol,
-    fixedFill:[IA, null,null,null,null,null, IB]
+    fixedFill:[IA].concat(Array(n-2).fill(null), [IB])
   };
 }
 
@@ -590,9 +597,10 @@ const $=id=>document.getElementById(id);
 
 function nuevo(){
   EX=generarEjercicio();
-  userSlots=[null,null,null,null,null,null,null];
+  userSlots=Array(EX.n).fill(null);
   userSlots[0]=clone(EX.sol[0].acc[0]);
-  userSlots[6]=clone(EX.sol[6].acc[0]);
+  userSlots[EX.n-1]=clone(EX.sol[EX.n-1].acc[0]);
+  $('modulCard').style.setProperty('--n', EX.n);
   selSlot=null; corrected=false;
   $('editor').classList.remove('show'); $('editor').innerHTML='';
   $('solution').classList.remove('show');
@@ -617,8 +625,9 @@ function gradoTexto(i){
     const g=[0,3,4,0][i]; const tri=EX.triadsA[g];
     return romano(tri.grado, i===2?'M':tri.modo)+(i===2?'7':'');
   }
-  if(i===5) return 'V7';
-  if(i===6) return 'I';
+  if(i===EX.n-1) return 'I';
+  if(i===EX.n-2) return 'V7';
+  if(i===5) return 'IV';
   if(i===4){
     // puente: mostrar grado en A → grado en B del acorde recomendado (primero de la lista)
     const c=EX.comunes[0];
@@ -629,7 +638,7 @@ function gradoTexto(i){
 
 function renderSlots(){
   const host=$('slots'); host.innerHTML='';
-  for(let i=0;i<7;i++){
+  for(let i=0;i<EX.n;i++){
     const def=EX.sol[i];
 
     const b=document.createElement('button'); b.className='slot'; b.dataset.i=i; b.type='button';
@@ -665,18 +674,18 @@ function renderGrados(){
   const aFull=keyLabel(EX.keyA), bFull=keyLabel(EX.keyB);
   // línea A: grados I IV V7 I en columnas 1-4 + corchete con la tonalidad A
   const gradosA=['I','IV','V7','I'];
-  for(let col=1;col<=7;col++){
+  for(let col=1;col<=EX.n;col++){
     const c=document.createElement('div'); c.className='grado-cell';
     if(col<=4) c.textContent=gradosA[col-1];
     if(col===4){ c.appendChild(makeBracket(aFull, 4)); }
     glA.appendChild(c);
   }
-  // línea B: grados V7 I en columnas 6-7 + corchete con la tonalidad B
-  const gradosB={6:'V7',7:'I'};
-  for(let col=1;col<=7;col++){
+  // línea B: grados (IV) V7 I en las últimas columnas + corchete con la tonalidad B
+  const gradosB=EX.n===8?{6:'IV',7:'V7',8:'I'}:{6:'V7',7:'I'};
+  for(let col=1;col<=EX.n;col++){
     const c=document.createElement('div'); c.className='grado-cell';
     if(gradosB[col]) c.textContent=gradosB[col];
-    if(col===7){ c.appendChild(makeBracket(bFull, 2)); }
+    if(col===EX.n){ c.appendChild(makeBracket(bFull, EX.n-5)); }
     glB.appendChild(c);
   }
 }
@@ -851,7 +860,7 @@ function corregir(){
   if(selSlot!=null && edComplete()) commitEdToSlot(selSlot);
   // exigir que todas las editables estén completas
   const vacias=[];
-  for(let i=0;i<7;i++){ if(!EX.sol[i].fixed && !userSlots[i]) vacias.push(i+1); }
+  for(let i=0;i<EX.n;i++){ if(!EX.sol[i].fixed && !userSlots[i]) vacias.push(i+1); }
   if(vacias.length){
     const msg=$('resultMsg'); msg.className='result-msg warn';
     msg.textContent='Faltan casillas por completar: '+vacias.join(', ')+'.';
@@ -864,7 +873,7 @@ function corregir(){
 
   let nBad=0,nAmber=0;
   const wrongIdx=[];
-  for(let i=0;i<7;i++){
+  for(let i=0;i<EX.n;i++){
     if(EX.sol[i].fixed) continue;
     const v=verdictFor(i);
     if(v.cls==='bad'){ nBad++; wrongIdx.push(i); }
@@ -883,7 +892,7 @@ function renderSolution(wrongIdx){
   if(wrongIdx.length===0){ sol.classList.remove('show'); return; }
   sol.classList.add('show');
   const host=$('solSlots'); host.innerHTML='';
-  for(let i=0;i<7;i++){
+  for(let i=0;i<EX.n;i++){
     const def=EX.sol[i];
     const show=wrongIdx.includes(i);
     const cell=document.createElement('div'); cell.className='sol-slot'+(show?' show-blue':'');
