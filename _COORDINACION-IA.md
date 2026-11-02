@@ -75,6 +75,7 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 2-nov 08:00 · C1 · Modulación · HECHO · en este mismo commit, junto a modulacion.html (parto de 2677457; un solo fichero, sin EN CURSO previo) · Iago pidió que el paso 0 sea una ventana delante del fondo oscurecido y difuminado: texto → «Entendido» → armaduras de A y B con la rueda de siempre (↑ sostenidos · ↓ bemoles) → notas conflictivas en un piano (do vale por do y do♯; sin mostrar las armaduras) → «Siguiente ▶» desbloquea las casillas. Nota sobre 10 en la corrección: la dominante sin 7ª ya no es error, resta 0,25 (máx. −0,5). Copia: /home/claude/tpro/modulacion_premodal.html (= 2677457). DESHACER: volver modulacion.html a 2677457.
 - 1-nov 23:15 · C1 · Modulación · HECHO · en este mismo commit, junto a modulacion.html (parto de 883a409) · Iago pidió que el ejercicio
   obligue a definir antes las armaduras de A y de B con un selector (Paso 0). Las casillas quedan bloqueadas hasta acertar las dos; si falla,
   aviso y vuelve a elegir. Bloque marcado «(1-nov-2026, Iago) PASO 0 OBLIGATORIO» (CSS + #armRow + JS «PASO 0 · armaduras»).

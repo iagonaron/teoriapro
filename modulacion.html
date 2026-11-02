@@ -56,7 +56,7 @@
   .btn-nuevos svg{width:20px;height:20px}
   .btn-nuevos:hover{background:rgba(233,201,106,.16);border-color:var(--gold1);color:var(--gold-soft)}
   .btn-correct{background:linear-gradient(135deg,var(--gold1),var(--gold2));color:#1a1407;border-color:transparent}
-  .btn-correct:hover{filter:brightness(1.08);color:#1a1407}
+  .btn-correct:hover,.iconbtn.btn-correct:hover{background:linear-gradient(135deg,var(--gold1),var(--gold2));border-color:transparent;filter:brightness(1.08);color:#1a1407}
   .btn-help.on{background:rgba(91,157,255,.16);border-color:var(--blue);color:#cfe0ff}
 
   .ex-card{background:linear-gradient(150deg,#3a2c0e 0%,#241a08 45%,#160f04 100%);border:1px solid var(--line);border-radius:18px;padding:20px 20px;margin-bottom:22px;box-shadow:inset 0 1px 0 rgba(233,201,106,.08),0 14px 40px rgba(0,0,0,.4)}
@@ -161,18 +161,84 @@
     animation:nebulaShift 22s ease-in-out infinite alternate}
   @media (prefers-reduced-motion: reduce){ .slot.magic::after{animation:none} }
   .slot.magic > *{position:relative;z-index:1}
-  /* (1-nov-2026, Iago) PASO 0 OBLIGATORIO: elegir la armadura de A y de B antes de rellenar casillas.
-     Para quitarlo: borrar este bloque CSS, el <div id="armRow"> y el bloque JS «PASO 0 · armaduras». */
-  .arm-row{display:flex;gap:14px;flex-wrap:wrap;margin:0 0 14px}
-  .arm-box{flex:1 1 300px;display:flex;flex-direction:column;gap:7px;border:1px dashed rgba(212,175,55,.5);border-radius:12px;padding:10px 12px;background:rgba(212,175,55,.05)}
-  .arm-box .arm-lab{font-size:12px;font-weight:800;color:var(--gold-soft);letter-spacing:.02em}
-  .arm-box .arm-lab small{font-weight:600;color:var(--muted2)}
-  .arm-box .arm-btns{display:flex;gap:5px;flex-wrap:wrap;align-items:center}
-  .arm-box .arm-btns .pill{min-width:34px;padding:6px 8px}
-  .arm-box .arm-ok{font-size:13px;font-weight:800;color:#bff3df;min-height:16px}
-  .arm-box.ok{border-style:solid;border-color:var(--green);background:var(--green-soft)}
-  .arm-box.ok .arm-btns{display:none}
-  .arm-box.mal{animation:edShake .32s ease;border-color:var(--red)}
+  /* (2-nov-2026, Iago) PASO 0 OBLIGATORIO en ventana modal (fondo oscurecido y desenfocado): 1) texto, 2) armaduras con ruedas, 3) notas conflictivas en un piano.
+     Para quitarlo: borrar este bloque CSS, el <div id="p0Modal">, el <div id="pmSum"> y el bloque JS «PASO 0 · ventana modal». */
+  .wheel{position:relative;width:72px;height:96px;border:1px solid var(--line);border-radius:12px;
+    background:linear-gradient(180deg,#241a08,#160f04);overflow:hidden;touch-action:none;
+    box-shadow:inset 0 1px 0 rgba(233,201,106,.08);cursor:grab}
+  .wheel .wlist{position:absolute;left:0;right:0;top:0;will-change:transform}
+  .wheel .witem{height:32px;line-height:32px;text-align:center;font-size:16px;font-weight:800;color:var(--muted2);user-select:none}
+  .wheel .witem.sel{color:var(--gold-soft)}
+  .wheel::before,.wheel::after{content:"";position:absolute;left:0;right:0;height:32px;pointer-events:none;z-index:2}
+  .wheel::before{top:0;background:linear-gradient(180deg,#160f04,rgba(22,15,4,0))}
+  .wheel::after{bottom:0;background:linear-gradient(0deg,#160f04,rgba(22,15,4,0))}
+  .wheel .wband{position:absolute;left:0;right:0;top:32px;height:32px;border-top:1px solid rgba(212,175,55,.4);border-bottom:1px solid rgba(212,175,55,.4);background:rgba(212,175,55,.07);pointer-events:none;z-index:1}
+
+  .pm-overlay{position:fixed;inset:0;z-index:100;display:none;align-items:center;justify-content:center;padding:16px;
+    background:rgba(8,5,1,.62);-webkit-backdrop-filter:blur(7px);backdrop-filter:blur(7px);opacity:0;transition:opacity .28s ease}
+  .pm-overlay.show{display:flex}
+  .pm-overlay.vis{opacity:1}
+  .pm-box{position:relative;width:100%;max-width:600px;max-height:calc(100vh - 32px);max-height:calc(100dvh - 32px);overflow-y:auto;
+    background:linear-gradient(150deg,#3a2c0e 0%,#241a08 45%,#160f04 100%);border:1px solid rgba(212,175,55,.45);border-radius:18px;
+    box-shadow:var(--shadow),inset 0 1px 0 rgba(233,201,106,.1);padding:26px 26px 24px;transform:translateY(8px);transition:transform .28s ease}
+  .pm-overlay.vis .pm-box{transform:none}
+  .pm-st{display:none}
+  .pm-st.on{display:block;animation:edIn .22s ease}
+  .pm-tag{display:inline-block;font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:#1a1407;
+    background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:5px 11px;border-radius:8px;margin-bottom:12px}
+  .pm-box h3{margin:0 0 10px;font-size:24px;font-weight:900;letter-spacing:-.01em;color:var(--ink)}
+  .pm-box p.pm-txt{margin:0 0 20px;font-size:16px;line-height:1.55;color:var(--muted)}
+  .pm-box p.pm-txt b{color:var(--gold-soft)}
+  .pm-go{display:flex;justify-content:flex-end;align-items:center;gap:12px;margin-top:18px;flex-wrap:wrap}
+  .pm-go .iconbtn{font-size:15px;padding:12px 24px;border-radius:11px}
+  .pm-msg{min-height:22px;margin-top:14px;font-size:14px;font-weight:700;color:var(--muted)}
+  .pm-msg.warn{color:#ffb4ae}
+  .pm-msg.good{color:#bff3df}
+  .pm-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+  .pm-card{display:flex;flex-direction:column;align-items:center;gap:10px;padding:14px 10px 16px;text-align:center;
+    border:1px solid var(--line);border-radius:14px;background:rgba(251,247,236,.04);transition:border-color .2s,background .2s}
+  .pm-card .pm-lab{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:800}
+  .pm-card .pm-nm{font-size:18px;font-weight:900;color:var(--ink);line-height:1.15}
+  .pm-card .pm-ck{min-height:18px;font-size:14px;font-weight:900;color:#bff3df}
+  .pm-card.ok{border-color:var(--green);background:var(--green-soft)}
+  .pm-card.ok .wheel{opacity:.55;pointer-events:none}
+  .pm-card.mal{border-color:var(--red);background:var(--red-soft);animation:edShake .32s ease}
+  .pm-hint{margin:12px 0 0;text-align:center;font-size:13px;color:var(--muted2);font-weight:700;letter-spacing:.02em}
+  .pm-vs{display:flex;align-items:center;justify-content:center;gap:12px;margin:2px 0 18px;font-size:19px;font-weight:900;color:var(--ink);flex-wrap:wrap;text-align:center}
+  .pm-vs .ar{color:var(--gold1)}
+  .piano{position:relative;display:flex;width:100%;max-width:520px;height:190px;margin:0 auto;padding:10px 10px 12px;
+    border:1px solid var(--line);border-radius:14px;background:#0e0902;box-shadow:inset 0 1px 0 rgba(233,201,106,.08)}
+  .piano-in{position:relative;display:flex;flex:1;gap:3px}
+  .pk{flex:1;position:relative;border:1px solid #b9ab86;border-radius:0 0 9px 9px;background:linear-gradient(180deg,#fbf7ec,#e9e0c6);
+    color:#3a2c10;font-family:inherit;font-size:13px;font-weight:800;display:flex;align-items:flex-end;justify-content:center;padding:0 0 10px;cursor:pointer;
+    transition:background .15s,border-color .15s,box-shadow .15s,transform .08s}
+  .pk:active{transform:translateY(1px)}
+  .pk:hover{border-color:var(--gold2)}
+  .pk.on{background:linear-gradient(180deg,#f3d98a,var(--gold1));border-color:var(--gold2);color:#1a1407;box-shadow:0 0 0 2px rgba(212,175,55,.5)}
+  .pk.black{position:absolute;top:0;height:60%;width:9%;z-index:2;border:1px solid #000;border-radius:0 0 7px 7px;
+    background:linear-gradient(180deg,#2b2112,#0b0804);padding:0;box-shadow:0 3px 7px rgba(0,0,0,.6)}
+  .pk.black:hover{border-color:var(--gold2)}
+  .pk.black.on{background:linear-gradient(180deg,#e9c96a,var(--gold2));border-color:var(--gold1);box-shadow:0 0 0 2px rgba(212,175,55,.5),0 3px 7px rgba(0,0,0,.6)}
+  .piano.good .pk.on{background:linear-gradient(180deg,#8fe6b8,var(--green));border-color:#1e9e57;color:#06301a;box-shadow:0 0 0 2px rgba(47,170,106,.5)}
+  .piano.good .pk.black.on{background:linear-gradient(180deg,#5fd19a,#1e8a52);border-color:#2faa6a}
+  .piano.locked .pk{pointer-events:none}
+  .piano.shake{animation:edShake .32s ease}
+  .pm-sum{display:none;margin:0 0 10px;padding:8px 14px;border:1px solid rgba(212,175,55,.35);border-radius:10px;background:rgba(212,175,55,.06);font-size:13px;font-weight:700;color:var(--muted);line-height:1.5}
+  .pm-sum.show{display:block}
+  .pm-sum b{color:var(--gold-soft)}
+  .pm-sum .ev{color:#cfe0ff;margin-left:8px;white-space:nowrap}
+  @media(max-width:560px){
+    .pm-box{padding:20px 16px 18px;border-radius:16px}
+    .pm-box h3{font-size:21px}
+    .pm-cards{gap:10px}
+    .pm-card .pm-nm{font-size:15px}
+    .piano{height:160px;padding:8px 6px 10px}
+    .pk{font-size:11.5px}
+    .wheel{width:66px}
+  }
+  .nota-final{margin-top:6px;font-size:18px;font-weight:900;color:var(--gold-soft)}
+  .nota-final small{font-size:13px;color:var(--muted2);font-weight:700}
+  .desc-7{margin-top:6px;font-size:13.5px;font-weight:700;color:var(--amber);line-height:1.5}
   .slot.bloq{opacity:.45;cursor:not-allowed}
   .slot.magic > .cif, .slot.magic > .verdict{position:absolute}   /* (1-nov-2026) el cifrado y el «correcto» de la casilla 5 se montaban sobre el nombre. Para quitarlo: borrar esta línea */
   .slot.magic .spark{position:absolute;top:-10px;left:50%;transform:translateX(-50%);font-size:16px;color:var(--gold2);filter:drop-shadow(0 0 5px rgba(212,175,55,.8));animation:sparkFloat 3s ease-in-out infinite;z-index:2}
@@ -383,10 +449,7 @@
       </div>
     </div>
 
-    <div class="arm-row" id="armRow">
-      <div class="arm-box" data-k="A"><span class="arm-lab">Paso 0 · Armadura de la tonalidad A <small>(la de la casilla 1)</small></span><div class="arm-btns"></div><span class="arm-ok"></span></div>
-      <div class="arm-box" data-k="B"><span class="arm-lab">Armadura de la tonalidad B <small>(la de la última casilla)</small></span><div class="arm-btns"></div><span class="arm-ok"></span></div>
-    </div>
+    <div class="pm-sum" id="pmSum"></div>
     <span class="magic-cap">✦ la casilla 5 es la puerta entre las dos tonalidades ✦</span>
 
     <!-- nota a evitar, flotando sobre la casilla 5 (solo pista) -->
@@ -417,6 +480,39 @@
     </div>
 
     <p class="foot-tip">Pulsa una casilla vacía para elegir su acorde. Recuerda: las dominantes se escriben con 7ª.</p>
+    </div>
+  </div>
+</div>
+
+<!-- (2-nov-2026, Iago) PASO 0 en ventana modal. Para quitarlo: borrar este bloque y el bloque JS «PASO 0 · ventana modal» -->
+<div class="pm-overlay" id="p0Modal" role="dialog" aria-modal="true" aria-labelledby="pmT1">
+  <div class="pm-box">
+    <div class="pm-st on" id="pmS1">
+      <span class="pm-tag">Paso 0</span>
+      <h3 id="pmT1">Paso 0</h3>
+      <p class="pm-txt" id="pmTxt1"></p>
+      <div class="pm-go"><button class="iconbtn btn-correct" id="pmOk1" type="button">Entendido</button></div>
+    </div>
+    <div class="pm-st" id="pmS2">
+      <span class="pm-tag">Paso 0 · Armaduras</span>
+      <h3>Armaduras</h3>
+      <p class="pm-txt" style="margin-bottom:16px">Gira cada rueda hasta la armadura de su tonalidad.</p>
+      <div class="pm-cards">
+        <div class="pm-card" data-k="A"><span class="pm-lab">Tonalidad A</span><span class="pm-nm" id="pmNmA">—</span><div class="wheel" id="pmWA"></div><span class="pm-ck"></span></div>
+        <div class="pm-card" data-k="B"><span class="pm-lab">Tonalidad B</span><span class="pm-nm" id="pmNmB">—</span><div class="wheel" id="pmWB"></div><span class="pm-ck"></span></div>
+      </div>
+      <div class="pm-hint">↑ sostenidos · ↓ bemoles</div>
+      <div class="pm-msg" id="pmMsg2"></div>
+      <div class="pm-go"><button class="iconbtn btn-correct" id="pmOk2" type="button">Comprobar</button></div>
+    </div>
+    <div class="pm-st" id="pmS3">
+      <span class="pm-tag">Paso 0 · Notas</span>
+      <h3>Notas conflictivas</h3>
+      <p class="pm-txt" style="margin-bottom:12px">Toca en el piano las notas que cambian de una tonalidad a otra.</p>
+      <div class="pm-vs"><span id="pmVsA">—</span><span class="ar">→</span><span id="pmVsB">—</span></div>
+      <div class="piano" id="pmPiano"><div class="piano-in" id="pmPianoIn"></div></div>
+      <div class="pm-msg" id="pmMsg3"></div>
+      <div class="pm-go"><button class="iconbtn btn-correct" id="pmOk3" type="button">Comprobar</button></div>
     </div>
   </div>
 </div>
@@ -618,7 +714,7 @@ function nuevo(){
   userSlots[0]=clone(EX.sol[0].acc[0]);
   userSlots[EX.n-1]=clone(EX.sol[EX.n-1].acc[0]);
   $('modulCard').style.setProperty('--n', EX.n);
-  ARM={A:{n:null,t:null,ok:false},B:{n:null,t:null,ok:false}}; renderArm();
+  paso0Reset();
   selSlot=null; corrected=false;
   $('editor').classList.remove('show'); $('editor').innerHTML='';
   $('solution').classList.remove('show');
@@ -679,7 +775,7 @@ function renderSlots(){
       const vd=document.createElement('span'); vd.className='verdict'; vd.textContent=v.label; b.appendChild(vd);
     } else if(!def.fixed && !armListo()){
       b.classList.add('bloq');
-      b.addEventListener('click',()=>{ const m=$('resultMsg'); m.className='result-msg warn'; m.textContent='Primero, el paso 0: elige la armadura de las dos tonalidades.'; });
+      b.addEventListener('click',()=>{ const m=$('resultMsg'); m.className='result-msg warn'; m.textContent='Primero, completa el paso 0.'; paso0Abrir(); });
     } else if(!def.fixed){
       b.addEventListener('click',()=>selectSlot(i));
     }
@@ -869,14 +965,14 @@ function verdictFor(i){
   if(matches.length===0) return {cls:'bad', label:'incorrecto'};
   // root+modo OK. ¿requiere 7ª? (alguna solución la pide)
   const needsSeventh=def.acc.some(s=>s.seventh);
-  if(needsSeventh && !u.seventh) return {cls:'amber', label:'falta 7ª'};
+  if(needsSeventh && !u.seventh) return {cls:'amber', label:'falta 7ª · −0,25'};
   // si puso 7ª de más donde no toca, lo damos por bueno igualmente (no penalizamos extra)
   return {cls:'ok', label:'correcto'};
 }
 
 function corregir(){
   if(corrected) return;
-  if(!armListo()){ const m=$('resultMsg'); m.className='result-msg warn'; m.textContent='Primero, el paso 0: elige la armadura de las dos tonalidades.'; return; }
+  if(!armListo()){ const m=$('resultMsg'); m.className='result-msg warn'; m.textContent='Primero, completa el paso 0.'; paso0Abrir(); return; }
   // si hay un editor abierto a medias, no dejar corregir
   if(selSlot!=null && !edComplete() && !userSlots[selSlot]){ flashIncompleta(); return; }
   if(selSlot!=null && edComplete()) commitEdToSlot(selSlot);
@@ -893,18 +989,30 @@ function corregir(){
   updateNebula();
   renderSlots();
 
-  let nBad=0,nAmber=0;
-  const wrongIdx=[];
+  /* (2-nov-2026, Iago) NOTA: cada casilla editable vale lo mismo sobre 10; una casilla mal o vacía no puntúa.
+     Una dominante correcta pero sin 7ª NO es un acorde equivocado: puntúa entera y se descuenta 0,25 por cada dominante sin 7ª (máx. −0,5). La nota nunca baja de 0. */
+  let nBad=0,nSin7=0,nEd=0,nOk=0;
+  const wrongIdx=[], sin7=[];
   for(let i=0;i<EX.n;i++){
     if(EX.sol[i].fixed) continue;
+    nEd++;
     const v=verdictFor(i);
     if(v.cls==='bad'){ nBad++; wrongIdx.push(i); }
-    else if(v.cls==='amber'){ nAmber++; }
+    else { nOk++; if(v.cls==='amber'){ nSin7++; sin7.push(i+1); } }
   }
+  const descuento=Math.min(0.5,0.25*nSin7);
+  const nota=Math.max(0,10*nOk/nEd-descuento);
+  const fmt=x=>String(Math.round(x*100)/100).replace('.',',');
   const msg=$('resultMsg');
-  if(nBad===0&&nAmber===0){ msg.className='result-msg good'; msg.innerHTML='✓ ¡Modulación perfecta! Has viajado de <b>'+keyLabel(EX.keyA)+'</b> a <b>'+keyLabel(EX.keyB)+'</b>.'; }
-  else if(nBad===0){ msg.className='result-msg warn'; msg.innerHTML='Casi: '+nAmber+' dominante'+(nAmber>1?'s':'')+' sin 7ª (ámbar = medio punto). Recuerda escribirlas con séptima.'; }
-  else { msg.className='result-msg'; msg.innerHTML=nBad+' casilla'+(nBad>1?'s':'')+' incorrecta'+(nBad>1?'s':'')+(nAmber?' · '+nAmber+' sin 7ª (ámbar)':'')+'. Mira la solución en azul abajo.'; }
+  let h;
+  if(nBad===0&&nSin7===0){ msg.className='result-msg good'; h='✓ ¡Modulación perfecta! Has viajado de <b>'+keyLabel(EX.keyA)+'</b> a <b>'+keyLabel(EX.keyB)+'</b>.'; }
+  else if(nBad===0){ msg.className='result-msg warn'; h='Casi: todos los acordes están bien, pero te falta la 7ª en '+(nSin7>1?'las dos dominantes':'una dominante')+'.'; }
+  else { msg.className='result-msg'; h=nBad+' casilla'+(nBad>1?'s':'')+' incorrecta'+(nBad>1?'s':'')+'. Mira la solución en azul abajo.'; }
+  h+='<div class="nota-final">Nota: '+fmt(nota)+' <small>/ 10</small></div>';
+  if(nSin7>=1) h+='<div class="desc-7">−0,25: a la dominante'+(nSin7>1?' de la casilla '+sin7[0]:'')+' le falta la 7ª. La 7ª no es solo estilo: le da el impulso que te lleva al I.</div>';
+  if(nSin7>=2) h+='<div class="desc-7">−0,25: a la dominante de la casilla '+sin7[1]+' también le falta la 7ª.</div>';
+  msg.innerHTML=h;
+  window.MOD_NOTA={nota,descuento,nOk,nEd,nSin7};
 
   renderSolution(wrongIdx);
 }
@@ -954,31 +1062,213 @@ function evitarTexto(){
   }).join(', ');
 }
 
-/* ---- PASO 0 · armaduras (1-nov-2026, Iago): obligatorio antes de rellenar casillas ---- */
-let ARM={A:{n:null,t:null,ok:false},B:{n:null,t:null,ok:false}};
-function armListo(){ return ARM.A.ok && ARM.B.ok; }
-function sigNotasTxt(sig){ if(!sig) return ''; const L=sig>0?SHARP_ORDER:FLAT_ORDER; return L.slice(0,Math.abs(sig)).map(l=>NOMBRE[l].toLowerCase()+(sig>0?'♯':'♭')).join(', '); }
-function renderArm(){
-  ['A','B'].forEach(K=>{
-    const box=document.querySelector('#armRow .arm-box[data-k="'+K+'"]'); if(!box) return;
-    const S=ARM[K], host=box.querySelector('.arm-btns'); host.innerHTML='';
-    box.classList.toggle('ok',S.ok);
-    const sig=K==='A'?EX.keyA.sig:EX.keyB.sig;
-    box.querySelector('.arm-ok').textContent=S.ok?('✓ '+sigLabel(sig)+(sig?' ('+sigNotasTxt(sig)+')':'')):'';
-    [0,1,2,3,4,5,6,7].forEach(n=>{ const x=document.createElement('button'); x.className='pill'+(S.n===n?' on':''); x.textContent=n; x.addEventListener('click',()=>{ S.n=n; if(n===0) S.t=null; compruebaArm(K); }); host.appendChild(x); });
-    const sep=document.createElement('span'); sep.className='ed-sep'; host.appendChild(sep);
-    [['♯',1],['♭',-1]].forEach(([g,v])=>{ const x=document.createElement('button'); x.className='pill acc'+(S.t===v?' on':''); x.textContent=g; x.addEventListener('click',()=>{ S.t=v; compruebaArm(K); }); host.appendChild(x); });
+/* ===== rueda iOS global: snap suave + sonido tick + vibración ===== */
+let _wheelAC=null;
+function _wheelCtx(){ try{ if(!_wheelAC) _wheelAC=new (window.AudioContext||window.webkitAudioContext)(); if(_wheelAC.state==='suspended') _wheelAC.resume(); return _wheelAC; }catch(e){ return null; } }
+function wheelTick(){
+  const ctx=_wheelCtx(); if(!ctx) return;
+  /* (23-sep-2026, Iago) «suena tipo metralleta»: como mucho un tick cada 55 ms */
+  const _now=performance.now(); if(window.__wheelTickT && _now-window.__wheelTickT<55) return; window.__wheelTickT=_now;
+  try{
+    const t=ctx.currentTime;
+    // "tock" suave: senoide grave con caída rápida + filtro pasa-bajos
+    const o=ctx.createOscillator(), g=ctx.createGain(), lp=ctx.createBiquadFilter();
+    o.type='sine';
+    o.frequency.setValueAtTime(320,t);
+    o.frequency.exponentialRampToValueAtTime(180,t+0.05);
+    lp.type='lowpass'; lp.frequency.setValueAtTime(1200,t);
+    g.gain.setValueAtTime(0.0001,t);
+    g.gain.exponentialRampToValueAtTime(0.026,t+0.006);   /* WAVE12: tick más suave */
+    g.gain.exponentialRampToValueAtTime(0.0001,t+0.07);
+    o.connect(lp).connect(g).connect(ctx.destination); o.start(t); o.stop(t+0.09);
+  }catch(e){}
+  if(navigator.vibrate){ try{ navigator.vibrate(6); }catch(e){} }
+}
+/* makeWheel(host, items, startIdx, onChange) -> {setIndex,setItems,getValue,getIndex} */
+function makeWheel(host, items, startIdx, onChange){
+  const H=32;
+  host.innerHTML='';
+  const band=document.createElement('div'); band.className='wband'; host.appendChild(band);
+  const list=document.createElement('div'); list.className='wlist'; host.appendChild(list);
+  let data=items.slice(), idx=startIdx||0, live=idx;
+  let dragging=false, startY=0, moved=0;
+  let wheelAcc=0, wheelLock=false, wheelClr=null;
+  /* (23-sep-2026, Iago) ARMADURAS PASO A PASO: en las ruedas de nº de alteraciones
+     (ítems tipo «3♯», «0», «2♭») la armadura se repinta en cada paso mientras se
+     arrastra, no solo al levantar el dedo. Se avisa al onChange con el ítem vivo
+     (coalescido por frame); al soltar, el commit lo llama otra vez con el final. */
+  const esArm=/[♯♭]/.test(data.join('')) && data.length>=8;
+  let liveRaf=null;
+  function previewLive(c){ if(!esArm || !onChange) return; if(liveRaf) cancelAnimationFrame(liveRaf); liveRaf=requestAnimationFrame(()=>{ liveRaf=null; try{ onChange(c); }catch(e){} }); }
+  function build(){
+    list.innerHTML='';
+    data.forEach((t,i)=>{ const d=document.createElement('div'); d.className='witem'+(i===idx?' sel':''); d.dataset.i=i;
+      if(String(t).indexOf('7\u0338')>=0){ d.innerHTML=String(t).split('7\u0338').join('<span class="ab-tach">7</span>'); } else { d.textContent=t; }
+      d.addEventListener('click',()=>{ if(moved>6) return; commit(i,true); }); list.appendChild(d); });
+  }
+  const hi=k=>list.querySelectorAll('.witem').forEach((e,i)=>e.classList.toggle('sel',i===k));
+  const placeAt=ix=>{ list.style.transform='translateY('+(H-ix*H)+'px)'; };
+  function commit(ni,fire){
+    ni=Math.max(0,Math.min(data.length-1,ni));
+    const cambia=(ni!==idx);
+    idx=ni; live=idx;
+    list.style.transition='transform .18s cubic-bezier(.22,.61,.36,1)';
+    placeAt(idx); hi(idx);
+    if(fire){ if(cambia) wheelTick(); if(onChange) onChange(idx); }
+  }
+  function onMove(e){
+    if(!dragging) return;
+    const y=(e.touches?e.touches[0].clientY:e.clientY); const dy=y-startY;
+    moved=Math.max(moved,Math.abs(dy));
+    list.style.transition='none';
+    list.style.transform='translateY('+(H-idx*H+dy)+'px)';
+    const c=Math.max(0,Math.min(data.length-1,Math.round(idx-dy/H)));
+    if(c!==live){ live=c; hi(c); wheelTick(); previewLive(c); }
+    if(e.cancelable) e.preventDefault();
+  }
+  function detach(){ ['pointermove','mousemove','touchmove'].forEach(t=>window.removeEventListener(t,onMove)); ['pointerup','mouseup','touchend','pointercancel'].forEach(t=>window.removeEventListener(t,onUp)); }
+  function onUp(e){
+    if(!dragging) return; dragging=false; detach();
+    const y=(e.changedTouches?e.changedTouches[0].clientY:(e.clientY!=null?e.clientY:startY)); const dy=y-startY;
+    if(Math.abs(dy)<6){ placeAt(idx); hi(idx); return; }
+    commit(Math.round(idx-dy/H), true);
+  }
+  function onDown(e){
+    dragging=true; moved=0; live=idx; startY=(e.touches?e.touches[0].clientY:e.clientY);
+    _wheelCtx();
+    window.addEventListener('pointermove',onMove); window.addEventListener('pointerup',onUp); window.addEventListener('pointercancel',onUp);
+    window.addEventListener('mousemove',onMove); window.addEventListener('mouseup',onUp);
+    window.addEventListener('touchmove',onMove,{passive:false}); window.addEventListener('touchend',onUp);
+    if(e.cancelable) e.preventDefault();
+  }
+  host.addEventListener('pointerdown',onDown);
+  host.addEventListener('mousedown',e=>{ if(!window.PointerEvent) onDown(e); });
+  host.addEventListener('touchstart',e=>{ if(!window.PointerEvent) onDown(e); },{passive:false});
+  host.addEventListener('wheel',e=>{ e.preventDefault();
+    wheelAcc+=e.deltaY; if(wheelClr) clearTimeout(wheelClr); wheelClr=setTimeout(()=>{wheelAcc=0;},160);
+    if(wheelLock) return;
+    /* (22-sep-2026, Iago) trackpad/rueda del ratón un poco MENOS sensible: umbral 24 -> 40 unidades de deltaY por paso, igual que en Grado Elemental (bloqueo 120 ms sin cambios) */
+    if(Math.abs(wheelAcc)>=40){ commit(idx+(wheelAcc>0?1:-1),true); wheelAcc=0; wheelLock=true; setTimeout(()=>{wheelLock=false;},120); }
+  },{passive:false});
+  build(); commit(idx,false);
+  return {
+    setIndex:(i,silent)=>{ commit(i,!silent); },
+    setItems:(newItems,silent)=>{ data=newItems.slice(); if(idx>=data.length) idx=data.length-1; build(); commit(idx,false); },
+    getValue:()=>data[idx], getIndex:()=>idx
+  };
+}
+window.makeWheel=makeWheel;
+
+/* ---- PASO 0 · ventana modal (2-nov-2026, Iago): obligatorio antes de rellenar casillas ----
+   estado 1: texto · estado 2: armaduras con ruedas · estado 3: notas conflictivas en un piano.
+   Para quitarlo: p0Listo() devuelve siempre true y se borran paso0Reset/paso0Abrir y el modal. */
+const P0={ok:false, arm:{A:false,B:false}, sel:{}, wA:null, wB:null, busy:false};
+function armListo(){ return P0.ok; }
+function sigCorto(sig){ return sig===0?'0':Math.abs(sig)+(sig>0?'♯':'♭'); }
+function nombreCorto(L,a){ return NOMBRE[L].toLowerCase()+accGlyph(a); }
+function evitarLista(){
+  return EX.evitar.map(n=>{ const ga=nombreCorto(n.letter,n.a), gb=nombreCorto(n.letter,n.b); return ga+' / '+gb; }).join(' · ');
+}
+function pmEstado(k){
+  [1,2,3].forEach(i=>$('pmS'+i).classList.toggle('on',i===k));
+  const f=({1:'pmOk1',2:'pmOk2',3:'pmOk3'})[k]; setTimeout(()=>{ try{ $(f).focus({preventScroll:true}); }catch(e){} },30);
+}
+/* dueño de cada tecla negra (entre las letras L y R): L si L es sostenida en A o B; si no R si R es bemol en A o B; si no L si sigA+sigB>=0, si no R */
+const PM_NEGRAS=[['C','D'],['D','E'],['F','G'],['G','A'],['A','B']];
+function duenoNegra(L,R){
+  const ma=accMapFromSig(EX.keyA.sig), mb=accMapFromSig(EX.keyB.sig);
+  if(ma[L]===1||mb[L]===1) return L;
+  if(ma[R]===-1||mb[R]===-1) return R;
+  return (EX.keyA.sig+EX.keyB.sig)>=0 ? L : R;
+}
+function pmPiano(){
+  const host=$('pmPianoIn'); host.innerHTML='';
+  const pi=$('pmPiano'); pi.classList.remove('good','locked','shake');
+  LETTERS.forEach(L=>{
+    const b=document.createElement('button'); b.type='button'; b.className='pk white'; b.dataset.l=L; b.textContent=NOMBRE[L].toLowerCase();
+    b.setAttribute('aria-label',NOMBRE[L]);
+    b.addEventListener('click',()=>pmToggle(L));
+    host.appendChild(b);
   });
+  PM_NEGRAS.forEach(([L,R])=>{
+    const own=duenoNegra(L,R), idx=LETTERS.indexOf(L);
+    const b=document.createElement('button'); b.type='button'; b.className='pk black'; b.dataset.l=own;
+    b.style.left='calc('+((idx+1)*100/7)+'% - 4.5%)';
+    b.setAttribute('aria-label','tecla negra');
+    b.addEventListener('click',()=>pmToggle(own));
+    host.appendChild(b);
+  });
+  pmPintaPiano();
 }
-function compruebaArm(K){
-  const S=ARM[K]; renderArm();
-  if(S.n==null || (S.n>0 && S.t==null)) return;
-  const sig=S.n===0?0:S.n*S.t, real=K==='A'?EX.keyA.sig:EX.keyB.sig;
-  const box=document.querySelector('#armRow .arm-box[data-k="'+K+'"]'), m=$('resultMsg');
-  if(sig===real){ S.ok=true; m.className='result-msg'; m.textContent=''; renderArm(); if(armListo()) renderSlots(); }
-  else { ARM[K]={n:null,t:null,ok:false}; renderArm(); box.classList.remove('mal'); void box.offsetWidth; box.classList.add('mal');
-    m.className='result-msg warn'; m.textContent='Esa armadura no es la de la tonalidad '+K+'. Mira el acorde de la casilla '+(K==='A'?'1':EX.n)+' y vuelve a probar.'; }
+function pmToggle(L){ if($('pmPiano').classList.contains('locked')) return; P0.sel[L]=!P0.sel[L]; $('pmMsg3').textContent=''; $('pmMsg3').className='pm-msg'; pmPintaPiano(); }
+function pmPintaPiano(){ document.querySelectorAll('#pmPianoIn .pk').forEach(k=>k.classList.toggle('on',!!P0.sel[k.dataset.l])); }
+
+function paso0Reset(){
+  P0.ok=false; P0.arm={A:false,B:false}; P0.sel={}; P0.busy=false;
+  $('pmSum').className='pm-sum'; $('pmSum').innerHTML='';
+  const a=keyLabel(EX.keyA), b=keyLabel(EX.keyB);
+  $('pmTxt1').innerHTML='Vas de <b>'+a+'</b> a <b>'+b+'</b>. Primero, establece las armaduras de las dos tonalidades. Después, toca en el piano las notas conflictivas: las que cambian de una a otra.';
+  $('pmNmA').textContent=a; $('pmNmB').textContent=b; $('pmVsA').textContent=a; $('pmVsB').textContent=b;
+  document.querySelectorAll('.pm-card').forEach(c=>{ c.className='pm-card'; c.querySelector('.pm-ck').textContent=''; });
+  $('pmMsg2').textContent=''; $('pmMsg2').className='pm-msg'; $('pmMsg3').textContent=''; $('pmMsg3').className='pm-msg';
+  const items=[]; for(let s=7;s>=-7;s--) items.push(sigCorto(s));      // 7♯ … 1♯, 0, 1♭ … 7♭
+  ['pmWA','pmWB'].forEach(id=>{ const h=$(id), n=h.cloneNode(false); h.replaceWith(n); });   // host limpio: sin escuchas de la rueda anterior
+  P0.wA=makeWheel($('pmWA'),items,7); P0.wB=makeWheel($('pmWB'),items,7);
+  $('pmOk3').textContent='Comprobar';
+  pmPiano();
+  paso0Abrir(true);
 }
+function paso0Abrir(reinicio){
+  const m=$('p0Modal'); document.body.style.overflow='hidden';
+  m.classList.add('show'); void m.offsetWidth; m.classList.add('vis');
+  if(reinicio) pmEstado(1);
+}
+function paso0Cerrar(){
+  const m=$('p0Modal'); m.classList.remove('vis'); document.body.style.overflow='';
+  setTimeout(()=>{ if(!m.classList.contains('vis')) m.classList.remove('show'); },300);
+}
+function pmComprobaArm(){
+  const m=$('pmMsg2'); let malos=[];
+  ['A','B'].forEach(K=>{
+    if(P0.arm[K]) return;
+    const w=K==='A'?P0.wA:P0.wB, sig=7-w.getIndex(), real=K==='A'?EX.keyA.sig:EX.keyB.sig;
+    const card=document.querySelector('.pm-card[data-k="'+K+'"]');
+    card.classList.remove('mal','ok');
+    if(sig===real){ P0.arm[K]=true; card.classList.add('ok'); card.querySelector('.pm-ck').textContent='✓'; }
+    else { malos.push(K); void card.offsetWidth; card.classList.add('mal'); }
+  });
+  if(malos.length){
+    m.className='pm-msg warn';
+    m.textContent=malos.map(K=>'Revisa la armadura de '+(K==='A'?keyLabel(EX.keyA):keyLabel(EX.keyB))+'.').join(' ');
+    return;
+  }
+  m.className='pm-msg good'; m.textContent='✓ Las dos armaduras son correctas.';
+  if(P0.busy) return; P0.busy=true;
+  setTimeout(()=>{ P0.busy=false; pmEstado(3); },900);
+}
+function pmComprobaNotas(){
+  const m=$('pmMsg3'), pi=$('pmPiano');
+  if(P0.ok){ paso0Cerrar(); return; }                                   // botón «Siguiente ▶»
+  const real=new Set(EX.evitar.map(n=>n.letter));
+  const sel=LETTERS.filter(L=>P0.sel[L]);
+  const bien=sel.length===real.size && sel.every(L=>real.has(L));
+  if(!bien){
+    pi.classList.remove('shake'); void pi.offsetWidth; pi.classList.add('shake');
+    P0.sel={}; setTimeout(pmPintaPiano,180);
+    m.className='pm-msg warn'; m.textContent='Esas no son las notas que cambian entre '+keyLabel(EX.keyA)+' y '+keyLabel(EX.keyB)+'. Prueba otra vez.';
+    return;
+  }
+  P0.ok=true; pi.classList.add('good','locked');
+  m.className='pm-msg good'; m.textContent='✓ Nota'+(real.size>1?'s':'')+' a evitar en el puente: '+evitarLista()+'.';
+  $('pmOk3').textContent='Siguiente ▶';
+  const sm=$('pmSum');
+  sm.innerHTML='<b>'+keyLabel(EX.keyA)+'</b> ('+sigCorto(EX.keyA.sig)+') → <b>'+keyLabel(EX.keyB)+'</b> ('+sigCorto(EX.keyB.sig)+') <span class="ev">evita: '+evitarLista()+'</span>';
+  sm.className='pm-sum show';
+  renderSlots();
+}
+$('pmOk1').addEventListener('click',()=>pmEstado(2));
+$('pmOk2').addEventListener('click',pmComprobaArm);
+$('pmOk3').addEventListener('click',pmComprobaNotas);
 
 /* ---- wiring ---- */
 $('newBtn').addEventListener('click', nuevo);
