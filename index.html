@@ -14587,7 +14587,7 @@ function fpPintaDodeC(host, spec, resuelto, anchoFijo){
   }
   function txt(t,color,size){ var d=document.createElement('div'); d.style.cssText='font-size:'+size+'px;font-weight:800;color:'+color+';text-align:center;line-height:1.15'; d.textContent=t; return d; }
   function renderSlots(g){ var host=g.__slots; host.innerHTML=''; host.style.cssText='display:grid;grid-template-columns:repeat('+g.EX.N+',1fr);gap:8px'; for(var i=0;i<g.EX.N;i++) host.appendChild(slotCard(g,i,{})); }
-  function selectSlot(g,i){ if(g.EX.sol[i].fixed) return; if(g.__sel!=null && g.__sel!==i && edComplete(g.__ed)) commit(g,g.__sel); g.__sel=(g.__sel===i)?null:i;
+  function selectSlot(g,i){ if(g.EX.sol[i].fixed) return; if(!p0Ok(g)){ p0Aviso(g); return; } if(g.__sel!=null && g.__sel!==i && edComplete(g.__ed)) commit(g,g.__sel); g.__sel=(g.__sel===i)?null:i;
     if(g.__sel==null){ g.__ed=blankEd(); g.__editor.style.display='none'; renderSlots(g); return; }
     var u=g.userSlots[i]; g.__ed = u? {letter:u.root.letter,alter:u.root.alter||0,modo:u.modo,seventh:!!u.seventh} : blankEd();
     renderSlots(g); renderEditor(g,i); }
@@ -14609,10 +14609,50 @@ function fpPintaDodeC(host, spec, resuelto, anchoFijo){
     act.appendChild(done); act.appendChild(clr); ed.appendChild(act);
   }
   function live(g,i){ commit(g,i); renderSlots(g); renderEditor(g,i); }
+  /* (2-nov-2026, Iago) PASO 0 obligatorio, igual que en modulacion.html: armaduras de A y B + notas conflictivas.
+     Para quitarlo: borrar este bloque «PASO 0 · fichas», la llamada p0Monta() en montarEn, el aviso en selectSlot y la línea «Paso 0» de corregirVisual y del PDF. */
+  function p0Ok(g){ return !!(g.p0 && g.p0.ok); }
+  function sigTxt(sig){ return sig===0?'0':Math.abs(sig)+(sig>0?'♯':'♭'); }
+  function evitarSet(g){ var o={}; g.EX.evitar.forEach(function(n){ o[n.letter]=1; }); return o; }
+  function p0Aviso(g){ var m=g.__p0msg; if(!m) return; m.style.color='#b45309'; m.textContent='Primero, completa el paso 0.'; if(g.__p0box){ g.__p0box.style.boxShadow='0 0 0 3px rgba(217,119,6,.45)'; setTimeout(function(){ g.__p0box.style.boxShadow='none'; },700); } }
+  function p0Monta(wrap, g){
+    if(!g.p0) g.p0={ok:false, a:0, b:0, sel:{}};
+    var box=document.createElement('div'); box.style.cssText='margin-bottom:10px;padding:10px 12px;border:1.5px solid #cbb98a;border-radius:12px;background:#fffaf0;transition:box-shadow .2s'; wrap.appendChild(box); g.__p0box=box;
+    function pinta(){
+      box.innerHTML=''; var ok=g.p0.ok; box.style.borderColor=ok?'#22c98a':'#cbb98a';
+      var h=document.createElement('div'); h.style.cssText='font-size:12px;font-weight:900;color:'+(ok?'#15935f':'#3a2f12')+';margin-bottom:8px'; h.textContent=ok?'Paso 0 ✓':'Paso 0 · antes de las casillas: armaduras y notas conflictivas'; box.appendChild(h);
+      var row=document.createElement('div'); row.style.cssText='display:flex;gap:18px;flex-wrap:wrap;align-items:flex-start'; box.appendChild(row);
+      function rueda(lbl, K){ var d=document.createElement('div'); d.style.cssText='display:flex;flex-direction:column;align-items:center;gap:3px';
+        var l=document.createElement('div'); l.style.cssText='font-size:10px;font-weight:800;text-transform:uppercase;color:#8a7a45'; l.textContent=lbl; d.appendChild(l);
+        var up=pill('▲',false,function(){ if(!ok&&g.p0[K]<7){ g.p0[K]++; pinta(); } }), dn=pill('▼',false,function(){ if(!ok&&g.p0[K]>-7){ g.p0[K]--; pinta(); } });
+        up.style.padding=dn.style.padding='2px 14px'; up.style.fontSize=dn.style.fontSize='11px'; up.title='sostenidos'; dn.title='bemoles';
+        var v=document.createElement('div'); v.style.cssText='min-width:52px;text-align:center;padding:5px 8px;border:1.5px solid '+(ok?'#22c98a':'#b8860b')+';border-radius:8px;background:#fff;font-size:16px;font-weight:900;color:#2b2b2b'; v.textContent=sigTxt(g.p0[K]);
+        if(!ok) d.appendChild(up); d.appendChild(v); if(!ok) d.appendChild(dn); return d; }
+      row.appendChild(rueda('Armadura '+M().keyLabel(g.EX.keyA),'a'));
+      row.appendChild(rueda('Armadura '+M().keyLabel(g.EX.keyB),'b'));
+      var gN=document.createElement('div'); var l2=document.createElement('div'); l2.style.cssText='font-size:10px;font-weight:800;text-transform:uppercase;color:#8a7a45;margin-bottom:5px'; l2.textContent='Notas conflictivas (cambian de A a B)'; gN.appendChild(l2);
+      var b2=document.createElement('div'); b2.style.cssText='display:flex;flex-wrap:wrap;gap:5px'; gN.appendChild(b2);
+      M().LETTERS.forEach(function(L){ var bt=pill(M().NOMBRE[L], !!g.p0.sel[L], function(){ if(ok) return; g.p0.sel[L]=!g.p0.sel[L]; pinta(); }); if(ok) bt.style.cursor='default'; b2.appendChild(bt); });
+      row.appendChild(gN);
+      var foot=document.createElement('div'); foot.style.cssText='display:flex;gap:10px;align-items:center;margin-top:9px;flex-wrap:wrap'; box.appendChild(foot);
+      if(!ok){ var c=pill('Comprobar',false,function(){ comprueba(); }); c.style.background='linear-gradient(120deg,#e9c96a,#b8860b)'; c.style.color='#1a1305'; foot.appendChild(c); }
+      var m=document.createElement('div'); m.style.cssText='font-size:12px;font-weight:800'; foot.appendChild(m); g.__p0msg=m;
+      if(ok){ m.style.color='#15935f'; m.textContent='Ya puedes completar las casillas.'; }
+    }
+    function comprueba(){
+      var okA=g.p0.a===g.EX.keyA.sig, okB=g.p0.b===g.EX.keyB.sig, real=evitarSet(g), sel=M().LETTERS.filter(function(L){ return g.p0.sel[L]; });
+      var okN=sel.length===Object.keys(real).length && sel.every(function(L){ return real[L]; }), mal=[];
+      if(!okA) mal.push('armadura de '+M().keyLabel(g.EX.keyA)); if(!okB) mal.push('armadura de '+M().keyLabel(g.EX.keyB)); if(!okN) mal.push('notas conflictivas');
+      if(!mal.length){ g.p0.ok=true; pinta(); return; }
+      pinta(); g.__p0msg.style.color='#e11d1d'; g.__p0msg.textContent='Revisa: '+mal.join(', ')+'.';
+    }
+    pinta();
+  }
   function montarEn(host, g){
     if(!host||!g) return; host.innerHTML='';
     var wrap=document.createElement('div'); wrap.style.cssText='background:#f3f5ff;border:1px solid #dfe3f4;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
     var cap=document.createElement('div'); cap.style.cssText='font-size:12.5px;font-weight:800;color:#3a2f12;margin-bottom:8px'; cap.innerHTML='Completa la modulación de <b>'+M().keyLabel(g.EX.keyA)+'</b> a <b>'+M().keyLabel(g.EX.keyB)+'</b>. Se dan la 1ª y la última; la <b style="color:#3a6fd8">casilla 5 es el puente</b>. Pulsa una casilla para elegir su acorde.<br><span style="font-weight:600;color:#8a7a45">Recuerda: los acordes de dominante los escribimos con 7ª (por estilo).</span>'; wrap.appendChild(cap);
+    p0Monta(wrap, g);
     var slots=document.createElement('div'); wrap.appendChild(slots); g.__slots=slots;
     var keys=document.createElement('div'); keys.style.cssText='display:flex;justify-content:space-between;margin-top:6px;font-size:11px;font-weight:800;color:#3a6fd8'; keys.innerHTML='<span>'+M().keyLabel(g.EX.keyA)+'</span><span>'+M().keyLabel(g.EX.keyB)+'</span>'; wrap.appendChild(keys);
     var ed=document.createElement('div'); ed.style.cssText='display:none;margin-top:10px;padding:12px;border:1px solid #cbb374;border-radius:12px;background:linear-gradient(180deg,#f6ecd0,#efe1b8)'; wrap.appendChild(ed); g.__editor=ed;
@@ -14623,6 +14663,7 @@ function fpPintaDodeC(host, spec, resuelto, anchoFijo){
       if(host){ host.innerHTML='';
         var wrap=document.createElement('div'); wrap.style.cssText='background:#f3f5ff;border:1px solid #dfe3f4;border-radius:12px;padding:10px 12px'; host.appendChild(wrap);
         wrap.appendChild(txtL('Modulación de '+M().keyLabel(g.EX.keyA)+' a '+M().keyLabel(g.EX.keyB)));
+        wrap.appendChild(txtL('Paso 0: '+(p0Ok(g)?'✓':'sin completar')+' · armaduras '+sigTxt(g.EX.keyA.sig)+' → '+sigTxt(g.EX.keyB.sig)+' · notas conflictivas: '+g.EX.evitar.map(function(n){ return M().NOMBRE[n.letter]; }).join(', ')));
         var slots=document.createElement('div'); slots.style.cssText='display:grid;grid-template-columns:repeat('+g.EX.N+',1fr);gap:8px;margin-top:6px'; for(var i=0;i<g.EX.N;i++) slots.appendChild(slotCard(g,i,{corr:true})); wrap.appendChild(slots);
         var mi=magicIdx(g), pc=puntua(g), det=[];
         if(mi>=0 && !verdict(g,mi)){ det.push('El acorde <b>puente</b> es incorrecto → 0 puntos'); }
@@ -14648,6 +14689,15 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     var svg=document.createElementNS(ns,'svg'); svg.setAttribute('width',W); svg.setAttribute('height',H); svg.setAttribute('viewBox','0 0 '+W+' '+H); host.appendChild(svg);
     function T(x,y,s,fill,sz,anchor,weight){ var t=document.createElementNS(ns,'text'); t.setAttribute('x',x);t.setAttribute('y',y);t.setAttribute('text-anchor',anchor||'middle');t.setAttribute('font-size',sz||13);t.setAttribute('font-weight',weight||'bold');t.setAttribute('font-family','Arial, Helvetica, sans-serif');t.setAttribute('fill',fill);t.textContent=s;svg.appendChild(t); }
     /* padX/gap/bw/bh/y/H ya definidos arriba */
+    /* (2-nov-2026, Iago) PASO 0 en papel: armaduras y notas conflictivas (en la hoja de soluciones, en rojo) */
+    (function(){ function st(sig){ return sig===0?'0':Math.abs(sig)+(sig>0?'♯':'♭'); }
+      var ev=EX.evitar.map(function(n){ return M.NOMBRE[n.letter]; }).join(', ');
+      var parts=[['Paso 0 · Armadura '+M.keyLabel(EX.keyA)+':', st(EX.keyA.sig), 46], ['Armadura '+M.keyLabel(EX.keyB)+':', st(EX.keyB.sig), 46], ['Notas conflictivas:', ev, 130]];
+      var x=padX;
+      parts.forEach(function(p){ var t=document.createElementNS(ns,'text'); t.setAttribute('x',x); t.setAttribute('y',18); t.setAttribute('font-size',12); t.setAttribute('font-weight','bold'); t.setAttribute('font-family','Arial, Helvetica, sans-serif'); t.setAttribute('fill','#3a2f12'); t.textContent=p[0]; svg.appendChild(t);
+        var tw=0; try{ tw=t.getComputedTextLength(); }catch(e){} if(!tw) tw=p[0].length*6.8; x+=tw+6; var w=p[2];
+        if(resuelto) T(x+w/2, 18, p[1], '#e11d1d', 13); else { var ln=document.createElementNS(ns,'line'); ln.setAttribute('x1',x); ln.setAttribute('x2',x+w); ln.setAttribute('y1',20); ln.setAttribute('y2',20); ln.setAttribute('stroke','#8a7a45'); ln.setAttribute('stroke-width','1'); svg.appendChild(ln); }
+        x+=w+20; }); })();
     for(var i=0;i<N;i++){ var def=EX.sol[i], x=padX+i*(bw+gap), magic=def.magic;
       var rc=document.createElementNS(ns,'rect'); rc.setAttribute('x',x);rc.setAttribute('y',y);rc.setAttribute('width',bw);rc.setAttribute('height',bh);rc.setAttribute('rx',10);
       rc.setAttribute('fill', def.fixed?'#f6efdc':'#fff'); rc.setAttribute('stroke', magic?'#3a6fd8':'#cbb98a'); rc.setAttribute('stroke-width', magic?'2':'1'); svg.appendChild(rc);

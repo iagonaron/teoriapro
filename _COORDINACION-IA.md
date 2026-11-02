@@ -75,6 +75,7 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
   suite_ficha_test_usadas(p_token) en Supabase (ya pegada el 22-oct).
 
 ## Registro (lo más reciente arriba · hora de Galicia)
+- 2-nov 13:40 · C1 · Modulación · HECHO · en este mismo commit, junto a index.html (parto de 49fb2b6) · Generador de fichas, ejercicio de Modulación (MODULACION_MOTOR y fpPintaModulacion): paso 0 obligatorio como en modulacion.html. En pantalla, armaduras de A y B con ▲ sostenidos / ▼ bemoles y notas conflictivas (Do…Si) → «Comprobar»; hasta acertarlo no se abren las casillas. En la corrección sale la línea «Paso 0». En el PDF, la línea «Paso 0 · Armadura A: ___ · Armadura B: ___ · Notas conflictivas: ___» (en la hoja de soluciones, en rojo). La dominante sin 7ª ya restaba 0,25. Copia: /home/claude/tpro/index_prepaso0.html (= 49fb2b6). DESHACER: volver index.html a 49fb2b6.
 - 2-nov 08:25 · Mantenimiento · HECHO · en este mismo commit (index.html) · Test 3.1 Atonalidad, 1.ª pregunta reescrita (Iago):
   «Si el intérprete toma decisiones que construyen la obra, la aleatoriedad está en…» (antes «…sigue indicaciones para ir construyendo
   la obra…»). Mismas opciones y misma correcta. Su parrafito (EXPL_TEST), al día en LMEAVathome
