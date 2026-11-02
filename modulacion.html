@@ -965,7 +965,7 @@ function verdictFor(i){
   if(matches.length===0) return {cls:'bad', label:'incorrecto'};
   // root+modo OK. ¿requiere 7ª? (alguna solución la pide)
   const needsSeventh=def.acc.some(s=>s.seventh);
-  if(needsSeventh && !u.seventh) return {cls:'amber', label:'falta 7ª · −0,25'};
+  if(needsSeventh && !u.seventh) return {cls:'amber', label:'falta 7ª · −2,5'};
   // si puso 7ª de más donde no toca, lo damos por bueno igualmente (no penalizamos extra)
   return {cls:'ok', label:'correcto'};
 }
@@ -990,7 +990,7 @@ function corregir(){
   renderSlots();
 
   /* (2-nov-2026, Iago) NOTA: cada casilla editable vale lo mismo sobre 10; una casilla mal o vacía no puntúa.
-     Una dominante correcta pero sin 7ª NO es un acorde equivocado: puntúa entera y se descuenta 0,25 por cada dominante sin 7ª (máx. −0,5). La nota nunca baja de 0. */
+     Una dominante correcta pero sin 7ª NO es un acorde equivocado: puntúa entera y se descuenta 2,5 por cada dominante sin 7ª (máx. −5: una sin 7ª = 7,5; las dos = 5) — corregido 2-nov 13:37, Iago. La nota nunca baja de 0. */
   let nBad=0,nSin7=0,nEd=0,nOk=0;
   const wrongIdx=[], sin7=[];
   for(let i=0;i<EX.n;i++){
@@ -1000,7 +1000,7 @@ function corregir(){
     if(v.cls==='bad'){ nBad++; wrongIdx.push(i); }
     else { nOk++; if(v.cls==='amber'){ nSin7++; sin7.push(i+1); } }
   }
-  const descuento=Math.min(0.5,0.25*nSin7);
+  const descuento=Math.min(5,2.5*nSin7);
   const nota=Math.max(0,10*nOk/nEd-descuento);
   const fmt=x=>String(Math.round(x*100)/100).replace('.',',');
   const msg=$('resultMsg');
@@ -1009,8 +1009,8 @@ function corregir(){
   else if(nBad===0){ msg.className='result-msg warn'; h='Casi: todos los acordes están bien, pero te falta la 7ª en '+(nSin7>1?'las dos dominantes':'una dominante')+'.'; }
   else { msg.className='result-msg'; h=nBad+' casilla'+(nBad>1?'s':'')+' incorrecta'+(nBad>1?'s':'')+'. Mira la solución en azul abajo.'; }
   h+='<div class="nota-final">Nota: '+fmt(nota)+' <small>/ 10</small></div>';
-  if(nSin7>=1) h+='<div class="desc-7">−0,25: a la dominante'+(nSin7>1?' de la casilla '+sin7[0]:'')+' le falta la 7ª. La 7ª no es solo estilo: le da el impulso que te lleva al I.</div>';
-  if(nSin7>=2) h+='<div class="desc-7">−0,25: a la dominante de la casilla '+sin7[1]+' también le falta la 7ª.</div>';
+  if(nSin7>=1) h+='<div class="desc-7">−2,5: a la dominante'+(nSin7>1?' de la casilla '+sin7[0]:'')+' le falta la 7ª. La 7ª no es solo estilo: le da el impulso que te lleva al I.</div>';
+  if(nSin7>=2) h+='<div class="desc-7">−2,5: a la dominante de la casilla '+sin7[1]+' también le falta la 7ª.</div>';
   msg.innerHTML=h;
   window.MOD_NOTA={nota,descuento,nOk,nEd,nSin7};
 
