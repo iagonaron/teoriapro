@@ -959,10 +959,10 @@ function verdictFor(i){
   const def=EX.sol[i];
   const u=userSlots[i];
   if(def.fixed) return {cls:'ok', label:''};
-  if(!u) return {cls:'bad', label:'vacía'};
+  if(!u) return {cls:'bad', label:'vacía · −5'};
   // ¿coincide root+modo con alguna solución?
   const matches=def.acc.filter(s=>acordeIgual(u,s));
-  if(matches.length===0) return {cls:'bad', label:'incorrecto'};
+  if(matches.length===0) return {cls:'bad', label:'incorrecto · −5'};
   // root+modo OK. ¿requiere 7ª? (alguna solución la pide)
   const needsSeventh=def.acc.some(s=>s.seventh);
   if(needsSeventh && !u.seventh) return {cls:'amber', label:'falta 7ª · −2,5'};
@@ -989,8 +989,7 @@ function corregir(){
   updateNebula();
   renderSlots();
 
-  /* (2-nov-2026, Iago) NOTA: cada casilla editable vale lo mismo sobre 10; una casilla mal o vacía no puntúa.
-     Una dominante correcta pero sin 7ª NO es un acorde equivocado: puntúa entera y se descuenta 2,5 por cada dominante sin 7ª (máx. −5: una sin 7ª = 7,5; las dos = 5) — corregido 2-nov 13:37, Iago. La nota nunca baja de 0. */
+  /* NOTA (ver la regla debajo). Una dominante correcta pero sin 7ª NO es un acorde equivocado (ámbar). */
   let nBad=0,nSin7=0,nEd=0,nOk=0;
   const wrongIdx=[], sin7=[];
   for(let i=0;i<EX.n;i++){
@@ -1000,14 +999,20 @@ function corregir(){
     if(v.cls==='bad'){ nBad++; wrongIdx.push(i); }
     else { nOk++; if(v.cls==='amber'){ nSin7++; sin7.push(i+1); } }
   }
+  /* (Iago 2-nov 13:43) igual que las fichas y el portal: cada acorde mal (p. ej. el modo) −5, cada dominante sin 7ª −2,5, puente mal → 0.
+     Con 5 o más: modulación salvada (si hay defectos); por debajo: fallida. */
+  const puenteMal=wrongIdx.some(i=>EX.sol[i].magic);
   const descuento=Math.min(5,2.5*nSin7);
-  const nota=Math.max(0,10*nOk/nEd-descuento);
+  const nota=puenteMal?0:Math.max(0,10-5*nBad-descuento);
   const fmt=x=>String(Math.round(x*100)/100).replace('.',',');
   const msg=$('resultMsg');
+  const det=[];
+  if(puenteMal) det.push('el puente está mal: sin acorde común no hay modulación');
+  else { if(nBad) det.push(nBad+' acorde'+(nBad>1?'s':'')+' mal (−'+(5*nBad)+')'); if(nSin7) det.push((nSin7>1?'las dos dominantes':'una dominante')+' sin 7ª (−'+fmt(descuento)+')'); }
   let h;
   if(nBad===0&&nSin7===0){ msg.className='result-msg good'; h='✓ ¡Modulación perfecta! Has viajado de <b>'+keyLabel(EX.keyA)+'</b> a <b>'+keyLabel(EX.keyB)+'</b>.'; }
-  else if(nBad===0){ msg.className='result-msg warn'; h='Casi: todos los acordes están bien, pero te falta la 7ª en '+(nSin7>1?'las dos dominantes':'una dominante')+'.'; }
-  else { msg.className='result-msg'; h=nBad+' casilla'+(nBad>1?'s':'')+' incorrecta'+(nBad>1?'s':'')+'. Mira la solución en azul abajo.'; }
+  else if(nota>=5){ msg.className='result-msg warn'; h='Modulación salvada, con defectos: '+det.join(' y ')+'.'+(nBad?' Mira la solución en azul abajo.':''); }
+  else { msg.className='result-msg'; h='Modulación fallida: '+det.join(' y ')+'.'+(nBad?' Mira la solución en azul abajo.':''); }
   h+='<div class="nota-final">Nota: '+fmt(nota)+' <small>/ 10</small></div>';
   if(nSin7>=1) h+='<div class="desc-7">−2,5: a la dominante'+(nSin7>1?' de la casilla '+sin7[0]:'')+' le falta la 7ª. La 7ª no es solo estilo: le da el impulso que te lleva al I.</div>';
   if(nSin7>=2) h+='<div class="desc-7">−2,5: a la dominante de la casilla '+sin7[1]+' también le falta la 7ª.</div>';
