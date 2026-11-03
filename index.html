@@ -8561,10 +8561,10 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     var ci=compasEn(p.x);
     // ¿sobre una nota ya escrita? -> cursor pointer, sin fantasma
     if(ci>=1 && bSeq[ci-1]){ host.style.cursor='pointer'; clearGhost(); return; }
-    // fantasma solo en el próximo hueco libre
-    var slot=nextSlot();
+    /* (3-nov-2026, Iago: «que pueda poner la nota en el orden de compases que quiera… deslizando en la propia vertical de ese
+       compás») fantasma en CUALQUIER compás vacío: el compás lo decide la franja vertical (la X) en la que esté el cursor */
+    var slot=(ci>=1 && ci<=7 && !bSeq[ci-1]) ? ci-1 : -1;
     if(slot<0){ host.style.cursor='default'; clearGhost(); return; }
-    if(ci!==slot+1){ host.style.cursor='default'; clearGhost(); return; }
     var nat=nearestByY(p.y); if(!nat){ clearGhost(); return; }
     var which=(nat.clef==='bass')?'bot':'top';   /* (20-oct-2026) la clave la decide la altura elegida */
     host.style.cursor='pointer';
@@ -8613,9 +8613,8 @@ window.trInit=trInit; window.trNuevo=trNuevo; window.trCorregir=trCorregir;
     var ci=compasEn(p.x);
     // ¿clic sobre una nota ya escrita? -> seleccionarla
     if(ci>=1 && bSeq[ci-1]){ selB=ci-1; renderScoreB(); return; }   /* SEL-UNICA 10-jul-2026 · tocar armónico colocado lo selecciona */
-    // colocar en el próximo hueco libre
-    var slot=nextSlot(); if(slot<0){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
-    if(ci!==slot+1){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 */
+    // (3-nov-2026, Iago) colocar en el compás vacío de esa franja vertical, en el orden que quiera
+    var slot=(ci>=1 && ci<=7 && !bSeq[ci-1]) ? ci-1 : -1; if(slot<0){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
     var nat=nearestByY(p.y); if(!nat){ if(selB!=null){ selB=null; renderScoreB(); } return; }   /* SEL-UNICA 10-jul-2026 */
     // alteración heredada: si una aparición anterior de la misma letra/octava llevaba alteración, partir de natural igualmente (el alumno la ajusta)
     bSeq[slot]={step:nat.step,octave:nat.octave,alter:0,clef:nat.clef};   /* (20-oct-2026) y en qué clave la puso */
@@ -13916,8 +13915,7 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
   function onHover(g,ev){ if(g.__corr){ clearGhost(g); return; } var host=g.__host, p=svgPoint(host,ev); if(!p){ clearGhost(g); return; }
     var ci=compasEn(g,p.x);
     if(ci>=1 && g.bSeq[ci-1]){ host.style.cursor='pointer'; clearGhost(g); return; }
-    var slot=nextSlot(g); if(slot<0){ host.style.cursor='default'; clearGhost(g); return; }
-    if(ci!==slot+1){ host.style.cursor='default'; clearGhost(g); return; }
+    var slot=(ci>=1 && ci<=7 && !g.bSeq[ci-1]) ? ci-1 : -1; if(slot<0){ host.style.cursor='default'; clearGhost(g); return; }   /* (3-nov-2026, Iago) cualquier compás vacío, por su franja vertical */
     var nat=nearestByY(g,p.y,null); if(!nat){ clearGhost(g); return; }
     var which=(nat.clef==='bass')?'bot':(nat.clef==='treble'?'top':clefEn(g,nat.y));   /* (20-oct-2026) la clave de la altura elegida · WAVE12: la clave se decide por la ALTURA elegida (solo para las líneas adicionales) */
     host.style.cursor='pointer'; showGhost(g, g.__geo.comp[slot+1].cx, nat, which);
@@ -13938,8 +13936,7 @@ function fpPintaCompReplicar(host, spec, resuelto, anchoFijo){
   function clearGhost(g){ var el=g.__host.querySelector('.serieF-ghost'); if(el) el.style.display='none'; g.__host.querySelectorAll('.serieF-ledger').forEach(function(x){x.remove();}); if(g.__host) g.__host._gnLastNat=null; /* R5 10-jul-2026 */ }
   function onClickScore(g,ev){ if(g.__corr) return; var p=svgPoint(g.__host,ev); if(!p) return; var ci=compasEn(g,p.x);
     if(ci>=1 && g.bSeq[ci-1]){ g.__sel=ci-1; render(g); return; }   /* SEL-UNICA 10-jul-2026 · tocar armónico colocado lo selecciona */
-    var slot=nextSlot(g); if(slot<0){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 · vacío deselecciona */
-    if(ci!==slot+1){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* SEL-UNICA 10-jul-2026 */
+    var slot=(ci>=1 && ci<=7 && !g.bSeq[ci-1]) ? ci-1 : -1; if(slot<0){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* (3-nov-2026, Iago) en el orden que quiera · SEL-UNICA 10-jul-2026 */
     var nat=nearestByY(g,p.y,null); if(!nat){ if(g.__sel!=null){ g.__sel=null; render(g); } return; }   /* WAVE12: mapa continuo */
     g.bSeq[slot]={step:nat.step,octave:nat.octave,alter:0,clef:nat.clef}; gnPushSF(g,{slot:slot, prev:null}); g.__sel=slot; render(g);   /* GN-UNIF 8-jul-2026 */
   }
