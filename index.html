@@ -14175,7 +14175,7 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
     /* 2-ago-2026 (Iago) · Reglas visibles para el alumno */
     var _regla=document.createElement('div');
     _regla.style.cssText='font-size:11.5px;line-height:1.55;color:#6b5d2e;background:#faf6ea;border:1px dashed #e0d3a0;border-radius:9px;padding:7px 10px;margin-bottom:8px';
-    _regla.innerHTML='<b>Reglas:</b> coloca <b>12 sonidos distintos</b> — los enarmónicos cuentan como el MISMO sonido (Re♯ = Mi♭) y la <b>octava es libre</b>. Cada sonido repetido o que falte resta <b>0,5</b>. Evita las «escaleras»: 4 notas seguidas por grados conjuntos en la misma dirección restan 0,25 (y 0,10 más por cada nota extra).';
+    _regla.innerHTML='<b>Reglas:</b> coloca <b>12 sonidos distintos</b> — los enarmónicos cuentan como el MISMO sonido (Re♯ = Mi♭) y la <b>octava es libre</b>. Cada sonido repetido o que falte resta <b>1 punto</b> (de 10). Evita las «escaleras»: 4 notas seguidas por grados conjuntos en la misma dirección restan 1 punto (y medio más por cada nota extra). Ojo: sin barra de compás, una alteración sigue valiendo para las notas iguales que vienen después.';
     wrap.insertBefore(_regla, score);
     var tb=document.createElement('div'); tb.style.cssText='display:flex;align-items:center;gap:8px;margin-top:8px;padding:8px 12px;border:1px solid #e7d9a8;border-radius:10px;background:#faf6ea'; wrap.appendChild(tb); g.__tb=tb;
     var l=document.createElement('span'); l.style.cssText='font-size:12px;font-weight:800;color:#7a6a3a'; l.textContent='Alteración:'; tb.appendChild(l);
@@ -14186,8 +14186,8 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
   }
   function esValida(g){ var pcs=soundingPcs(g); return pcs.length===12 && D().todosDistintos(pcs) && !reglaViola(g); }
   function distintasCount(g){ var pcs=soundingPcs(g), s={}, c=0; pcs.forEach(function(p){ if(!s[p]){ s[p]=1; c++; } }); return c; }
-  function penConj(g){ var r=rachaDir(g); return r>=3 ? (0.25 + 0.10*(r-3)) : 0; }   // 4 notas: 25%; +10% por cada extra
-  function puntua(g){ try{ var nMal=12 - distintasCount(g); var sc=1 - 0.5*nMal - penConj(g);   /* 2-ago-2026 (Iago): más severo — cada sonido repetido o faltante resta 0,5 (enarmónicos = mismo sonido, ya contemplado por clase de nota) */ return Math.max(0, Math.round(sc*100)/100); }catch(e){ return 0; } }
+  function penConj(g){ var r=rachaDir(g); return r>=3 ? (0.10 + 0.05*(r-3)) : 0; }   /* (3-nov-2026, Iago: «no de repente cero») antes 0,25 + 0,10 */   // 4 notas: 25%; +10% por cada extra
+  function puntua(g){ try{ var nMal=12 - distintasCount(g); var sc=1 - 0.1*nMal - penConj(g);   /* (3-nov-2026, Iago: «he sacado un cero por repetir una nota») 1 punto de 10 por sonido; antes 0,5 = medio ejercicio */   /* 2-ago-2026 (Iago): más severo — cada sonido repetido o faltante resta 0,5 (enarmónicos = mismo sonido, ya contemplado por clase de nota) */ return Math.max(0, Math.round(sc*100)/100); }catch(e){ return 0; } }
   function corregirVisual(host, g){
     try{
       if(!g) return 0;
@@ -14199,7 +14199,10 @@ function fpPintaSerie(host, spec, resuelto, anchoFijo){
         renderStaff(g,true);
         var nMal=12-distintasCount(g), r=rachaDir(g), pc=puntua(g);
         var det=[];
-        if(nMal>0) det.push('<span style="color:#e11d1d">'+nMal+' sonido(s) incorrecto(s) o que faltan (repetidos en rojo): −'+(50*nMal)+'%</span>');
+        if(nMal>0) det.push('<span style="color:#e11d1d">'+nMal+' sonido(s) incorrecto(s) o que faltan (repetidos en rojo): −'+(10*nMal)+'%</span>');
+        /* (3-nov-2026, Iago: «el no mirar por el retrovisor») si un repetido sale de una alteración que se arrastra */
+        (function(){ var ret=null; for(var i=0;i<12&&!ret;i++){ var n=g.notes[i]; if(!n||(n.acc!==''&&n.acc!=null)||(g.__bad&&g.__bad.indexOf&&g.__bad.indexOf(i)<0)) continue; for(var j=i-1;j>=0;j--){ var m=g.notes[j]; if(m&&m.step===n.step&&m.octave===n.octave&&m.acc!==''&&m.acc!=null){ if(ACCV[m.acc]!==0) ret={a:D().nomEs(m.step,ACCV[m.acc]),b:D().nomEs(n.step,0)}; break; } } }
+          if(ret) det.push('<span style="color:#2f6df6">👀 Fíjate bien: antes ya estaba el '+ret.a+' y, como no hay barra de compás, esa alteración sigue afectando. Para que suene '+ret.b+' natural hay que ponerle el becuadro (♮). ¡Mira por el retrovisor!</span>'); })();
         if(r>=3) det.push('<span style="color:#e11d1d">'+(r+1)+' notas por grados conjuntos en la misma dirección: −25%'+(r>3?(' y −10% × '+(r-3)+' extra'):'')+' = −'+Math.round(penConj(g)*100)+'%</span>');
         if(!det.length) det.push('<span style="color:#22c98a">✓ 12 sonidos distintos y sin cadenas por grados conjuntos: serie válida</span>');
         var box=document.createElement('div'); box.style.cssText='margin-top:10px;font-size:12px;line-height:1.6;color:#5a5030'; box.innerHTML=det.join('<br>')+'<div style="margin-top:6px;font-weight:900;color:'+(pc>=0.5?'#22c98a':'#e11d1d')+'">Puntuación: '+Math.round(pc*100)+'%</div>'; wrap.appendChild(box);
@@ -14356,6 +14359,11 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
   }
   function rowLabel(t){ var d=document.createElement('div'); d.style.cssText='font-size:11px;font-weight:900;color:#b8860b;margin:6px 0 2px;text-transform:uppercase;letter-spacing:.03em'; d.textContent=t; return d; }
   function puntua(g){ try{ var ok=0; g.missing.forEach(function(i){ if(g.shown[i] && pcAt(g.shown,i)===pcAt(g.varNotes,i)) ok++; }); return g.missing.length?ok/g.missing.length:0; }catch(e){ return 0; } }
+  /* (3-nov-2026) ¿la nota natural de la solución necesita becuadro porque antes, en el mismo compás, salió alterada? */
+  function arrastre(g,i){ var vn=g.varNotes[i]; if(!vn) return null; if((ACCV[vn.acc]||0)!==0) return null;
+    for(var j=i-1;j>=0;j--){ var m=(g.missing.indexOf(j)>=0)?g.varNotes[j]:g.shown[j]; if(m&&m.step===vn.step&&m.octave===vn.octave&&m.acc!==''&&m.acc!=null){ return ACCV[m.acc]!==0?{antes:D().nomEs(m.step,ACCV[m.acc]),sol:D().nomEs(vn.step,0)+'♮'}:null; } }
+    return null; }
+  function nomSol(g,i){ var vn=g.varNotes[i]; var c=arrastre(g,i); return c?c.sol:(D().nomEs(vn.step,ACCV[vn.acc]||0)+(vn.acc==='n'?'♮':'')); }
   function corregirVisual(host, g){
     try{
       if(!g) return 0;
@@ -14372,9 +14380,13 @@ function fpPintaDodeA(host, spec, resuelto, anchoFijo){
         var geo=drawRow(r2, shownCorr, {marks:marks});
         // solución azul de los que faltan/fallan como texto debajo
         var svg=r2.querySelector('svg');
-        if(svg){ g.missing.forEach(function(i){ var good=g.shown[i]&&pcAt(g.shown,i)===pcAt(g.varNotes,i); if(good) return; var vn=g.varNotes[i]; var lbl=document.createElement('div'); lbl.textContent=D().nomEs(vn.step,ACCV[vn.acc]||0); lbl.style.cssText='position:absolute;z-index:7;font-size:11px;font-weight:800;color:#2f6df6;transform:translateX(-50%);white-space:nowrap';
+        if(svg){ g.missing.forEach(function(i){ var good=g.shown[i]&&pcAt(g.shown,i)===pcAt(g.varNotes,i); if(good) return; var vn=g.varNotes[i]; var lbl=document.createElement('div'); lbl.textContent=nomSol(g,i); lbl.style.cssText='position:absolute;z-index:7;font-size:11px;font-weight:800;color:#2f6df6;transform:translateX(-50%);white-space:nowrap';
           try{ var pt=svg.createSVGPoint(); pt.x=geo.xs[i]; pt.y=geo.yBot+26; var sp=pt.matrixTransform(svg.getScreenCTM()), hr=r2.getBoundingClientRect(); lbl.style.left=(sp.x-hr.left)+'px'; lbl.style.top=(sp.y-hr.top)+'px'; r2.appendChild(lbl); }catch(e){} }); }
         var t=document.createElement('div'); t.style.cssText='text-align:center;margin-top:12px;font-size:12.5px;font-weight:800;color:'+(ok===g.missing.length?'#22c98a':'#8a6d1a'); t.textContent='Correctas: '+ok+'/'+g.missing.length+(ok<g.missing.length?' · solución en azul (se admiten enarmonías)':''); wrap.appendChild(t);
+        /* (3-nov-2026, Iago) «una aclaración de: fíjate bien que antes ya estaba el la bemol… el no mirar por el retrovisor» */
+        g.missing.forEach(function(i){ var good=g.shown[i]&&pcAt(g.shown,i)===pcAt(g.varNotes,i); if(good) return; var c=arrastre(g,i); if(!c) return;
+          var a=document.createElement('div'); a.style.cssText='text-align:center;margin-top:6px;font-size:12.5px;font-weight:700;color:#2f6df6;line-height:1.5';
+          a.textContent='👀 Fíjate bien: antes ya estaba el '+c.antes+' y, como no hay barra de compás, esa alteración sigue afectando. Para el '+c.sol+' hay que poner el becuadro (♮). ¡Mira por el retrovisor!'; wrap.appendChild(a); });
       }
       return puntua(g);
     }catch(e){ return puntua(g); }
@@ -14769,7 +14781,7 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
       { q:'El dodecafonismo fue impulsado sobre todo por…', op:['Arnold Schoenberg','Claude Debussy','Iannis Xenakis'] },
       { q:'La regla básica del dodecafonismo es…', op:['No repetir ningún sonido hasta que suenan los doce','Usar solo notas de la escala mayor','Repetir constantemente la tónica'] },
       { q:'La serie original se llama…', op:['P0 (Principal cero)','R0','I0'] },
-      { q:'Obtener P5 significa…', op:['Transportar la serie 5 semitonos ascendentes','Tocarla al revés','Invertir sus intervalos'] },
+      { q:'Obtener P5 significa…', op:['Transportar la serie 5 semitonos ascendentes','Transportar la serie 5 semitonos descendentes','Transportar la serie 5 tonos ascendentes'] },   /* (3-nov-2026, Iago: «demasiado fácil») */
       { q:'La serie retrógrada (R) consiste en…', op:['Tocar la serie al revés','Subir 5 semitonos','Invertir los intervalos'] },
       { q:'La inversión (I) consiste en…', op:['Cambiar la dirección de cada intervalo (lo que sube, baja)','Tocar la serie al revés','Repetir la serie igual'] },
       { q:'Sumando todas las variantes, la serie principal genera un total de…', op:['48 variaciones','12 variaciones','24 variaciones'] },
