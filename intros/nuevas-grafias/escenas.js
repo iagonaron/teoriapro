@@ -153,9 +153,13 @@
       mostrarEn(s, qc2, Wd('M1', 'ninguna') - 0.1, Wd('M1', 'minimo'));
       // guiar la vista: lo que no se nombra, semitransparente
       const tMin = Wd('M1', 'minimo');
-      atenua(s, RA, [[a, F0('I3') + 0.6, 0.32], [t68, F0('I4'), 0.32], [tC, b, 0.3]]);
-      atenua(s, RB, [[a, F0('I3') + 0.6, 0.32], [t34, t68, 0.32], [tC, b, 0.3]]);
-      atenua(s, RC, [[a + 0.01, F0('I1') + 0.02, 1], [Wd('I3', 'seguro'), tC, 0.3]]);
+      // (5-nov, Iago) los tres iguales mientras se escuchan y se pregunta; luego, solo el que se nombra:
+      // «en el a) y en el b)» → a y b · «En el a), tres por cuatro» → a · «En el b), seis por ocho» → b · los pulsos y la
+      // notación tradicional → a y b · «¿Y el c)?» → c
+      const tAB = Wd('I3', 'seguro') - 0.1, tSoloA = Wd('I3', 'en', 3) - 0.1, tSoloB = Wd('I3', 'en', 4) - 0.1, tPul = F0('I4') - 0.1;
+      atenua(s, RA, [[tSoloB, tPul, 0.3], [tC, b, 0.3]]);
+      atenua(s, RB, [[tSoloA, tSoloB, 0.3], [tC, b, 0.3]]);
+      atenua(s, RC, [[tAB, tC, 0.3]]);
       // mientras suenan (SON_ABC), la nota que suena en rosa
       const son = F0('SON_ABC') + 0.35, neg = 60 / 84;      // 84 negras por minuto (como lo toca el piano)
       const sonar = (r, ids, durs, t0) => { let tt = t0; ids.forEach((id, i) => { const n = r.marcas[id]; const a0 = tt, a1 = tt + durs[i] * neg; resalta(s, n.g, a0, a1 - 0.05, { d: .08 }); if (n.barras) resalta(s, n.barras, a0, a1 - 0.05, { d: .08 }); tt = a1; }); return tt; };
