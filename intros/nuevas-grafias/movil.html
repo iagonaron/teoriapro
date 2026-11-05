@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#081628">
+<meta name="robots" content="noindex">
+<title>Nuevas grafías · Reto</title>
+<!-- NUEVAS GRAFÍAS (2.º GP · U4) · EL RETO EN DIRECTO · la página de los MÓVILES (5-nov-2026). Se entra con el QR de la pantalla de
+     clase (movil.html?c=PIN) o escribiendo el PIN; se elige un apodo y se contesta tocando el color. Mismo servidor que el quiz de
+     4 Sabores (funciones suite_aq_* de Supabase, con la clave pública del ecosistema: reto-sb.js); solo se guarda el apodo y las
+     respuestas, y las partidas se borran a las 12 h. En este móvil solo se recuerda la partida en curso (localStorage). -->
+<style>
+:root{--fondo:#081628;--panel:#0f1d33;--borde:rgba(255,255,255,.16);--texto:#e8eef5;--suave:#94a3b8;--rosa:#ec4899}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;background:var(--fondo);color:var(--texto);font-family:"Helvetica Neue",Helvetica,Arial,sans-serif}
+body{display:flex;flex-direction:column;min-height:100vh;padding:env(safe-area-inset-top) 16px env(safe-area-inset-bottom)}
+.cab{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 2px 10px;border-bottom:1px solid var(--borde)}
+.marca{font-weight:800;font-size:15px;letter-spacing:.16em;text-transform:uppercase;color:#fff}
+.marca i{font-style:normal;color:var(--rosa)}
+.yo{font-weight:700;font-size:14px;color:var(--suave);text-align:right;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.yo b{color:var(--rosa)}
+main{flex:1;display:flex;flex-direction:column;padding:18px 0 22px}
+.pant{display:none;flex:1;flex-direction:column}
+.pant.on{display:flex}
+h1{font-weight:800;font-size:32px;line-height:1.08;margin:8px 0 6px;color:#fff}
+p{font-size:17px;line-height:1.4;margin:6px 0;color:var(--texto)}
+label{display:block;margin:18px 0 6px;font-weight:800;font-size:12px;letter-spacing:.2em;text-transform:uppercase;color:var(--rosa)}
+input{width:100%;font:700 24px "Helvetica Neue",Helvetica,Arial,sans-serif;padding:14px 16px;border-radius:12px;border:2px solid var(--borde);background:var(--panel);color:#fff;outline:none}
+input:focus{border-color:var(--rosa)}
+input.pin{font-weight:800;font-size:34px;letter-spacing:.3em;text-align:center}
+.bt{display:block;width:100%;margin-top:22px;padding:16px;border-radius:14px;border:0;background:var(--rosa);color:#fff;
+  font:800 17px "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.14em;text-transform:uppercase;cursor:pointer}
+.bt:disabled{opacity:.55}
+.error{min-height:24px;margin-top:12px;font-weight:700;font-size:16px;color:#ff9aa8}
+.centro{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:6px}
+.grande{font-weight:800;font-size:46px;line-height:1.05;color:#fff}
+.etq{font-weight:800;font-size:12px;letter-spacing:.24em;text-transform:uppercase;color:var(--rosa)}
+.ico{width:72px;height:72px;margin-bottom:8px;color:var(--rosa)}
+.ico svg{width:100%;height:100%}
+.pcab{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.pcab .etq{color:var(--suave)}
+.seg{font-weight:800;font-size:30px;line-height:1;color:#fff;min-width:48px;text-align:right}
+.seg.poco{color:#ff9aa8}
+.ops{flex:1;display:grid;grid-template-columns:1fr 1fr;grid-auto-rows:1fr;gap:10px}
+.ops.n2{grid-template-columns:1fr}
+.op{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:10px;padding:12px;border-radius:16px;border:0;cursor:pointer;
+  background:var(--c);color:#fff;font:800 20px/1.2 "Helvetica Neue",Helvetica,Arial,sans-serif;letter-spacing:.04em;text-align:center;min-height:120px;word-break:break-word}
+.op svg{width:46px;height:46px;fill:currentColor}
+.op.oscuro{color:#0b1320}
+.op:disabled{cursor:default}
+.ops.hecho .op{opacity:.28}
+.ops.hecho .op.mia{opacity:1;outline:4px solid #fff;outline-offset:-4px}
+.res-ok .grande{color:#86efac}
+.res-mal .grande{color:#ff9aa8}
+.era{margin-top:10px;padding:10px 16px;border-radius:12px;background:var(--panel);font-weight:700;font-size:18px}
+.marcador{display:flex;gap:10px;margin-top:22px;width:100%}
+.marcador div{flex:1;padding:12px 6px;border-radius:12px;background:var(--panel);border:1px solid var(--borde)}
+.marcador b{display:block;font-weight:800;font-size:28px;line-height:1.1;color:#fff}
+.marcador span{font-weight:800;font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--suave)}
+.pie{font-size:13px;color:var(--suave);text-align:center;margin-top:16px}
+.sin-red{display:none;position:fixed;left:16px;right:16px;bottom:calc(14px + env(safe-area-inset-bottom));padding:10px 14px;border-radius:12px;background:#5b1a2e;color:#ffe0ea;font-weight:700;font-size:14px;text-align:center}
+.sin-red.on{display:block}
+</style>
+</head>
+<body>
+<header class="cab"><div class="marca">Nuevas grafías <i>·</i> Reto</div><div class="yo"></div></header>
+<main>
+  <section class="pant" id="p-entrar">
+    <h1>El reto de las nuevas grafías</h1>
+    <p id="intro">Escribe el PIN que sale en la pantalla de clase y elige tu apodo.</p>
+    <div id="caja-pin"><label for="pin">PIN</label>
+    <input id="pin" class="pin" inputmode="numeric" pattern="[0-9]*" maxlength="4" autocomplete="off" placeholder="····"></div>
+    <label for="nick">Tu apodo</label>
+    <input id="nick" maxlength="16" autocomplete="off" autocapitalize="words" spellcheck="false" placeholder="Por ejemplo, Corchea">
+    <button class="bt" id="entrar">Entrar</button>
+    <div class="error" id="err"></div>
+    <div class="pie">Solo se guarda tu apodo y tus respuestas, y se borran al acabar el día. Pon un apodo, no tu nombre completo.</div>
+  </section>
+  <section class="pant" id="p-espera">
+    <div class="centro">
+      <div class="ico"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><rect x="2.5" y="4" width="19" height="13" rx="2"/><path d="M8 21h8M12 17v4"/></svg></div>
+      <div class="etq" id="esp-etq">¡Ya estás dentro!</div>
+      <div class="grande" id="esp-t">Mira la pantalla</div>
+      <p id="esp-p">Cuando empiece la pregunta, aquí salen los colores para contestar.</p>
+    </div>
+  </section>
+  <section class="pant" id="p-preg">
+    <div class="pcab"><span class="etq" id="pg-n"></span><span class="seg" id="pg-s"></span></div>
+    <div class="ops" id="ops"></div>
+  </section>
+  <section class="pant" id="p-res">
+    <div class="centro">
+      <div class="etq" id="rs-etq"></div>
+      <div class="grande" id="rs-t"></div>
+      <div class="era" id="rs-era"></div>
+      <div class="marcador"><div><b id="rs-pts">0</b><span>puntos</span></div><div><b id="rs-pos">–</b><span>puesto</span></div><div><b id="rs-ac">0</b><span>aciertos</span></div></div>
+    </div>
+  </section>
+  <section class="pant" id="p-fin">
+    <div class="centro">
+      <div class="etq">¡Fin del reto!</div>
+      <div class="grande" id="fn-pos"></div>
+      <p id="fn-p"></p>
+      <div class="marcador"><div><b id="fn-pts">0</b><span>puntos</span></div><div><b id="fn-ac">0</b><span>aciertos</span></div></div>
+      <button class="bt" id="otra">Jugar otra partida</button>
+    </div>
+  </section>
+</main>
+<div class="sin-red" id="sinred">Sin conexión… reintentando</div>
+<script src="reto-sb.js"></script>
+<script>
+'use strict';
+(function () {
+  var COL = ['#ec4899', '#3b82f6', '#fbbf24', '#22c55e'];
+  var FORMA = ['<svg viewBox="0 0 24 24"><path d="M12 3 22 20H2z"/></svg>', '<svg viewBox="0 0 24 24"><path d="M12 1.8 22.2 12 12 22.2 1.8 12z"/></svg>',
+    '<svg viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/></svg>', '<svg viewBox="0 0 24 24"><path d="M3 3h18v18H3z"/></svg>'];
+  var ERR = { pin: 'No hay ninguna partida con ese PIN.', nick_usado: 'Ese apodo ya lo tiene alguien: prueba otro.', nick_corto: 'El apodo tiene que tener al menos 2 letras.',
+    cerrada: 'Esa partida ya ha terminado.', llena: 'La partida está llena.', fuera: 'Ya no estás en la partida.' };
+  var $ = function (id) { return document.getElementById(id); };
+  var SB = /[?&]quizsb=local\b/.test(location.search) ? { url: location.origin, anon: 'local' } : window.RETO_SB;
+  var yo = null, ultimo = null, tFin = 0, nAct = -1, enviando = false, fallos = 0, reloj = null, sondeo = null;
+  var lee = function () { try { return JSON.parse(localStorage.getItem('ngreto_yo') || 'null'); } catch (e) { return null; } };
+  var guarda = function (v) { try { v ? localStorage.setItem('ngreto_yo', JSON.stringify(v)) : localStorage.removeItem('ngreto_yo'); } catch (e) { } };
+  function rpc(fn, args) {
+    if (!SB || !SB.url) return Promise.reject(new Error('sin servidor'));
+    var ab = new AbortController(), to = setTimeout(function () { ab.abort(); }, 8000);
+    return fetch(SB.url + '/rest/v1/rpc/' + fn, { method: 'POST', signal: ab.signal, cache: 'no-store',
+      headers: { 'Content-Type': 'application/json', apikey: SB.anon, Authorization: 'Bearer ' + SB.anon }, body: JSON.stringify(args) })
+      .then(function (r) { return r.text().then(function (t) { clearTimeout(to); var j = null; try { j = t ? JSON.parse(t) : null; } catch (e) { }
+        if (!r.ok) { var er = new Error((j && j.message) || ('HTTP ' + r.status)); er.servidor = true; throw er; } return j; }); },
+        function (e) { clearTimeout(to); throw e; });
+  }
+  function pant(id) { ['entrar', 'espera', 'preg', 'res', 'fin'].forEach(function (p) { $('p-' + p).classList.toggle('on', p === id); }); }
+  function cabYo() { document.querySelector('.yo').innerHTML = yo ? '<b>' + esc(yo.nick) + '</b>' : ''; }
+  function esc(s) { return String(s == null ? '' : s).replace(/[&<>"]/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]; }); }
+  function ordinal(n) { return n + '.º'; }
+
+  /* ── entrar ── */
+  var q = /[?&]c=([0-9]{4})/.exec(location.search);
+  /* (Iago 30-oct 06:42) quien entra por el QR no ve el PIN (va dentro del código): solo el apodo */
+  var conPin = function (ver) { $('caja-pin').style.display = ver ? '' : 'none'; $('intro').textContent = ver ? 'Escribe el PIN que sale en la pantalla de clase y elige tu apodo.' : 'Elige tu apodo y pulsa Entrar.'; };
+  if (q) { $('pin').value = q[1]; conPin(false); }
+  try { var ap = localStorage.getItem('ngreto_nick'); if (ap) $('nick').value = ap; } catch (e) { }
+  $('entrar').addEventListener('click', entra);
+  $('nick').addEventListener('keydown', function (e) { if (e.key === 'Enter') entra(); });
+  $('pin').addEventListener('keydown', function (e) { if (e.key === 'Enter') $('nick').focus(); });
+  function entra() {
+    var pin = $('pin').value.replace(/\D/g, ''), nick = $('nick').value.trim();
+    $('err').textContent = '';
+    if (pin.length !== 4) { $('err').textContent = 'El PIN tiene 4 cifras.'; return; }
+    if (nick.length < 2) { $('err').textContent = ERR.nick_corto; return; }
+    $('entrar').disabled = true;
+    rpc('suite_aq_unir', { p_pin: pin, p_nick: nick }).then(function (r) {
+      yo = { jugador: r.jugador, clave: r.clave, nick: r.nick, pin: pin }; guarda(yo);
+      try { localStorage.setItem('ngreto_nick', r.nick); } catch (e) { }
+      cabYo(); pant('espera'); arranca();
+    }, function (e) { if (e.message === 'pin') conPin(true); $('err').textContent = ERR[e.message] || (e.servidor ? 'No se ha podido entrar (' + e.message + ').' : 'Sin conexión: comprueba la wifi y vuelve a probar.'); })
+      .then(function () { $('entrar').disabled = false; });
+  }
+  $('otra').addEventListener('click', function () { para(); yo = null; guarda(null); cabYo(); $('pin').value = ''; conPin(true); pant('entrar'); });
+
+  /* ── seguir la partida: pregunta su estado cada segundo ── */
+  function arranca() { para(); nAct = -1; ultimo = null; tick(); sondeo = setInterval(tick, 1000); reloj = setInterval(cuenta, 250); }
+  function para() { if (sondeo) clearInterval(sondeo); if (reloj) clearInterval(reloj); sondeo = reloj = null; }
+  var enCurso = false;
+  function tick() {
+    if (!yo || enCurso) return;
+    if (document.hidden && Date.now() % 3000 > 1000) return;   // en segundo plano, más despacio
+    enCurso = true;
+    rpc('suite_aq_estado', { p_jugador: yo.jugador, p_clave: yo.clave }).then(function (s) {
+      fallos = 0; $('sinred').classList.remove('on'); pinta(s);
+    }, function (e) {
+      if (e.servidor && e.message === 'fuera') { para(); guarda(null); yo = null; cabYo(); pant('entrar'); $('err').textContent = 'Te han quitado de la partida (o ya ha terminado). Puedes volver a entrar con otro apodo.'; return; }
+      if (++fallos >= 3) $('sinred').classList.add('on');
+    }).then(function () { enCurso = false; });
+  }
+  function cuenta() {
+    if (!$('p-preg').classList.contains('on')) return;
+    var s = Math.max(0, Math.ceil((tFin - Date.now()) / 1000));
+    $('pg-s').textContent = s; $('pg-s').classList.toggle('poco', s <= 5);
+  }
+  function pinta(s) {
+    ultimo = s; yo.nick = s.nick; cabYo();
+    if (s.estado === 'espera') { pant('espera'); $('esp-etq').textContent = '¡Ya estás dentro!'; $('esp-t').textContent = 'Mira la pantalla'; $('esp-p').textContent = 'Cuando empiece la pregunta, aquí salen los colores para contestar. En la partida: ' + s.jugadores + '.'; return; }
+    if (s.estado === 'pregunta') {
+      if (s.n !== nAct) {   // una pregunta nueva
+        nAct = s.n; enviando = false;
+        $('pg-n').textContent = 'Pregunta ' + s.n + ' de ' + s.total;
+        var ops = $('ops'); ops.className = 'ops n' + (s.opciones || []).length; ops.innerHTML = '';
+        (s.opciones || []).forEach(function (o, j) {
+          var b = document.createElement('button'); b.className = 'op' + (j === 2 ? ' oscuro' : ''); b.style.setProperty('--c', COL[j]);
+          b.innerHTML = FORMA[j] + '<span>' + esc(o) + '</span>';
+          b.addEventListener('click', function () { contesta(j, b); });
+          ops.appendChild(b);
+        });
+      }
+      tFin = Date.now() + (s.quedan_ms || 0);
+      if (s.mia != null) { marcaMia(s.mia); pant('espera'); $('esp-etq').textContent = 'Respuesta enviada'; $('esp-t').textContent = '¡Hecho!'; $('esp-p').textContent = 'Espera a que se acabe el tiempo…'; return; }
+      if (!enviando) { pant('preg'); cuenta(); }
+      return;
+    }
+    if (s.estado === 'resuelta') {
+      pant('res');
+      var res = $('p-res'), ok = s.mia != null && s.mia === s.buena;
+      res.className = 'pant on ' + (s.mia == null ? '' : ok ? 'res-ok' : 'res-mal');
+      $('rs-etq').textContent = 'Pregunta ' + s.n + ' de ' + s.total;
+      $('rs-t').textContent = s.mia == null ? 'Sin respuesta' : ok ? '¡Correcto!' : 'No era esa';
+      $('rs-era').innerHTML = ok ? '+' + (s.puntos_n || 0) + ' puntos' : 'Era: <b>' + esc((s.opciones || [])[s.buena]) + '</b>';
+      $('rs-pts').textContent = s.puntos; $('rs-pos').textContent = ordinal(s.puesto); $('rs-ac').textContent = s.aciertos;
+      if (ok && navigator.vibrate) { if (res.dataset.n !== String(s.n)) { try { navigator.vibrate(60); } catch (e) { } } }
+      res.dataset.n = s.n;
+      return;
+    }
+    if (s.estado === 'fin') {
+      para(); pant('fin'); guarda(null);
+      $('fn-pos').textContent = ordinal(s.puesto);
+      $('fn-p').textContent = 'de ' + s.jugadores + (s.jugadores === 1 ? ' jugador' : ' jugadores') + ' · ¡gracias por jugar, ' + s.nick + '!';
+      $('fn-pts').textContent = s.puntos; $('fn-ac').textContent = s.aciertos + ' / ' + s.total;
+    }
+  }
+  function marcaMia(j) { var ops = $('ops'); ops.classList.add('hecho'); Array.prototype.forEach.call(ops.children, function (b, k) { b.disabled = true; b.classList.toggle('mia', k === j); }); }
+  function contesta(j, b) {
+    if (enviando || !ultimo || ultimo.estado !== 'pregunta') return;
+    enviando = true; marcaMia(j);
+    rpc('suite_aq_responder', { p_jugador: yo.jugador, p_clave: yo.clave, p_n: nAct, p_opcion: j }).then(function (r) {
+      pant('espera');
+      $('esp-etq').textContent = r && r.ok ? 'Respuesta enviada' : 'No ha llegado a tiempo';
+      $('esp-t').textContent = r && r.ok ? '¡Hecho!' : 'Uy…';
+      $('esp-p').textContent = r && r.ok ? 'Espera a que se acabe el tiempo…' : 'La pregunta ya estaba cerrada.';
+    }, function () {
+      enviando = false; var ops = $('ops'); ops.classList.remove('hecho'); Array.prototype.forEach.call(ops.children, function (x) { x.disabled = false; x.classList.remove('mia'); });
+      $('sinred').classList.add('on');
+    });
+  }
+
+  /* ── al abrir: si este móvil ya estaba en una partida, vuelve a ella ── */
+  var antes = lee();
+  if (!SB) { pant('entrar'); $('err').textContent = 'Falta la configuración del servidor.'; }
+  else if (antes && (!q || q[1] === antes.pin)) { yo = antes; cabYo(); pant('espera'); arranca(); }
+  else { guarda(null); pant('entrar'); if (q) setTimeout(function () { $('nick').focus(); }, 300); }
+})();
+</script>
+</body>
+</html>
