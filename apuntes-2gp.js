@@ -204,7 +204,7 @@ Object.assign(window.APX_TEMAS, {
 
   /* ---- test 4.3 · U4, p. 16 desde «Nuevas grafías» (PDF 19 @41 %) y p. 17 hasta las láminas (PDF 20 @0–25 %) ---- */
   'gp-grafias': {
-    titulo:'Nuevas grafías', corto:'Nuevas grafías', fuente:'Apuntes de teoría 2GP · Unidad 4 · p. 16–17',
+    titulo:'Nuevas grafías', corto:'Nuevas grafías', fuente:'Apuntes de teoría 2GP · Unidad 4 · p. 16–18',
     bloques:[
       {p:'Cambiando totalmente de tema. Mira estos tres compases:'},
       {img:{src:'apuntes-img/gp-grafias-1.png', alt:'Tres compases con el mismo ritmo: a), b) y c)', w:760}},
@@ -216,7 +216,27 @@ Object.assign(window.APX_TEMAS, {
       {img:{src:'apuntes-img/gp-grafias-2.png', alt:'Los casos a) en 3/4 y b) en 6/8, con una raya en cada pulso', w:760}},
       {p:'El caso c) representa a las <i>Nuevas Grafías,</i> también llamadas <i>Escritura Moderna</i>. No es relevante el compás que esté indicado. Lo que busca es <b>reducir la escritura a la mínima expresión gráfica</b>. <u>Notación minimalista</u>.'},
       {p:'Ha sido un ejemplo muy básico, voy a mostrarte lo que algunos libros nos enseñan:'},
-      {nota:'Esas láminas (Ligaduras, Puntillos y Barrado) son de otros libros: están en «Unidad completa en PDF».'}
+      /* (6-nov-2026, Iago: «me faltan los tipos de recursos… sería un poco el formato no vídeo del vídeo») los cuatro recursos, la
+         desintegración del compás y el repaso, como en el vídeo «Nuevas grafías»; ejemplos dibujados con el motor de la intro
+         (apuntes-img/gp-grafias-3…6.png: los mismos ritmos del vídeo, escritura tradicional = escritura moderna) */
+      {p:'Son <b>cuatro recursos</b>.'},
+      {h4:'1 · Sumar lo ligado'},
+      {p:'La escritura moderna tiende a eliminar las <b>ligaduras</b>, haya síncopa o no: las figuras ligadas se <b>suman</b> y se escriben en una sola. Mira la última fila: en 6/8, una negra con puntillo ligada a una corchea… es una blanca. Y listo.'},
+      {img:{src:'apuntes-img/gp-grafias-3.png', alt:'Sumar lo ligado: tres ritmos con ligaduras (en 3/4, 4/4 y 6/8) y, al lado, los mismos sin ligaduras', w:760}},
+      {h4:'2 · Dobles y triples puntillos'},
+      {p:'Los compositores modernos tienen una marcada preferencia por el <b>doble</b>, el <b>triple</b>… ¡y hasta el <b>cuádruple puntillo</b>! Mira la primera fila: una corchea con puntillo ligada a una negra se convierte en una negra con doble puntillo.'},
+      {img:{src:'apuntes-img/gp-grafias-4.png', alt:'Puntillos: corchea con puntillo ligada a negra = negra con doble puntillo; y, debajo, los casos de triple y cuádruple puntillo', w:760}},
+      {h4:'3 · Barras que saltan pulsos'},
+      {p:'Las barras de las corcheas ya <b>no respetan la división del compás en tiempos</b>: unen notas de pulsos distintos… e incluso <b>se saltan la línea divisoria</b> (segunda fila).'},
+      {img:{src:'apuntes-img/gp-grafias-5.png', alt:'Barrado: en 6/8, una sola barra para todo el compás; en 2/4, la barra de las corcheas cruza la línea divisoria', w:760}},
+      {h4:'4 · Compás con una figura'},
+      {p:'Nuevas formas de indicar el compás: abajo, en lugar de un número, <b>la figura que vale cada pulso</b>. Un 2/4 es un 2 encima de una negra. Un 6/8, un 6 encima de una corchea… o un 2 encima de una negra con puntillo, también.'},
+      {img:{src:'apuntes-img/gp-grafias-6.png', alt:'Compases con figura: A) 2/4 = 2 sobre negra; B) 6/8 = 6 sobre corchea = 2 sobre negra con puntillo; C) 6/4 = 6 sobre negra = 2 sobre blanca con puntillo', w:540}},
+      {h4:'La idea de compás se desintegra'},
+      {p:'Todo esto, sumado a grupos irregulares cada vez más complejos (tresillos, cinquillos, septillos…), a ritmos asimétricos, a cambios constantes de tempo y a acentos irregulares… ha ido <b>desintegrando</b> poco a poco la idea de compás. El ritmo se ha liberado. Y la <b>simetría</b> ha dejado paso a la <b>asimetría</b>.'},
+      {truco:'<b>Notación tradicional</b>: las figuras, agrupadas por pulsos.<br><b>Nuevas grafías</b> o <b>escritura moderna</b>: la mínima expresión gráfica, y el compás deja de importar. Sus recursos:', lab:'Repaso',
+       dentro:[{pasos:[{n:'1', t:'Sumar lo que va ligado.'}, {n:'2', t:'Dobles y triples puntillos.'}, {n:'3', t:'Barras que se saltan los pulsos.'}, {n:'4', t:'El compás indicado con una figura.'}]}]},
+      {nota:'Las láminas de los libros (Ligaduras, Puntillos y Barrado) siguen en «Unidad completa en PDF».'}
     ]
   },
 
