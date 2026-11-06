@@ -47,14 +47,23 @@
       if (v > 0) pos(g, x0, y0 + (1 - eo(ramp(t, ta, ta + fi))) * dy);
     });
   }
+  /** Colorea (currentColor) de blanco a rosa en [ta, tb]. Un mismo elemento puede tener varias ventanas: manda la más encendida. */
   function resalta(s, g, ta, tb, o) {
+    if (!g) return;
     o = o || {};
-    const de = o.de || C.blanco, a = o.a || C.rosa, d = o.d || .35;
-    s.on(t => {
-      let k = ease(ramp(t, ta, ta + d));
-      if (tb != null) k = Math.min(k, 1 - ease(ramp(t, tb, tb + d)));
-      color(g, mezcla(de, a, k));
-    });
+    if (!g._resV) {
+      const V = g._resV = [];
+      s.on(t => {
+        let k = 0, de = C.blanco, a2 = C.rosa;
+        for (const v of V) {
+          let kk = ease(ramp(t, v.ta, v.ta + v.d));
+          if (v.tb != null) kk = Math.min(kk, 1 - ease(ramp(t, v.tb, v.tb + v.d)));
+          if (kk > k) { k = kk; de = v.de; a2 = v.a; }
+        }
+        color(g, mezcla(de, a2, k));
+      });
+    }
+    g._resV.push({ ta, tb, d: o.d || .35, de: o.de || C.blanco, a: o.a || C.rosa });
   }
   function mostrarEn(s, g, ta, tb, fi, fo) { s.on(t => opa(g, win(t, ta, tb == null ? 1e9 : tb, fi || .35, fo || .35))); }
   /** Opacidad «de guiar la vista»: lo que no se nombra se queda semitransparente. tramos = [[ta, tb, nivel], …] */
@@ -149,6 +158,20 @@
       const qs = centros.map((cx, i) => { const q = texto(G, '¿?', cx, yM + 5.6 * SP, { anchor: 'middle', size: 40, peso: 800, fill: C.rosa }); return q; });
       mostrarEn(s, qs[0], tQ, t34); mostrarEn(s, qs[1], tQ + 0.12, t68); mostrarEn(s, qs[2], tQ + 0.24, Wd('I3', 'seguro'));
       const tC = Wd('M1', 'c') - 0.1;
+      // (6-nov, Iago) diez segundos para pensarlo, con su cuenta atrás (bloque PIENSA, sin voz)
+      if (hay('PIENSA')) {
+        const p0 = F0('PIENSA') + 0.3, p1 = p0 + 10, CR = N.group(G, 'cuenta');
+        const cxr = CX, cyr = 736, rr = 46, circ = 2 * Math.PI * rr;
+        N.el('circle', { cx: cxr, cy: cyr, r: rr, fill: 'none', stroke: 'rgba(255,255,255,0.14)', 'stroke-width': 8 }, CR);
+        const arco = N.el('circle', { cx: cxr, cy: cyr, r: rr, fill: 'none', stroke: C.rosa, 'stroke-width': 8, 'stroke-linecap': 'round', 'stroke-dasharray': circ.toFixed(1), transform: `rotate(-90 ${cxr} ${cyr})` }, CR);
+        const num = texto(CR, '10', cxr, cyr + 16, { anchor: 'middle', size: 44, peso: 800, fill: C.blanco });
+        texto(CR, 'PIÉNSALO', cxr, cyr + 92, { anchor: 'middle', size: 20, peso: 800, ls: '0.3em', fill: C.suave });
+        s.on(t => {
+          const v = win(t, p0 - 0.4, p1 + 0.4, .35, .4); opa(CR, v); if (!v) return;
+          arco.setAttribute('stroke-dashoffset', (circ * ramp(t, p0, p1)).toFixed(1));
+          const n = String(Math.max(1, Math.ceil(p1 - t))); if (num.textContent !== n) num.textContent = n;
+        });
+      }
       const qc2 = texto(G, '¿?', centros[2], yM + 5.6 * SP, { anchor: 'middle', size: 40, peso: 800, fill: C.rosa });
       mostrarEn(s, qc2, Wd('M1', 'ninguna') - 0.1, Wd('M1', 'minimo'));
       // guiar la vista: lo que no se nombra, semitransparente
@@ -176,7 +199,7 @@
       [['n1', 'CORCHEA', tCor1], ['n2', 'BLANCA', tBla], ['n3', 'CORCHEA', tCor2]].forEach(([id, txt, ta]) => {
         const n = rc.marcas[id];
         resalta(s, n.g, ta - 0.05, b);
-        const l = texto(G, txt, n.x + 0.6 * SP, yM + 4.4 * SP, { anchor: 'middle', size: 20, peso: 800, ls: '0.12em', fill: C.rosa });
+        const l = texto(G, txt, n.x + 0.6 * SP, yM + 4.4 * SP, { anchor: 'middle', size: 17, peso: 800, ls: '0.1em', fill: C.rosa });
         mostrarEn(s, l, ta - 0.05, F0('M3') + 0.2);
       });
       // NOTACIÓN TRADICIONAL · AGRUPA POR PULSOS (sobre a y b)
@@ -261,6 +284,16 @@
   }
 
   // ---------------------------------------------------------------- 1 · LIGADURAS
+  /* (6-nov, Iago: «quiero que haya una animación de cada ritmo… que esté más tiempo en pantalla cada uno de los ritmos pasados a
+     moderno») Tras la frase de las ligaduras viene el bloque LIG, sin voz: cada ritmo, uno a uno, SUENA (al piano, como lo dibuja),
+     se pasa a moderno (una copia viaja y se funde en su fila moderna) y vuelve a sonar igual. Los tiempos los comparte mezcla.py. */
+  const NEG = 60 / 84;
+  const LIG_PLAN = [   // [inicio (s del bloque), duraciones que suenan (negras), grupos de notas que suenan juntas (ligadas)]
+    { t: 0.0, durT: [0.5, 2, 0.5], grT: [[0], [1, 2], [3]], durM: [0.5, 2, 0.5] },
+    { t: 7.4, durT: [0.5, 2, 0.5], grT: [[0], [1, 2], [3]], durM: [0.5, 2, 0.5] },
+    { t: 14.8, durT: [0.5, 2, 1.5], grT: [[0], [1, 2, 3], [4, 5]], durM: [0.5, 2, 1.5] },
+  ];
+  window.LIG_PLAN = LIG_PLAN;
   function escenaLigaduras() {
     const a = F0('R1') - 0.2, b = F0('R2') - 0.1;
     escena('ligaduras', a, b, (s, g) => {
@@ -270,9 +303,9 @@
       // 3/4 (dos maneras) = corchea · blanca · corchea
       const f1 = fila(G, [{ n: '8' }, { n: 'q', p: 1, liga: true }, { n: '8', barra: 'x' }, { n: '8', barra: 'x' }], 350, Y[0], ['3', '4']);
       const f2 = fila(G, [{ n: '8', barra: 'y' }, { n: '8', barra: 'y', liga: true }, { n: 'q', p: 1 }, { n: '8' }], 350 + f1.c.w + 0.9 * SP, Y[1], null);
-      // la llave que une las dos maneras
       const xl = 350 + Math.max(f1.w, f2.w + f1.c.w + 0.9 * SP) + 18;
-      N.el('path', { d: `M${xl},${Y[0] - 50} q18,0 18,34 v52 q0,14 14,16 q-14,2 -14,16 v52 q0,34 -18,34`, fill: 'none', stroke: 'currentColor', 'stroke-width': 3 }, f1.g);
+      const llave = N.group(G);
+      N.el('path', { d: `M${xl},${Y[0] - 50} q18,0 18,34 v52 q0,14 14,16 q-14,2 -14,16 v52 q0,34 -18,34`, fill: 'none', stroke: 'currentColor', 'stroke-width': 3 }, llave);
       const m12 = fila(G, [{ n: '8' }, { n: 'h' }, { n: '8' }], 1190, 435, null);
       // 4/4
       const f3 = fila(G, [{ n: '8', barra: 'a' }, { n: '8', barra: 'a', liga: true }, { n: 'q', liga: true }, { n: '8', barra: 'b' }, { n: '8', barra: 'b', liga: true }, { n: 'q' }], 350, Y[2], ['4', '4']);
@@ -280,35 +313,49 @@
       // 6/8 (la que se nombra)
       const f4 = fila(G, [{ n: 'q', p: 1, liga: true, id: 'nc' }, { n: '8', barra: 'c', id: 'c1' }, { n: '8', barra: 'c' }, { n: '8', barra: 'c' }], 350, Y[3], ['6', '8']);
       const m4 = fila(G, [{ n: 'h', id: 'bl' }, { n: '8', barra: 'd' }, { n: '8', barra: 'd' }], 1190, Y[3], null);
-      // aparición: lo tradicional al empezar; lo moderno cuando «se suman… en una sola»
-      const tSum = Wd('R1', 'suman') - 0.1, tSola = Wd('R1', 'sola') - 0.1;
-      [f1.g, f2.g, f3.g, f4.g].forEach((x, i) => mostrarEn(s, x, a + 0.3 + i * 0.12));
-      const mod = [m12.g, m3.g, ig[0], ig[1]];
-      mod.forEach(x => mostrarEn(s, x, tSola));
-      // las ligaduras de la izquierda se marcan en rosa al nombrarlas
-      const tLig = Wd('R1', 'ligaduras') - 0.1, tElim = Wd('R1', 'eliminarlas') - 0.1;
-      [f1, f2, f3].forEach(f => f.r.ligas.forEach(l => resalta(s, l.g, tElim, tSola)));
-      // «Mira: en seis por ocho…»: el resto se atenúa y se transforma la última fila
+      const tElim = Wd('R1', 'eliminarlas') - 0.1, tSola = Wd('R1', 'sola') - 0.1;
+      [f1.g, f2.g, llave, f3.g, f4.g].forEach((x, i) => mostrarEn(s, x, a + 0.3 + Math.min(i, 3) * 0.12));
+      [f1, f2, f3, f4].forEach(f => f.r.ligas.forEach(l => resalta(s, l.g, tElim, tSola + 0.6)));
+      // «Mira: en seis por ocho…» (con la voz): la fila del 6/8 se transforma
       const t68 = Wd('R1', 'seis') - 0.1, tNeg = Wd('R1', 'negra') - 0.05, tLiga = Wd('R1', 'ligada', 2) - 0.05,
             tCor = Wd('R1', 'corchea') - 0.05, tBla = Wd('R1', 'blanca') - 0.1;
-      [f1.g, f2.g, f3.g, m12.g, m3.g, ig[0], ig[1]].forEach(x => atenua(s, x, [[t68, null, 0.28]]));
+      const L0 = F0('LIG'), L1 = F1('LIG');
       const nc = f4.r.marcas.nc, c1 = f4.r.marcas.c1;
-      resalta(s, nc.g, tNeg); resalta(s, nc.ligaG, tLiga); resalta(s, c1.g, tCor);
-      // m4: la blanca llega en rosa, como la suma de las dos figuras (transformación: una copia viaja y se funde)
-      const viaje = N.group(G, 'viaje');
-      const cp = N.ritmo2(viaje, [{ n: 'q', p: 1, liga: true }, { n: '8' }], 0, 0, { sp: SP, alto: 1.6 });
-      color(viaje, C.rosa);
-      const x0v = nc.x, x1v = m4.r.marcas.bl.x;
-      s.on(t => {
-        const k = ease(ramp(t, tBla - 0.25, tBla + 0.75));
-        const v = t < tBla - 0.25 ? 0 : (t > tBla + 0.75 ? 0 : 1);
-        opa(viaje, v);
-        if (v) viaje.setAttribute('transform', `translate(${lerp(x0v, x1v, k).toFixed(1)},${Y[3]}) translate(${(18 * k).toFixed(1)},0) scale(${lerp(1, 0.55, k).toFixed(3)},1)`);
+      resalta(s, nc.g, tNeg, L0); resalta(s, nc.ligaG, tLiga, L0); resalta(s, c1.g, tCor, L0);
+      viaja(s, G, f4.r.g, m4.r.notas[0].x - f4.r.notas[0].x, 0, tBla - 0.25);
+      mostrarEn(s, m4.g, tBla + 0.55); mostrarEn(s, ig[2], tBla + 0.3);
+      resalta(s, m4.r.marcas.bl.g, tBla + 0.55, L0);
+      // las filas que no se nombran, semitransparentes; el foco va pasando fila a fila
+      const filas = [
+        { tr: [f1.g], mo: m12, ig: ig[0], f: f1 },
+        { tr: [f2.g], mo: m12, ig: ig[0], f: f2 },
+        { tr: [f3.g], mo: m3, ig: ig[1], f: f3 },
+      ];
+      const foco = LIG_PLAN.map((p, i) => [L0 + p.t, L0 + (LIG_PLAN[i + 1] ? LIG_PLAN[i + 1].t : 23.6)]);
+      const atenuaSalvo = (els, mios) => atenua(s, els, [[t68, L0 + 0.2, 0.28]].concat(foco.filter((w, i) => mios.indexOf(i) < 0).map(w => [w[0], w[1] - 0.1, 0.25])));
+      atenuaSalvo(f1.g, [0]); atenuaSalvo(llave, [0, 1]); atenuaSalvo(f2.g, [1]); atenuaSalvo(f3.g, [2]);
+      atenuaSalvo(m12.g, [0, 1]); atenuaSalvo(ig[0], [0, 1]); atenuaSalvo(m3.g, [2]); atenuaSalvo(ig[1], [2]);
+      [f4.g, m4.g, ig[2]].forEach(x => atenua(s, x, [[L0, L0 + 23.4, 0.25]]));
+      // cada fila: suena lo tradicional (las ligadas, juntas), viaja a moderno y suena lo moderno
+      LIG_PLAN.forEach((p, i) => {
+        const F = filas[i], T0 = L0 + p.t, notasT = F.f.r.notas, notasM = F.mo.r.notas;
+        let tt = T0 + 0.5;
+        p.grT.forEach((gr, j) => { const d = p.durT[j] * NEG; gr.forEach(n => { resalta(s, notasT[n].g, tt, tt + d - 0.08, { d: .08 }); if (notasT[n].barras) resalta(s, notasT[n].barras, tt, tt + d - 0.08, { d: .08 }); if (notasT[n].ligaG) resalta(s, notasT[n].ligaG, tt, tt + d - 0.08, { d: .08 }); }); tt += d; });
+        const tTr = tt + 0.3;
+        viaja(s, G, F.f.r.g, F.mo.r.notas[0].x - F.f.r.notas[0].x, i === 1 ? 435 - Y[1] : (i === 0 ? 435 - Y[0] : 0), tTr);
+        if (i !== 1) { mostrarEn(s, F.mo.g, tTr + 0.8); mostrarEn(s, F.ig, tTr + 0.5); }
+        tt = tTr + 1.6;
+        p.durM.forEach((dn, j) => { const d = dn * NEG; resalta(s, notasM[j].g, tt, tt + d - 0.08, { d: .08 }); tt += d; });
       });
-      opa(m4.g, 0);
-      s.on(t => opa(m4.g, ease(ramp(t, tBla + 0.55, tBla + 0.95))));
-      mostrarEn(s, ig[2], tBla + 0.3);
-      resalta(s, m4.r.marcas.bl.g, tBla + 0.55, b);
+    });
+  }
+  /** Una copia de la fila viaja (dx, dy) hacia su versión moderna y se funde por el camino, en rosa. */
+  function viaja(s, G, fuente, dx, dy, ta) {
+    const v = N.group(G, 'viaje'); v.appendChild(fuente.cloneNode(true)); color(v, C.rosa);
+    s.on(t => {
+      const k = ease(ramp(t, ta, ta + 1.0)), on = t >= ta && t <= ta + 1.0;
+      opa(v, on ? (1 - k * 0.85) : 0);
+      if (on) v.setAttribute('transform', `translate(${(dx * k).toFixed(1)},${(dy * k).toFixed(1)})`);
     });
   }
 
@@ -426,47 +473,79 @@
   }
 
   // ================================================================ C · LA IDEA DE COMPÁS SE DESINTEGRA
+  /* (6-nov, Iago: «quiero que la imagen la vayas adaptando a todo lo que digo») Cada cosa que se nombra llega a la imagen:
+     «Todo esto» → los cuatro recursos · tresillos, cinquillos, septillos → cada grupo sustituye a una negra · ritmos asimétricos →
+     un compás de 7/8 (2+2+3) · cambios constantes de tempo → una indicación distinta en cada compás · acentos irregulares →
+     acentos fuera de los tiempos fuertes · «desintegrando la idea de compás» → se borran las divisorias y las cifras ·
+     «el ritmo se ha liberado» → las notas se sueltan · SIMETRÍA → ASIMETRÍA. */
   function escenaDesintegra() {
     const a = F0('D1') - 0.15, b = F0('F1') - 0.1;
     escena('desintegra', a, b, (s, g) => {
       const G = N.group(g); aparece(s, G, a, b, { dy: 16, fi: .5, fo: .5 });
-      panel(G, 170, 300, 1580, 480);
-      const yM = 560;
-      // cuatro compases de 4/4 «de siempre» (simétricos)
-      const it = [];
-      const comp = [
-        [{ n: 'q' }, { n: 'q' }, { n: 'q' }, { n: 'q' }],
-        [{ n: '8', barra: 't', id: 'tre' }, { n: '8', barra: 't' }, { n: '8', barra: 't' }, { n: 'q' }, { n: 'q' }, { n: 'q' }],
-        [{ n: '16', barra: 'c', id: 'cin' }, { n: '16', barra: 'c' }, { n: '16', barra: 'c' }, { n: '16', barra: 'c' }, { n: '16', barra: 'c' }, { n: 'q', acento: true, id: 'ac1' }, { n: 'q' }, { n: 'q' }],
-        [{ n: 'q' }, { n: '16', barra: 's', id: 'sep' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: '16', barra: 's', acento: true, id: 'ac2' }, { n: 'q' }, { n: 'q' }],
+      panel(G, 170, 200, 1580, 680);
+      const yM = 590;
+      // «Todo esto»: los cuatro recursos, arriba
+      const tTodo = Wd('D1', 'todo') - 0.1, tGru = Wd('D1', 'grupos') - 0.1;
+      ['LIGADURAS', 'PUNTILLOS', 'BARRADO', 'COMPASES'].forEach((n, i) => {
+        const gi = N.group(G); const x = 560 + i * 266;
+        iconoRecurso(gi, n, x, 304);
+        texto(gi, n, x, 372, { anchor: 'middle', size: 16, peso: 800, ls: '0.16em', fill: C.suave });
+        mostrarEn(s, gi, tTodo + i * 0.15); atenua(s, gi, [[tGru, null, 0.3]]);
+      });
+      // la línea: cinco compases
+      const it = [
+        { n: 'q' }, { n: 'q', acento: true, id: 'ac1' }, { n: 'q' }, { n: 'q' }, { div: 'simple', pre: 0.9, post: 1.1, marca: 'd0' },
+        { n: '8', barra: 't', id: 'tre' }, { n: '8', barra: 't' }, { n: '8', barra: 't' }, { n: 'q' }, { n: 'q' }, { n: 'q' }, { div: 'simple', pre: 0.9, post: 1.1, marca: 'd1' },
+        { n: '16', barra: 'c', id: 'cin' }, { n: '16', barra: 'c' }, { n: '16', barra: 'c' }, { n: '16', barra: 'c' }, { n: '16', barra: 'c' }, { n: 'q' }, { n: 'q', acento: true, id: 'ac2' }, { n: 'q' }, { div: 'simple', pre: 0.9, post: 1.1, marca: 'd2' },
+        { n: 'q' }, { n: '16', barra: 's', id: 'sep' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: '16', barra: 's' }, { n: 'q' }, { n: 'q' }, { div: 'simple', pre: 0.9, post: 0.5, marca: 'd3' },
+        { hueco: 2.4, marca: 'c78' },
+        { n: '8', barra: 'u', id: 'as' }, { n: '8', barra: 'u' }, { n: '8', barra: 'v', acento: true, id: 'ac3' }, { n: '8', barra: 'v' }, { n: '8', barra: 'w' }, { n: '8', barra: 'w' }, { n: '8', barra: 'w', acento: true, id: 'ac4' }, { div: 'final', pre: 0.9, post: 0, marca: 'd4' },
       ];
-      comp.forEach((c, i) => { c.forEach(x => it.push(x)); it.push({ div: i < 3 ? 'simple' : 'final', pre: 1.0, post: i < 3 ? 1.3 : 0, marca: 'd' + i }); });
       const FG = N.group(G, 'linea');
-      const F = fila(FG, it.map(x => x.div ? Object.assign({}, x, { pre: 0.8, post: x.post ? 1.0 : 0 }) : x), 0, yM, ['4', '4'], { enGrupo: { '16': 1.5, '8': 2.1 }, espacio: { q: 2.9 } });
-      const esc = Math.min(1, 1460 / F.w); FG.setAttribute('transform', `translate(${(CX - F.w * esc / 2).toFixed(1)},${(yM * (1 - esc)).toFixed(1)}) scale(${esc.toFixed(4)})`);
+      const F = fila(FG, it, 0, yM, ['4', '4'], { enGrupo: { '16': 1.5, '8': 2.0 }, espacio: { q: 2.8, '8': 2.6 } });
       const r = F.r;
-      // números de los grupos irregulares, encima de sus barras
+      const c78 = N.compasNum(FG, '7', '8', r.marcas.c78.x + 0.3 * SP, yM, SP);
+      const esc = Math.min(1, 1480 / F.w); FG.setAttribute('transform', `translate(${(CX - F.w * esc / 2).toFixed(1)},${(yM * (1 - esc)).toFixed(1)}) scale(${esc.toFixed(4)})`);
+      const xs = x => CX - F.w * esc / 2 + x * esc;          // x de la línea → x de la pantalla
       const num = (id, n, cuantos) => {
         const a0 = r.marcas[id]; const idx = r.notas.indexOf(a0); const ult = r.notas[idx + cuantos - 1];
         const xm = (a0.plicaX + ult.plicaX) / 2, y = a0.yPlicaTop - 0.75 * SP;
         const gq = N.group(FG, 'tupla'); texto(gq, String(n), xm, y, { anchor: 'middle', size: 26, peso: 800, italic: true, fill: 'currentColor' });
-        return { gq, notas: r.notas.slice(idx, idx + cuantos) };
+        // la negra «de siempre» que había en ese pulso (se va cuando llega el grupo)
+        const neg = N.group(FG, 'negra'); N.ritmo2(neg, [{ n: 'q' }], xm - 0.7 * SP, yM, { sp: SP, alto: 1.6 });
+        return { gq, neg, notas: r.notas.slice(idx, idx + cuantos) };
       };
       const tre = num('tre', 3, 3), cin = num('cin', 5, 5), sep = num('sep', 7, 7);
       const tT = Wd('D1', 'tresillos') - 0.1, tC = Wd('D1', 'cinquillos') - 0.1, tS = Wd('D1', 'septillos') - 0.1;
-      // al principio, los grupos irregulares no están: aparecen al nombrarlos (en rosa un momento)
       [[tre, tT], [cin, tC], [sep, tS]].forEach(([q, ta]) => {
         const gs = [q.gq].concat(q.notas.map(n => n.g)).concat(q.notas[0].barras ? [q.notas[0].barras] : []);
-        gs.forEach(x => { mostrarEn(s, x, ta, null, .3); resalta(s, x, ta, ta + 1.2); });
+        gs.forEach(x => { mostrarEn(s, x, ta, null, .3); resalta(s, x, ta, ta + 1.4); });
+        mostrarEn(s, q.neg, a - 1, ta, .2, .3);
       });
-      // los acentos irregulares
+      // ritmos asimétricos: el 7/8 (2 + 2 + 3) llega entero
+      const tAsim = Wd('D1', 'asimetricos') - 0.1;
+      const as = r.notas.slice(r.notas.indexOf(r.marcas.as), r.notas.indexOf(r.marcas.as) + 7);
+      const asG = [c78.g, r.marcas.d4.g].concat(as.map(n => n.g)).concat(Array.from(new Set(as.map(n => n.barras))));
+      asG.forEach(x => { mostrarEn(s, x, tAsim, null, .3); resalta(s, x, tAsim, tAsim + 1.6); });
+      mostrarEn(s, r.marcas.d3.g, tAsim, null, .3);
+      const suma = texto(FG, '2 + 2 + 3', (as[0].plicaX + as[6].plicaX) / 2, as[0].yPlicaTop - 0.9 * SP, { anchor: 'middle', size: 24, peso: 800, fill: C.rosa });
+      mostrarEn(s, suma, tAsim + 0.3);
+      // cambios constantes de tempo: una indicación distinta encima de cada compás
+      const tTempo = Wd('D1', 'tempo') - 0.15;
+      const inicios = [r.notas[0], r.marcas.tre, r.marcas.cin, r.notas[r.notas.indexOf(r.marcas.sep) - 1], r.marcas.as];
+      ['60', '132', '76', '108', '66'].forEach((v, i) => {
+        const gt = N.group(G); const x = xs(inicios[i].x) - 6, y = 470;
+        N.figura(gt, 'q', x, y, SP * 0.8); texto(gt, '= ' + v, x + 34, y - 2, { size: 26, peso: 700, fill: 'currentColor' });
+        mostrarEn(s, gt, tTempo + i * 0.28, null, .25); resalta(s, gt, tTempo + i * 0.28, tTempo + i * 0.28 + 1.2);
+      });
+      // acentos irregulares
       const tAc = Wd('D1', 'acentos') - 0.1;
-      [r.marcas.ac1, r.marcas.ac2].forEach(n => { mostrarEn(s, n.acento, tAc, null, .25); resalta(s, n.acento, tAc, tAc + 1.4); });
-      // «desintegrando poco a poco la idea de compás»: las divisorias se desvanecen una a una
+      ['ac1', 'ac2', 'ac3', 'ac4'].forEach((k, i) => { const n = r.marcas[k]; mostrarEn(s, n.acento, tAc + i * 0.2, null, .25); resalta(s, n.acento, tAc + i * 0.2, tAc + 1.6); });
+      // «desintegrando poco a poco la idea de compás»: las divisorias y las cifras se van, una a una
       const tDes = Wd('D1', 'desintegrando') - 0.1;
-      ['d0', 'd1', 'd2', 'd3'].forEach((k, i) => { const d = r.marcas[k]; const ta = tDes + i * 0.45; s.on(t => opa(d.g, 1 - ease(ramp(t, ta, ta + 0.7)))); });
-      s.on(t => opa(F.c.g, 1 - ease(ramp(t, tDes + 1.6, tDes + 2.3))));
-      // «el ritmo se ha liberado»: las notas se separan un poco, cada una a su aire (sin parpadeos)
+      ['d0', 'd1', 'd2', 'd3', 'd4'].forEach((k, i) => { const d = r.marcas[k]; const ta = tDes + i * 0.4; s.on(t => { if (t >= ta) opa(d.g, 1 - ease(ramp(t, ta, ta + 0.7))); }); });
+      [F.c.g, c78.g].forEach(x => s.on(t => { if (t >= tDes + 1.6) opa(x, 1 - ease(ramp(t, tDes + 1.6, tDes + 2.3))); }));
+      // «el ritmo se ha liberado»: cada nota (o cada grupo con su barra) se suelta un poco, a su aire
       const tLib = Wd('D1', 'liberado') - 0.2;
       const unidades = []; const vistos = new Set();
       r.notas.forEach(n => {
@@ -480,9 +559,9 @@
       });
       // SIMETRÍA → ASIMETRÍA
       const tSim = Wd('D1', 'simetria') - 0.1, tAsi = Wd('D1', 'asimetria') - 0.1;
-      const s1 = texto(G, 'SIMETRÍA', 800, 410, { anchor: 'end', size: 44, peso: 800, ls: '0.08em', fill: C.texto });
-      const fl = flecha(G, 840, 396, 1000, 396, { w: 4, cab: 18 }); color(fl, C.rosa);
-      const s2 = texto(G, 'ASIMETRÍA', 1040, 410, { anchor: 'start', size: 44, peso: 800, ls: '0.08em', fill: C.rosa });
+      const s1 = texto(G, 'SIMETRÍA', 800, 800, { anchor: 'end', size: 44, peso: 800, ls: '0.08em', fill: C.texto });
+      const fl = flecha(G, 840, 786, 1000, 786, { w: 4, cab: 18 }); color(fl, C.rosa);
+      const s2 = texto(G, 'ASIMETRÍA', 1040, 800, { anchor: 'start', size: 44, peso: 800, ls: '0.08em', fill: C.rosa });
       mostrarEn(s, s1, tSim); mostrarEn(s, fl, tAsi - 0.2); mostrarEn(s, s2, tAsi);
     });
   }
@@ -493,7 +572,7 @@
     if (tipo === 'LIGADURAS') N.ritmo2(g, [{ n: 'q', p: 1, liga: true }, { n: '8' }], cx - 2.4 * SP, cy, { sp: SP });
     if (tipo === 'PUNTILLOS') N.ritmo2(g, [{ n: 'q', p: 3 }], cx - 1.2 * SP, cy, { sp: SP });
     if (tipo === 'BARRADO') N.ritmo2(g, [{ n: '8', barra: 'k' }, { div: 'simple', pre: 0.55, post: 0.55 }, { n: '8', barra: 'k' }, { n: '8', barra: 'k' }], cx - 2.8 * SP, cy, { sp: SP, alto: 1.6, enGrupo: { '8': 2.0 } });
-    if (tipo === 'COMPASES') N.compasFigura(g, '2', 'q', 1, cx - 0.7 * SP, cy - 0.4 * SP, SP);
+    if (tipo === 'COMPASES') N.compasFigura(g, '2', 'q', 1, cx - 0.7 * SP, cy - 1.5 * SP, SP);
     return g;
   }
   function escenaRepaso() {

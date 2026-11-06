@@ -16,8 +16,12 @@
   const N = window.NOTA, D = window.DIB, C = D.C;
   const { texto, panel, chip, pos, opa, color, mezcla } = D;
   const SP = 24, CX = 960;
-  const SEG = 20;                    // segundos para contestar
-  const NPREG = 16, CADA = 4;        // preguntas por partida · clasificación cada 4
+  // (6-nov, Iago: vídeo + reto en unos 10 minutos) 10 preguntas: 3 ¿cuál es moderna? · 3 ¿tradicional o moderna? · 2 ¿qué recurso
+  // es? · 2 ¿a qué equivale?; 15 s las de mirar y 20 s las de pensar; la clasificación, a la mitad
+  const SEGT = { cual: 15, tm: 15, recurso: 20, equiv: 20 };
+  const SEG = 20;
+  const NPREG = 10, CADA = 5;
+  const CUANTAS = { cual: 3, tm: 3, recurso: 2, equiv: 2 };
   const COL = ['#ec4899', '#3b82f6', '#fbbf24', '#22c55e'];
   const FORMA = ['M12 3 22 20H2z', 'M12 1.8 22.2 12 12 22.2 1.8 12z', null, 'M3 3h18v18H3z'];
   const $ = id => document.getElementById(id);
@@ -43,6 +47,9 @@
     pun3m: { it: [{ n: '32' }, { n: 'h', p: 4 }], o: { espacio: { '32': 3.2 } } },
     bar68t: { c: ['6', '8'], it: [{ sil: '16' }, { n: '8', barra: 'a' }, { n: '8', barra: 'a' }, { n: '16', barra: 'a', liga: true }, { n: '16', barra: 'b' }, { n: '8', barra: 'b' }, { n: '8', barra: 'b' }, { n: '16', barra: 'b' }, { div: 'simple', pre: 0.9, post: 0 }], o: { enGrupo: { '8': 2.35, '16': 2.1 } } },
     bar68m: { c: ['6', '8'], it: [{ sil: '16' }, { n: '8', barra: 'm' }, { n: '8', barra: 'm' }, { n: '8', barra: 'm' }, { n: '8', barra: 'm' }, { n: '8', barra: 'm' }, { n: '16', barra: 'm' }, { div: 'simple', pre: 0.9, post: 0 }], o: { enGrupo: { '8': 2.35, '16': 2.1 } } },
+    // (6-nov) barrado «puro»: las mismas corcheas, sólo cambian las barras (para «¿Qué recurso es?», sin dudas)
+    bar68pt: { c: ['6', '8'], it: [{ sil: '8' }, { n: '8', barra: 'a' }, { n: '8', barra: 'a' }, { n: '8', barra: 'b' }, { n: '8', barra: 'b' }, { n: '8', barra: 'b' }, { div: 'simple', pre: 0.9, post: 0 }], o: { enGrupo: { '8': 2.35 } } },
+    bar68pm: { c: ['6', '8'], it: [{ sil: '8' }, { n: '8', barra: 'm' }, { n: '8', barra: 'm' }, { n: '8', barra: 'm' }, { n: '8', barra: 'm' }, { n: '8', barra: 'm' }, { div: 'simple', pre: 0.9, post: 0 }], o: { enGrupo: { '8': 2.35 } } },
     bar24t: { c: ['2', '4'], it: [{ n: 'q' }, { sil: '8' }, { n: '8', acento: true }, { div: 'simple', pre: 0.7, post: 0.9 }, { n: '8', barra: 'c' }, { n: '8', barra: 'c' }, { n: 'q' }, { div: 'simple', pre: 0.6, post: 0 }], o: { espacio: { q: 3.7, '8': 3.0 }, silencio: { '8': 2.0 } } },
     bar24m: { c: ['2', '4'], it: [{ n: 'q' }, { sil: '8' }, { n: '8', barra: 'd' }, { div: 'simple', pre: 0.55, post: 0.55 }, { n: '8', barra: 'd' }, { n: '8', barra: 'd' }, { n: 'q' }, { div: 'simple', pre: 0.6, post: 0 }], o: { espacio: { q: 3.7, '8': 3.0 }, silencio: { '8': 2.0 } } },
     // compases (número · figura)
@@ -60,8 +67,11 @@
     ['lig68', 'mod68', 'LIGADURAS', 'Negra con puntillo + corchea = blanca'],
     ['pun1t', 'pun1m', 'PUNTILLOS', 'Corchea con puntillo + negra = negra con doble puntillo'],
     ['pun2t', 'pun2m', 'PUNTILLOS', 'Corchea con doble puntillo + negra = negra con triple puntillo'],
-    ['pun3t', 'pun3m', 'PUNTILLOS', 'Corchea con doble puntillo + blanca con puntillo = blanca con cuádruple puntillo'],
-    ['bar68t', 'bar68m', 'BARRADO', 'Una sola barra para todo el compás, sin respetar los pulsos'],
+    ['pun3t', 'pun3m', 'PUNTILLOS', 'Corchea con doble puntillo + blanca con puntillo = cuádruple puntillo'],
+    // (6-nov, Iago) el del libro junta dos recursos (las dos semicorcheas ligadas se suman y la barra se salta el pulso):
+    // vale para «¿cuál es moderna?», pero no para «¿qué recurso es?» (MIXTO no entra en esa pregunta)
+    ['bar68t', 'bar68m', 'MIXTO', 'Lo ligado se suma y una sola barra cruza los dos pulsos'],
+    ['bar68pt', 'bar68pm', 'BARRADO', 'Las mismas corcheas: una sola barra cruza los dos pulsos'],
     ['bar24t', 'bar24m', 'BARRADO', 'La barra de las corcheas se salta la línea divisoria'],
   ];
   const PARES_C = [
@@ -92,7 +102,12 @@
     ['c68', ['f2qp', 'f2q', 'f3qp', 'f6q'], '6/8 = dos pulsos de negra con puntillo', '¿Cómo se escribe con una figura?'],
   ];
   const RECURSOS = ['LIGADURAS', 'PUNTILLOS', 'BARRADO', 'COMPASES'];
-  const ETQ_REC = { LIGADURAS: 'Ligaduras', PUNTILLOS: 'Puntillos', BARRADO: 'Barrado', COMPASES: 'Compases' };
+  // (6-nov, Iago) «ligadura» es lo que hace la tradicional: las opciones dicen lo que hace la moderna, en frase corta
+  // (las mismas palabras del repaso del vídeo, F2)
+  const ETQ_REC = { LIGADURAS: 'Agrupar ligaduras', PUNTILLOS: 'Dobles y triples puntillos', BARRADO: 'Barras que saltan pulsos', COMPASES: 'Compás con una figura',
+    MIXTO: 'Agrupar ligaduras y barras que saltan pulsos' };
+  // en los de puntillos también desaparece una ligadura: la explicación dice cuál es el recurso que se ve
+  const NOTA_REC = { PUNTILLOS: 'También desaparece una ligadura, pero lo nuevo, lo que se ve, son los puntillos' };
 
   const baraja = a => { const b = a.slice(); for (let i = b.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); const x = b[i]; b[i] = b[j]; b[j] = x; } return b; };
   /** Las 16 preguntas de esta partida: 4 de cada tipo, al azar, sin que se repita un ejemplo y sin dos tipos iguales seguidos. */
@@ -101,23 +116,28 @@
     const T = { cual: [], recurso: [], tm: [], equiv: [] };
     // ¿qué recurso es? (uno de cada recurso, si se puede)
     const porRec = {}; baraja(PARES.concat(PARES_C)).forEach(p => (porRec[p[2]] = porRec[p[2]] || []).push(p));
-    RECURSOS.forEach(rc => { const p = (porRec[rc] || [])[0]; if (p) { T.recurso.push({ tipo: 'recurso', t: p[0], m: p[1], buena: rc, expl: ETQ_REC[rc] + ' · ' + p[3] }); usa(p[0], p[1]); } });
+    baraja(RECURSOS).slice(0, CUANTAS.recurso).forEach(rc => { const p = (porRec[rc] || [])[0]; if (p) { T.recurso.push({ tipo: 'recurso', t: p[0], m: p[1], buena: rc, expl: ETQ_REC[rc] + ' · ' + p[3], expl2: NOTA_REC[rc] }); usa(p[0], p[1]); } });
     // ¿cuál es moderna?
-    baraja(PARES).forEach(p => { if (T.cual.length < 4 && ok(p[0], p[1])) { const izq = Math.random() < .5; T.cual.push({ tipo: 'cual', A: izq ? p[1] : p[0], B: izq ? p[0] : p[1], buena: izq ? 0 : 1, expl: ETQ_REC[p[2]] + ' · ' + p[3] }); usa(p[0], p[1]); } });
+    const recCual = new Set();   // (6-nov) cada «¿cuál?», de un recurso distinto
+    baraja(PARES).forEach(p => { if (T.cual.length < CUANTAS.cual && ok(p[0], p[1]) && !recCual.has(p[2] === 'MIXTO' ? 'BARRADO' : p[2]) && recCual.add(p[2] === 'MIXTO' ? 'BARRADO' : p[2])) { const izq = Math.random() < .5; T.cual.push({ tipo: 'cual', A: izq ? p[1] : p[0], B: izq ? p[0] : p[1], buena: izq ? 0 : 1, expl: ETQ_REC[p[2]] + ' · ' + p[3] }); usa(p[0], p[1]); } });
     // ¿tradicional o moderna? (dos y dos)
     const tr = baraja(SUELTOS.filter(x => x[1] === 0)), mo = baraja(SUELTOS.filter(x => x[1] === 1));
     const elige = (lista, n) => { const out = []; lista.forEach(x => { if (out.length < n && ok(x[0])) { out.push(x); usa(x[0]); } }); return out; };
-    baraja(elige(tr, 2).concat(elige(mo, 2))).forEach(x => T.tm.push({ tipo: 'tm', r: x[0], buena: x[1], expl: x[2] }));
+    baraja(elige(tr, 2).concat(elige(mo, CUANTAS.tm - 2))).forEach(x => T.tm.push({ tipo: 'tm', r: x[0], buena: x[1], expl: x[2] }));
     // ¿a qué equivale? (dos de figuras y dos de compases)
     const fig = baraja(EQUIV.slice(0, 4)), com = baraja(EQUIV.slice(4));
-    fig.slice(0, 2).concat(com.slice(0, 2)).forEach(e => { const orden = baraja([0, 1, 2, 3]); T.equiv.push({ tipo: 'equiv', dado: e[0], ops: orden.map(i => e[1][i]), buena: orden.indexOf(0), expl: e[2], titulo: e[3] }); });
-    Object.keys(T).forEach(k => { T[k] = baraja(T[k]); while (T[k].length < 4) T[k].push(T[k][0]); });
+    fig.slice(0, 1).concat(com.slice(0, CUANTAS.equiv - 1)).forEach(e => { const orden = baraja([0, 1, 2, 3]); T.equiv.push({ tipo: 'equiv', dado: e[0], ops: orden.map(i => e[1][i]), buena: orden.indexOf(0), expl: e[2], titulo: e[3] }); });
+    Object.keys(T).forEach(k => { T[k] = baraja(T[k]); while (T[k].length < CUANTAS[k]) T[k].push(T[k][0]); });
     // rondas de 4 (un tipo de cada), sin repetir tipo en la costura
     const out = []; let ult = null;
-    for (let r = 0; r < 4; r++) {
-      let orden; do { orden = baraja(['cual', 'tm', 'recurso', 'equiv']); } while (orden[0] === ult);
-      if (r === 0) { orden = ['cual'].concat(baraja(['tm', 'recurso', 'equiv'])); }
-      orden.forEach(k => out.push(T[k][r])); ult = orden[3];
+    // el orden: empieza por «¿cuál?», sin dos tipos iguales seguidos (y las de pensar repartidas)
+    const quedan = { cual: T.cual.slice(1), tm: T.tm.slice(), recurso: T.recurso.slice(), equiv: T.equiv.slice() };
+    out.push(T.cual[0]); ult = 'cual';
+    while (out.length < NPREG) {
+      const tipos = Object.keys(quedan).filter(k => quedan[k].length && k !== ult);
+      if (!tipos.length) { const k = Object.keys(quedan).find(k => quedan[k].length); if (!k) break; out.push(quedan[k].shift()); ult = k; continue; }
+      const max = Math.max(...tipos.map(k => quedan[k].length)); const k = baraja(tipos.filter(x => quedan[x].length === max))[0];
+      out.push(quedan[k].shift()); ult = k;
     }
     return out.slice(0, NPREG);
   }
@@ -140,7 +160,8 @@
     const e = R[clave]; const g = N.group(parent, 'ej'); const gi = N.group(g);
     let w = 0;
     if (e.cn) { const r = N.compasNum(gi, e.cn[0], e.cn[1], 0, 0, sp * 1.5); w = r.w; }
-    else if (e.cf) { const r = N.compasFigura(gi, e.cf[0], e.cf[1], e.cf[2], 0, 0, sp * 1.5); w = r.w; }
+    else if (e.cf) {   // (6-nov) con la plica hacia abajo es más alto: un poco más pequeño y subido, centrado como los numéricos
+      const s2 = sp * 1.2, alto = e.cf[1] === '8' ? 4.7 : 4.2; const r = N.compasFigura(gi, e.cf[0], e.cf[1], e.cf[2], 0, -((alto - 2) / 2) * s2, s2); w = r.w; }
     else {
       let x = 0;
       if (e.c) { const c = N.compasNum(gi, e.c[0], e.c[1], 0, 0, sp); x = c.w + 0.9 * sp; }
@@ -244,7 +265,7 @@
     texto(capa, 'EL RETO DE LAS', CX, 400, { anchor: 'middle', size: 64, peso: 800, ls: '0.04em', fill: C.blanco });
     texto(capa, 'NUEVAS GRAFÍAS', CX, 480, { anchor: 'middle', size: 64, peso: 800, ls: '0.04em', fill: C.blanco });
     el('rect', { x: CX - 60, y: 512, width: 120, height: 5, rx: 2.5, fill: C.rosa }, capa);
-    texto(capa, `${NPREG} preguntas · 4 tipos de reto · ${SEG} segundos para cada una`, CX, 572, { anchor: 'middle', size: 30, fill: '#cbd5e1' });
+    texto(capa, `${NPREG} preguntas · 4 tipos de reto · 15 o 20 segundos para cada una`, CX, 572, { anchor: 'middle', size: 30, fill: '#cbd5e1' });
     boton(capa, 'JUGAR EN CLASE · CON MÓVILES', CX - 460, 650, 560, 84, sala);
     boton(capa, 'JUGAR YO SOLO', CX + 130, 650, 330, 84, () => juego('solo'), { lleno: false });
     const v = texto(capa, '← Volver al vídeo', 190, 940, { size: 24, peso: 700, fill: C.suave }); v.style.cursor = 'pointer';
@@ -311,7 +332,7 @@
       cabecera(`PREGUNTA ${k} DE ${estado.preg.length}`, '');
       if (estado.modo === 'solo') texto(capa, `${estado.puntos} puntos`, 190, 236, { size: 24, peso: 700, fill: C.suave });
       texto(capa, q.titulo || TITULO[q.tipo], CX, 250, { anchor: 'middle', size: 50, peso: 800, fill: C.blanco });
-      const ops = etiquetas(q), buena = buenaIdx(q);
+      const ops = etiquetas(q), buena = buenaIdx(q), SEGq = SEGT[q.tipo] || SEG;
       // el enunciado musical
       if (q.tipo === 'recurso') {
         dibuja(capa, q.t, 580, 420, 600); texto(capa, '=', CX, 438, { anchor: 'middle', size: 70, peso: 300, fill: C.suave }); dibuja(capa, q.m, 1340, 420, 600);
@@ -333,6 +354,7 @@
         const cx = x + 64 + (w - 64) / 2, cy = y + h / 2;
         if (q.tipo === 'cual') { texto(g, o, x + 96, y + 56, { size: 34, peso: 800, fill: C.suave }); dibuja(g, j === 0 ? q.A : q.B, cx, cy + 10, w - 140); }
         else if (q.tipo === 'equiv') { texto(g, o, x + 96, y + 52, { size: 28, peso: 800, fill: C.suave }); dibuja(g, q.ops[j], cx + 10, cy + (R[q.ops[j]].it ? -2 : -8), w - 200, R[q.ops[j]].it ? 28 : 17); }
+        else if (q.tipo === 'recurso') texto(g, o, cx, cy + 13, { anchor: 'middle', size: 38, peso: 800, fill: C.blanco });   // (6-nov) frases cortas, sin mayúsculas
         else texto(g, o.toUpperCase(), cx, cy + 12, { anchor: 'middle', size: 34, peso: 800, ls: '0.1em', fill: C.blanco });
         cajas.push({ g, fondoOp });
         if (estado.modo === 'solo') { g.style.cursor = 'pointer'; g.addEventListener('click', () => contesta(j)); }
@@ -341,17 +363,17 @@
       const cxr = 1660, cyr = 236, rr = 46, circ = 2 * Math.PI * rr;
       const pista = el('circle', { cx: cxr, cy: cyr, r: rr, fill: 'none', stroke: 'rgba(255,255,255,0.14)', 'stroke-width': 8 }, capa);
       const arco = el('circle', { cx: cxr, cy: cyr, r: rr, fill: 'none', stroke: C.rosa, 'stroke-width': 8, 'stroke-linecap': 'round', 'stroke-dasharray': circ.toFixed(1), transform: `rotate(-90 ${cxr} ${cyr})` }, capa);
-      const num = texto(capa, String(SEG), cxr, cyr + 16, { anchor: 'middle', size: 44, peso: 800, fill: C.blanco });
+      const num = texto(capa, String(SEGq), cxr, cyr + 16, { anchor: 'middle', size: 44, peso: 800, fill: C.blanco });
       const reloj0 = [pista, arco, num];
       const recuento = texto(capa, '', 190, 236, { size: 24, peso: 700, fill: C.suave });
       let abierta = false;
-      if (moviles) { try { await rpc('suite_aq_preguntar', { p_pin: estado.partida.pin, p_clave: estado.partida.clave, p_n: k, p_opciones: ops, p_segundos: SEG }); abierta = true; } catch (e) { abierta = false; } }
+      if (moviles) { try { await rpc('suite_aq_preguntar', { p_pin: estado.partida.pin, p_clave: estado.partida.clave, p_n: k, p_opciones: ops, p_segundos: SEGq }); abierta = true; } catch (e) { abierta = false; } }
       musicaOn(0.16);
       const t0 = performance.now(); let hecho = false, mia = null, tMia = 0, ultS = -1;
       const reloj = cada(() => {
-        const t = (performance.now() - t0) / 1000, s = Math.max(0, Math.ceil(SEG - t));
-        if (s !== ultS) { ultS = s; num.textContent = String(s); arco.setAttribute('stroke-dashoffset', (circ * Math.min(1, t / SEG)).toFixed(1)); if (s <= 5 && s > 0) tic(); }
-        if (t >= SEG) acaba();
+        const t = (performance.now() - t0) / 1000, s = Math.max(0, Math.ceil(SEGq - t));
+        if (s !== ultS) { ultS = s; num.textContent = String(s); arco.setAttribute('stroke-dashoffset', (circ * Math.min(1, t / SEGq)).toFixed(1)); if (s <= 5 && s > 0) tic(); }
+        if (t >= SEGq) acaba();
       }, 250);
       let poll = null;
       if (moviles && abierta) poll = cada(async () => {
@@ -377,11 +399,13 @@
         acierto();
         let linea = q.expl;
         if (estado.modo === 'solo') {
-          const ok = mia === buena; const pts = ok ? Math.round(1000 * (1 - 0.5 * Math.min(1, tMia / SEG))) : 0;
+          const ok = mia === buena; const pts = ok ? Math.round(1000 * (1 - 0.5 * Math.min(1, tMia / SEGq))) : 0;
           if (ok) { estado.puntos += pts; estado.aciertos++; }
           linea = (mia == null ? 'Sin respuesta · ' : ok ? `¡Bien! +${pts} puntos · ` : 'No era esa · ') + q.expl;
         } else if (r) linea = `${r.aciertos || 0} de ${r.contestados || 0} ${(r.aciertos || 0) === 1 ? 'ha' : 'han'} acertado · ` + q.expl;
-        texto(capa, linea, CX, q.tipo === 'cual' ? 900 : (ops.length === 2 ? 870 : 970), { anchor: 'middle', size: 28, peso: 600, fill: C.texto });
+        const yL = q.tipo === 'cual' ? 900 : (ops.length === 2 ? 870 : 966);
+        texto(capa, linea, CX, yL, { anchor: 'middle', size: 28, peso: 600, fill: C.texto });
+        if (q.expl2) texto(capa, q.expl2, CX, yL + 38, { anchor: 'middle', size: 24, peso: 600, fill: C.suave });   // (6-nov) segunda línea
         if (ops.length === 4 && q.tipo !== 'cual') { /* la explicación va abajo del todo */ }
         await botonSiguiente(k < estado.preg.length ? 'SIGUIENTE' : 'VER EL RESULTADO');
         res(r);
@@ -418,7 +442,7 @@
       texto(capa, String(estado.puntos), CX, 470, { anchor: 'middle', size: 150, peso: 800, fill: C.rosa });
       texto(capa, 'PUNTOS', CX, 530, { anchor: 'middle', size: 26, peso: 800, ls: '0.3em', fill: C.suave });
       texto(capa, `${estado.aciertos} de ${estado.preg.length} aciertos`, CX, 620, { anchor: 'middle', size: 40, peso: 700, fill: C.blanco });
-      const fr = estado.aciertos >= 14 ? '¡Dominas las nuevas grafías!' : estado.aciertos >= 10 ? '¡Muy bien! Repasa los que has fallado.' : 'Vuelve a ver el vídeo y prueba otra vez.';
+      const fr = estado.aciertos >= estado.preg.length - 1 ? '¡Dominas las nuevas grafías!' : estado.aciertos >= Math.ceil(estado.preg.length * 0.6) ? '¡Muy bien! Repasa los que has fallado.' : 'Vuelve a ver el vídeo y prueba otra vez.';
       texto(capa, fr, CX, 690, { anchor: 'middle', size: 32, fill: '#cbd5e1' });
     } else if (f && f.top && f.top.length) {
       const top = f.top; const pod = [[top[1], 2, 700, 560], [top[0], 1, CX, 500], [top[2], 3, 1220, 610]];

@@ -158,16 +158,21 @@
    * fig: 'q' | '8' | 'h' ; puntos: 0/1. Devuelve {g, w, num, fig}.
    */
   function compasFigura(parent, num, fig, puntos, x, yMid, sp) {
+    /* (6-nov, Iago) la figura con la PLICA HACIA ABAJO (como las notas agudas): así no se mete en el número de arriba.
+       Cabeza justo debajo del número, plica a la izquierda bajando; la corchea, con su corchete hacia abajo. */
     sp = sp || N.SP;
     const g = N.group(parent, 'compasFigura');
-    const MAP = { h: 'noteHalfUp', q: 'noteQuarterUp', '8': 'note8thUp' };
-    const s = 0.78, wf = adv(MAP[fig], s) + (puntos ? 0.55 : 0), wn = anchoCifra(num);
+    const s = 0.85, cab = fig === 'h' ? 'noteheadHalf' : 'noteheadBlack';
+    const wCab = adv(cab, s), wf = wCab + (fig === '8' ? 0.55 * s : 0) + (puntos ? 0.62 : 0), wn = anchoCifra(num);
     const w = Math.max(wn, wf);
     const gn = N.group(g, 'num'); cifra(gn, num, x + (w - wn) / 2 * sp, yMid - sp, sp);
     const gf = N.group(g, 'fig');
-    const xf = x + (w - wf) / 2 * sp, yf = yMid + 1.75 * sp;
-    N.glyph(gf, MAP[fig], xf, yf, sp, s);
-    if (puntos) N.glyph(gf, 'augmentationDot', xf + (adv(MAP[fig], s) + 0.12) * sp, yf - 0.05 * sp, sp);
+    const xf = x + (w - wf) / 2 * sp, yh = yMid + 1.0 * sp;   // (6-nov) aire entre el número y la cabeza
+    N.glyph(gf, cab, xf, yh, sp, s);
+    const xp = xf + E.stem / 2 * sp, y0 = yh + 0.168 * s * sp, y1 = yh + (fig === '8' ? 3.7 : 3.2) * sp;   // (6-nov) la corchea, más larga: que el corchete no toque la cabeza
+    N.line(gf, xp, y0, xp, y1, E.stem * sp);
+    if (fig === '8') { const an = M.flag8thDown.an.stemDownSW; N.glyph(gf, 'flag8thDown', xp - E.stem / 2 * sp - an[0] * s * sp, y1 + an[1] * s * sp, sp, s); }
+    if (puntos) N.glyph(gf, 'augmentationDot', xf + (wCab + 0.22) * sp, yh - 0.02 * sp, sp);
     return { g, w: w * sp, num: gn, fig: gf };
   }
   /** Compás de siempre (2/4, 6/8…). */
