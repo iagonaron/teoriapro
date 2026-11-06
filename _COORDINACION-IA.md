@@ -548,3 +548,4 @@ el punto de encuentro. Empieza por «_» para que la web no lo publique.
 - «Intros didácticas» sigue ahora con vídeos de Grado Elemental (otro repositorio). En
   teoriapro no tocará nada más sin apuntarlo antes aquí.
 - 6-nov 17:15 · Mantenimiento (tonos vecinos) · HECHO · index.html: la ventana de elegir tonalidad de «Tonos vecinos» (tarjeta C) ya no tiene botón «Añadir»: la tonalidad se registra en cuanto tiene nota y modo, y al pulsar fuera se cierra con ella puesta (cerrarTonPop repinta). El clic de soltar un arrastre de la rueda ya no cierra la ventana (pointerdown + composedPath). Las fichas no cambian (no tenían botón). Mismo cambio en teoriaathome.
+- 6-nov 17:20 · Mantenimiento · nota: relanza la publicación de Pages del commit de «Tonos vecinos» (la anterior falló en GitHub).
