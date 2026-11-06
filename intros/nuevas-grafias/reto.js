@@ -102,10 +102,11 @@
     ['c68', ['f2qp', 'f2q', 'f3qp', 'f6q'], '6/8 = dos pulsos de negra con puntillo', '¿Cómo se escribe con una figura?'],
   ];
   const RECURSOS = ['LIGADURAS', 'PUNTILLOS', 'BARRADO', 'COMPASES'];
-  // (6-nov, Iago) «ligadura» es lo que hace la tradicional: las opciones dicen lo que hace la moderna, en frase corta
+  // (6-nov, Iago) «ligadura» es lo que hace la tradicional: las opciones dicen lo que hace la moderna, en frase corta.
+  // «Sumar lo ligado» y no «Agrupar ligaduras»: «agrupar» es lo que hacen las barras (Iago, 6-nov)
   // (las mismas palabras del repaso del vídeo, F2)
-  const ETQ_REC = { LIGADURAS: 'Agrupar ligaduras', PUNTILLOS: 'Dobles y triples puntillos', BARRADO: 'Barras que saltan pulsos', COMPASES: 'Compás con una figura',
-    MIXTO: 'Agrupar ligaduras y barras que saltan pulsos' };
+  const ETQ_REC = { LIGADURAS: 'Sumar lo ligado', PUNTILLOS: 'Dobles y triples puntillos', BARRADO: 'Barras que saltan pulsos', COMPASES: 'Compás con una figura',
+    MIXTO: 'Sumar lo ligado y barras que saltan pulsos' };
   // en los de puntillos también desaparece una ligadura: la explicación dice cuál es el recurso que se ve
   const NOTA_REC = { PUNTILLOS: 'También desaparece una ligadura, pero lo nuevo, lo que se ve, son los puntillos' };
 
@@ -155,11 +156,12 @@
   const el = N.el;
   function limpia() { while (capa.firstChild) capa.removeChild(capa.firstChild); }
   /** Un ritmo (o un compás) centrado en (cx, yMid), que no pase de maxW. */
-  function dibuja(parent, clave, cx, yMid, maxW, sp) {
+  function dibuja(parent, clave, cx, yMid, maxW, sp, alinear) {
     sp = sp || SP;
     const e = R[clave]; const g = N.group(parent, 'ej'); const gi = N.group(g);
     let w = 0;
-    if (e.cn) { const r = N.compasNum(gi, e.cn[0], e.cn[1], 0, 0, sp * 1.5); w = r.w; }
+    if (e.cn) { const r = N.compasNum(gi, e.cn[0], e.cn[1], 0, 0, sp * (alinear ? 1.3 : 1.5)); w = r.w; }
+    else if (e.cf && alinear) { const r = N.compasFigura(gi, e.cf[0], e.cf[1], e.cf[2], 0, 0, sp * 1.3); w = r.w; }   // (6-nov, Iago) numeradores a la misma altura
     else if (e.cf) {   // (6-nov) con la plica hacia abajo es más alto: un poco más pequeño y subido, centrado como los numéricos
       const s2 = sp * 1.2, alto = e.cf[1] === '8' ? 4.7 : 4.2; const r = N.compasFigura(gi, e.cf[0], e.cf[1], e.cf[2], 0, -((alto - 2) / 2) * s2, s2); w = r.w; }
     else {
@@ -335,7 +337,8 @@
       const ops = etiquetas(q), buena = buenaIdx(q), SEGq = SEGT[q.tipo] || SEG;
       // el enunciado musical
       if (q.tipo === 'recurso') {
-        dibuja(capa, q.t, 580, 420, 600); texto(capa, '=', CX, 438, { anchor: 'middle', size: 70, peso: 300, fill: C.suave }); dibuja(capa, q.m, 1340, 420, 600);
+        const al = !!(R[q.t].cn && R[q.m].cf), yR = al ? 392 : 420;
+        dibuja(capa, q.t, 580, yR, 600, null, al); texto(capa, '=', CX, 438, { anchor: 'middle', size: 70, peso: 300, fill: C.suave }); dibuja(capa, q.m, 1340, yR, 600, null, al);
       } else if (q.tipo === 'tm') {
         dibuja(capa, q.r, CX, 420, 1100);
       } else if (q.tipo === 'equiv') {
