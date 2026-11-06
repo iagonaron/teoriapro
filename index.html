@@ -10206,7 +10206,9 @@ var CATALOGO=[
   { key:'test_3_3', tramo:'3.3', label:'Test 3.3 · Música estocástica',        estado:'activo', col:'pro', u:3, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_4_1', tramo:'4.1', label:'Test 4.1 · Magnetófono',               estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_4_2', tramo:'4.2', label:'Test 4.2 · Música concreta',           estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
-  { key:'test_4_3', tramo:'4.3', label:'Test 4.3 · Nuevas grafías',            estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
+  /* (6-nov-2026, Iago: «quiero que esté el test actual. El que hemos hecho que tiene 5 variantes») el viejo de texto ya no sale en el
+     generador (col:'retirado'); se queda aquí para que las fichas que ya lo llevan se sigan viendo. Deshacer: volver a col:'pro' */
+  { key:'test_4_3', tramo:'4.3', label:'Test 4.3 · Nuevas grafías',            estado:'activo', col:'retirado', u:4, test:true, desc:'2 preguntas · 3 opciones' },
   /* (6-nov-2026, Iago) NG: el de partitura, 4 preguntas a·b·c·d (5 variantes de cada una), en nuevas-grafias.js. Para quitarlo: borra esta línea */
   { key:'test_ng', tramo:'NG', label:'Nuevas grafías', estado:'activo', col:'pro', u:4, test:true, desc:'tipo test con partitura · 4 preguntas (a, b, c, d)' },
   { key:'test_5_1', tramo:'5.1', label:'Test 5.1 · El Blues',                  estado:'activo', col:'pro', u:5, test:true, desc:'2 preguntas · 3 opciones' },
