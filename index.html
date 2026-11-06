@@ -294,6 +294,10 @@ document.addEventListener('DOMContentLoaded', function(){
   .iv-title{font-size:46px;font-weight:900;letter-spacing:-.02em;line-height:1}
   .iv-title .post{color:var(--ink)}
   .iv-title .dim{color:var(--muted);font-weight:200}
+  /* (6-nov-2026, Iago) Acordes unificado: pestañas REPASO | AVANZADO en la cabecera, la elegida en rosa. Para quitarlo: borra estas 3 líneas */
+  .iv-title .aco-tabs{display:inline-flex;gap:6px;vertical-align:middle;margin-left:10px}
+  .iv-title .aco-tab{font-family:inherit;font-size:.34em;font-weight:900;letter-spacing:.12em;text-transform:uppercase;line-height:1;padding:5px 10px;border-radius:7px;cursor:pointer;background:transparent;color:#f5c6dc;border:1.5px solid rgba(236,72,153,.55)}
+  .iv-title .aco-tab.on{background:#ec4899;color:#fff;border-color:#ec4899;cursor:default}
   .iv-title .pro-seal{font-size:.34em;font-weight:900;letter-spacing:.12em;color:#1a1407;background:linear-gradient(135deg,var(--gold1),var(--gold2));padding:4px 9px;border-radius:7px;vertical-align:middle;margin-left:10px;text-transform:uppercase}
   .iv-sub{font-size:14px;color:var(--muted);margin:6px 0 22px;max-width:760px}
 
@@ -1055,12 +1059,14 @@ window.SuiteTiempo=(function(){
       <button class="mode-card" data-path="seriearmonica"><h2>Serie armónica</h2></button>
       <button class="mode-card" data-path="dodecafonismo"><h2>Dodecafonismo</h2></button>
 
+      <!-- (6-nov-2026, Iago) NG: «Nuevas grafías» entra donde estaba «Acordes avanzado»; Acordes, Modulación y Transporte se
+           corren un puesto y la tarjeta «Acordes» de repaso se va (vive en la pestaña REPASO de Acordes). Para quitarlo: la rejilla de ef708c5 -->
+      <button class="mode-card" data-path="nuevasgrafias"><h2>Nuevas grafías</h2><span class="card-sub">ligaduras · puntillos · barras · compás</span></button>
       <button class="mode-card" data-path="acordespro"><h2>Acordes <span class="pro-seal">avanzado</span></h2><span class="card-sub">° · - · + · sus4 · 7D · -7 · △ · 7̸ · ∅</span></button>
       <button class="mode-card" data-path="modulacion"><h2>Modulación</h2></button>
-      <button class="mode-card" data-path="transporte"><h2>Transporte</h2><span class="card-sub">resumen · escrito · mental</span></button>
 
+      <button class="mode-card" data-path="transporte"><h2>Transporte</h2><span class="card-sub">resumen · escrito · mental</span></button>
       <button class="mode-card repaso" data-path="intervalos"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Intervalos</h2><span class="card-sub">simples · compuestos</span></button>
-      <button class="mode-card repaso" data-path="acordes"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Acordes</h2><span class="card-sub">triadas · 7D</span></button>
       <button class="mode-card repaso" data-path="inversion"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Inversión</h2><span class="card-sub">intervalos · acordes</span></button>
 
       <button class="mode-card repaso" data-path="escalas"><span class="repaso-cinta" aria-hidden="true"><span>repaso</span></span><h2>Escalas</h2><span class="card-sub">menores · mayores · otras</span></button>
@@ -1069,6 +1075,32 @@ window.SuiteTiempo=(function(){
     </div>
 
     <div class="eva-foot"><button class="maint-link" id="genLink">Generador de fichas</button> <span style="opacity:.35;margin:0 4px">·</span> <button class="maint-link" id="maintLink">Mantenimiento</button></div>
+  </div>
+  </div>
+
+  <!-- ===================== (6-nov-2026, Iago) NG · VISTA NUEVAS GRAFÍAS (el ejercicio vive en nuevas-grafias.js) ===================== -->
+  <div id="view-nuevasgrafias" style="display:none">
+  <header class="top">
+    <a class="brand" href="#" onclick="volverPortal();return false;" style="cursor:pointer;text-decoration:none;color:inherit" title="Volver a TEORÍA at home">
+      <h1><span class="back-arrow">‹</span><span class="a">TEO</span><span class="eav-pro">RÍA</span> <span class="home2">at home</span></h1>
+    </a>
+  </header>
+  <div class="iv-head">
+    <div class="iv-title"><span class="post">NUEVAS</span> <span class="dim">GRAFÍAS</span></div>
+    <div class="iv-actions">
+      <button class="iconbtn btn-nuevos" onclick="window.NG&&NG.nuevo()" title="Nuevos ejercicios">
+        <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
+        Nuevos ejercicios
+      </button>
+    </div>
+  </div>
+  <div class="ex-card" id="cardNG">
+    <div class="ex-top">
+      <div class="ex-letter"><b></b><span>Marca una casilla en cada pregunta</span></div>
+      <div style="display:flex;gap:8px"><button class="iconbtn btn-correct" onclick="window.NG&&NG.corregir()">✓ Corregir</button></div>
+    </div>
+    <div class="score" id="scoreNG"></div>
+    <div class="answers" id="answersNG"></div>
   </div>
   </div>
 
@@ -1083,7 +1115,7 @@ window.SuiteTiempo=(function(){
   </header>
 
   <div class="iv-head">
-    <div class="iv-title"><span class="post">ACOR</span><span class="dim">DES</span> <span class="pro-seal">avanzado</span></div>
+    <div class="iv-title"><span class="post">ACOR</span><span class="dim">DES</span> <span class="aco-tabs"><button type="button" class="aco-tab" onclick="acoPestana('repaso')">repaso</button><button type="button" class="aco-tab on" onclick="acoPestana('avanzado')">avanzado</button></span></div><!-- (6-nov-2026) pestañas -->
     <div class="iv-actions">
       <button class="iconbtn btn-nuevos" onclick="nuevoTODO()" title="Nuevos ejercicios">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
@@ -1135,7 +1167,7 @@ window.SuiteTiempo=(function(){
     </a>
   </header>
   <div class="iv-head">
-    <div class="iv-title"><span class="post">ACOR</span><span class="dim">DES</span></div>
+    <div class="iv-title"><span class="post">ACOR</span><span class="dim">DES</span> <span class="aco-tabs"><button type="button" class="aco-tab on" onclick="acoPestana('repaso')">repaso</button><button type="button" class="aco-tab" onclick="acoPestana('avanzado')">avanzado</button></span></div><!-- (6-nov-2026) pestañas -->
     <div class="iv-actions">
       <button class="iconbtn btn-nuevos" onclick="nuevoACOBASTODO()" title="Nuevos ejercicios">
         <svg viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="none" stroke="currentColor" stroke-width="2"/><circle cx="8" cy="8" r="1.6" fill="currentColor"/><circle cx="16" cy="8" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="8" cy="16" r="1.6" fill="currentColor"/><circle cx="16" cy="16" r="1.6" fill="currentColor"/></svg>
@@ -2009,6 +2041,7 @@ window.SuiteTiempo=(function(){
     indiceacustico: abrirIndice,
     transporte: abrirTransporte,
     acordes: abrirAcordesBasico,
+    nuevasgrafias: function(){ if(window.NG) window.NG.abrirVista(); },   /* (6-nov-2026) NG */
     inversion: function(){ if(window.abrirInversion) window.abrirInversion(); },
     modulacion: function(){ window.location.href='modulacion.html'; },
     enarmoniapro: abrirEnarmonia
@@ -2037,6 +2070,11 @@ window.SuiteTiempo=(function(){
     if(!window._acoBasInit){ window._acoBasInit=true; if(window.nuevoACOBASTODO) window.nuevoACOBASTODO(); }
   }
   window.abrirAcordesBasico=abrirAcordesBasico;
+  /* (6-nov-2026, Iago) Acordes unificado: la tarjeta abre AVANZADO; la pestaña REPASO es la vista de Acordes básico */
+  function acoPestana(t){ var a=document.getElementById('view-acordes'), b=document.getElementById('view-acordesbasico');
+    if(t==='repaso'){ if(b && b.style.display==='block') return; if(a) a.style.display='none'; abrirAcordesBasico(); }
+    else { if(a && a.style.display==='block') return; if(b) b.style.display='none'; abrirAcordes(); } }
+  window.acoPestana=acoPestana;
   function volverPortal(){
     document.getElementById('view-acordes').style.display='none';
     var vab=document.getElementById('view-acordesbasico'); if(vab) vab.style.display='none';
@@ -2052,6 +2090,7 @@ window.SuiteTiempo=(function(){
     var ven=document.getElementById('view-enarmonia'); if(ven) ven.style.display='none';
     var vdo=document.getElementById('view-dodecafonismo'); if(vdo) vdo.style.display='none';
     var vca=document.getElementById('view-cadencias'); if(vca) vca.style.display='none';
+    var vng=document.getElementById('view-nuevasgrafias'); if(vng) vng.style.display='none';   /* (6-nov-2026) NG */
     if(window.iaStop) window.iaStop();
     if(window.serieStop) window.serieStop();
     document.getElementById('view-portal').style.display='block';
@@ -10168,6 +10207,8 @@ var CATALOGO=[
   { key:'test_4_1', tramo:'4.1', label:'Test 4.1 · Magnetófono',               estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_4_2', tramo:'4.2', label:'Test 4.2 · Música concreta',           estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_4_3', tramo:'4.3', label:'Test 4.3 · Nuevas grafías',            estado:'activo', col:'pro', u:4, test:true, desc:'2 preguntas · 3 opciones' },
+  /* (6-nov-2026, Iago) NG: el de partitura, 4 preguntas a·b·c·d (5 variantes de cada una), en nuevas-grafias.js. Para quitarlo: borra esta línea */
+  { key:'test_ng', tramo:'NG', label:'Nuevas grafías', estado:'activo', col:'pro', u:4, test:true, desc:'tipo test con partitura · 4 preguntas (a, b, c, d)' },
   { key:'test_5_1', tramo:'5.1', label:'Test 5.1 · El Blues',                  estado:'activo', col:'pro', u:5, test:true, desc:'2 preguntas · 3 opciones' },
   { key:'test_5_2', tramo:'5.2', label:'Test 5.2 · GVE en varios pulsos',      estado:'activo', col:'pro', u:5, test:true, desc:'2 preguntas · 3 opciones' },
   /* (22-oct-2026, Iago) tipo test Afrolatin (unidad 7). Para quitarlo: borra estas dos líneas y '7.1'/'7.2' de BANCO. */
@@ -11250,6 +11291,8 @@ async function fpConstruirPDF(esSolucion, copias, personas){
   var yBot=H-10;
   var topDe=function(p){ return p===1?36:16; };
   var BLOCK_STD=(yBot-topDe(1))/porPagina;           // altura fija por ejercicio
+  /* (6-nov-2026, Iago) NG: las tarjetas de «Nuevas grafías» (partitura) se pasan antes a PNG (nuevas-grafias.js). Para quitarlo: borra esta línea */
+  if(window.NG && window.NG.prepPDF){ try{ await window.NG.prepPDF(esSolucion, FP.ejercicios.map(function(e){ return e.spec; }).concat([].concat.apply([], (PERSONAS||[]).map(function(p){ return (p.extras||[]).map(function(x){ return x.spec; }); })))); }catch(e){} }
   var imgs=[];
   for(var i=0;i<n;i++){ var _s2=FP.ejercicios[i].spec; imgs.push((_s2._test||_s2._tres||_s2._blues||_s2._examen) ? null : await fpBloquePng(_s2, esSolucion)); }
   /* (3-oct-2026) los ejercicios de refuerzo de cada alumno de papel se dibujan una sola vez */
@@ -11939,7 +11982,7 @@ function pintaAlu(){
   ALU.__dir=null;
   var _so=el('fpSimOv'); if(_so) _so.scrollTop=0;   /* en simulación, el scroll es del overlay */
 }
-var FP_PRACTICE_VIEW={ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', indice:'indiceacustico', tonalidades:'tonalidades', ton_nombre:'tonalidades', ton_armadura:'tonalidades', ton_vecinos:'tonalidades', comp_elegir:'compasespro', comp_rellenar:'compasespro', comp_replicar:'compasespro', seriearmonica:'seriearmonica', dode_construir:'dodecafonismo', dode_completa:'dodecafonismo', dode_identifica:'dodecafonismo', enarmoniapro:'enarmoniapro', modulacion:'modulacion', inversion_int_simples:'inversion', inversion_int_compuestos:'inversion', inversion_aco_identifica:'inversion', inversion_aco_construir:'inversion', transporte_escrito:'transporte', transporte_mental:'transporte', transporte_resumen:'transporte' };
+var FP_PRACTICE_VIEW={ test_ng:'nuevasgrafias', /* (6-nov-2026) NG */ modos:'modos', escala_mayor:'escalas', escala_menor:'escalas', escala_otras:'escalas', intervalos_id:'intervalos', intervalos_build:'intervalos', acordes_id:'acordes', acordes_build:'acordes', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', indice:'indiceacustico', tonalidades:'tonalidades', ton_nombre:'tonalidades', ton_armadura:'tonalidades', ton_vecinos:'tonalidades', comp_elegir:'compasespro', comp_rellenar:'compasespro', comp_replicar:'compasespro', seriearmonica:'seriearmonica', dode_construir:'dodecafonismo', dode_completa:'dodecafonismo', dode_identifica:'dodecafonismo', enarmoniapro:'enarmoniapro', modulacion:'modulacion', inversion_int_simples:'inversion', inversion_int_compuestos:'inversion', inversion_aco_identifica:'inversion', inversion_aco_construir:'inversion', transporte_escrito:'transporte', transporte_mental:'transporte', transporte_resumen:'transporte' };
 /* pestaña exacta del pad tras abrirlo */
 var FP_PRACTICE_AFTER={
   /* (3-oct-2026, Iago) «si el error es escalas mayores, que le lleve a escalas mayores»: se baja a la tarjeta de esa familia */
@@ -11961,7 +12004,8 @@ var FP_PRACTICE_AFTER={
   transporte_resumen:function(){ var b=document.querySelector('[data-tab="resumen"]'); if(b) b.click(); }
 };
 /* ejercicios SIN pad dedicado (tests, examen, blues): se repasa con los apuntes impresos */
-function fpTienePad(key){ return !(/^test_|^ex_/.test(String(key||'')) || key==='blues'); }
+function fpTienePad(key){ if(key==='test_ng') return true;   /* (6-nov-2026) NG: tiene su pad */
+  return !(/^test_|^ex_/.test(String(key||'')) || key==='blues'); }
 /* textos que repetirían el título del ejercicio dentro de la tarjeta */
 var FP_DUP_RE=[/^Transporta la melodía/, /^Transporte mental:/, /^Construye los 4 acordes sobre cada fundamental$/, /^Identifica el número y la especie de cada intervalo$/, /^Coloca la 2ª nota de cada intervalo/, /^Identifica el acorde$/];
 function fpQuitaDuplicados(host){
@@ -18864,11 +18908,11 @@ function fpPintaModulacion(host, spec, resuelto, anchoFijo){
     ['compasespro','Compases extraños',['gp-compases']],
     ['seriearmonica','Serie armónica',['gp-serie']],
     ['dodecafonismo','Dodecafonismo',['gp-serialismo']],
-    ['acordespro','Acordes avanzado',['gp-cifrado']],
+    ['nuevasgrafias','Nuevas grafías',['gp-grafias']],   /* (6-nov-2026) NG */
+    ['acordespro','Acordes',['gp-cifrado','acordes']],   /* (6-nov-2026) Acordes unificado: avanzado + repaso */
     ['modulacion','Modulación',['gp-modulacion']],
     ['transporte','Transporte',['gp-transporte']],
     ['intervalos','Intervalos · repaso',['intervalos','int-comp']],
-    ['acordes','Acordes · repaso',['acordes']],
     ['inversion','Inversión · repaso',['inv-simples','inv-comp','inv-acordes']],
     ['escalas','Escalas · repaso',['esc-menores','esc-mayores','esc-otras']],
     ['tonalidades','Tonalidades · repaso',['relativos','tonalidad','armadura','vecinas']],
@@ -19127,7 +19171,8 @@ window.LmfCorr=(function(){
        (8-oct-2026, Iago: «el test 2.2 lo que tiene que abrir son los apuntes de la unidad 2 referente a cualidades del
        sonido… que ahí abra PDF clásico») el 2.2 ya no va a «Serie armónica» (no trae Altura): abre el PDF de la unidad 2. */
     test_1_2:COMP, test_2_3:SERIE, test_3_2:DODE,
-    test_8_1:MODU, test_8_2:MODU, test_8_3:MODU, test_9_1:TRAN, test_9_2:TRAN
+    test_8_1:MODU, test_8_2:MODU, test_8_3:MODU, test_9_1:TRAN, test_9_2:TRAN,
+    test_ng:G('Nuevas grafías',['gp-grafias'])   /* (6-nov-2026) NG */
   };
   function esTest(k){ return /^test_/.test(String(k||'')); }   /* tipo test: 2 preguntas · 3 opciones */
   /* (27-sep-2026) VIDEO = tipo de ejercicio → vídeo («Compases extraños», bloque ivf-*). (29-sep-2026) Lo sustituye
@@ -19163,6 +19208,7 @@ window.LmfCorr=(function(){
     seriearmonica:{ nombre:'Serie armónica', lista:[ {src:'intros/serie-armonica/index.html', tit:'Serie armónica', dur:'2:48'} ] },
     dodecafonismo:{ nombre:'Dodecafonismo', lista:[ {src:'intros/dodecafonismo/index.html', tit:'Dodecafonismo', dur:'4:17'} ] },
     acordespro:{ nombre:'Acordes avanzados', lista:[ {src:'intros/acordes-avanzados/index.html', tit:'Acordes avanzados', dur:'4:36'} ] },
+    nuevasgrafias:{ nombre:'Nuevas grafías', lista:[ {src:'intros/nuevas-grafias/index.html', tit:'Nuevas grafías', dur:'4:52'} ] },   /* (6-nov-2026) NG */
     cadencias:{ nombre:'Cadencias', lista:[ {src:'intros/cadencias-pro/index.html', tit:'Cadencias', dur:'4:07'} ] },
     modulacion:{ nombre:'Modulación diatónica', lista:[ {src:'intros/modulacion/index.html', tit:'Modulación diatónica', dur:'5:28'} ] },
     transporte:{ nombre:'Transporte', lista:[ {src:'intros/transporte/index.html', tit:'Transporte', dur:'7:28'} ] },
@@ -19174,6 +19220,7 @@ window.LmfCorr=(function(){
      los alumnos con cuenta validada (nunca invitados). Para deshacer: dejar solo los tres de antes (intervalos-compuestos,
      inversion-compuestos, tonalidades-vecinas). */
   var VERIFICADOS={ 'intros/acordes-avanzados/index.html':1,
+    'intros/nuevas-grafias/index.html':1,   /* (6-nov-2026, Iago: «Alumnos ya») */
     'intros/acordes/index.html':1,
     'intros/cadencias-pro/index.html':1,
     'intros/dodecafonismo/index.html':1,
@@ -19203,7 +19250,7 @@ window.LmfCorr=(function(){
     indice:'indiceacustico', modos:'modos', seriearmonica:'seriearmonica', dode_construir:'dodecafonismo', dode_completa:'dodecafonismo', dode_identifica:'dodecafonismo', acordespro_id:'acordespro', acordespro_build:'acordespro', cadencias:'cadencias', modulacion:'modulacion', transporte_escrito:'transporte', transporte_mental:'transporte', transporte_resumen:'transporte',   /* (29-sep-2026, Intros didácticas) temas nuevos */
     /* (6-oct-2026, Iago) «en cada ejercicio… las tres referencias: apuntes, vídeos y ejercicios para practicar»: los test
        cuyo tema tiene vídeo (los mismos que ya abrían sus apuntes web, salvo el 2.2). Para quitarlo: borrar esta línea. */
-    test_1_2:'compasespro', test_2_3:'seriearmonica', test_3_2:'dodecafonismo', test_8_1:'modulacion', test_8_2:'modulacion', test_8_3:'modulacion', test_9_1:'transporte', test_9_2:'transporte' };
+    test_1_2:'compasespro', test_2_3:'seriearmonica', test_3_2:'dodecafonismo', test_8_1:'modulacion', test_8_2:'modulacion', test_8_3:'modulacion', test_9_1:'transporte', test_9_2:'transporte', test_ng:'nuevasgrafias' /* (6-nov-2026) NG */ };
   var PRIMERO={ ton_nombre:'intros/indica-la-tonalidad/index.html', ton_armadura:'intros/indica-la-armadura/index.html',
     ton_vecinos:'intros/tonalidades-vecinas/index.html', inversion_int_simples:'intros/inversion-intervalos/index.html',
     inversion_int_compuestos:'intros/inversion-compuestos/index.html', escala_menor:'intros/escalas-menores/index.html',
@@ -19912,8 +19959,12 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
     dodecafonismo: { nombre: 'Dodecafonismo', lista: [
       { src: 'intros/dodecafonismo/index.html', tit: 'Dodecafonismo', sub: 'La serie · P · R · I', dur: '4:17', practica: 'dode_construir', alumnos: true }
     ] },
+    nuevasgrafias: { nombre: 'Nuevas grafías', lista: [   /* (6-nov-2026, Iago: «Alumnos ya») NG */
+      { src: 'intros/nuevas-grafias/index.html', tit: 'Nuevas grafías', sub: 'Ligaduras · Puntillos · Barras · Compás', dur: '4:52', practica: 'test_ng', alumnos: true }
+    ] },
     acordespro: { nombre: 'Acordes avanzados', lista: [
       { src: 'intros/acordes-avanzados/index.html', tit: 'Acordes avanzados', sub: 'Cifrado americano · Tríadas · Cuatríadas', dur: '4:36', practica: 'acordespro_id', alumnos: true }
+      ,{ src: 'intros/acordes/index.html', tit: 'Acordes · repaso', sub: 'Tríadas · Séptima de dominante', dur: '2:53', practica: 'acordes_id', alumnos: true }   /* (6-nov-2026) Acordes unificado */
     ] },
     cadencias: { nombre: 'Cadencias', lista: [
       { src: 'intros/cadencias-pro/index.html', tit: 'Cadencias', sub: 'Auténtica · Plagal · Semicadencia · Rota', dur: '4:07', practica: 'cadencias', alumnos: true }
@@ -19955,7 +20006,8 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
     dode_construir: ['dodecafonismo', null],   /* (29-sep-2026) */
     seriearmonica: ['seriearmonica', null],   /* (29-sep-2026) */
     indice: ['indiceacustico', null],   /* (29-sep-2026) */
-    modos: ['modos', null]   /* (29-sep-2026) */
+    modos: ['modos', null],   /* (29-sep-2026) */
+    test_ng: ['nuevasgrafias', null]   /* (6-nov-2026) NG */
   };
   function abreEj(v){
     var k = v && v.practica, e = EJERCICIOS[k]; if (!e) return;
@@ -20299,12 +20351,12 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
   var VISTA = { 'view-cadencias': 'cadencias', 'view-indice': 'indiceacustico', 'view-modos': 'modos', 'view-serie': 'seriearmonica',
     'view-dodecafonismo': 'dodecafonismo', 'view-acordes': 'acordespro', 'view-transporte': 'transporte', 'view-intervalos': 'intervalos',
     'view-acordesbasico': 'acordes', 'view-inversion': 'inversion', 'view-escalas': 'escalas', 'view-tonalidades': 'tonalidades',
-    'view-enarmonia': 'enarmoniapro' };
+    'view-enarmonia': 'enarmoniapro', 'view-nuevasgrafias': 'nuevasgrafias' /* (6-nov-2026) NG */ };
   /* el nombre del grupo de «Ver apuntes» (sin tildes ni « · repaso») → su tarjeta */
   var APUNTES = { 'cadencias': 'cadencias', 'indice acustico': 'indiceacustico', 'modos': 'modos', 'compases extranos': 'compasespro',
     'compases': 'compasespro', 'serie armonica': 'seriearmonica', 'dodecafonismo': 'dodecafonismo', 'acordes avanzado': 'acordespro',
     'acordes avanzados': 'acordespro', 'modulacion': 'modulacion', 'transporte': 'transporte', 'intervalos': 'intervalos',
-    'acordes': 'acordes', 'inversion': 'inversion', 'escalas': 'escalas', 'tonalidades': 'tonalidades', 'enarmonias': 'enarmoniapro' };
+    'acordes': 'acordespro' /* (6-nov-2026) Acordes unificado */, 'nuevas grafias': 'nuevasgrafias', 'inversion': 'inversion', 'escalas': 'escalas', 'tonalidades': 'tonalidades', 'enarmonias': 'enarmoniapro' };
   function norm(s){
     s = String(s || ''); try { s = s.normalize('NFD').replace(/[̀-ͯ]/g, ''); } catch (e) {}
     return s.toLowerCase().replace(/\s*·\s*repaso\s*$/, '').replace(/\s+/g, ' ').trim();
@@ -20340,5 +20392,6 @@ html body .ivf-caja .ivf-giro .ivf-cara .mode-card{-webkit-backdrop-filter:none!
   window.LMQue = { que: que };   /* (para el banco de pruebas) */
 })();
 </script>
+<script src="nuevas-grafias.js"></script><!-- (6-nov-2026, Iago) NG: ejercicio «Nuevas grafías» (pad + fichas). Para quitarlo: borra esta línea y el fichero -->
 </body>
 </html>
