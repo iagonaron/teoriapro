@@ -878,6 +878,20 @@ document.addEventListener('DOMContentLoaded', function(){
 #aluFbBox>summary:hover{background:#ec4899}
 #aluFbBox>:not(summary){margin-left:16px;margin-right:16px}
 #aluFbBox[open]{padding-bottom:14px}
+#aluFbBox>summary+div{color:#cbd5e1!important}
+#aluFbBox .aluFbItem{border-top:1px dashed rgba(236,72,153,.35)!important}
+#aluFbBox .aluFbItem label{color:#e2e8f0!important}
+#aluFbBox .aluFbItem label span{color:#f9a8d4!important}
+#aluFbBox .aluFbItem .fbN{border:1.5px solid #ec4899!important;color:#fff!important;border-radius:8px!important}
+#aluFbBox .aluFbItem .fbT{border:1px solid rgba(236,72,153,.45)!important;color:#fff!important;border-radius:10px!important}
+#aluFbBox .aluFbItem .fbT{font-family:inherit!important;font-size:13px!important;line-height:1.45!important}
+/* (10-nov-2026, Iago: «que sea igual en GE y en GP… lo de dorado y degradados era de la versión estética de hace unos meses») botones lisos: enviar en rosa relleno, añadir con contorno rosa */
+#aluFbMas,#aluFbSend{border-radius:10px!important;padding:9px 16px!important;font-family:inherit!important;font-weight:800!important;font-size:13px!important;line-height:1.2!important;cursor:pointer;box-shadow:none!important;transition:background .15s ease}
+#aluFbMas{background:rgba(219,39,119,.10)!important;border:1.5px solid rgba(236,72,153,.7)!important;color:#fff!important}
+#aluFbMas:hover{background:rgba(219,39,119,.22)!important}
+#aluFbSend{background:#db2777!important;border:1.5px solid #db2777!important;color:#fff!important}
+#aluFbSend:hover{background:#ec4899!important;border-color:#ec4899!important}
+#aluFbSend[disabled]{opacity:.55;cursor:default}
 </style>
 <script>
 /* ============================================================
