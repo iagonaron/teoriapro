@@ -12139,14 +12139,19 @@ function pintaAlu(){
         : '<button class="fp-enviar" id="aluFin" type="button" style="padding:12px 22px;font-size:15px">'+(ALU.repaso?'✓ Corregir y ver mi nota':'📨 Enviar al profesor y ver puntuación')+'</button>')+
     '</div>'+
     '<div class="fp-status" id="fpStatus" style="text-align:center"></div>';
-  try{ fpMotorDe(it.item).montarEn(el('aluHost'), it.item); }
+  var _montado=null;
+  try{ _montado=fpMotorDe(it.item).montarEn(el('aluHost'), it.item); }
   catch(e){ el('aluHost').innerHTML=''; }
   /* ANTI-SILENCIO (2-ago-2026, Iago) · Si el ejercicio quedó vacío o roto:
      aviso visible + botón para notificar. El botón SOLO existe cuando la
      propia app detecta el fallo (garantía de veracidad), y la entrega viaja
      marcada automáticamente aunque el alumno no pulse. */
-  try{
+  /* (17-nov-2026, incidencia #14) los ejercicios que se pintan después de cargar (Nuevas grafías: «Cargando…» y luego la
+     partitura) daban un «no cargó» falso al instante. Si el motor devuelve una promesa, se comprueba cuando termina (o a los
+     10 s si no termina), y solo si el alumno sigue en ese ejercicio. */
+  var _chkFallo=function(){ try{
     var _ah=el('aluHost');
+    if(ALU.items[ALU.i]!==it || it._falloCarga) return;
     if(_ah && _ah.innerHTML.length<100){
       it._falloCarga=true;
       _ah.innerHTML='<div style="border:2px dashed #d4af37;border-radius:14px;padding:18px 20px;background:rgba(212,175,55,.07);max-width:560px;margin:8px auto;text-align:center">'
@@ -12158,7 +12163,12 @@ function pintaAlu(){
       if(_fb2) _fb2.onclick=function(){ it._falloAvisado=true; _fb2.disabled=true; _fb2.style.opacity='.55';
         var st2=_ah.querySelector('#aluFalloSt'); if(st2) st2.textContent='✓ Anotado. Iago lo verá con tu entrega y este ejercicio se anulará.'; };
     }
-  }catch(e){}
+  }catch(e){} };
+  if(_montado && typeof _montado.then==='function'){
+    var _hecho=false, _host0=el('aluHost');
+    var _tarde=function(){ if(_hecho) return; _hecho=true; if(el('aluHost')===_host0) _chkFallo(); };
+    _montado.then(_tarde, _tarde); setTimeout(_tarde, 10000);
+  } else _chkFallo();
   fpQuitaDuplicados(el('aluHost'));   /* sin textos repetidos bajo el título */
   var bpr=el('aluPractica'); if(bpr) bpr.addEventListener('click', function(){ fpModalPracticar(it.key); });
   try{ if(window.ApxFicha) window.ApxFicha.pinta(c.querySelector('.fp-ayuda'), it.key); }catch(e){}   /* (27-sep-2026, Iago) APUNTES EN LAS FICHAS */
